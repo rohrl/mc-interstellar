@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "id": "interstellar",
+  "version": "${version}",
+  "name": "Interstellar",
+  "description": "An educational relativistic optics experiment. Current build: calibration HUD only.",
+  "environment": "*",
+  "entrypoints": {
+    "main": ["io.github.rohrl.interstellar.Interstellar"],
+    "client": ["io.github.rohrl.interstellar.client.InterstellarClient"]
+  },
+  "contact": {
+    "sources": "https://github.com/rohrl/mc-interstellar",
+    "issues": "https://github.com/rohrl/mc-interstellar/issues"
+  },
+  "depends": {
+    "fabricloader": ">=0.16.14",
+    "minecraft": "1.21.1",
+    "java": ">=21",
+    "fabric-api": "*"
+  }
+}

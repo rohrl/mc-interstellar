@@ -1,0 +1,10 @@
+pluginManagement {
+    repositories {
+        maven {
+            url = providers.gradleProperty('fabric_maven_url').getOrElse('https://maven.fabricmc.net/')
+        }
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+rootProject.name = 'interstellar'

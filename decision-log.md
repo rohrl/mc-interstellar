@@ -1,0 +1,59 @@
+# Decision log
+
+Important decisions are recorded here with stable IDs. Supersede entries rather than silently rewriting history. Date: 2026-09-13 (Australia/Brisbane).
+
+## D001 — Scientific scope — accepted
+
+Build a scaled educational optical simulation, not a dynamical solution of Einstein's field equations for the Minecraft world. GPU performs expensive light propagation. Java manages state, rendering resources, configuration, persistence and synchronization. Reason: scientific clarity with interactive performance. No terrain destruction or full server-side gravitational simulation.
+
+## D002 — Minecraft and Java — accepted baseline
+
+Minecraft 1.21.1, Fabric, JDK 21. Pin dependency versions and use a Gradle wrapper. Reason: established mod ecosystem and a focused version target. Revisit only with measured compatibility evidence. Initial pins: Loom 1.7.4, Loader 0.16.14, Fabric API 0.102.1+1.21.1, Yarn 1.21.1+build.3, Gradle 8.10.2.
+
+## D003 — Rendering integration — provisional
+
+A dedicated Interstellar shader pack is acceptable; compatibility with arbitrary existing packs is not required. Iris is an option, not a mandatory dependency. First establish scene access and horizon-crossing optics; compare an Iris adapter against a mod-owned renderer. Do not invent a public arbitrary-uniform Iris API. Bootstrap intentionally has no Iris/Sodium dependency, permitting a clean Fabric baseline before compatibility trials.
+
+## D004 — Optical core must cross the horizon — accepted requirement; coordinates proposed
+
+Use a horizon-regular formulation and a physical local observer frame. Ingoing Kerr–Schild or Painleve–Gullstrand coordinates are candidates. Bruneton's published implementation excludes interior views, so it is a reference/exterior optimization, not the complete renderer. Final integration scheme requires numerical validation.
+
+## D005 — Scene representation — unresolved engineering choice
+
+Single-view screen-space data cannot recover off-screen or hidden geometry. Validate optics in a controlled scene first; investigate additional captures or GPU scene data for terrain. A cubemap alone does not solve nearby parallax/occlusion. Reason: avoid an attractive but misleading UV warp being presented as accurate GR.
+
+## D006 — GR defaults — accepted starting values, tunable
+
+Schwarzschild, no charge/spin, reference horizon radius 8 blocks, photon sphere 12, ISCO 24, start at 64 blocks from centre. Each mass block will contribute 0.125 blocks of Schwarzschild radius; 64 blocks give r_s=8. Cluster radius/compactness and collapse rule remain to be specified. These are scaled exhibit parameters, not claims of safe metre-sized astrophysical objects. No physical mass in kg is assigned until the length conversion is explicit.
+
+## D007 — Observer controls — accepted
+
+Potion initially controls observer speed independently of actual player movement. SR and GR may use independent scales/defaults. Include HUD and guided observation/free-fall modes. Stationary hovering is available only outside the horizon; an interior tour must follow a valid timelike trajectory. Slowing playback does not alter physical equations.
+
+## D008 — Player returning-light image — accepted
+
+Use the player's actual body and skin, including the back, in the optical scene. A stationary photon-sphere setup is the first candidate; arbitrary moving-body accuracy later requires emission-time pose history. Do not promise a mirror-like image or treat this as a generic event-horizon effect. Reason: user explicitly rejected a mannequin substitute.
+
+## D009 — Deferred features — accepted
+
+Accretion disks and general infalling-entity history/horizon-freeze rendering are follow-ups. Kerr spin, multiple interacting strong sources, CMB spectral rendering, and comprehensive dynamic-scene retarded-time rendering are later milestones. Horizon crossing is not deferred with entity freeze.
+
+## D010 — Performance — accepted, supersedes 120 FPS proposal
+
+Target 2560x1440 at 60 FPS (16.67 ms total frame) on Ryzen 7 5800X3D / RTX 5070 Ti / 32 GB RAM. Measure baseline first and track CPU/GPU costs, tail frame times, scene, resolution, and quality settings. Heavy disabled features must skip passes/resource work. Separate pedagogical effect isolation from numerical quality controls.
+
+## D011 — Repository and continuity — accepted
+
+Actual Git root is C:\work\code\minecraft\interstellar\interstellar (nested folder is intentional). Remote: https://github.com/rohrl/mc-interstellar.git. User authorizes branches and pushes. Keep decision-log.md, plan.md, progress.md, handoff.md and source references in Git so another agent can resume. Bootstrap branch: codex/bootstrap-observatory.
+
+## D012 — Development JDK — verified
+
+Use complete Temurin 21.0.12.1 at C:\Portable\jdks\temurin-21.0.12.1 on this machine. Minecraft's bundled Java 21 has javac but lacks jmods; do not base the build on that launcher-managed runtime. Do not commit machine-specific JDK paths into Gradle configuration.
+
+## D013 — First code checkpoint — accepted implementation choice
+
+Create a buildable Fabric foundation, diagnostic HUD, validated config, and isolated scientific reference quantities before the GPU experiment. Clearly label the HUD as calibration only. Reason: establish repeatable builds and an observable camera/source convention without confusing unimplemented optics with a simulation.
+
+## D014 — Optional official dependency mirror — accepted implementation choice
+
+The initial machine could reach Maven Central but TCP connections to maven.fabricmc.net timed out on both published IPv4 addresses. maven2.fabricmc.net worked and is listed in the official Fabric installer's Reference.java. Add a fabric_maven_url Gradle property to redirect plugin and Loom-added Fabric repositories when required; preserve the primary service as the default. No third-party mirrors or machine DNS changes. Verification command may supply -Pfabric_maven_url=https://maven2.fabricmc.net/.

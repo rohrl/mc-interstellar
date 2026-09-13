@@ -1,0 +1,63 @@
+plugins {
+    id 'fabric-loom' version '1.7.4'
+}
+
+version = project.mod_version
+group = project.maven_group
+base { archivesName = project.archives_base_name }
+
+repositories { mavenCentral() }
+
+// Optional official Fabric mirror when the primary service is unreachable.
+// Also redirects the Fabric repository installed by Loom itself.
+repositories.withType(MavenArtifactRepository).configureEach { repository ->
+    if (repository.url.host == 'maven.fabricmc.net' && project.hasProperty('fabric_maven_url')) {
+        repository.url = project.property('fabric_maven_url')
+    }
+}
+
+loom {
+    if (project.hasProperty('fabric_maven_url')) {
+        intermediaryUrl = project.property('fabric_maven_url').toString().replaceAll('/+$', '') +
+                '/net/fabricmc/intermediary/%1$s/intermediary-%1$s-v2.jar'
+    }
+    splitEnvironmentSourceSets()
+    mods {
+        interstellar {
+            sourceSet sourceSets.main
+            sourceSet sourceSets.client
+        }
+    }
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${project.minecraft_version}"
+    mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
+    modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+    testImplementation platform('org.junit:junit-bom:5.11.4')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+processResources {
+    inputs.property 'version', project.version
+    filesMatching('fabric.mod.json') { expand version: project.version }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.release = 21
+    options.encoding = 'UTF-8'
+}
+
+java {
+    toolchain { languageVersion = JavaLanguageVersion.of(21) }
+    withSourcesJar()
+}
+
+test { useJUnitPlatform() }
+
+tasks.withType(AbstractArchiveTask).configureEach {
+    preserveFileTimestamps = false
+    reproducibleFileOrder = true
+}
