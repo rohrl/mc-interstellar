@@ -65,3 +65,7 @@ Persistent defaults now load from config/interstellar-optics.json on each F8 ope
 SourceBlocks registers interstellar:mass_block. SourceInspector runs bounded on-demand jobs; ClusterProbe is the pure tested component/geometry kernel. Read docs/mass-blocks.md for model, budgets, incomplete/stale behavior, test-world positions and untested paths. Fixed mass uses ordinary chunk persistence, with no BlockEntities or custom save data. 25 tests pass; runtime split/merge, right-click, loot and save/reload passed. The client remains at the high-altitude test structure.
 
 Next: integrate validated source selection/synchronization with the lab, then maintained cluster tracking if needed. Do not claim the current inspector is a live global index. Preserve unknown/capped/stale distinctions. Terrain geometry rendering remains iteration 3; critical-ray/winding accuracy is still tracked separately.
+
+## Remote publication pending — 2026-09-15
+
+Mass-block implementation is committed locally on codex/mass-blocks (implementation commit ee55b74). Two pushes failed connecting to github.com:443. System DNS and an explicit Cloudflare resolver query both returned 4.237.22.38; no network settings were changed. Retry git push -u origin codex/mass-blocks when connectivity returns. Tests and runtime verification are complete for this documented checkpoint; origin does not yet contain this branch.

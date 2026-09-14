@@ -71,3 +71,7 @@ Implemented validated persistent optical defaults and Q quality cycling. Build a
 ## Mass-block checkpoint — 2026-09-15, codex/mass-blocks
 
 Registered Mass Block/item, creative entry, vanilla-texture model, loot and pickaxe tag. Added on-demand bounded inspections, immutable summaries, revision cancellation and incomplete-result handling. Build and 25 tests pass. Runtime verified cross-chunk 64-block cube, split into 16/32, merge back to 64, empty-hand inspection, loot, and identical data after world save/reload. Full conditions and untested cases are in docs/mass-blocks.md. No live cluster index, shader source selection or world lensing yet; this is an inspection/data checkpoint within iteration 2.
+
+## Remote publication pending — 2026-09-15
+
+Mass-block implementation is committed locally on codex/mass-blocks (implementation commit ee55b74). Two pushes failed connecting to github.com:443. System DNS and an explicit Cloudflare resolver query both returned 4.237.22.38; no network settings were changed. Retry git push -u origin codex/mass-blocks when connectivity returns. Tests and runtime verification are complete for this documented checkpoint; origin does not yet contain this branch.
