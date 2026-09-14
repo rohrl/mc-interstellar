@@ -54,3 +54,7 @@ RGB sky colours and the extended orange source are illustrative; no gravitationa
 ## Free-fall extension
 
 The earlier exterior-only description is superseded for the falling-frame lab by [the PG reference, observer definitions and GPU extension](free-fall.md). That document specifies signs, boundary conditions, independent integration, playback law, observed errors and remaining limits. The sky renderer now crosses the horizon; terrain, spectral transport and emission histories remain outside current validation.
+
+## Mass-block source proxy
+
+[Mass-block model](mass-blocks.md) defines equal weights, corner-inclusive enclosing radius and the explicitly approximate compactness classification. It does not solve nonspherical collapse or generate a dynamical spacetime; current blocks only expose inspection data.

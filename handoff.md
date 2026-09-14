@@ -7,7 +7,7 @@ Read this, decision-log.md, progress.md and docs/science.md before continuing. D
 - Git root: C:\work\code\minecraft\interstellar\interstellar.
 - Parent folder of same name is intentional and is not the Git root.
 - Remote: https://github.com/rohrl/mc-interstellar.git.
-- Current branch: codex/optical-settings. Verify git status/branch before modifying anything.
+- Current branch: codex/mass-blocks. Verify git status/branch before modifying anything.
 - User permits branches and pushes. No force pushes or unrelated cleanup.
 - User requests notifications for blockers/decisions and durable Markdown project records.
 
@@ -59,3 +59,9 @@ Next: targeted near-critical accuracy/winding checks, quality controls and confi
 ## Current checkpoint — codex/optical-settings
 
 Persistent defaults now load from config/interstellar-optics.json on each F8 open. Q cycles integration step; R restores loaded settings; keyboard changes are temporary. Read docs/optical-settings.md for validation and costs. Original local config was restored after testing. 18 tests pass, including Gson parsing; test runtime needs Gson 2.10.1 explicitly. Shader computes angle from loop index, and V logs quality. Current client is left open with restored STANDARD defaults. Next: targeted near-critical/winding accuracy and source-block/clustering work; terrain integration remains iteration 3.
+
+## Current checkpoint — codex/mass-blocks
+
+SourceBlocks registers interstellar:mass_block. SourceInspector runs bounded on-demand jobs; ClusterProbe is the pure tested component/geometry kernel. Read docs/mass-blocks.md for model, budgets, incomplete/stale behavior, test-world positions and untested paths. Fixed mass uses ordinary chunk persistence, with no BlockEntities or custom save data. 25 tests pass; runtime split/merge, right-click, loot and save/reload passed. The client remains at the high-altitude test structure.
+
+Next: integrate validated source selection/synchronization with the lab, then maintained cluster tracking if needed. Do not claim the current inspector is a live global index. Preserve unknown/capped/stale distinctions. Terrain geometry rendering remains iteration 3; critical-ray/winding accuracy is still tracked separately.

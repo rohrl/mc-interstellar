@@ -2,7 +2,7 @@
 
 A Minecraft Java mod for educational relativistic optics. Scientific assumptions and numerical limits must be visible and testable.
 
-**Current iteration:** Fabric diagnostics and an F8 optical lab with Schwarzschild sky lensing and a guided free-fall horizon crossing. Terrain lensing, mass blocks and potion are not implemented yet. See [progress.md](progress.md) for verified results rather than assuming planned features exist.
+**Current iteration:** Fabric diagnostics and an F8 optical lab with Schwarzschild sky lensing and a guided free-fall horizon crossing. Mass blocks now support bounded cluster inspection. Terrain lensing, block-to-renderer source selection and potion are not implemented yet. See [progress.md](progress.md) for verified results rather than assuming planned features exist.
 
 ## Start here
 
@@ -51,3 +51,7 @@ Routine builds and in-game tests are handled by the development agent. Exploring
 ## Optical settings
 
 Edit **run/config/interstellar-optics.json** for persistent effect defaults, observer settings, playback speed and quality. Reopen F8 to reload. **Q** cycles FAST/STANDARD/FINE temporarily; **R** restores that lab's loaded settings. Keyboard overrides are not auto-saved. See [settings and measured quality costs](docs/optical-settings.md).
+
+## Mass blocks
+
+Use **/give @s interstellar:mass_block**, place connected blocks, then right-click with an empty hand to inspect mass and compactness. Operator command: **/interstellar inspect x y z**. Blocks do not yet activate world lensing. [Model, budgets and verified behavior](docs/mass-blocks.md).

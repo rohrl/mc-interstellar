@@ -69,3 +69,7 @@ Independent PG reference and GPU free-fall sky crossing implemented and tested. 
 ### Settings checkpoint (2026-09-15)
 
 Persistent optical defaults and three integration-quality levels implemented and measured. Ordinary render work skips diagnostics unless requested; lensing-off bypasses integration. Critical-ray/winding validation remains open. Proceed toward the source-block/clustering milestone while retaining those numerical limits in documentation.
+
+### Source-data checkpoint (2026-09-15)
+
+Mass block/item and bounded on-demand component inspections implemented and verified. Chunk persistence saves the blocks, and fresh inspections reflect splits/merges/reloads. Live indexing, source-to-renderer data, guided source selection and actual-body images remain unfinished in iteration 2. Terrain rendering remains iteration 3.

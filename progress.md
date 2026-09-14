@@ -1,8 +1,8 @@
 # Progress
 
-Last updated: 2026-09-15. Current branch: codex/optical-settings.
+Last updated: 2026-09-15. Current branch: codex/mass-blocks.
 
-Current: controlled-sky lensing, independent PG reference and guided horizon crossing. 18 tests pass. See docs/optical-settings.md and docs/free-fall.md and the latest checkpoint below; early sections record historical bootstrap results.
+Current: controlled-sky lensing, independent PG reference and guided horizon crossing. 25 tests pass. See docs/mass-blocks.md, docs/optical-settings.md and docs/free-fall.md and the latest checkpoint below; early sections record historical bootstrap results.
 
 ## Verified environment
 
@@ -67,3 +67,7 @@ Implemented independent PG-time adaptive reference and GPU falling-frame ray ini
 ## Optical settings checkpoint — 2026-09-15, codex/optical-settings
 
 Implemented validated persistent optical defaults and Q quality cycling. Build and 18 tests pass. Runtime checked config creation/reload, all quality GPU outputs/timings, disabled lensing, invalid-value fallback with unchanged file, and restoration of the original config. Default-scene 1440p p95 costs: FAST 0.736 ms, STANDARD 1.414 ms, FINE 2.771 ms. All sampled quality runs had zero outcome mismatches. See docs/optical-settings.md for limits, methodology and the increased STANDARD cost relative to fixed-step rendering. Non-default playback rate was loaded/displayed but not timed. No test edits remain in the user config.
+
+## Mass-block checkpoint — 2026-09-15, codex/mass-blocks
+
+Registered Mass Block/item, creative entry, vanilla-texture model, loot and pickaxe tag. Added on-demand bounded inspections, immutable summaries, revision cancellation and incomplete-result handling. Build and 25 tests pass. Runtime verified cross-chunk 64-block cube, split into 16/32, merge back to 64, empty-hand inspection, loot, and identical data after world save/reload. Full conditions and untested cases are in docs/mass-blocks.md. No live cluster index, shader source selection or world lensing yet; this is an inspection/data checkpoint within iteration 2.
