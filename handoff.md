@@ -31,3 +31,9 @@ Actual player body, not mannequin. Crossing the horizon remains in scope despite
 ## Next implementation step
 
 After the foundation is built and the HUD checked, implement an independent horizon-regular numerical reference and a controlled GPU scene. Define the observer tetrad and past-directed ray initial conditions before writing the visual effect. Resolve scene-data access with a measurable spike; do not begin by inventing Iris uniform APIs.
+
+## Resume checkpoint — 2026-09-14
+
+Bootstrap commit d7a87e7 contains the scaffold and documentation and has been pushed to origin/codex/bootstrap-observatory. Build succeeded, 5/5 reference tests passed; runtime HUD, F6, F7, F1 and movement were visually checked in a disposable creative world. Check progress.md for remaining checks. Earlier GitHub authentication failures are resolved.
+
+This machine's user Gradle properties now set fabric_maven_url=https://maven2.fabricmc.net/. If an IDE import holds the Loom lock, diagnose the owning process before touching it; never delete an active lock or stop unrelated builds. The agent previously stopped only the identified stalled import for this project, preserving IntelliJ.

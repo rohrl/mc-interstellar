@@ -26,7 +26,9 @@ Iteration 0: documentation and Fabric bootstrap implemented.
 - 2026-09-13: Gradle build succeeded in 4m 11s using the official Fabric secondary Maven service.
 - JUnit report: 5 tests, 0 failures, 0 errors, 0 skipped. Checks cover shadow angular branches, scale invariance, distant limit, Doppler reciprocity/known velocity, and invalid inputs.
 - Remapped mod and sources JARs generated in build/libs (ignored by Git).
-- 2026-09-14: recovered those results after a session usage-limit interruption. Tightened the metadata dependency from ~1.21.1 to exact 1.21.1; rebuild and development-client startup are in progress.
+- 2026-09-14: recovered those results after a session usage-limit interruption. Tightened the metadata dependency from ~1.21.1 to exact 1.21.1; rebuild succeeded in 56s. All 5 tests passed again.
+- Development client launched successfully; Interstellar registered and wrote the expected default config.
+- Created disposable creative world Interstellar Calibration. Visually verified F7 reports r=64 and r/r_s=8, F6 hides the overlay, F1 hides both vanilla and Interstellar HUDs, and movement updates the distance (observed r=67.04). The client later saved and exited normally. World rejoin/reset and malformed-config runtime checks have not been performed.
 - No GPU optical renderer exists yet; no visual-physics or FPS validation is claimed.
 
 ## Not implemented
@@ -35,4 +37,9 @@ GPU ray tracing, lensing, black-hole rendering, source blocks/clustering, potion
 
 ## Blockers / user decisions
 
-No product decision blocks the bootstrap. Mobile pairing and notification permissions require the user to operate their device; push delivery is not verified by the agent. Renderer integration and cluster collapse definition remain engineering investigations.
+No product decision blocks the bootstrap. Renderer integration and cluster collapse definition remain engineering investigations.
+
+- Bootstrap commit d7a87e7 was pushed successfully to origin/codex/bootstrap-observatory after authentication recovered. Earlier credential and DNS failures are resolved.
+- IntelliJ's stalled Gradle import held the shared Loom cache lock after resuming. Stopped only that project's import helper (not IntelliJ), restarted the waiting agent build, and Loom recovered its stale lock. Editor state was preserved.
+- Added the existing supported fabric_maven_url property to this machine's previously absent user Gradle properties, pointing to the official secondary host. New IntelliJ imports can now use it without CLI arguments. No project dependency versions or system DNS settings were changed to solve connectivity.
+- Mobile pairing and notification permissions require the user to operate their device; push notification delivery is not verified by the agent.

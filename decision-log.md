@@ -57,3 +57,5 @@ Create a buildable Fabric foundation, diagnostic HUD, validated config, and isol
 ## D014 — Optional official dependency mirror — accepted implementation choice
 
 The initial machine could reach Maven Central but TCP connections to maven.fabricmc.net timed out on both published IPv4 addresses. maven2.fabricmc.net worked and is listed in the official Fabric installer's Reference.java. Add a fabric_maven_url Gradle property to redirect plugin and Loom-added Fabric repositories when required; preserve the primary service as the default. No third-party mirrors or machine DNS changes. Verification command may supply -Pfabric_maven_url=https://maven2.fabricmc.net/.
+
+2026-09-14 follow-up: IntelliJ imports do not inherit CLI -P flags. Configured the same project-supported override in this machine's previously absent user Gradle properties, outside Git. Reason: allow the owner's normal IDE import to use the known-working official service. Loom's separate intermediary URL is covered by the project override as well.
