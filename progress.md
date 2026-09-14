@@ -1,8 +1,8 @@
 # Progress
 
-Last updated: 2026-09-14. Current branch: codex/free-fall.
+Last updated: 2026-09-15. Current branch: codex/optical-settings.
 
-Current: controlled-sky lensing, independent PG reference and guided horizon crossing. 15 tests pass. See docs/free-fall.md and the latest checkpoint below; early sections record historical bootstrap results.
+Current: controlled-sky lensing, independent PG reference and guided horizon crossing. 18 tests pass. See docs/optical-settings.md and docs/free-fall.md and the latest checkpoint below; early sections record historical bootstrap results.
 
 ## Verified environment
 
@@ -63,3 +63,7 @@ Implemented V floating-point readback and CPU/analytic comparisons. Owner's init
 ## Free-fall checkpoint — 2026-09-14, codex/free-fall
 
 Implemented independent PG-time adaptive reference and GPU falling-frame ray initialization; F/T/H/L controls support paused frames, exact horizon, full playback and look-back. Build passes with 15 tests. Seven sampled GPU comparisons against the independent reference have zero outcome mismatches/invalid values; worst sampled angle error 0.002383 rad near the shadow edge. CPU and GPU share analytic connectivity classification. Automated playback reaches the explicit 0.35 cutoff. Interior 1440p optical-pass p95 measured 0.702272 ms in one run. See docs/free-fall.md for full results and limitations. Terrain, source blocks, actual-body images and spectral transport remain pending; this does not complete all iteration 1 fidelity work.
+
+## Optical settings checkpoint — 2026-09-15, codex/optical-settings
+
+Implemented validated persistent optical defaults and Q quality cycling. Build and 18 tests pass. Runtime checked config creation/reload, all quality GPU outputs/timings, disabled lensing, invalid-value fallback with unchanged file, and restoration of the original config. Default-scene 1440p p95 costs: FAST 0.736 ms, STANDARD 1.414 ms, FINE 2.771 ms. All sampled quality runs had zero outcome mismatches. See docs/optical-settings.md for limits, methodology and the increased STANDARD cost relative to fixed-step rendering. Non-default playback rate was loaded/displayed but not timed. No test edits remain in the user config.

@@ -7,7 +7,7 @@ Read this, decision-log.md, progress.md and docs/science.md before continuing. D
 - Git root: C:\work\code\minecraft\interstellar\interstellar.
 - Parent folder of same name is intentional and is not the Git root.
 - Remote: https://github.com/rohrl/mc-interstellar.git.
-- Current branch: codex/free-fall. Verify git status/branch before modifying anything.
+- Current branch: codex/optical-settings. Verify git status/branch before modifying anything.
 - User permits branches and pushes. No force pushes or unrelated cleanup.
 - User requests notifications for blockers/decisions and durable Markdown project records.
 
@@ -55,3 +55,7 @@ V now samples actual GPU output. Read docs/ray-validation.md: owner testing caug
 FreeFallRay is an independent adaptive PG-time reference. GPU spatial orbit equation now initializes in a freely falling frame and crosses u=1 for sky-connected rays. F toggles observer, T plays/pause, H jumps to a paused exact-horizon frame, L looks back. V uses the PG reference in both static and falling modes; analytic shadow comparison is only counted for static mode. CPU/GPU share analytic connectivity classification. Read docs/free-fall.md before changing signs or claiming collapse physics. All 15 tests pass; automated runtime and timings recorded there.
 
 Next: targeted near-critical accuracy/winding checks, quality controls and configured defaults, then source blocks/guided exhibits (iteration 2) and terrain scene data (iteration 3). Owner confirmed terrain distortion is expected and asks agent to operate runtime tests without their attendance. No owner input is needed for routine continuation.
+
+## Current checkpoint — codex/optical-settings
+
+Persistent defaults now load from config/interstellar-optics.json on each F8 open. Q cycles integration step; R restores loaded settings; keyboard changes are temporary. Read docs/optical-settings.md for validation and costs. Original local config was restored after testing. 18 tests pass, including Gson parsing; test runtime needs Gson 2.10.1 explicitly. Shader computes angle from loop index, and V logs quality. Current client is left open with restored STANDARD defaults. Next: targeted near-critical/winding accuracy and source-block/clustering work; terrain integration remains iteration 3.

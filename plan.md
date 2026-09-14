@@ -65,3 +65,7 @@ Exterior controlled-sky lab implemented and visually checked; nine reference tes
 ### Horizon-sky checkpoint (2026-09-14)
 
 Independent PG reference and GPU free-fall sky crossing implemented and tested. Targeted critical-ray/winding accuracy, radiometric transport, quality/configuration work and broader performance checks remain. Mass blocks/exhibits remain iteration 2; terrain and hidden-geometry rendering remain iteration 3. Routine in-game validation is agent-operated; user attendance is optional.
+
+### Settings checkpoint (2026-09-15)
+
+Persistent optical defaults and three integration-quality levels implemented and measured. Ordinary render work skips diagnostics unless requested; lensing-off bypasses integration. Critical-ray/winding validation remains open. Proceed toward the source-block/clustering milestone while retaining those numerical limits in documentation.

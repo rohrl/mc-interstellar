@@ -47,3 +47,7 @@ Press **V** to compare sampled GPU rays with the CPU reference and analytic shad
 In the F8 lab, **T** plays/pauses a radial fall, **H** pauses exactly at the horizon, **L** looks back, and **F** switches observer frames. **R** resets. The tour stops at r/r_s=0.35. These are controlled-sky views; Minecraft terrain and the player body are still future work. [Model, controls and verification](docs/free-fall.md).
 
 Routine builds and in-game tests are handled by the development agent. Exploring the open client is optional; user input is needed only for preferences or checks that automation cannot complete.
+
+## Optical settings
+
+Edit **run/config/interstellar-optics.json** for persistent effect defaults, observer settings, playback speed and quality. Reopen F8 to reload. **Q** cycles FAST/STANDARD/FINE temporarily; **R** restores that lab's loaded settings. Keyboard overrides are not auto-saved. See [settings and measured quality costs](docs/optical-settings.md).

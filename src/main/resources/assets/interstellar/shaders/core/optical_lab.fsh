@@ -5,6 +5,7 @@ uniform float Lensing;
 uniform float Grid;
 uniform float Aligned;
 uniform float Diagnostic;
+uniform float IntegrationStep;
 uniform float Falling;
 uniform float LookBack;
 in vec2 screenUv;
@@ -67,9 +68,10 @@ void main() {
         initialSlope = -radial * u * sqrt(1.0-u) / tangent;
     }
     vec2 q = vec2(u, initialSlope);
-    float phi = 0.0;
-    const float h = .02;
-    for (int i = 0; i < 800; ++i) {
+    
+    float h = IntegrationStep;
+    for (int i = 0; i < 1600; ++i) {
+        if (float(i) * h >= 16.0) break;
         vec2 a = derivative(q);
         vec2 b = derivative(q + h * a * .5);
         vec2 c = derivative(q + h * b * .5);
@@ -77,13 +79,13 @@ void main() {
         vec2 next = q + h * (a + 2.0 * b + 2.0 * c + d) / 6.0;
         if (Falling < .5 && next.x >= 1.0) { fragColor = vec4(0, 0, 0, 1); return; }
         if (next.x <= 0.0) {
-            float exitPhi = phi + h * q.x / (q.x - next.x);
+            float exitPhi = float(i) * h + h * q.x / (q.x - next.x);
             vec3 n = vec3(0, 0, cos(exitPhi)) + e * sin(exitPhi);
             fragColor = Diagnostic > .5 ? vec4(cos(exitPhi), sin(exitPhi), 1, 1) : vec4(sky(normalize(n)), 1.0);
             return;
         }
         q = next;
-        phi += h;
+
     }
     // Finite integration budget: show the limitation instead of inventing an image.
     fragColor = Diagnostic > .5 ? vec4(0, 0, 2, 1) : vec4(.5, .02, .3, 1);

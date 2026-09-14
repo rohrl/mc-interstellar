@@ -79,3 +79,7 @@ Choose ingoing PG coordinates and a radial observer falling from rest at infinit
 ## D019 — Agent-operated runtime verification — explicit owner preference (2026-09-14)
 
 The agent handles ordinary Minecraft navigation, controls, screenshots, V checks and benchmarks autonomously. Leaving the client open does not request owner testing. Ask for attendance only when automation cannot complete a material check or a preference is needed. Reason: owner should not need to constantly attend development.
+
+## D020 — Optical configuration and integration quality — accepted (2026-09-15)
+
+Use a separate interstellar-optics.json so the existing calibration config remains compatible. Load partial files over defaults, validate types/ranges, and preserve existing files on success or failure. F8 loads a snapshot; Q and other keys change session state; R restores that snapshot. Persisted changes are explicit JSON edits, not automatic writes during exploration. FAST/STANDARD/FINE use 0.04/0.02/0.01-radian steps with the same 16-radian budget. Reason: adjustable GPU cost without conflating effect isolation with accuracy. Fine steps are not a numerical error guarantee. Measured dynamic-loop overhead and accuracy are recorded in docs/optical-settings.md.
