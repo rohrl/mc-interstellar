@@ -17,6 +17,8 @@ import java.util.Locale;
 public final class OpticalLabScreen extends Screen {
     private static ShaderProgram shader;
     private LabBenchmark benchmark;
+    private boolean validateRays;
+    private String validationStatus = "V: check GPU rays (brief pause)";
     private float radius = 8;
     private boolean lensing = true;
     private boolean grid = true;
@@ -28,7 +30,7 @@ public final class OpticalLabScreen extends Screen {
     @Override public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         context.draw();
         if (shader != null) {
-            shader.getUniformOrDefault("Viewport").set((float) width, (float) height);
+            shader.getUniformOrDefault("Viewport").set((float) client.getWindow().getFramebufferWidth(), (float) client.getWindow().getFramebufferHeight());
             shader.getUniformOrDefault("CameraRadius").set(radius);
             shader.getUniformOrDefault("Lensing").set(lensing ? 1f : 0f);
             shader.getUniformOrDefault("Grid").set(grid ? 1f : 0f);
@@ -37,13 +39,12 @@ public final class OpticalLabScreen extends Screen {
             RenderSystem.depthMask(false);
             RenderSystem.disableBlend();
             RenderSystem.setShader(() -> shader);
-            var buffer = Tessellator.getInstance().begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION);
-            buffer.vertex(0, 0, 0);
-            buffer.vertex(0, height, 0);
-            buffer.vertex(width, height, 0);
-            buffer.vertex(width, 0, 0);
+            if (validateRays) {
+                validateRays = false;
+                validationStatus = LabRayValidation.run(shader, radius, lensing, (double) client.getWindow().getFramebufferWidth() / client.getWindow().getFramebufferHeight(), this::drawQuad);
+            }
             if (benchmark != null) benchmark.begin();
-            BufferRenderer.drawWithGlobalProgram(buffer.end());
+            drawQuad();
             if (benchmark != null) benchmark.end();
             RenderSystem.depthMask(true);
             RenderSystem.enableDepthTest();
@@ -59,10 +60,20 @@ public final class OpticalLabScreen extends Screen {
         context.drawTextWithShadow(textRenderer, "Up/Down: distance | Space: lensing | G: grid", 12, 36, 0xFFE0E8EF);
         context.drawTextWithShadow(textRenderer, "A: source alignment | R: reset | Esc: return", 12, 48, 0xFFE0E8EF);
         context.drawTextWithShadow(textRenderer, benchmark == null ? "B / click here: benchmark GPU pass" : benchmark.status(), 12, 72, 0xFF88D8FF);
+        context.drawTextWithShadow(textRenderer, validationStatus, 12, 84, 0xFF88D8FF);
         String footer = shader == null ? "Shader unavailable: check the game log"
                 : "Test sky, not terrain | Exterior only | Magenta = unresolved ray";
         context.drawTextWithShadow(textRenderer, footer, 12, height - 16, 0xFFFFD59A);
         // This screen owns its background; vanilla Screen.render would blur the finished lab.
+    }
+
+    private void drawQuad() {
+        var buffer = Tessellator.getInstance().begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION);
+        buffer.vertex(0, 0, 0);
+        buffer.vertex(0, client.getWindow().getFramebufferHeight(), 0);
+        buffer.vertex(client.getWindow().getFramebufferWidth(), client.getWindow().getFramebufferHeight(), 0);
+        buffer.vertex(client.getWindow().getFramebufferWidth(), 0, 0);
+        BufferRenderer.drawWithGlobalProgram(buffer.end());
     }
 
     @Override public boolean mouseClicked(double x, double y, int button) {
@@ -79,6 +90,7 @@ public final class OpticalLabScreen extends Screen {
         }
         if (benchmark != null) { benchmark.close(); benchmark = null; }
         switch (key) {
+            case GLFW.GLFW_KEY_V -> validateRays = true;
             case GLFW.GLFW_KEY_SPACE -> lensing = !lensing;
             case GLFW.GLFW_KEY_G -> grid = !grid;
             case GLFW.GLFW_KEY_A -> aligned = !aligned;

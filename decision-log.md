@@ -67,3 +67,7 @@ Use Fabric core shader registration and a mod-owned F8 screen for an immediately
 ## D016 — Opt-in asynchronous GPU timing — accepted (2026-09-14)
 
 Use timestamp pairs with eight outstanding slots; read only available results, skip sampling if busy, and free queries on completion/cancellation. Support ARB_timer_query in Minecraft's OpenGL 3.2 context. Reason: isolate optical draw cost without introducing a GPU stall or confusing capped FPS with shader time. No profiling overhead when unrequested. Preliminary 1440p results support continuing direct integration; they do not settle terrain/horizon architecture. See docs/benchmark.md.
+
+## D017 — Exact framebuffer ray mapping and opt-in readback — accepted (2026-09-14)
+
+The owner's V tests revealed mismatches caused by rounded GUI dimensions/projection. The optical quad now owns clip-space mapping and uses framebuffer dimensions; HUD drawing remains vanilla GUI. Add a one-shot RGBA32F diagnostic of the production shader, comparing 9216 rays to finer CPU RK4 plus analytic capture. Reason: numerical evidence must test actual GPU output and resizing, not only copied CPU equations. The diagnostic is intentionally blocking and excluded from normal rendering. This is not the independent horizon solver. Results/limits: docs/ray-validation.md.

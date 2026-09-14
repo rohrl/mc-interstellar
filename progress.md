@@ -53,3 +53,7 @@ Earlier statements above that no GPU renderer exists describe the bootstrap chec
 ## GPU timing checkpoint — 2026-09-14
 
 Implemented B/click opt-in GPU timing with warmup, percentile logging and query cleanup. Build passed; nine mathematical tests remain passing (unchanged tests reused by Gradle). Runtime verified three 2560x1440 runs: lensed r/rs=8 p95 1.178 ms; unlensed 0.03568 ms; lensed r/rs=6.6667 1.228 ms. See docs/benchmark.md for conditions and limits. Initial core-version-only capability check was corrected to accept ARB_timer_query. B, scene changes and repeat runs worked. No GPU ray readback/accuracy comparison yet; horizon crossing remains pending.
+
+## GPU ray validation checkpoint — 2026-09-14
+
+Implemented V floating-point readback and CPU/analytic comparisons. Owner's initial portrait runs exposed real capture and angle mismatches. Fixed ray initialization to use framebuffer dimensions and direct clip-space mapping instead of rounded GUI projection. Six corrected runs (flat/lensed, landscape/portrait, radii 4.63/8/64) each had zero invalid values, outcome/capture mismatches or unresolved rays. Sampled worst angle difference 3.553e-4 rad. 1440p GPU p95 remains 1.1784 ms. Build and nine tests pass; restored normal rendering visually checked. Exact results, methodology and limitations are in docs/ray-validation.md. Independent horizon-regular reference and crossing remain pending.

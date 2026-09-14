@@ -45,3 +45,7 @@ Continue on codex/optical-lab. F8 now opens a mod-owned exterior test-sky shader
 ## Latest checkpoint — measured GPU pass
 
 LabBenchmark provides optional B/click timestamp profiling. Three 1440p runs completed; conditions/results are in docs/benchmark.md. Minecraft's 3.2 context exposes ARB_timer_query despite OpenGL33=false. Build passes. Next work is quantitative ray-output readback and an independent horizon-regular solver, followed by falling-observer rendering. Do not present timing checks as physics validation. The client is left running with the optical lab; no user decision blocks continued development.
+
+## Latest checkpoint — GPU ray checks and resize fix
+
+V now samples actual GPU output. Read docs/ray-validation.md: owner testing caught a GUI projection/pixel-centre mismatch; direct clip-space quad plus framebuffer dimensions fixes it. Six sampled runs have no capture mismatches, but near-critical accuracy is not bounded, and modulo-angle comparison does not verify winding counts. Next: independent horizon-regular reference, targeted critical rays, falling-observer sky rendering. Current diagnostics are stationary/exterior and shared RK4. Do not treat successful GPU comparison as full physical validation. Client remains open at default radius in fullscreen.

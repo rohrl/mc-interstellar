@@ -39,3 +39,5 @@ Enter a development world and press **F8**. The default view shows a black shado
 This is an illustrative sky at infinity, not a photograph or a terrain renderer. Colour and brightness are not yet spectral/redshift calculations. The camera stays outside the horizon. Numerical budget exhaustion is magenta. See the science notes for limits.
 
 Press **B** (or click the benchmark text) in the lab to measure its GPU pass. Results are logged after warm-up. See [measured results and methodology](docs/benchmark.md).
+
+Press **V** to compare sampled GPU rays with the CPU reference and analytic shadow boundary. This intentionally pauses briefly and logs results. [Validation results and limits](docs/ray-validation.md).

@@ -4,6 +4,7 @@ uniform float CameraRadius;
 uniform float Lensing;
 uniform float Grid;
 uniform float Aligned;
+uniform float Diagnostic;
 in vec2 screenUv;
 out vec4 fragColor;
 const float PI = 3.14159265359;
@@ -40,7 +41,7 @@ void main() {
     vec2 xy = (screenUv * 2.0 - 1.0) * .7002075382; // vertical FOV 70 degrees
     xy.x *= Viewport.x / Viewport.y;
     vec3 direction = normalize(vec3(xy.x, -xy.y, -1.0));
-    if (Lensing < .5) { fragColor = vec4(sky(direction), 1.0); return; }
+    if (Lensing < .5) { fragColor = Diagnostic > .5 ? vec4(direction.z, length(direction.xy), 1, 1) : vec4(sky(direction), 1.0); return; }
     float radial = direction.z;
     float tangent = length(direction.xy);
     if (tangent < 1e-6) { fragColor = vec4(0, 0, 0, 1); return; }
@@ -59,12 +60,12 @@ void main() {
         if (next.x <= 0.0) {
             float exitPhi = phi + h * q.x / (q.x - next.x);
             vec3 n = vec3(0, 0, cos(exitPhi)) + e * sin(exitPhi);
-            fragColor = vec4(sky(normalize(n)), 1.0);
+            fragColor = Diagnostic > .5 ? vec4(cos(exitPhi), sin(exitPhi), 1, 1) : vec4(sky(normalize(n)), 1.0);
             return;
         }
         q = next;
         phi += h;
     }
     // Finite integration budget: show the limitation instead of inventing an image.
-    fragColor = vec4(.5, .02, .3, 1);
+    fragColor = Diagnostic > .5 ? vec4(0, 0, 2, 1) : vec4(.5, .02, .3, 1);
 }
