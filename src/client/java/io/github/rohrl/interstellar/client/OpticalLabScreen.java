@@ -16,6 +16,7 @@ import java.util.Locale;
 /** Controlled exterior sky scene, not Minecraft terrain and not a horizon-crossing camera. */
 public final class OpticalLabScreen extends Screen {
     private static ShaderProgram shader;
+    private LabBenchmark benchmark;
     private float radius = 8;
     private boolean lensing = true;
     private boolean grid = true;
@@ -41,7 +42,9 @@ public final class OpticalLabScreen extends Screen {
             buffer.vertex(0, height, 0);
             buffer.vertex(width, height, 0);
             buffer.vertex(width, 0, 0);
+            if (benchmark != null) benchmark.begin();
             BufferRenderer.drawWithGlobalProgram(buffer.end());
+            if (benchmark != null) benchmark.end();
             RenderSystem.depthMask(true);
             RenderSystem.enableDepthTest();
             RenderSystem.enableBlend();
@@ -55,13 +58,26 @@ public final class OpticalLabScreen extends Screen {
                 "Static observer r/r_s %.2f | Lensing %s", radius, lensing ? "ON" : "OFF"), 12, 24, 0xFFFFFFFF);
         context.drawTextWithShadow(textRenderer, "Up/Down: distance | Space: lensing | G: grid", 12, 36, 0xFFE0E8EF);
         context.drawTextWithShadow(textRenderer, "A: source alignment | R: reset | Esc: return", 12, 48, 0xFFE0E8EF);
+        context.drawTextWithShadow(textRenderer, benchmark == null ? "B / click here: benchmark GPU pass" : benchmark.status(), 12, 72, 0xFF88D8FF);
         String footer = shader == null ? "Shader unavailable: check the game log"
                 : "Test sky, not terrain | Exterior only | Magenta = unresolved ray";
         context.drawTextWithShadow(textRenderer, footer, 12, height - 16, 0xFFFFD59A);
         // This screen owns its background; vanilla Screen.render would blur the finished lab.
     }
 
+    @Override public boolean mouseClicked(double x, double y, int button) {
+        if (button == 0 && x >= 12 && x < width - 12 && y >= 68 && y < 84) return keyPressed(GLFW.GLFW_KEY_B, 0, 0);
+        return super.mouseClicked(x, y, button);
+    }
     @Override public boolean keyPressed(int key, int scanCode, int modifiers) {
+        if (key == GLFW.GLFW_KEY_B) {
+            if (benchmark != null) { benchmark.close(); benchmark = null; }
+            else if (shader != null) benchmark = new LabBenchmark(String.format(Locale.ROOT,
+                    "%dx%d, r/rs=%.4f, lensing=%s, grid=%s, aligned=%s",
+                    client.getWindow().getFramebufferWidth(), client.getWindow().getFramebufferHeight(), radius, lensing, grid, aligned));
+            return true;
+        }
+        if (benchmark != null) { benchmark.close(); benchmark = null; }
         switch (key) {
             case GLFW.GLFW_KEY_SPACE -> lensing = !lensing;
             case GLFW.GLFW_KEY_G -> grid = !grid;
@@ -73,5 +89,7 @@ public final class OpticalLabScreen extends Screen {
         }
         return true;
     }
+    @Override public void removed() { if (benchmark != null) { benchmark.close(); benchmark = null; } }
+    @Override protected void init() { if (benchmark != null) { benchmark.close(); benchmark = null; } }
     @Override public boolean shouldPause() { return true; }
 }

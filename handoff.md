@@ -41,3 +41,7 @@ This machine's user Gradle properties now set fabric_maven_url=https://maven2.fa
 ## Latest checkpoint — exterior lab
 
 Continue on codex/optical-lab. F8 now opens a mod-owned exterior test-sky shader; Space/A/G/R were visually checked. Up was verified (8 to 6.67); Windows automation needs extended-key flags and scan codes for arrows. Nine mathematical tests pass. No quantitative GPU comparison or performance benchmark yet. Do not confuse the exterior RK4 CPU diagnostic with the planned independent horizon-regular reference. Next: add GPU readback/timing validation, then implement valid falling-observer rays across the horizon. Preserve the planned terrain/body integration scope. The development client was left open for the owner to try the visible lab.
+
+## Latest checkpoint — measured GPU pass
+
+LabBenchmark provides optional B/click timestamp profiling. Three 1440p runs completed; conditions/results are in docs/benchmark.md. Minecraft's 3.2 context exposes ARB_timer_query despite OpenGL33=false. Build passes. Next work is quantitative ray-output readback and an independent horizon-regular solver, followed by falling-observer rendering. Do not present timing checks as physics validation. The client is left running with the optical lab; no user decision blocks continued development.

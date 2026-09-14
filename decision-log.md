@@ -63,3 +63,7 @@ The initial machine could reach Maven Central but TCP connections to maven.fabri
 ## D015 — Exterior lab checkpoint — accepted implementation choice (2026-09-14)
 
 Use Fabric core shader registration and a mod-owned F8 screen for an immediately observable controlled-sky experiment. Integrate the exterior planar null-ray equation on the GPU with RK4, and compare a double-precision implementation to analytic limits and step refinement. This is a preliminary checkpoint within iteration 1, not completion of the horizon-capable solver. Reason: validate shader integration and source geometry before terrain access. Iris remains optional. Hovering is restricted to r/r_s >= 1.05; guided horizon crossing still requires a different observer formulation. The procedural source is extended so its Einstein ring is visible without claiming a glowing photon sphere.
+
+## D016 — Opt-in asynchronous GPU timing — accepted (2026-09-14)
+
+Use timestamp pairs with eight outstanding slots; read only available results, skip sampling if busy, and free queries on completion/cancellation. Support ARB_timer_query in Minecraft's OpenGL 3.2 context. Reason: isolate optical draw cost without introducing a GPU stall or confusing capped FPS with shader time. No profiling overhead when unrequested. Preliminary 1440p results support continuing direct integration; they do not settle terrain/horizon architecture. See docs/benchmark.md.
