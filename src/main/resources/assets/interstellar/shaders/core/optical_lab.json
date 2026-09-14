@@ -8,6 +8,8 @@
     {"name":"CameraRadius","type":"float","count":1,"values":[8]},
     {"name":"Lensing","type":"float","count":1,"values":[1]},
     {"name":"Grid","type":"float","count":1,"values":[1]},
+    {"name":"Falling","type":"float","count":1,"values":[0]},
+    {"name":"LookBack","type":"float","count":1,"values":[0]},
     {"name":"Diagnostic","type":"float","count":1,"values":[0]},
     {"name":"Aligned","type":"float","count":1,"values":[1]}
   ]

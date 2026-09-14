@@ -20,3 +20,7 @@ Read README.md, decision-log.md, progress.md, and handoff.md before continuing. 
 ## Checks
 
 Run the Gradle build for Java/resource changes and relevant mathematical tests for optical changes. In-game rendering changes additionally need runtime shader compilation, visual checks, and measured timings. Clearly record which checks were actually possible.
+
+## Runtime testing ownership
+
+The owner explicitly requests autonomous in-game inputs and verification. Operate the development client, capture results, and iterate without expecting owner attendance. An open client is for optional exploration, not a pending test assignment.

@@ -2,7 +2,7 @@
 
 A Minecraft Java mod for educational relativistic optics. Scientific assumptions and numerical limits must be visible and testable.
 
-**Current iteration:** Fabric diagnostics and an F8 exterior optical lab with GPU Schwarzschild sky lensing. Terrain lensing, mass blocks, potion and horizon crossing are not implemented yet. See [progress.md](progress.md) for verified results rather than assuming planned features exist.
+**Current iteration:** Fabric diagnostics and an F8 optical lab with Schwarzschild sky lensing and a guided free-fall horizon crossing. Terrain lensing, mass blocks and potion are not implemented yet. See [progress.md](progress.md) for verified results rather than assuming planned features exist.
 
 ## Start here
 
@@ -36,8 +36,14 @@ No project license has been selected yet. Third-party notices are in [THIRD-PART
 
 Enter a development world and press **F8**. The default view shows a black shadow, a bent sky grid and a bright ring produced by an aligned extended test source. **Space** compares lensing on/off; **A** offsets the source to demonstrate multiple images; **G** hides the grid; **Up/Down** changes the static observer radius; **R** resets; **Esc** returns to Minecraft. F7 remains a measurement aid and does not activate world lensing.
 
-This is an illustrative sky at infinity, not a photograph or a terrain renderer. Colour and brightness are not yet spectral/redshift calculations. The camera stays outside the horizon. Numerical budget exhaustion is magenta. See the science notes for limits.
+This is an illustrative sky at infinity, not a photograph or a terrain renderer. Colour and brightness are not yet spectral/redshift calculations. The static frame stays outside the horizon; the free-fall tour crosses it. Numerical budget exhaustion is magenta. See the science notes for limits.
 
 Press **B** (or click the benchmark text) in the lab to measure its GPU pass. Results are logged after warm-up. See [measured results and methodology](docs/benchmark.md).
 
 Press **V** to compare sampled GPU rays with the CPU reference and analytic shadow boundary. This intentionally pauses briefly and logs results. [Validation results and limits](docs/ray-validation.md).
+
+## Free-fall tour
+
+In the F8 lab, **T** plays/pauses a radial fall, **H** pauses exactly at the horizon, **L** looks back, and **F** switches observer frames. **R** resets. The tour stops at r/r_s=0.35. These are controlled-sky views; Minecraft terrain and the player body are still future work. [Model, controls and verification](docs/free-fall.md).
+
+Routine builds and in-game tests are handled by the development agent. Exploring the open client is optional; user input is needed only for preferences or checks that automation cannot complete.

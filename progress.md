@@ -1,6 +1,8 @@
 # Progress
 
-Last updated: 2026-09-14. Branch: codex/bootstrap-observatory.
+Last updated: 2026-09-14. Current branch: codex/free-fall.
+
+Current: controlled-sky lensing, independent PG reference and guided horizon crossing. 15 tests pass. See docs/free-fall.md and the latest checkpoint below; early sections record historical bootstrap results.
 
 ## Verified environment
 
@@ -10,7 +12,7 @@ Last updated: 2026-09-14. Branch: codex/bootstrap-observatory.
 - Temurin java/javac 21.0.12.1 executed successfully; jmods/compiler module present.
 - Git origin points to rohrl/mc-interstellar; local settings preserved.
 
-## Current work
+## Foundation checkpoint (historical)
 
 Iteration 0: documentation and Fabric bootstrap implemented.
 
@@ -31,7 +33,7 @@ Iteration 0: documentation and Fabric bootstrap implemented.
 - Created disposable creative world Interstellar Calibration. Visually verified F7 reports r=64 and r/r_s=8, F6 hides the overlay, F1 hides both vanilla and Interstellar HUDs, and movement updates the distance (observed r=67.04). The client later saved and exited normally. World rejoin/reset and malformed-config runtime checks have not been performed.
 - No GPU optical renderer exists yet; no visual-physics or FPS validation is claimed.
 
-## Not implemented
+## Not implemented at bootstrap (historical)
 
 GPU ray tracing, lensing, black-hole rendering, source blocks/clustering, potion, actual-body returning images, guided free fall, disk, and retarded entity states.
 
@@ -57,3 +59,7 @@ Implemented B/click opt-in GPU timing with warmup, percentile logging and query 
 ## GPU ray validation checkpoint — 2026-09-14
 
 Implemented V floating-point readback and CPU/analytic comparisons. Owner's initial portrait runs exposed real capture and angle mismatches. Fixed ray initialization to use framebuffer dimensions and direct clip-space mapping instead of rounded GUI projection. Six corrected runs (flat/lensed, landscape/portrait, radii 4.63/8/64) each had zero invalid values, outcome/capture mismatches or unresolved rays. Sampled worst angle difference 3.553e-4 rad. 1440p GPU p95 remains 1.1784 ms. Build and nine tests pass; restored normal rendering visually checked. Exact results, methodology and limitations are in docs/ray-validation.md. Independent horizon-regular reference and crossing remain pending.
+
+## Free-fall checkpoint — 2026-09-14, codex/free-fall
+
+Implemented independent PG-time adaptive reference and GPU falling-frame ray initialization; F/T/H/L controls support paused frames, exact horizon, full playback and look-back. Build passes with 15 tests. Seven sampled GPU comparisons against the independent reference have zero outcome mismatches/invalid values; worst sampled angle error 0.002383 rad near the shadow edge. CPU and GPU share analytic connectivity classification. Automated playback reaches the explicit 0.35 cutoff. Interior 1440p optical-pass p95 measured 0.702272 ms in one run. See docs/free-fall.md for full results and limitations. Terrain, source blocks, actual-body images and spectral transport remain pending; this does not complete all iteration 1 fidelity work.

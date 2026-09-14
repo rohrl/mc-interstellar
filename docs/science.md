@@ -50,3 +50,7 @@ The camera is stationary at +z, looks toward the centre with a 70-degree vertica
 The GPU uses 800 steps of 0.02 radians maximum. Unresolved rays are magenta. CPU tests check the flat limit, analytic capture boundary including the inner photon-sphere branch, weak deflection and step refinement. The CPU implementation shares RK4 with the GPU: it is not an independent numerical solver, and these tests do not measure GPU floating-point error. No interior observer is supported. The zero-lensing comparison bypasses integration entirely.
 
 RGB sky colours and the extended orange source are illustrative; no gravitational frequency/intensity transport is applied. Point sampling aliases fine stellar and higher-order structures. Beam filtering, quantitative GPU readback, independent horizon-regular reference and GPU timings remain required. The bright ring is source alignment, not a luminous material shell.
+
+## Free-fall extension
+
+The earlier exterior-only description is superseded for the falling-frame lab by [the PG reference, observer definitions and GPU extension](free-fall.md). That document specifies signs, boundary conditions, independent integration, playback law, observed errors and remaining limits. The sky renderer now crosses the horizon; terrain, spectral transport and emission histories remain outside current validation.

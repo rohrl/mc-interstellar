@@ -5,6 +5,8 @@ uniform float Lensing;
 uniform float Grid;
 uniform float Aligned;
 uniform float Diagnostic;
+uniform float Falling;
+uniform float LookBack;
 in vec2 screenUv;
 out vec4 fragColor;
 const float PI = 3.14159265359;
@@ -40,14 +42,31 @@ vec2 derivative(vec2 q) { return vec2(q.y, 1.5 * q.x * q.x - q.x); }
 void main() {
     vec2 xy = (screenUv * 2.0 - 1.0) * .7002075382; // vertical FOV 70 degrees
     xy.x *= Viewport.x / Viewport.y;
-    vec3 direction = normalize(vec3(xy.x, -xy.y, -1.0));
+    float facing = LookBack > .5 ? 1.0 : -1.0;
+    vec3 direction = normalize(vec3(-facing * xy.x, -xy.y, facing));
     if (Lensing < .5) { fragColor = Diagnostic > .5 ? vec4(direction.z, length(direction.xy), 1, 1) : vec4(sky(direction), 1.0); return; }
     float radial = direction.z;
     float tangent = length(direction.xy);
-    if (tangent < 1e-6) { fragColor = vec4(0, 0, 0, 1); return; }
+        if (tangent < 1e-6) {
+        fragColor = radial > 0.0 ? (Diagnostic > .5 ? vec4(1,0,1,1) : vec4(sky(vec3(0,0,1)),1)) : vec4(0,0,0,1);
+        return;
+    }
     vec3 e = vec3(direction.xy / tangent, 0);
     float u = 1.0 / CameraRadius;
-    vec2 q = vec2(u, -radial * u * sqrt(1.0 - u) / tangent);
+        float initialSlope;
+    if (Falling > .5) {
+        float flow = sqrt(u);
+        float energy = 1.0 + flow * radial;
+        float impact = CameraRadius * tangent / energy;
+        bool dark = energy <= 0.0 || (CameraRadius >= 1.5
+            ? (radial + flow < 0.0 && impact <= 2.59807621135)
+            : (radial + flow <= 0.0 || impact >= 2.59807621135));
+        if (dark) { fragColor = vec4(0,0,0,1); return; }
+        initialSlope = -u * (radial + flow) / tangent;
+    } else {
+        initialSlope = -radial * u * sqrt(1.0-u) / tangent;
+    }
+    vec2 q = vec2(u, initialSlope);
     float phi = 0.0;
     const float h = .02;
     for (int i = 0; i < 800; ++i) {
@@ -56,7 +75,7 @@ void main() {
         vec2 c = derivative(q + h * b * .5);
         vec2 d = derivative(q + h * c);
         vec2 next = q + h * (a + 2.0 * b + 2.0 * c + d) / 6.0;
-        if (next.x >= 1.0) { fragColor = vec4(0, 0, 0, 1); return; }
+        if (Falling < .5 && next.x >= 1.0) { fragColor = vec4(0, 0, 0, 1); return; }
         if (next.x <= 0.0) {
             float exitPhi = phi + h * q.x / (q.x - next.x);
             vec3 n = vec3(0, 0, cos(exitPhi)) + e * sin(exitPhi);

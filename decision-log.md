@@ -71,3 +71,11 @@ Use timestamp pairs with eight outstanding slots; read only available results, s
 ## D017 — Exact framebuffer ray mapping and opt-in readback — accepted (2026-09-14)
 
 The owner's V tests revealed mismatches caused by rounded GUI dimensions/projection. The optical quad now owns clip-space mapping and uses framebuffer dimensions; HUD drawing remains vanilla GUI. Add a one-shot RGBA32F diagnostic of the production shader, comparing 9216 rays to finer CPU RK4 plus analytic capture. Reason: numerical evidence must test actual GPU output and resizing, not only copied CPU equations. The diagnostic is intentionally blocking and excluded from normal rendering. This is not the independent horizon solver. Results/limits: docs/ray-validation.md.
+
+## D018 — Free-fall reference and horizon sky — accepted (2026-09-14)
+
+Choose ingoing PG coordinates and a radial observer falling from rest at infinity. Independent reference uses adaptive Dormand-Prince in backward PG time; GPU keeps the horizon-regular spatial inverse-radius equation with falling-frame initial conditions. Use one asymptotic sky and dark nonconnecting past boundaries, not a collapse/white-hole simulation. T follows the exact radial proper-time law; H pauses at the horizon; stop the tour at 0.35 r_s. Reason: a valid observer and checkable horizon passage without introducing unavailable terrain/history data. CPU/GPU ray integrators differ, but share analytic sky-connectivity classification. Detailed equations, evidence and limits: docs/free-fall.md.
+
+## D019 — Agent-operated runtime verification — explicit owner preference (2026-09-14)
+
+The agent handles ordinary Minecraft navigation, controls, screenshots, V checks and benchmarks autonomously. Leaving the client open does not request owner testing. Ask for attendance only when automation cannot complete a material check or a preference is needed. Reason: owner should not need to constantly attend development.

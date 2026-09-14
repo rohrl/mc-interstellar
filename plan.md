@@ -61,3 +61,7 @@ Accretion disk, dynamic entity/player histories, higher-order image antialiasing
 ### Iteration 1 checkpoint (2026-09-14)
 
 Exterior controlled-sky lab implemented and visually checked; nine reference tests pass. Independent horizon-regular integration, quantitative GPU comparison, timings and horizon crossing remain open. This checkpoint does not satisfy full iteration 1 acceptance.
+
+### Horizon-sky checkpoint (2026-09-14)
+
+Independent PG reference and GPU free-fall sky crossing implemented and tested. Targeted critical-ray/winding accuracy, radiometric transport, quality/configuration work and broader performance checks remain. Mass blocks/exhibits remain iteration 2; terrain and hidden-geometry rendering remain iteration 3. Routine in-game validation is agent-operated; user attendance is optional.
