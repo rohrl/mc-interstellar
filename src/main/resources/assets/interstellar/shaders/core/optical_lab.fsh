@@ -68,7 +68,7 @@ void main() {
         initialSlope = -radial * u * sqrt(1.0-u) / tangent;
     }
     vec2 q = vec2(u, initialSlope);
-    
+
     float h = IntegrationStep;
     for (int i = 0; i < 1600; ++i) {
         if (float(i) * h >= 16.0) break;
