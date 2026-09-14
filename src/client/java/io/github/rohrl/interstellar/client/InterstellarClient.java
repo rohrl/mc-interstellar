@@ -6,6 +6,9 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
+import net.fabricmc.fabric.api.client.rendering.v1.CoreShaderRegistrationCallback;
+import net.minecraft.client.render.VertexFormats;
+import net.minecraft.util.Identifier;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.option.KeyBinding;
@@ -27,6 +30,9 @@ public final class InterstellarClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
+        CoreShaderRegistrationCallback.EVENT.register(context -> context.register(
+                Identifier.of("interstellar", "optical_lab"), VertexFormats.POSITION, OpticalLabScreen::setShader));
+        KeyBinding opticalLab = KeyBindingHelper.registerKeyBinding(new KeyBinding("key.interstellar.optical_lab", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_F8, "key.categories.interstellar"));
         settings = CalibrationConfig.load();
         showHud = settings.hudEnabled();
         KeyBinding toggleHud = KeyBindingHelper.registerKeyBinding(new KeyBinding(
@@ -37,6 +43,9 @@ public final class InterstellarClient implements ClientModInitializer {
                 "key.categories.interstellar"));
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            while (opticalLab.wasPressed()) {
+                if (client.world != null) client.setScreen(new OpticalLabScreen());
+            }
             if (previousWorld != client.world) {
                 referenceCentre = null;
                 previousWorld = client.world;
@@ -65,7 +74,7 @@ public final class InterstellarClient implements ClientModInitializer {
         Schwarzschild source = new Schwarzschild(settings.schwarzschildRadius());
         List<String> lines = new ArrayList<>();
         lines.add("INTERSTELLAR | Calibration");
-        lines.add("Optics not implemented | F6 HUD | F7 reference");
+        lines.add("F8 optical lab | F6 HUD | F7 reference");
         lines.add(String.format(Locale.ROOT, "r_s %.2f | photon sphere %.2f | ISCO %.2f blocks",
                 source.horizonRadius(), source.photonSphereRadius(),
                 source.innermostStableCircularOrbitRadius()));

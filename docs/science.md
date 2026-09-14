@@ -42,3 +42,11 @@ Stationary actual-player-body demonstrations can omit motion history because the
 4. Calibrated images with known emitters and explicit camera/worldline conventions.
 5. Minecraft scene comparisons: hidden surfaces, returning body rays, transparency, depth and scale.
 6. Performance and temporal stability at declared settings.
+
+## Exterior lab implementation (2026-09-14)
+
+The camera is stationary at +z, looks toward the centre with a 70-degree vertical field of view, and samples an illustrative sky at infinity. In r_s=1 units, integrate u'' = 1.5 u^2 - u with u=1/r. For outward radial local direction cosine mu, initialize u'=-mu*u*sqrt(1-u)/sqrt(1-mu^2). This follows the static orthonormal observer basis and planar null-ray equation in Bruneton sections 3.1–3.3 (reference 1). The invariant is u'^2+u^2-u^3. Capture terminates at u>=1; escape is u<=0, with linearly interpolated exit angle.
+
+The GPU uses 800 steps of 0.02 radians maximum. Unresolved rays are magenta. CPU tests check the flat limit, analytic capture boundary including the inner photon-sphere branch, weak deflection and step refinement. The CPU implementation shares RK4 with the GPU: it is not an independent numerical solver, and these tests do not measure GPU floating-point error. No interior observer is supported. The zero-lensing comparison bypasses integration entirely.
+
+RGB sky colours and the extended orange source are illustrative; no gravitational frequency/intensity transport is applied. Point sampling aliases fine stellar and higher-order structures. Beam filtering, quantitative GPU readback, independent horizon-regular reference and GPU timings remain required. The bright ring is source alignment, not a luminous material shell.

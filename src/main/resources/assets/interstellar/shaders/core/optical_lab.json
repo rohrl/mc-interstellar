@@ -1,0 +1,15 @@
+{
+  "vertex": "interstellar:optical_lab",
+  "fragment": "interstellar:optical_lab",
+  "attributes": ["Position"],
+  "samplers": [],
+  "uniforms": [
+    {"name":"ModelViewMat","type":"matrix4x4","count":16,"values":[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1]},
+    {"name":"ProjMat","type":"matrix4x4","count":16,"values":[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1]},
+    {"name":"Viewport","type":"float","count":2,"values":[854,480]},
+    {"name":"CameraRadius","type":"float","count":1,"values":[8]},
+    {"name":"Lensing","type":"float","count":1,"values":[1]},
+    {"name":"Grid","type":"float","count":1,"values":[1]},
+    {"name":"Aligned","type":"float","count":1,"values":[1]}
+  ]
+}

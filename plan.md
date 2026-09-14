@@ -57,3 +57,7 @@ Accretion disk, dynamic entity/player histories, higher-order image antialiasing
 ## Performance acceptance
 
 2560x1440 / 60 FPS is a target, not guaranteed yet. Record actual framebuffer resolution, render distance, world/scene, mod versions, preset, GPU/CPU times, frame-time percentiles and warm-up. A capped 60 FPS counter is insufficient evidence. Do not silently switch off effects to claim success.
+
+### Iteration 1 checkpoint (2026-09-14)
+
+Exterior controlled-sky lab implemented and visually checked; nine reference tests pass. Independent horizon-regular integration, quantitative GPU comparison, timings and horizon crossing remain open. This checkpoint does not satisfy full iteration 1 acceptance.

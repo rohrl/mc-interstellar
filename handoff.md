@@ -37,3 +37,7 @@ After the foundation is built and the HUD checked, implement an independent hori
 Bootstrap commit d7a87e7 contains the scaffold and documentation and has been pushed to origin/codex/bootstrap-observatory. Build succeeded, 5/5 reference tests passed; runtime HUD, F6, F7, F1 and movement were visually checked in a disposable creative world. Check progress.md for remaining checks. Earlier GitHub authentication failures are resolved.
 
 This machine's user Gradle properties now set fabric_maven_url=https://maven2.fabricmc.net/. If an IDE import holds the Loom lock, diagnose the owning process before touching it; never delete an active lock or stop unrelated builds. The agent previously stopped only the identified stalled import for this project, preserving IntelliJ.
+
+## Latest checkpoint — exterior lab
+
+Continue on codex/optical-lab. F8 now opens a mod-owned exterior test-sky shader; Space/A/G/R were visually checked. Up was verified (8 to 6.67); Windows automation needs extended-key flags and scan codes for arrows. Nine mathematical tests pass. No quantitative GPU comparison or performance benchmark yet. Do not confuse the exterior RK4 CPU diagnostic with the planned independent horizon-regular reference. Next: add GPU readback/timing validation, then implement valid falling-observer rays across the horizon. Preserve the planned terrain/body integration scope. The development client was left open for the owner to try the visible lab.

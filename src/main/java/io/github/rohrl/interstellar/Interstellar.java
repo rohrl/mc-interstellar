@@ -10,6 +10,6 @@ public final class Interstellar implements ModInitializer {
 
     @Override
     public void onInitialize() {
-        LOGGER.info("Interstellar bootstrap loaded. Optical simulation is not implemented yet.");
+        LOGGER.info("Interstellar loaded. F8 opens the exterior optical lab in a development world.");
     }
 }

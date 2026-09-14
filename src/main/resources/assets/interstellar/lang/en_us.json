@@ -1,5 +1,6 @@
 {
   "key.categories.interstellar": "Interstellar",
+  "key.interstellar.optical_lab": "Open exterior optical lab",
   "key.interstellar.toggle_hud": "Toggle calibration HUD",
   "key.interstellar.place_reference": "Place virtual reference centre"
 }
