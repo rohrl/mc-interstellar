@@ -30,6 +30,7 @@ public final class InterstellarClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
+        SelectedSource.register();
         CoreShaderRegistrationCallback.EVENT.register(context -> context.register(
                 Identifier.of("interstellar", "optical_lab"), VertexFormats.POSITION, OpticalLabScreen::setShader));
         KeyBinding opticalLab = KeyBindingHelper.registerKeyBinding(new KeyBinding("key.interstellar.optical_lab", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_F8, "key.categories.interstellar"));
@@ -87,6 +88,11 @@ public final class InterstellarClient implements ClientModInitializer {
             lines.add(distance <= source.horizonRadius()
                     ? "Inside reference radius (measurement only)"
                     : "Outside reference radius (measurement only)");
+        }
+        var selected=SelectedSource.current();
+        if (selected != null) {
+            lines.add(String.format(Locale.ROOT,"Selected N=%d | r_s %.3f | %s", selected.count(),
+                    selected.schwarzschildRadius(), selected.blackHoleProxy()?"F8 then S: source lab":"extended source"));
         }
         int width = lines.stream().mapToInt(client.textRenderer::getWidth).max().orElse(0) + 16;
         context.fill(6, 6, 6 + width, 16 + lines.size() * 12, 0xC0101824);

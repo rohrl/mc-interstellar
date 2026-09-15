@@ -47,3 +47,17 @@ Automated Minecraft checks in the disposable Interstellar Calibration world:
 A separate single Mass Block at (12,301,10) supports the test player at (12.5,302,10.5); it is not connected to the cube. The test structures remain in this disposable world. No existing terrain was removed.
 
 Live unknown-chunk/capacity/cancellation/multiplayer stress cases and dedicated-server startup were not exercised. The pure probe's unknown/capacity behaviors are unit tested. This checkpoint does not certify the untested runtime paths.
+
+
+## Selecting a source for the optical lab
+
+A completed inspection now synchronizes its geometry to that player's client. The world HUD displays the selected N and r_s. Open F8 and press S to adopt a black-hole proxy in the controlled-sky lab. Its initial r/r_s is the camera's Euclidean coordinate distance to the COM divided by r_s; this is an explicit coordinate mapping, not a proper-distance measurement. Below 1.05 r_s the lab chooses the freely falling observer; its supported range remains 0.35..64 (static minimum 1.05). Clamping is labelled. Thereafter lab controls change the observer independently of player movement. R restores the JSON reference defaults, and reopening F8 starts the reference lab again.
+
+Extended sources can be selected for metadata but S refuses to treat them as black holes. Incomplete results never become selections. A new inspection replaces the previous selection. Any mass/chunk revision in the source's server world invalidates it on the next server tick; this is conservative, including unrelated chunk activity. No automatic rescan occurs. Disconnects and client-world replacements clear client state. An open source-bound lab restores the configured reference sky on invalidation. Integrated singleplayer pauses while the lab is open; multiplayer can continue ticking.
+
+Selection checks cost O(selected players) per server tick with no extra world queries. Each selected player gets at most one invalidation packet for a batch of changes, not one per changed block. Inspection retains its existing cell budgets. The payload is registered on both sides through Fabric's typed play networking, and receiver work runs on the client thread. API reference: https://maven.fabricmc.net/docs/fabric-api-0.106.0%2B1.21.1/net/fabricmc/fabric/api/networking/v1/PayloadTypeRegistry.html (same 1.21.1 API family; compiled against the project's pinned 0.102.1).
+### Bridge runtime verification — 2026-09-15
+
+Build and 25 existing tests pass. The saved edited cluster had N=63, r_s=7.875, enclosing R=3.496. F8/S used camera r/r_s=0.706777535 and correctly selected a falling observer. R restored static r/r_s=8. Inspecting the isolated block at (12,301,10) replaced the selection and S refused black-hole optics. Reinspecting the main source then placing one temporary block into air at (20,306,20) cleared its eligibility; the temporary block was removed with a mass-only replacement. Reinspect/save/disconnect/reload left no selection, confirmed through S. Existing source edits were preserved.
+
+No multiplayer live-screen invalidation, dimension-transfer, dedicated-server startup, or live capped/unknown/stale-job test was run. Source-state cleanup at reload and mass revision invalidation were exercised through actual packets, not inferred from unit tests. No new GPU cost measurement; the shader is unchanged.

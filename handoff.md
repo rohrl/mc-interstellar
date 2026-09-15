@@ -7,7 +7,7 @@ Read this, decision-log.md, progress.md and docs/science.md before continuing. D
 - Git root: C:\work\code\minecraft\interstellar\interstellar.
 - Parent folder of same name is intentional and is not the Git root.
 - Remote: https://github.com/rohrl/mc-interstellar.git.
-- Current branch: codex/mass-blocks. Verify git status/branch before modifying anything.
+- Current branch: codex/source-selection. Verify git status/branch before modifying anything.
 - User permits branches and pushes. No force pushes or unrelated cleanup.
 - User requests notifications for blockers/decisions and durable Markdown project records.
 
@@ -69,3 +69,18 @@ Next: integrate validated source selection/synchronization with the lab, then ma
 ## Remote publication pending — 2026-09-15
 
 Mass-block implementation is committed locally on codex/mass-blocks (implementation commit ee55b74). Two pushes failed connecting to github.com:443. System DNS and an explicit Cloudflare resolver query both returned 4.237.22.38; no network settings were changed. Retry git push -u origin codex/mass-blocks when connectivity returns. Tests and runtime verification are complete for this documented checkpoint; origin does not yet contain this branch.
+
+
+## Remote publication recovered — 2026-09-15
+
+Verified origin/codex/mass-blocks at c697e0b with git ls-remote. The earlier publication-pending note is superseded.
+
+## Source-selection checkpoint — 2026-09-15, codex/source-selection
+
+Completed inspection data now synchronizes through a typed S2C payload. World HUD displays the selection; F8 then S uses a black-hole proxy's scale and camera distance in the sky lab. R returns to configured defaults. Server revisions clear stale selections, and client state is scoped to its ClientWorld/connection. Read D022 and docs/mass-blocks.md. No terrain rendering or live cluster index has been added.
+
+Build passed and all 25 existing tests passed. Autonomous runtime checks passed: source selection, falling-frame initialization, reset, rejection of an extended source, invalidation after a temporary mass-block placement, and clearing after disconnect/reload. The saved main cluster now has 63 blocks (owner edits preserved), r_s=7.875; camera r/r_s=0.706777535. The only temporary block at (20,306,20) was removed using a mass-only replacement. No owner input is required for these checks.
+
+V at that radius (STANDARD, 854x480 framebuffer, 128x72 diagnostic) had zero invalid/outcome-mismatch/unresolved rays. Among 1624 escaped rays, angular p95=9.56496e-5 rad and max=0.00563317 rad (~0.323 degrees). This is a larger sampled worst-case error than earlier runs; near-critical accuracy remains unfinished. No shader changes or new performance benchmark in this checkpoint. Live multiplayer invalidation while the lab remains open, dimension transfer, stale/capped/unknown server-job integration, and dedicated-server startup remain untested. Existing pure probe tests cover incomplete/capped components.
+
+Next: targeted critical-ray/winding checks and guided source/body demonstrations. Terrain/hidden-geometry integration is still iteration 3. Source selection is deliberately conservative: unrelated chunk activity can clear it, and no automatic reinspection is performed.

@@ -87,3 +87,10 @@ Use a separate interstellar-optics.json so the existing calibration config remai
 ## D021 — Mass-block geometry and bounded inspection — accepted implementation choice (2026-09-15)
 
 Use equal-mass face-connected blocks, arithmetic block-centre COM, and a centre-based enclosing radius including block corners. r_s=0.125*N as planned; C=r_s/R>=1 is a labelled spherical black-hole proxy, not a general collapse law. Inspect on demand with at most 256 queued cell queries per tick, eight jobs, and 4096 mass blocks per job. Unknown/capped components are incomplete, and revisions cancel stale jobs. Reason: inspectable source semantics before renderer coupling or a maintained index. Fixed mass uses normal chunk persistence without BlockEntities/tickers. This is the first part of iteration 2, not completion of persistent live clustering. Detailed bounds and checks: docs/mass-blocks.md.
+
+
+## D022 — Validated selection bridge — accepted (2026-09-15)
+
+Send completed inspection metadata through Fabric typed S2C payloads; never read integrated-server world objects on the renderer thread. Keep one selection per player. Coalesce world revision changes at the end of the server tick and clear affected selections; a replacement inspection clears its predecessor before starting. Client state is scoped to the actual ClientWorld instance and cleared on disconnect. Reason: prevent stale, capped or unknown components from silently becoming optical sources. World-wide chunk revisions are deliberately conservative and may require reinspection after unrelated chunk activity.
+
+F8 remains the reference lab; S explicitly adopts an inspected black-hole proxy. It uses camera coordinate distance / selected r_s, clamps to the lab's supported radius range, and chooses a falling frame below 1.05 r_s. The lab's axes still point toward/away from the source; they do not follow Minecraft yaw. Controls explore the selected spherical model, not live player motion. Extended sources remain metadata-only because a material-interior optical model does not yet exist. R restores configured reference defaults. No world terrain lensing is implied.

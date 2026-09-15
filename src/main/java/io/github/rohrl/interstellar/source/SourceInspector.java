@@ -5,6 +5,8 @@ import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerChunkEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
+import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.command.argument.BlockPosArgumentType;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -22,15 +24,18 @@ import static net.minecraft.server.command.CommandManager.*;
 public final class SourceInspector {
     private SourceInspector() { }
     private record Job(ServerWorld world, ServerPlayerEntity player, long epoch, ClusterProbe probe) { }
+    private record Selection(ServerWorld world, long epoch) { }
+    private static final Map<ServerPlayerEntity, Selection> selections = new IdentityHashMap<>();
     private static final ArrayDeque<Job> jobs = new ArrayDeque<>();
     private static final Map<ServerWorld,Long> epochs = new IdentityHashMap<>();
     public static void changed(ServerWorld world) { epochs.put(world,epoch(world)+1); }
     private static long epoch(ServerWorld world) { return epochs.getOrDefault(world,0L); }
 
     public static void register() {
+        PayloadTypeRegistry.playS2C().register(SourcePayload.ID, SourcePayload.CODEC);
         ServerChunkEvents.CHUNK_LOAD.register((world,chunk)->changed(world));
         ServerChunkEvents.CHUNK_UNLOAD.register((world,chunk)->changed(world));
-        ServerLifecycleEvents.SERVER_STOPPED.register(server->{jobs.clear();epochs.clear();});
+        ServerLifecycleEvents.SERVER_STOPPED.register(server->{jobs.clear();epochs.clear();selections.clear();});
         ServerTickEvents.END_SERVER_TICK.register(SourceInspector::tick);
         CommandRegistrationCallback.EVENT.register((dispatcher,access,environment)->dispatcher.register(
                 literal("interstellar").then(literal("inspect").requires(source->source.hasPermissionLevel(2))
@@ -45,6 +50,7 @@ public final class SourceInspector {
             player.sendMessage(Text.literal("Interstellar: inspection target must be within 128 blocks.")); return;
         }
         jobs.removeIf(job->job.player==player);
+        if (selections.remove(player) != null) sendClear(player, world);
         if (jobs.size() >= 8) { player.sendMessage(Text.literal("Interstellar: inspection queue busy; retry shortly.")); return; }
         if (state(world,new ClusterProbe.Cell(pos.getX(),pos.getY(),pos.getZ())) != ClusterProbe.CellState.MASS) {
             player.sendMessage(Text.literal("Interstellar: target must be a mass block in a loaded chunk.")); return;
@@ -59,7 +65,22 @@ public final class SourceInspector {
         if (!world.getChunkManager().isChunkLoaded(cell.x()>>4,cell.z()>>4)) return ClusterProbe.CellState.UNKNOWN;
         return world.getBlockState(pos).isOf(SourceBlocks.MASS_BLOCK) ? ClusterProbe.CellState.MASS : ClusterProbe.CellState.EMPTY;
     }
+    private static void sendClear(ServerPlayerEntity player, ServerWorld world) {
+        if (ServerPlayNetworking.canSend(player, SourcePayload.ID)) {
+            ServerPlayNetworking.send(player, new SourcePayload(world.getRegistryKey().getValue(),0,0,0,0,0,0));
+        }
+    }
     private static void tick(MinecraftServer server) {
+        // Coalesce arbitrarily many block/chunk revisions into one invalidation per selected player.
+        selections.entrySet().removeIf(entry -> {
+            var player=entry.getKey(); var selection=entry.getValue();
+            if (server.getPlayerManager().getPlayer(player.getUuid()) != player) return true;
+            if (player.getServerWorld()!=selection.world || epoch(selection.world)!=selection.epoch) {
+                sendClear(player, player.getServerWorld());
+                return true;
+            }
+            return false;
+        });
         // Four 64-cell slices, rotating jobs fairly. Even very large clusters cannot monopolize a tick.
         for (int slice=0;slice<4 && !jobs.isEmpty();slice++) {
             Job job=jobs.remove();
@@ -78,6 +99,11 @@ public final class SourceInspector {
                         "Interstellar: N=%d | centre=(%.2f, %.2f, %.2f) | enclosing R=%.3f | r_s=%.3f | C=%.3f | %s (spherical proxy; no world lensing yet)",
                         result.count(),result.x(),result.y(),result.z(),result.enclosingRadius(),result.schwarzschildRadius(),result.compactness(),
                         result.blackHoleProxy()?"black-hole proxy":"extended source");
+            }
+            if (result.status()==ClusterProbe.Status.COMPLETE && ServerPlayNetworking.canSend(job.player, SourcePayload.ID)) {
+                ServerPlayNetworking.send(job.player, new SourcePayload(job.world.getRegistryKey().getValue(),
+                        result.count(),result.x(),result.y(),result.z(),result.enclosingRadius(),result.schwarzschildRadius()));
+                selections.put(job.player, new Selection(job.world,job.epoch));
             }
             job.player.sendMessage(Text.literal(message));
             Interstellar.LOGGER.info(message);

@@ -73,3 +73,7 @@ Persistent optical defaults and three integration-quality levels implemented and
 ### Source-data checkpoint (2026-09-15)
 
 Mass block/item and bounded on-demand component inspections implemented and verified. Chunk persistence saves the blocks, and fresh inspections reflect splits/merges/reloads. Live indexing, source-to-renderer data, guided source selection and actual-body images remain unfinished in iteration 2. Terrain rendering remains iteration 3.
+
+### Source-selection checkpoint (2026-09-15)
+
+Completed inspections now synchronize to the client, and F8/S adopts an eligible spherical source's scale and starting camera radius. Revision/disconnect invalidation and extended-source rejection were runtime checked. Guided exhibits, actual player body, maintained clustering, and critical-ray/winding work remain unfinished. Terrain remains iteration 3.

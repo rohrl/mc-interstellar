@@ -17,6 +17,8 @@ import io.github.rohrl.interstellar.config.OpticalSettings;
 /** Controlled sky at infinity with static and freely falling observer frames. */
 public final class OpticalLabScreen extends Screen {
     private static ShaderProgram shader;
+    private io.github.rohrl.interstellar.source.SourcePayload boundSource;
+    private String sourceStatus = "S: use inspected black-hole proxy | Sky only";
     private final OpticalSettings settings = OpticalConfig.load();
     private OpticalSettings.Quality quality;
     private LabBenchmark benchmark;
@@ -33,6 +35,12 @@ public final class OpticalLabScreen extends Screen {
     public static void setShader(ShaderProgram loaded) { shader = loaded; }
 
     @Override public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+        if (boundSource != null && SelectedSource.current() != boundSource) {
+            resetSettings();
+            sourceStatus="Source invalidated: inspect again | Reference sky restored";
+            if (benchmark != null) { benchmark.close(); benchmark=null; }
+            validateRays=false;
+        }
         long now = System.nanoTime();
         double seconds = previousFrame == 0 ? 0 : Math.min(.1, (now-previousFrame)/1e9);
         previousFrame = now;
@@ -82,6 +90,7 @@ public final class OpticalLabScreen extends Screen {
         context.drawTextWithShadow(textRenderer, radius == 1 ? "At the event horizon" : radius < 1 ?
                 (radius <= .35001f ? "Inside horizon | Tour stops here (r/r_s=0.35)" : "Inside the event horizon") : "Outside the event horizon", 12, 120, 0xFFFFD59A);
         context.drawTextWithShadow(textRenderer, "Q: quality " + quality + " | Playback x" + settings.playbackRate(), 12, 132, 0xFFE0E8EF);
+        context.drawTextWithShadow(textRenderer, sourceStatus, 12, 144, 0xFFFFD59A);
         String footer = shader == null ? "Shader unavailable: check the game log"
                 : "Illustrative sky | Magenta: unresolved ray";
         context.drawTextWithShadow(textRenderer, footer, 12, height - 16, 0xFFFFD59A);
@@ -89,6 +98,7 @@ public final class OpticalLabScreen extends Screen {
     }
 
     private void resetSettings() {
+        boundSource=null; sourceStatus="S: use inspected black-hole proxy | Sky only";
         radius=(float)settings.startRadius(); quality=settings.quality();
         lensing=settings.lensing(); grid=settings.grid(); aligned=settings.aligned();
         falling=settings.falling(); lookBack=settings.lookBack(); playing=false;
@@ -119,6 +129,22 @@ public final class OpticalLabScreen extends Screen {
         }
         if (benchmark != null) { benchmark.close(); benchmark = null; }
         switch (key) {
+            case GLFW.GLFW_KEY_S -> {
+                var selected=SelectedSource.current();
+                if (selected==null || !selected.blackHoleProxy()) {
+                    sourceStatus="Inspect a complete black-hole proxy first | Sky only";
+                } else {
+                    double distance=client.gameRenderer.getCamera().getPos().distanceTo(
+                            new net.minecraft.util.math.Vec3d(selected.x(),selected.y(),selected.z()));
+                    double scaled=distance/selected.schwarzschildRadius();
+                    boundSource=selected; falling=scaled<1.05; playing=false; lookBack=false;
+                    radius=(float)Math.clamp(scaled,falling?.35:1.05,64);
+                    sourceStatus=String.format(Locale.ROOT,"N=%d | r_s=%.3f blocks | Sky proxy%s",
+                            selected.count(),selected.schwarzschildRadius(), radius!=(float)scaled?" | distance clamped":"");
+                    io.github.rohrl.interstellar.Interstellar.LOGGER.info("Source lab: N={}, r_s={}, camera r/r_s={}, lab r/r_s={}, falling={}",
+                            selected.count(),selected.schwarzschildRadius(),scaled,radius,falling);
+                }
+            }
             case GLFW.GLFW_KEY_V -> validateRays = true;
             case GLFW.GLFW_KEY_Q -> quality = quality.next();
             case GLFW.GLFW_KEY_F -> { falling = !falling; radius = Math.max(falling ? .35f : 1.05f, radius); }
