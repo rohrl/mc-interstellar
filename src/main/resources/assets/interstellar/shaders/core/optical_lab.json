@@ -11,6 +11,7 @@
     {"name":"Falling","type":"float","count":1,"values":[0]},
     {"name":"LookBack","type":"float","count":1,"values":[0]},
     {"name":"IntegrationStep","type":"float","count":1,"values":[0.02]},
+    {"name":"TargetRadial","type":"float","count":1,"values":[0]},
     {"name":"Diagnostic","type":"float","count":1,"values":[0]},
     {"name":"Aligned","type":"float","count":1,"values":[1]}
   ]

@@ -44,6 +44,7 @@ final class LabRayValidation {
             GL30.glDeleteFramebuffers(framebuffer);
         }
         int mismatch = 0, analyticMismatch = 0, unresolved = 0, count = 0, invalid = 0;
+        double rawMaximum = 0; int windingMismatch = 0;
         double[] errors = new double[WIDTH * HEIGHT];
         double shadow = falling ? Double.NaN : new Schwarzschild(1).staticShadowHalfAngle(radius);
         for (int y = 0; y < HEIGHT; y++) for (int x = 0; x < WIDTH; x++) {
@@ -64,7 +65,7 @@ final class LabRayValidation {
             int offset = (y * WIDTH + x) * 4;
             float cosine = pixels.get(offset), sine = pixels.get(offset + 1), status = pixels.get(offset + 2);
             if (!Float.isFinite(cosine) || !Float.isFinite(sine) || !Float.isFinite(status)
-                    || pixels.get(offset + 3) != 1f || (status != 0 && status != 1 && status != 2)) {
+                    || !Float.isFinite(pixels.get(offset + 3)) || (status != 0 && status != 1 && status != 2)) {
                 invalid++; continue;
             }
 
@@ -73,6 +74,9 @@ final class LabRayValidation {
             boolean analyticCapture = lensing && Math.acos(-mu) < shadow;
             if (!falling && (status == 0) != analyticCapture) analyticMismatch++;
             if (status == 1 && expected == 1) {
+                double unwrapped = pixels.get(offset + 3);
+                rawMaximum = Math.max(rawMaximum, Math.abs(unwrapped-cpuAngle));
+                if ((int)Math.floor(unwrapped/(2*Math.PI)) != (int)Math.floor(cpuAngle/(2*Math.PI))) windingMismatch++;
                 double difference = Math.atan2(sine, cosine) - cpuAngle;
                 errors[count++] = Math.abs(Math.atan2(Math.sin(difference), Math.cos(difference)));
             }
@@ -82,6 +86,7 @@ final class LabRayValidation {
         double maximum = count == 0 ? Double.NaN : errors[count - 1];
         Interstellar.LOGGER.info("GPU ray check: {}x{}, aspect={}, r/rs={}, lensing={}, falling={}, lookBack={}; invalid={}, CPU outcome mismatches={}, analytic capture mismatches={}, unresolved={}, escaped compared={}; angular p95={} max={} rad; CPU independent PG Dormand-Prince tol=1e-10; analytic capture count only applies to static mode",
                 WIDTH, HEIGHT, aspect, radius, lensing, falling, lookBack, invalid, mismatch, analyticMismatch, unresolved, count, p95, maximum);
+        Interstellar.LOGGER.info("GPU unwrapped angle: max={} rad, full-turn-bin differences={} (bin boundaries can amplify small errors)", rawMaximum, windingMismatch);
         if (count == 0) return "Ray check: " + (mismatch + invalid) + " mismatches | no sky rays in this view";
         return String.format(Locale.ROOT, "Ray check: %d mismatches | max %.3g rad | logged",
                 mismatch + invalid + analyticMismatch, maximum);

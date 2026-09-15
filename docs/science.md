@@ -58,3 +58,7 @@ The earlier exterior-only description is superseded for the falling-frame lab by
 ## Mass-block source proxy
 
 [Mass-block model](mass-blocks.md) defines equal weights, corner-inclusive enclosing radius and the explicitly approximate compactness classification. It does not solve nonspherical collapse or generate a dynamical spacetime; current blocks only expose inspection data.
+
+## Critical-angle validation
+
+See [critical-ray diagnostics](critical-rays.md) for full-angle and boundary stress checks. CriticalRays solves b_c^2(1+mu/sqrt(r))^2=r^2(1-mu^2), with b_c^2=27/4 and the branch approaching the photon orbit. The static result follows the shadow formula; the falling result follows its local Lorentz transform. [Bozza, Gravitational lensing in the strong field limit (2002)](https://arxiv.org/abs/gr-qc/0208075) establishes logarithmic strong-deflection divergence for spherical metrics. Our finite-observer Schwarzschild test checks the asymptotic increment ln(10) when the horizon looking-cosine offset shrinks by a decade; it does not apply an infinity-to-infinity lens equation directly to the falling camera.

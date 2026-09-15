@@ -5,6 +5,7 @@ uniform float Lensing;
 uniform float Grid;
 uniform float Aligned;
 uniform float Diagnostic;
+uniform float TargetRadial;
 uniform float IntegrationStep;
 uniform float Falling;
 uniform float LookBack;
@@ -45,11 +46,12 @@ void main() {
     xy.x *= Viewport.x / Viewport.y;
     float facing = LookBack > .5 ? 1.0 : -1.0;
     vec3 direction = normalize(vec3(-facing * xy.x, -xy.y, facing));
-    if (Lensing < .5) { fragColor = Diagnostic > .5 ? vec4(direction.z, length(direction.xy), 1, 1) : vec4(sky(direction), 1.0); return; }
+    if (Diagnostic > 1.5) direction = vec3(sqrt(max(0.0, 1.0-TargetRadial*TargetRadial)),0,TargetRadial);
+    if (Lensing < .5) { fragColor = Diagnostic > .5 ? vec4(direction.z, length(direction.xy), 1, acos(clamp(direction.z,-1.0,1.0))) : vec4(sky(direction), 1.0); return; }
     float radial = direction.z;
     float tangent = length(direction.xy);
         if (tangent < 1e-6) {
-        fragColor = radial > 0.0 ? (Diagnostic > .5 ? vec4(1,0,1,1) : vec4(sky(vec3(0,0,1)),1)) : vec4(0,0,0,1);
+        fragColor = radial > 0.0 ? (Diagnostic > .5 ? vec4(1,0,1,0) : vec4(sky(vec3(0,0,1)),1)) : vec4(0,0,0,1);
         return;
     }
     vec3 e = vec3(direction.xy / tangent, 0);
@@ -81,7 +83,7 @@ void main() {
         if (next.x <= 0.0) {
             float exitPhi = float(i) * h + h * q.x / (q.x - next.x);
             vec3 n = vec3(0, 0, cos(exitPhi)) + e * sin(exitPhi);
-            fragColor = Diagnostic > .5 ? vec4(cos(exitPhi), sin(exitPhi), 1, 1) : vec4(sky(normalize(n)), 1.0);
+            fragColor = Diagnostic > .5 ? vec4(cos(exitPhi), sin(exitPhi), 1, exitPhi) : vec4(sky(normalize(n)), 1.0);
             return;
         }
         q = next;

@@ -22,8 +22,8 @@ public final class OpticalLabScreen extends Screen {
     private final OpticalSettings settings = OpticalConfig.load();
     private OpticalSettings.Quality quality;
     private LabBenchmark benchmark;
-    private boolean validateRays;
-    private String validationStatus = "V: check GPU rays (brief pause)";
+    private boolean validateRays, validateCritical;
+    private String validationStatus = "V: view rays | C: critical stress test (pause)";
     private float radius = 8;
     private boolean falling, playing, lookBack;
     private long previousFrame;
@@ -66,6 +66,10 @@ public final class OpticalLabScreen extends Screen {
                 validateRays = false;
                 io.github.rohrl.interstellar.Interstellar.LOGGER.info("Ray diagnostic quality={}, step={}", quality, quality.step());
                 validationStatus = LabRayValidation.run(shader, radius, lensing, falling, lookBack, (double) client.getWindow().getFramebufferWidth() / client.getWindow().getFramebufferHeight(), this::drawQuad);
+            }
+            if (validateCritical) {
+                validateCritical=false;
+                try { validationStatus=LabCriticalValidation.run(shader,radius,falling,lensing,quality,this::drawQuad); } catch (RuntimeException failure) { io.github.rohrl.interstellar.Interstellar.LOGGER.error("Critical diagnostic failed",failure); validationStatus="Critical diagnostic failed: see log"; }
             }
             if (benchmark != null) benchmark.begin();
             drawQuad();
@@ -117,9 +121,9 @@ public final class OpticalLabScreen extends Screen {
         return super.mouseClicked(x, y, button);
     }
     @Override public boolean keyPressed(int key, int scanCode, int modifiers) {
-        if (key == GLFW.GLFW_KEY_B || key == GLFW.GLFW_KEY_V || key == GLFW.GLFW_KEY_F ||
+        if (key == GLFW.GLFW_KEY_C || key == GLFW.GLFW_KEY_B || key == GLFW.GLFW_KEY_V || key == GLFW.GLFW_KEY_F ||
                 key == GLFW.GLFW_KEY_UP || key == GLFW.GLFW_KEY_DOWN || key == GLFW.GLFW_KEY_R || key == GLFW.GLFW_KEY_H || key == GLFW.GLFW_KEY_Q) playing = false;
-        if (key != GLFW.GLFW_KEY_V && key != GLFW.GLFW_KEY_B) validationStatus = "V: check GPU rays (brief pause)";
+        if (key != GLFW.GLFW_KEY_V && key != GLFW.GLFW_KEY_B) validationStatus = "V: view rays | C: critical stress test (pause)";
         if (key == GLFW.GLFW_KEY_B) {
             if (benchmark != null) { benchmark.close(); benchmark = null; }
             else if (shader != null) benchmark = new LabBenchmark(String.format(Locale.ROOT,
@@ -145,6 +149,7 @@ public final class OpticalLabScreen extends Screen {
                             selected.count(),selected.schwarzschildRadius(),scaled,radius,falling);
                 }
             }
+            case GLFW.GLFW_KEY_C -> validateCritical = true;
             case GLFW.GLFW_KEY_V -> validateRays = true;
             case GLFW.GLFW_KEY_Q -> quality = quality.next();
             case GLFW.GLFW_KEY_F -> { falling = !falling; radius = Math.max(falling ? .35f : 1.05f, radius); }
@@ -162,6 +167,6 @@ public final class OpticalLabScreen extends Screen {
         return true;
     }
     @Override public void removed() { if (benchmark != null) { benchmark.close(); benchmark = null; } }
-    @Override protected void init() { if (benchmark != null) { benchmark.close(); benchmark = null; } validationStatus = "V: check GPU rays (brief pause)"; previousFrame = 0; }
+    @Override protected void init() { if (benchmark != null) { benchmark.close(); benchmark = null; } validationStatus = "V: view rays | C: critical stress test (pause)"; previousFrame = 0; }
     @Override public boolean shouldPause() { return true; }
 }

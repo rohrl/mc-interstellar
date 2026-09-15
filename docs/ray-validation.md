@@ -26,3 +26,7 @@ These sparse-grid results do not bound errors arbitrarily close to the capture b
 ## Source-selected interior sample — 2026-09-15
 
 STANDARD at r/r_s=0.7067775, falling=true, lookBack=false, lensing=true; framebuffer 854x480, 128x72 diagnostic. Invalid=0, CPU outcome mismatches=0, unresolved=0, escaped compared=1624. Angular p95=9.564955185339465e-5 rad, max=0.005633167300844977 rad (~0.323 degrees). This extends the sampled worst-case beyond prior runs and reinforces the pending near-critical convergence/winding work. The shader was unchanged. Analytic capture mismatch count is not applicable to this falling-frame sample; CPU/GPU still share connectivity classification.
+
+## Critical-ray extension
+
+V now also compares unwrapped angles. C adds explicit critical directions across frames and qualities. See [results and limitations](critical-rays.md), including large errors in extreme samples and CPU-unresolved cases. Earlier modulo-only limitations describe the previous diagnostic.

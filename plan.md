@@ -77,3 +77,7 @@ Mass block/item and bounded on-demand component inspections implemented and veri
 ### Source-selection checkpoint (2026-09-15)
 
 Completed inspections now synchronize to the client, and F8/S adopts an eligible spherical source's scale and starting camera radius. Revision/disconnect invalidation and extended-source rejection were runtime checked. Guided exhibits, actual player body, maintained clustering, and critical-ray/winding work remain unfinished. Terrain remains iteration 3.
+
+### Immediate demo priority (2026-09-15)
+
+Bring forward iteration 3's scene-data experiment: one selected source and bounded opaque Minecraft terrain, with on/off comparison and explicit missing-data behavior. Actual-body exhibits follow this playable mass-block demo. Critical diagnostics now expose numerical limits; further accuracy work remains tracked without blocking the scene-data prototype indefinitely.

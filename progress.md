@@ -1,6 +1,6 @@
 # Progress
 
-Last updated: 2026-09-15. Current branch: codex/source-selection.
+Last updated: 2026-09-15. Current branch: codex/critical-rays.
 
 Current: controlled-sky lensing, independent PG reference and guided horizon crossing. 25 tests pass. See docs/mass-blocks.md, docs/optical-settings.md and docs/free-fall.md and the latest checkpoint below; early sections record historical bootstrap results.
 
@@ -90,3 +90,10 @@ Build passed and all 25 existing tests passed. Autonomous runtime checks passed:
 V at that radius (STANDARD, 854x480 framebuffer, 128x72 diagnostic) had zero invalid/outcome-mismatch/unresolved rays. Among 1624 escaped rays, angular p95=9.56496e-5 rad and max=0.00563317 rad (~0.323 degrees). This is a larger sampled worst-case error than earlier runs; near-critical accuracy remains unfinished. No shader changes or new performance benchmark in this checkpoint. Live multiplayer invalidation while the lab remains open, dimension transfer, stale/capped/unknown server-job integration, and dedicated-server startup remain untested. Existing pure probe tests cover incomplete/capped components.
 
 Next: targeted critical-ray/winding checks and guided source/body demonstrations. Terrain/hidden-geometry integration is still iteration 3. Source selection is deliberately conservative: unrelated chunk activity can clear it, and no automatic reinspection is performed.
+## Critical-ray checkpoint — 2026-09-15, codex/critical-rays
+
+V now logs unwrapped angles; C runs a bounded 252-ray off-screen critical-direction suite across all quality presets. Read docs/critical-rays.md and its CSV, which preserve actual results and limits. Build/28 tests pass. Complete baseline suite, restored shader visual check, portrait V and 1440p STANDARD timing completed autonomously. GPU pass p95=1.408512 ms. Extreme near-critical samples reveal large angular errors (up to 1.203488 rad), no sampled full-turn-bin differences, and budget exhaustion. CPU-unresolved results are inconclusive; the added reporting counter was compiled after the baseline runtime. A shifted-variable solver was evaluated and rejected; production orbit integration remains unchanged.
+
+An initial diagnostic helper rejected the float representation of 0.35 and stopped the client; fixed with regression coverage and diagnostic exception handling. The saved world was preserved. No blocks or terrain were changed during this checkpoint. All runtime checks are agent-operated; no owner attendance is pending.
+
+NEXT: prioritize a working mass-block/terrain optical demo. Start the bounded scene-data prototype for one selected spherical source and opaque nearby terrain; provide off-screen geometry and explicit missing-data behavior rather than pretending screen-space distortion can reveal hidden surfaces. Bring this ahead of actual-body demonstrations (D023). Do not spend the next iteration solely polishing critical-ray numerics. Player-body, transparent terrain, spectral transport, maintained clustering and improved critical precision remain tracked follow-ups. No product decision blocks proceeding.
