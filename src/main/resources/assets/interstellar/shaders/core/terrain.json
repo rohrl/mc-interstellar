@@ -1,0 +1,17 @@
+{
+  "vertex":"interstellar:optical_lab", "fragment":"interstellar:terrain",
+  "attributes":["Position"],
+  "samplers":[{"name":"Voxels"},{"name":"Palette"},{"name":"Atlas"}],
+  "uniforms":[
+    {"name":"Viewport","type":"float","count":2,"values":[854,480]},
+    {"name":"Camera","type":"float","count":3,"values":[48,48,12]},
+    {"name":"Source","type":"float","count":3,"values":[48,48,48]},
+    {"name":"Forward","type":"float","count":3,"values":[0,0,1]},
+    {"name":"Right","type":"float","count":3,"values":[1,0,0]},
+    {"name":"Up","type":"float","count":3,"values":[0,1,0]},
+    {"name":"Radius","type":"float","count":1,"values":[8]},
+    {"name":"Lensing","type":"float","count":1,"values":[1]},
+    {"name":"Diagnostic","type":"float","count":1,"values":[0]},
+    {"name":"PathStep","type":"float","count":1,"values":[0.45]}
+  ]
+}

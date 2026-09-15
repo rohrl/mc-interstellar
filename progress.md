@@ -1,8 +1,8 @@
 # Progress
 
-Last updated: 2026-09-15. Current branch: codex/critical-rays.
+Last updated: 2026-09-15. Current branch: codex/terrain-prototype.
 
-Current: controlled-sky lensing, independent PG reference and guided horizon crossing. 25 tests pass. See docs/mass-blocks.md, docs/optical-settings.md and docs/free-fall.md and the latest checkpoint below; early sections record historical bootstrap results.
+Current: F9 textured terrain-snapshot lensing, F8 sky/horizon lab, bounded source inspection and independent PG reference. 31 tests pass. See docs/terrain-prototype.md and the latest checkpoint below; early sections record historical results.
 
 ## Verified environment
 
@@ -97,3 +97,17 @@ V now logs unwrapped angles; C runs a bounded 252-ray off-screen critical-direct
 An initial diagnostic helper rejected the float representation of 0.35 and stopped the client; fixed with regression coverage and diagnostic exception handling. The saved world was preserved. No blocks or terrain were changed during this checkpoint. All runtime checks are agent-operated; no owner attendance is pending.
 
 NEXT: prioritize a working mass-block/terrain optical demo. Start the bounded scene-data prototype for one selected spherical source and opaque nearby terrain; provide off-screen geometry and explicit missing-data behavior rather than pretending screen-space distortion can reveal hidden surfaces. Bring this ahead of actual-body demonstrations (D023). Do not spend the next iteration solely polishing critical-ray numerics. Player-body, transparent terrain, spectral transport, maintained clustering and improved critical precision remain tracked follow-ups. No product decision blocks proceeding.
+## Terrain prototype checkpoint — 2026-09-15, codex/terrain-prototype
+
+F9 captures a bounded 96^3 region around the inspected source and renders actual textured opaque Minecraft cubes through curved rays. Read docs/terrain-prototype.md and D024 before modifying it. Snapshot is frozen; exterior static observer only; amber means missing scene data, pink unsupported/budget. Space compares lensing; arrows/L aim; Q resolution; J chord target; V flat geometry/off-screen audit; B timing. Config interstellar-terrain.json supports enabled and renderScale. F8 sky remains independent.
+
+Build/31 tests pass. Agent-operated runtime checks exercised textured floor/backdrop, foreground pillar, Space comparison, off-screen hits and landscape/portrait geometry diagnostics. Zero flat-hit mismatches in recorded samples; a turned view found 192 off-screen lensed hits. This is not full curved-surface validation. Half-resolution lensed p95=3.601376 ms at a 1440p window; full-resolution fine p95=16.449408 ms (owner-triggered run, verified log), too costly for the full 60 FPS budget. Capture about 0.90 s spread across frames. Subsequent owner edits to the wall were preserved.
+
+Fixed a native texture-upload overread caused by inherited GL_UNPACK_SKIP_ROWS. Upload/readback now isolate pixel-layout/PBO state; repeat opens succeeded with inherited skip rows 19 and 10. Resource reload invalidates UV snapshots. Preserve local run/hs_err_pid7212.log and world data; neither belongs in Git. No owner attendance is needed for routine tests.
+
+Next: make the terrain demo easier to use in normal play (live camera/bounded updates), improve explicit snapshot-boundary presentation and filtered secondary images, and validate finite-surface ray intersections independently. Do not describe F9 as a live world shader or certify the floor/rings from screenshots alone. Foreground floor has a valid sharp occlusion edge; its secondary image appears around the hole, while amber boundary markers are artificial. Player body, interior terrain, full block models/fluids/entities and radiometry remain unfinished.
+## Final verification addendum — 2026-09-15
+
+Final-build V pair used the same logged camera (16.5,303.6199998855591,-19.5), yaw=0.8451603, pitch=2.6502786, aspect=1.7791666666666666. Standard/fine path targets 0.45/0.225 both reported zero flat mismatches, 721 flat hits, 982 lensed opaque hits, one off-screen hit with margin and zero lensed unresolved samples. Aggregate counts agree; individual curved hit-cell convergence was not measured. Config enabled=false was runtime checked and the exact original bytes restored. Repeated captures after the pixel-unpack fix succeeded. Resource-reload invalidation is implemented but the attempted F3+T input in the screen did not trigger a reload, so that path is not runtime verified.
+
+Final-build 1440p-window timing, internal 1280x720, STANDARD path, lensing on, source aimed with L, 6960 opaque cells: GPU p50=3.638848, p95=3.740352, p99=3.791520 ms; sampled frame-interval p95=8.6177 ms. This is the most recent default-mode measurement. The client is left open for optional exploration; no user testing is pending.

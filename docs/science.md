@@ -62,3 +62,8 @@ The earlier exterior-only description is superseded for the falling-frame lab by
 ## Critical-angle validation
 
 See [critical-ray diagnostics](critical-rays.md) for full-angle and boundary stress checks. CriticalRays solves b_c^2(1+mu/sqrt(r))^2=r^2(1-mu^2), with b_c^2=27/4 and the branch approaching the photon orbit. The static result follows the shadow formula; the falling result follows its local Lorentz transform. [Bozza, Gravitational lensing in the strong field limit (2002)](https://arxiv.org/abs/gr-qc/0208075) establishes logarithmic strong-deflection divergence for spherical metrics. Our finite-observer Schwarzschild test checks the asymptotic increment ln(10) when the horizon looking-cosine offset shrinks by a decade; it does not apply an infinity-to-infinity lens equation directly to the falling camera.
+## Finite Minecraft terrain
+
+[Terrain prototype](terrain-prototype.md) extends the spatial orbit integration to ordered finite voxel intersections in a documented areal-coordinate embedding. Foreground material terminates a ray before any later background hit. Textures and directional shading are illustrative radiance; spectral transport is not implemented. The camera is static and exterior in this prototype. See that document for bounded-volume and straight-chord limitations, distinct from the sky lab's horizon-capable observer.
+
+Technical APIs checked against the pinned 1.21.1 family: [BakedQuad](https://maven.fabricmc.net/docs/yarn-1.21.1%2Bbuild.3/net/minecraft/client/render/model/BakedQuad.html), [SimpleFramebuffer](https://maven.fabricmc.net/docs/yarn-1.21.1%2Bbuild.3/net/minecraft/client/gl/SimpleFramebuffer.html). Atlas data remains Minecraft's runtime resource; no game textures are copied into this repository.

@@ -31,6 +31,8 @@ public final class InterstellarClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         SelectedSource.register();
+        CoreShaderRegistrationCallback.EVENT.register(context -> context.register(Identifier.of("interstellar", "terrain"), VertexFormats.POSITION, TerrainScreen::setShader));
+        KeyBinding terrain = KeyBindingHelper.registerKeyBinding(new KeyBinding("key.interstellar.terrain", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_F9, "key.categories.interstellar"));
         CoreShaderRegistrationCallback.EVENT.register(context -> context.register(
                 Identifier.of("interstellar", "optical_lab"), VertexFormats.POSITION, OpticalLabScreen::setShader));
         KeyBinding opticalLab = KeyBindingHelper.registerKeyBinding(new KeyBinding("key.interstellar.optical_lab", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_F8, "key.categories.interstellar"));
@@ -44,6 +46,7 @@ public final class InterstellarClient implements ClientModInitializer {
                 "key.categories.interstellar"));
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            while (terrain.wasPressed()) { if (client.world != null) client.setScreen(new TerrainScreen(SelectedSource.current())); }
             while (opticalLab.wasPressed()) {
                 if (client.world != null) client.setScreen(new OpticalLabScreen());
             }
@@ -75,7 +78,7 @@ public final class InterstellarClient implements ClientModInitializer {
         Schwarzschild source = new Schwarzschild(settings.schwarzschildRadius());
         List<String> lines = new ArrayList<>();
         lines.add("INTERSTELLAR | Calibration");
-        lines.add("F8 optical lab | F6 HUD | F7 reference");
+        lines.add("F9 terrain | F8 sky lab | F6 HUD | F7 reference");
         lines.add(String.format(Locale.ROOT, "r_s %.2f | photon sphere %.2f | ISCO %.2f blocks",
                 source.horizonRadius(), source.photonSphereRadius(),
                 source.innermostStableCircularOrbitRadius()));

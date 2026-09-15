@@ -81,3 +81,8 @@ Completed inspections now synchronize to the client, and F8/S adopts an eligible
 ### Immediate demo priority (2026-09-15)
 
 Bring forward iteration 3's scene-data experiment: one selected source and bounded opaque Minecraft terrain, with on/off comparison and explicit missing-data behavior. Actual-body exhibits follow this playable mass-block demo. Critical diagnostics now expose numerical limits; further accuracy work remains tracked without blocking the scene-data prototype indefinitely.
+
+
+### Terrain prototype checkpoint (2026-09-15)
+
+F9 renders actual textured opaque-block snapshots, curved-ray intersections and off-screen geometry for one selected source. On/off comparison, foreground occlusion, flat-hit validation and initial timings are implemented. This completes the initial scene-data spike, not iteration 3: live camera/update integration, finite-surface convergence, natural-terrain/model coverage, transparency and filtering remain. See docs/terrain-prototype.md.

@@ -61,3 +61,7 @@ Selection checks cost O(selected players) per server tick with no extra world qu
 Build and 25 existing tests pass. The saved edited cluster had N=63, r_s=7.875, enclosing R=3.496. F8/S used camera r/r_s=0.706777535 and correctly selected a falling observer. R restored static r/r_s=8. Inspecting the isolated block at (12,301,10) replaced the selection and S refused black-hole optics. Reinspecting the main source then placing one temporary block into air at (20,306,20) cleared its eligibility; the temporary block was removed with a mass-only replacement. Reinspect/save/disconnect/reload left no selection, confirmed through S. Existing source edits were preserved.
 
 No multiplayer live-screen invalidation, dimension-transfer, dedicated-server startup, or live capped/unknown/stale-job test was run. Source-state cleanup at reload and mass revision invalidation were exercised through actual packets, not inferred from unit tests. No new GPU cost measurement; the shader is unchanged.
+
+## Terrain preview follow-up
+
+F9 now uses the selected spherical proxy to render a bounded snapshot of actual opaque blocks. See [terrain controls and limits](terrain-prototype.md). Earlier no-terrain statements describe the inspection/sky-only checkpoints; live world-renderer integration remains unfinished.

@@ -96,7 +96,7 @@ public final class SourceInspector {
                 message="Interstellar: incomplete cluster ("+result.status()+"), "+result.count()+" known mass blocks. No compactness classification.";
             } else {
                 message=String.format(Locale.ROOT,
-                        "Interstellar: N=%d | centre=(%.2f, %.2f, %.2f) | enclosing R=%.3f | r_s=%.3f | C=%.3f | %s (spherical proxy; no world lensing yet)",
+                        "Interstellar: N=%d | centre=(%.2f, %.2f, %.2f) | enclosing R=%.3f | r_s=%.3f | C=%.3f | %s (spherical proxy; F9 frozen terrain preview)",
                         result.count(),result.x(),result.y(),result.z(),result.enclosingRadius(),result.schwarzschildRadius(),result.compactness(),
                         result.blackHoleProxy()?"black-hole proxy":"extended source");
             }

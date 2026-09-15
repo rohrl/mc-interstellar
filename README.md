@@ -2,7 +2,7 @@
 
 A Minecraft Java mod for educational relativistic optics. Scientific assumptions and numerical limits must be visible and testable.
 
-**Current iteration:** Fabric diagnostics and an F8 optical lab with Schwarzschild sky lensing and a guided free-fall horizon crossing. Mass blocks now support bounded cluster inspection. Completed inspections can supply the optical lab with source scale and starting distance. Terrain lensing and potion are not implemented yet. See [progress.md](progress.md) for verified results rather than assuming planned features exist.
+**Current iteration:** Fabric diagnostics and an F8 optical lab with Schwarzschild sky lensing and a guided free-fall horizon crossing. Mass blocks now support bounded cluster inspection. Completed inspections can supply the optical lab with source scale and starting distance. F9 now previews lensing of a bounded, frozen region of textured opaque Minecraft blocks. Live terrain rendering and potion remain unfinished. See [progress.md](progress.md) for verified results rather than assuming planned features exist.
 
 ## Start here
 
@@ -59,3 +59,7 @@ Use **/give @s interstellar:mass_block**, place connected blocks, then right-cli
 After inspecting a black-hole proxy, open **F8** and press **S** to use its scale and camera distance in the sky lab. Extended sources are metadata-only. Changes to mass blocks or loaded chunks clear the selection; inspect again. **R** restores the configured reference view. This does not yet bend terrain.
 
 Press **C** in the lab for the near-critical ray stress test (brief blocking pause). **V** now also logs unwrapped-angle comparisons. [Measured accuracy limits](docs/critical-rays.md).
+
+## Terrain preview
+
+Inspect a black-hole proxy, move outside 1.05 r_s, and press **F9**. **Space** compares lensing; arrows look around; **L** aims at the source; **Q** changes resolution; **J** changes path sampling; **V** checks geometry; **B** measures GPU cost. Esc returns to Minecraft. Reopen to capture a new view. This is a frozen opaque-block preview with explicit missing-data boundaries. [Controls, performance, limits and saved test scene](docs/terrain-prototype.md).
