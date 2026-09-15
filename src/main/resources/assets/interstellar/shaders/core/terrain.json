@@ -11,6 +11,7 @@
     {"name":"Up","type":"float","count":3,"values":[0,1,0]},
     {"name":"Radius","type":"float","count":1,"values":[8]},
     {"name":"Lensing","type":"float","count":1,"values":[1]},
+    {"name":"Antialiasing","type":"float","count":1,"values":[1]},
     {"name":"Diagnostic","type":"float","count":1,"values":[0]},
     {"name":"PathStep","type":"float","count":1,"values":[0.45]}
   ]

@@ -4,7 +4,7 @@ uniform sampler2D Palette;
 uniform sampler2D Atlas;
 uniform vec2 Viewport;
 uniform vec3 Camera,Source,Forward,Right,Up;
-uniform float Radius,Lensing,PathStep,Diagnostic;
+uniform float Radius,Lensing,PathStep,Diagnostic,Antialiasing;
 vec4 diagnostic=vec4(0);
 in vec2 screenUv;
 out vec4 fragColor;
@@ -75,8 +75,8 @@ vec3 surface(int value,vec3 hit,vec3 normal) {
     return albedo*light;
 }
 vec2 derivative(vec2 q) {return vec2(q.y,1.5*q.x*q.x-q.x);}
-void trace() {
-    vec2 xy=(screenUv*2.0-1.0)*.7002075382;xy.x*=Viewport.x/Viewport.y;
+void trace(vec2 uv) {
+    vec2 xy=(uv*2.0-1.0)*.7002075382;xy.x*=Viewport.x/Viewport.y;
     vec3 direction=normalize(Forward+xy.x*Right-xy.y*Up);
     vec3 hit,normal;
     vec3 radialAxis=normalize(Camera-Source);
@@ -114,4 +114,12 @@ void trace() {
     diagnostic=vec4(0,0,0,-2);
     fragColor=vec4(.7,.05,.5,1);
 }
-void main() {trace();if(Diagnostic>.5)fragColor=diagnostic;}
+void main() {
+    // Diagnostics always measure the centre ray; AA averages independently traced subpixels.
+    if(Diagnostic>.5) {trace(screenUv);fragColor=diagnostic;return;}
+    if(Antialiasing<.5) {trace(screenUv);return;}
+    vec2 offset=vec2(.25)/Viewport;
+    trace(screenUv-offset);vec4 first=fragColor;
+    trace(screenUv+offset);fragColor=(first+fragColor)*.5;
+}
+

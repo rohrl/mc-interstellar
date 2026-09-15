@@ -37,6 +37,7 @@ final class TerrainScreen extends Screen {
     private String error;
     private final TerrainOptions options=TerrainOptions.load();
     private float scale=options.renderScale();
+    private boolean antialiasing=options.antialiasing();
     TerrainScreen(SourcePayload source) {this(source,false);}
     TerrainScreen(SourcePayload source,boolean live) {super(Text.literal("Interstellar terrain prototype"));this.source=source;this.live=live;}
     String problem() {return error;}
@@ -87,7 +88,7 @@ final class TerrainScreen extends Screen {
         context.drawTextWithShadow(textRenderer,"INTERSTELLAR | Minecraft terrain snapshot",12,12,0xFF88D8FF);
         context.drawTextWithShadow(textRenderer,error!=null?error:snapshot.status(),12,24,0xFFFFFFFF);
         context.drawTextWithShadow(textRenderer,"Space: lensing "+(lensing?"ON":"OFF")+" | Arrows: look | L: aim at source",12,36,0xFFE0E8EF);
-        context.drawTextWithShadow(textRenderer,"Q: scale "+scale+" | J: path "+(fine?"fine":"standard")+" | Esc: return",12,48,0xFFE0E8EF);
+        context.drawTextWithShadow(textRenderer,"Q: scale "+scale+" | J: path "+(fine?"fine":"standard")+" | K: AA "+(antialiasing?"ON":"OFF"),12,48,0xFFE0E8EF);
         context.drawTextWithShadow(textRenderer,benchmark==null?"B: benchmark terrain pass":benchmark.status(),12,60,0xFF88D8FF);
         context.drawTextWithShadow(textRenderer,validationStatus,12,72,0xFF88D8FF);
         context.drawTextWithShadow(textRenderer,"Frozen cubes | Amber: missing | Pink: unsupported/budget",12,height-16,0xFFFFD59A);
@@ -118,6 +119,7 @@ final class TerrainScreen extends Screen {
             setVector("Forward",forward);setVector("Right",right);setVector("Up",right.crossProduct(forward));
             shader.getUniformOrDefault("Radius").set((float)source.schwarzschildRadius());
             shader.getUniformOrDefault("Lensing").set(lensing?1f:0f);
+            shader.getUniformOrDefault("Antialiasing").set(antialiasing?1f:0f);
             shader.getUniformOrDefault("PathStep").set(fine?.225f:.45f);
             shader.addSampler("Voxels",snapshot.voxelTexture);
             shader.addSampler("Palette",snapshot.paletteTexture);
@@ -150,12 +152,13 @@ final class TerrainScreen extends Screen {
     @Override public boolean keyPressed(int key,int scan,int modifiers) {
         if(key==GLFW.GLFW_KEY_B && snapshot!=null && snapshot.ready() && error==null) {
             if(benchmark!=null)cancelBenchmark();
-            else benchmark=new LabBenchmark(String.format(Locale.ROOT,"TERRAIN %dx%d, scale=%.2f, r/rs=%.5f, lensing=%s, fine=%s, snapshot=%s, live="+live,
+            else benchmark=new LabBenchmark(String.format(Locale.ROOT,"TERRAIN %dx%d, scale=%.2f, r/rs=%.5f, lensing=%s, fine=%s, snapshot=%s, AA="+antialiasing+", live="+live,
                     target.textureWidth,target.textureHeight,scale,camera.distanceTo(centre())/source.schwarzschildRadius(),lensing,fine,snapshot.status()));
             return true;
         }
         cancelBenchmark();
         switch(key) {
+            case GLFW.GLFW_KEY_K -> antialiasing=!antialiasing;
             case GLFW.GLFW_KEY_V -> validate=true;
             case GLFW.GLFW_KEY_SPACE -> lensing=!lensing;
             case GLFW.GLFW_KEY_Q -> scale=scale==.5f?1f:.5f;
@@ -172,3 +175,4 @@ final class TerrainScreen extends Screen {
     @Override public void removed() {cancelBenchmark();if(snapshot!=null)snapshot.close();if(pending!=null)pending.close();if(target!=null)target.delete();}
     @Override public boolean shouldPause() {return true;}
 }
+
