@@ -122,3 +122,9 @@ GitHub's default branch is codex/bootstrap-observatory, so its landing page show
 ## Snow and workflow checkpoint — 2026-09-15, codex/snow-layers
 
 Token-conscious workflow recorded in AGENTS.md; handoff shortened to current state. Snow layers now render at their actual heights in F9/F10. Build/32 tests pass; sampled GPU flat geometry has zero mismatches; snowy demo now has zero unsupported cells. Live 1440p/half-resolution GPU p95=4.244544 ms; frame interval p95=9.6169 ms. See docs/snow-layers.md for conditions and limitations. Client left in F10 for optional exploration. No owner testing is pending.
+
+## Stable exploration checkpoint — 2026-09-15, codex/stable-exploration
+
+Completed source selection now survives unrelated chunk activity; relevant nearby changes still invalidate it. F10 automatically pauses/resumes at exterior and 128-block observer limits. F9/F10 can view the bounded 96^3 capture from outside; missing external terrain remains explicit. Long-ray diagnostics/UVs retain traversed voxel identity. Antialiasing is separately preserved at 8ad46eb on codex/terrain-antialiasing, unverified and excluded here. Added repository launcher.
+
+Build/35 tests pass. Six near/far/overhead GPU checks have zero flat mismatches and no sampled lensed budget exhaustion. Verified F10 initial out-of-range pause, both automatic recoveries, selection survival during distant travel, and relevant mass-edit invalidation with temporary block restored. 1440p/half-resolution live GPU p95: near 5.111360 ms, far 4.707744 ms; frame interval p95 9.2592 / 9.1930 ms. Detailed evidence and limits: docs/stable-exploration.md and D027. Client left in live mode; no owner testing pending. Curved finite-surface validation and uncaptured foreground occlusion remain unfinished.

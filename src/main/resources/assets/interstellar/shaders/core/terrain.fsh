@@ -6,6 +6,7 @@ uniform vec2 Viewport;
 uniform vec3 Camera,Source,Forward,Right,Up;
 uniform float Radius,Lensing,PathStep,Diagnostic;
 vec4 diagnostic=vec4(0);
+ivec3 materialCell;
 in vec2 screenUv;
 out vec4 fragColor;
 const int SIDE=96;
@@ -18,17 +19,32 @@ vec3 missing(vec3 direction) {
 // Exact voxel traversal along one straight chord. -1=clear segment, 0=left snapshot, >0=material.
 int segment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
     vec3 d=end-start;
-    ivec3 cell=ivec3(floor(start));
+    // Clip this chord to the data box. A chord outside may enter on a later orbit step.
+    float enter=0.0,leave=1.0;
+    normal=vec3(0,1,0);
+    for(int axis=0;axis<3;axis++) {
+        if(abs(d[axis])<1e-12) {
+            if(start[axis]<0.0 || start[axis]>=float(SIDE)) return -1;
+        } else {
+            float a=-start[axis]/d[axis],b=(float(SIDE)-start[axis])/d[axis];
+            float nearT=min(a,b);
+            if(nearT>enter) {enter=nearT;normal=vec3(0);normal[axis]=-sign(d[axis]);}
+            leave=min(leave,max(a,b));
+        }
+    }
+    if(leave<=enter) return -1;
+    ivec3 cell=clamp(ivec3(floor(start+enter*d)),ivec3(0),ivec3(SIDE-1));
     ivec3 stepDirection=ivec3(sign(d));
     vec3 dt=vec3(1e30),next=vec3(1e30);
     for(int axis=0;axis<3;axis++) if(abs(d[axis])>1e-12) {
         dt[axis]=abs(1.0/d[axis]);
         next[axis]=(float(cell[axis])+(d[axis]>0.0?1.0:0.0)-start[axis])/d[axis];
     }
-    float t=0.0;normal=vec3(0,1,0);
+    float t=enter;
     for(int i=0;i<384;i++) {
         hit=start+t*d;
         if(any(lessThan(cell,ivec3(0))) || any(greaterThanEqual(cell,ivec3(SIDE)))) return 0;
+        materialCell=cell;
         int value=int(texelFetch(Voxels,ivec2(cell.x+cell.z*SIDE,cell.y),0).r+.5);
                 if(value!=0) {
             float height=value<3?1.0:texelFetch(Palette,ivec2(0,value),0).w;
@@ -60,11 +76,11 @@ int segment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
     return 2;
 }
 vec3 surface(int value,vec3 hit,vec3 normal) {
-    diagnostic=vec4(floor(hit-normal*.0001),float(value));
+    diagnostic=vec4(vec3(materialCell),float(value));
     if(value==1) return vec3(.85,.45,.06);
     if(value==2) return vec3(.7,.05,.5);
     int face=abs(normal.x)>.5?(normal.x<0?4:5):(abs(normal.y)>.5?(normal.y<0?0:1):(normal.z<0?2:3));
-    vec3 local=fract(hit-normal*.0001);
+    vec3 local=clamp(hit-vec3(materialCell),vec3(.0001),vec3(.9999));
     vec2 st=abs(normal.x)>.5?local.zy:(abs(normal.y)>.5?local.xz:local.xy);
     vec3 u=texelFetch(Palette,ivec2(face*3,value),0).xyz;
     vec3 v=texelFetch(Palette,ivec2(face*3+1,value),0).xyz;
@@ -95,6 +111,10 @@ void trace() {
     vec2 q=vec2(u,-mu*u*sqrt(1.0-u)/tangent);
     vec3 p=Camera;float phi=0.0;
     for(int i=0;i<2048;i++) {
+        // Once outgoing beyond the sphere enclosing all data, no future chord can re-enter.
+        if(q.y<0.0 && Radius/q.x>max(1.5*Radius,length(max(abs(Source),abs(vec3(SIDE)-Source))))) {
+            fragColor=vec4(missing(normalize(p-Source)),1);return;
+        }
         float speed=Radius*length(q)/(q.x*q.x);
         float h=min(.02,PathStep/max(speed,.0001));
         vec2 a=derivative(q),b=derivative(q+h*a*.5),c=derivative(q+h*b*.5),d=derivative(q+h*c);

@@ -35,6 +35,7 @@ final class TerrainScreen extends Screen {
     private float yaw,pitch;
     private boolean lensing=true, fine=false;
     private String error;
+    private String paused;
     private final TerrainOptions options=TerrainOptions.load();
     private float scale=options.renderScale();
     TerrainScreen(SourcePayload source) {this(source,false);}
@@ -48,9 +49,9 @@ final class TerrainScreen extends Screen {
         if(source==null || !source.blackHoleProxy()) {error="Inspect a complete black-hole proxy first, then reopen the terrain preview.";return;}
         camera=client.gameRenderer.getCamera().getPos();
         yaw=client.gameRenderer.getCamera().getYaw();pitch=client.gameRenderer.getCamera().getPitch();
-        if(camera.distanceTo(centre())/source.schwarzschildRadius()<1.05) {error="Terrain prototype needs an exterior camera: move beyond 1.05 r_s.";return;}
+        if(!live && camera.distanceTo(centre())/source.schwarzschildRadius()<1.05) {error="Terrain prototype needs an exterior camera: move beyond 1.05 r_s.";return;}
         snapshot=new TerrainSnapshot(client.world,centre());
-        if(!snapshot.contains(camera)) {error="Move within 46 blocks of the source on each axis, then reopen the terrain preview.";}
+        if(!live && camera.distanceTo(centre())>128) {error="Move within 128 blocks of the source, then reopen the terrain preview.";}
     }
     private Vec3d centre() {return new Vec3d(source.x(),source.y(),source.z());}
     @Override public void render(DrawContext context,int mouseX,int mouseY,float delta) {
@@ -63,8 +64,15 @@ final class TerrainScreen extends Screen {
                 if(live) {
                     camera=client.gameRenderer.getCamera().getPos();
                     yaw=client.gameRenderer.getCamera().getYaw();pitch=client.gameRenderer.getCamera().getPitch();
-                    if(!snapshot.contains(camera)) {error="Left captured region; move closer and press F10.";return;}
-                    if(camera.distanceTo(centre())/source.schwarzschildRadius()<1.05) {error="Exterior limit reached; live terrain stopped.";return;}
+
+                    String reason=camera.distanceTo(centre())>128?"Beyond 128-block viewing range: move closer":
+                            camera.distanceTo(centre())/source.schwarzschildRadius()<1.05?"Exterior limit: move beyond 1.05 r_s":null;
+                    if(!java.util.Objects.equals(paused,reason)) {
+                        paused=reason;cancelBenchmark();
+                        if(pending!=null) {pending.close();pending=null;}
+                        Interstellar.LOGGER.info("Live terrain {}",paused==null?"resumed":"paused: "+paused);
+                    }
+                    if(paused!=null) {renderPaused(context);return;}
                 }
                 snapshot.advance();
                 if(snapshot.ready() && publishedAt==0) {publishedAt=System.nanoTime();generation=1;}
@@ -79,7 +87,7 @@ final class TerrainScreen extends Screen {
             String age=publishedAt==0?snapshot.status():String.format(Locale.ROOT,"Published %.1fs ago | %s | generation %d",
                     (System.nanoTime()-publishedAt)/1e9,pending==null?"waiting to refresh":"refreshing",generation);
             context.drawTextWithShadow(textRenderer,age,12,24,0xFFFFFFFF);
-            context.drawTextWithShadow(textRenderer,benchmark==null?"Opaque cubes | Interactions use straight aim":benchmark.status().replace("B cancels","F12 cancels"),12,36,0xFFFFD59A);
+            context.drawTextWithShadow(textRenderer,benchmark==null?"Bounded terrain | Straight aim | Outside data omitted":benchmark.status().replace("B cancels","F12 cancels"),12,36,0xFFFFD59A);
             return;
         }
         if(error!=null) context.fill(0,0,width,height,0xFF201018);
@@ -91,6 +99,12 @@ final class TerrainScreen extends Screen {
         context.drawTextWithShadow(textRenderer,benchmark==null?"B: benchmark terrain pass":benchmark.status(),12,60,0xFF88D8FF);
         context.drawTextWithShadow(textRenderer,validationStatus,12,72,0xFF88D8FF);
         context.drawTextWithShadow(textRenderer,"Frozen cubes | Amber: missing | Pink: unsupported/budget",12,height-16,0xFFFFD59A);
+    }
+    private void renderPaused(DrawContext context) {
+        context.fill(6,6,Math.min(width-6,440),46,0xCD101824);
+        context.drawTextWithShadow(textRenderer,"INTERSTELLAR | PAUSED - normal view | F10: off",12,12,0xFFFFD59A);
+        context.drawTextWithShadow(textRenderer,paused,12,24,0xFFFFFFFF);
+        context.drawTextWithShadow(textRenderer,"Resumes automatically when back in range",12,36,0xFF88D8FF);
     }
     private void refresh() {
         if(pending==null && System.nanoTime()-publishedAt>=1_000_000_000L) pending=new TerrainSnapshot(client.world,centre());
@@ -148,7 +162,7 @@ final class TerrainScreen extends Screen {
     private static void setVector(String name,Vec3d value) {shader.getUniformOrDefault(name).set((float)value.x,(float)value.y,(float)value.z);}
     private void cancelBenchmark() {if(benchmark!=null) {benchmark.close();benchmark=null;}}
     @Override public boolean keyPressed(int key,int scan,int modifiers) {
-        if(key==GLFW.GLFW_KEY_B && snapshot!=null && snapshot.ready() && error==null) {
+        if(key==GLFW.GLFW_KEY_B && snapshot!=null && snapshot.ready() && error==null && paused==null && target!=null) {
             if(benchmark!=null)cancelBenchmark();
             else benchmark=new LabBenchmark(String.format(Locale.ROOT,"TERRAIN %dx%d, scale=%.2f, r/rs=%.5f, lensing=%s, fine=%s, snapshot=%s, live="+live,
                     target.textureWidth,target.textureHeight,scale,camera.distanceTo(centre())/source.schwarzschildRadius(),lensing,fine,snapshot.status()));

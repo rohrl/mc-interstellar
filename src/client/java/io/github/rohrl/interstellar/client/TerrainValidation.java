@@ -55,7 +55,10 @@ final class TerrainValidation {
                         }
                         if(best>=0)flatHits++;
                         int gpuIndex=gx+gz*TerrainSnapshot.SIDE+gy*TerrainSnapshot.SIDE*TerrainSnapshot.SIDE;
-                        if(best<0?status!=0:status!=scene.value(best)||gpuIndex!=best)mismatch++;
+                        if(best<0?status!=0:status!=scene.value(best)||gpuIndex!=best) {
+                            if(mismatch<5) Interstellar.LOGGER.info("Terrain mismatch pixel=({},{}), expected index={} t={}, GPU cell=({},{},{}) value={}",x,y,best,nearest,gx,gy,gz,status);
+                            mismatch++;
+                        }
                     } else {
                         if(status==-2)unresolved++;
                         if(status>=3) {

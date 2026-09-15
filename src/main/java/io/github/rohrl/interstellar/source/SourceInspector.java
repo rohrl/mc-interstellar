@@ -24,17 +24,28 @@ import static net.minecraft.server.command.CommandManager.*;
 public final class SourceInspector {
     private SourceInspector() { }
     private record Job(ServerWorld world, ServerPlayerEntity player, long epoch, ClusterProbe probe) { }
-    private record Selection(ServerWorld world, long epoch) { }
+    private static final class Selection {
+        final ServerWorld world;
+        final SourceFootprint footprint;
+        boolean dirty;
+        Selection(ServerWorld world, SourceFootprint footprint) {this.world=world;this.footprint=footprint;}
+    }
     private static final Map<ServerPlayerEntity, Selection> selections = new IdentityHashMap<>();
     private static final ArrayDeque<Job> jobs = new ArrayDeque<>();
     private static final Map<ServerWorld,Long> epochs = new IdentityHashMap<>();
-    public static void changed(ServerWorld world) { epochs.put(world,epoch(world)+1); }
+    public static void changed(ServerWorld world, BlockPos pos) { changedChunk(world,pos.getX()>>4,pos.getZ()>>4); }
+    private static void changedChunk(ServerWorld world, int x, int z) {
+        // In-flight probes retain conservative world epochs; completed sources have local dependencies.
+        epochs.put(world,epoch(world)+1);
+        for (var selection:selections.values())
+            if(selection.world==world && selection.footprint.contains(x,z)) selection.dirty=true;
+    }
     private static long epoch(ServerWorld world) { return epochs.getOrDefault(world,0L); }
 
     public static void register() {
         PayloadTypeRegistry.playS2C().register(SourcePayload.ID, SourcePayload.CODEC);
-        ServerChunkEvents.CHUNK_LOAD.register((world,chunk)->changed(world));
-        ServerChunkEvents.CHUNK_UNLOAD.register((world,chunk)->changed(world));
+        ServerChunkEvents.CHUNK_LOAD.register((world,chunk)->changedChunk(world,chunk.getPos().x,chunk.getPos().z));
+        ServerChunkEvents.CHUNK_UNLOAD.register((world,chunk)->changedChunk(world,chunk.getPos().x,chunk.getPos().z));
         ServerLifecycleEvents.SERVER_STOPPED.register(server->{jobs.clear();epochs.clear();selections.clear();});
         ServerTickEvents.END_SERVER_TICK.register(SourceInspector::tick);
         CommandRegistrationCallback.EVENT.register((dispatcher,access,environment)->dispatcher.register(
@@ -75,7 +86,7 @@ public final class SourceInspector {
         selections.entrySet().removeIf(entry -> {
             var player=entry.getKey(); var selection=entry.getValue();
             if (server.getPlayerManager().getPlayer(player.getUuid()) != player) return true;
-            if (player.getServerWorld()!=selection.world || epoch(selection.world)!=selection.epoch) {
+            if (player.getServerWorld()!=selection.world || selection.dirty) {
                 sendClear(player, player.getServerWorld());
                 return true;
             }
@@ -103,7 +114,7 @@ public final class SourceInspector {
             if (result.status()==ClusterProbe.Status.COMPLETE && ServerPlayNetworking.canSend(job.player, SourcePayload.ID)) {
                 ServerPlayNetworking.send(job.player, new SourcePayload(job.world.getRegistryKey().getValue(),
                         result.count(),result.x(),result.y(),result.z(),result.enclosingRadius(),result.schwarzschildRadius()));
-                selections.put(job.player, new Selection(job.world,job.epoch));
+                selections.put(job.player, new Selection(job.world,SourceFootprint.enclosing(result.x(),result.z(),result.enclosingRadius())));
             }
             job.player.sendMessage(Text.literal(message));
             Interstellar.LOGGER.info(message);

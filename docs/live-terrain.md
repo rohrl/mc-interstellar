@@ -30,3 +30,5 @@ RTX 5070 Ti, driver 616.92, 2560x1440 output, 1280x720 internal, standard path s
 The GPU measurement excludes native world rendering, capture/upload, upscale and HUD. Frame intervals include cap/vsync and surrounding work, but are a short scene-specific sample, not a general 60 FPS guarantee. No new optical equations or accuracy claims accompany this integration.
 
 Snow limitation update: vanilla snow layers are now supported; see [snow-layer verification](snow-layers.md). The unsupported-snow observations above describe the earlier live-camera checkpoint.
+
+Current observer-range and recovery behavior supersedes the original stopping limits above: see [stable exploration](stable-exploration.md). F10 pauses to normal view and automatically resumes between 1.05 r_s and 128 blocks; the scene itself remains bounded to 96^3.

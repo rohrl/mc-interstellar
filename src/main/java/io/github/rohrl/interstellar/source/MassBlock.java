@@ -23,10 +23,10 @@ public final class MassBlock extends Block {
     }
     @Override protected void onBlockAdded(BlockState state, World world, BlockPos pos, BlockState old, boolean notify) {
         super.onBlockAdded(state,world,pos,old,notify);
-        if (!old.isOf(this) && world instanceof ServerWorld server) SourceInspector.changed(server);
+        if (!old.isOf(this) && world instanceof ServerWorld server) SourceInspector.changed(server,pos);
     }
     @Override protected void onStateReplaced(BlockState state, World world, BlockPos pos, BlockState next, boolean moved) {
-        if (!next.isOf(this) && world instanceof ServerWorld server) SourceInspector.changed(server);
+        if (!next.isOf(this) && world instanceof ServerWorld server) SourceInspector.changed(server,pos);
         super.onStateReplaced(state,world,pos,next,moved);
     }
 }
