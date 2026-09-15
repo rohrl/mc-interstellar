@@ -2,7 +2,7 @@
 
 A Minecraft Java mod for educational relativistic optics. Scientific assumptions and numerical limits must be visible and testable.
 
-**Current iteration:** Fabric diagnostics and an F8 optical lab with Schwarzschild sky lensing and a guided free-fall horizon crossing. Mass blocks now support bounded cluster inspection. Completed inspections can supply the optical lab with source scale and starting distance. F9 now previews lensing of a bounded, frozen region of textured opaque Minecraft blocks. Live terrain rendering and potion remain unfinished. See [progress.md](progress.md) for verified results rather than assuming planned features exist.
+**Current iteration:** Fabric diagnostics and an F8 optical lab with Schwarzschild sky lensing and a guided free-fall horizon crossing. Mass blocks now support bounded cluster inspection. Completed inspections can supply the optical lab with source scale and starting distance. F9 now previews lensing of a bounded, frozen region of textured opaque Minecraft blocks. F10 adds a live camera with bounded periodic terrain refresh. Full scene coverage and the potion remain unfinished. See [progress.md](progress.md) for verified results rather than assuming planned features exist.
 
 ## Start here
 
@@ -63,3 +63,7 @@ Press **C** in the lab for the near-critical ray stress test (brief blocking pau
 ## Terrain preview
 
 Inspect a black-hole proxy, move outside 1.05 r_s, and press **F9**. **Space** compares lensing; arrows look around; **L** aims at the source; **Q** changes resolution; **J** changes path sampling; **V** checks geometry; **B** measures GPU cost. Esc returns to Minecraft. Reopen to capture a new view. This is a frozen opaque-block preview with explicit missing-data boundaries. [Controls, performance, limits and saved test scene](docs/terrain-prototype.md).
+
+## Live terrain
+
+After inspecting a black-hole proxy, press **F10** to explore terrain lensing with normal movement and the vanilla HUD. **F12** measures the pass; F10 returns to normal rendering. Terrain updates are delayed, interactions still use straight aim, and snow/non-cube models are unsupported. [Controls, checks and measured costs](docs/live-terrain.md).

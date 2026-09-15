@@ -36,6 +36,8 @@ public final class InterstellarClient implements ClientModInitializer {
         CoreShaderRegistrationCallback.EVENT.register(context -> context.register(
                 Identifier.of("interstellar", "optical_lab"), VertexFormats.POSITION, OpticalLabScreen::setShader));
         KeyBinding opticalLab = KeyBindingHelper.registerKeyBinding(new KeyBinding("key.interstellar.optical_lab", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_F8, "key.categories.interstellar"));
+        KeyBinding liveTerrain = KeyBindingHelper.registerKeyBinding(new KeyBinding("key.interstellar.live_terrain", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_F10, "key.categories.interstellar"));
+        KeyBinding liveTiming = KeyBindingHelper.registerKeyBinding(new KeyBinding("key.interstellar.live_timing", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_F12, "key.categories.interstellar"));
         settings = CalibrationConfig.load();
         showHud = settings.hudEnabled();
         KeyBinding toggleHud = KeyBindingHelper.registerKeyBinding(new KeyBinding(
@@ -46,8 +48,12 @@ public final class InterstellarClient implements ClientModInitializer {
                 "key.categories.interstellar"));
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            while (terrain.wasPressed()) { if (client.world != null) client.setScreen(new TerrainScreen(SelectedSource.current())); }
+            LiveTerrain.tick(client);
+            while(liveTerrain.wasPressed()) LiveTerrain.toggle(client);
+            while(liveTiming.wasPressed()) LiveTerrain.benchmark();
+            while (terrain.wasPressed()) { LiveTerrain.stop(); if (client.world != null) client.setScreen(new TerrainScreen(SelectedSource.current())); }
             while (opticalLab.wasPressed()) {
+                LiveTerrain.stop();
                 if (client.world != null) client.setScreen(new OpticalLabScreen());
             }
             if (previousWorld != client.world) {
@@ -72,13 +78,13 @@ public final class InterstellarClient implements ClientModInitializer {
 
     private void drawHud(DrawContext context) {
         MinecraftClient client = MinecraftClient.getInstance();
-        if (!showHud || client.world == null || client.player == null || client.options.hudHidden) {
+        if (LiveTerrain.active() || !showHud || client.world == null || client.player == null || client.options.hudHidden) {
             return;
         }
         Schwarzschild source = new Schwarzschild(settings.schwarzschildRadius());
         List<String> lines = new ArrayList<>();
         lines.add("INTERSTELLAR | Calibration");
-        lines.add("F9 terrain | F8 sky lab | F6 HUD | F7 reference");
+        lines.add("F10 live | F9 snapshot | F8 sky | F6 HUD");
         lines.add(String.format(Locale.ROOT, "r_s %.2f | photon sphere %.2f | ISCO %.2f blocks",
                 source.horizonRadius(), source.photonSphereRadius(),
                 source.innermostStableCircularOrbitRadius()));

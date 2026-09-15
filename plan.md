@@ -86,3 +86,7 @@ Bring forward iteration 3's scene-data experiment: one selected source and bound
 ### Terrain prototype checkpoint (2026-09-15)
 
 F9 renders actual textured opaque-block snapshots, curved-ray intersections and off-screen geometry for one selected source. On/off comparison, foreground occlusion, flat-hit validation and initial timings are implemented. This completes the initial scene-data spike, not iteration 3: live camera/update integration, finite-surface convergence, natural-terrain/model coverage, transparency and filtering remain. See docs/terrain-prototype.md.
+
+### Live-camera checkpoint (2026-09-15)
+
+F10 integrates moving-camera terrain with bounded periodic recapture and the vanilla HUD. F9 stays frozen. This is an explorable exterior preview, not full scene/model coverage or relativistic player motion. Next prioritize unsupported terrain models (snow is visible in the test scene), secondary-image filtering and independent finite-surface accuracy. See docs/live-terrain.md.

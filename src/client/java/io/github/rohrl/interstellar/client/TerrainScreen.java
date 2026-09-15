@@ -17,7 +17,7 @@ import net.minecraft.util.math.Vec3d;
 import org.lwjgl.glfw.GLFW;
 import java.util.Locale;
 
-/** Frozen scene-data prototype. World geometry is never moved or destroyed. */
+/** Shared frozen/live scene-data preview. World geometry is never moved or destroyed. */
 final class TerrainScreen extends Screen {
     private static ShaderProgram shader;
     private static int resourceVersion;
@@ -25,7 +25,10 @@ final class TerrainScreen extends Screen {
     private boolean validate;
     private String validationStatus="V: check geometry (brief pause)";
     private final SourcePayload source;
-    private TerrainSnapshot snapshot;
+    private TerrainSnapshot snapshot, pending;
+    private final boolean live;
+    private long publishedAt;
+    private int generation;
     private SimpleFramebuffer target;
     private LabBenchmark benchmark;
     private Vec3d camera;
@@ -34,30 +37,50 @@ final class TerrainScreen extends Screen {
     private String error;
     private final TerrainOptions options=TerrainOptions.load();
     private float scale=options.renderScale();
-    TerrainScreen(SourcePayload source) {super(Text.literal("Interstellar terrain prototype"));this.source=source;}
+    TerrainScreen(SourcePayload source) {this(source,false);}
+    TerrainScreen(SourcePayload source,boolean live) {super(Text.literal("Interstellar terrain prototype"));this.source=source;this.live=live;}
+    String problem() {return error;}
+    SourcePayload selectedSource() {return source;}
     static void setShader(ShaderProgram program) {shader=program;resourceVersion++;}
     @Override protected void init() {
         if(snapshot!=null || error!=null) return;
         if(!options.enabled()) {error="Terrain preview disabled in interstellar-terrain.json";return;}
-        if(source==null || !source.blackHoleProxy()) {error="Inspect a complete black-hole proxy first, then reopen F9.";return;}
+        if(source==null || !source.blackHoleProxy()) {error="Inspect a complete black-hole proxy first, then reopen the terrain preview.";return;}
         camera=client.gameRenderer.getCamera().getPos();
         yaw=client.gameRenderer.getCamera().getYaw();pitch=client.gameRenderer.getCamera().getPitch();
         if(camera.distanceTo(centre())/source.schwarzschildRadius()<1.05) {error="Terrain prototype needs an exterior camera: move beyond 1.05 r_s.";return;}
         snapshot=new TerrainSnapshot(client.world,centre());
-        if(!snapshot.contains(camera)) {error="Move within 46 blocks of the source on each axis, then reopen F9.";}
+        if(!snapshot.contains(camera)) {error="Move within 46 blocks of the source on each axis, then reopen the terrain preview.";}
     }
     private Vec3d centre() {return new Vec3d(source.x(),source.y(),source.z());}
     @Override public void render(DrawContext context,int mouseX,int mouseY,float delta) {
         context.draw();
-        if(snapshot!=null && (SelectedSource.current()!=source || client.world!=snapshot.world)) error="Source changed: inspect again and reopen F9.";
-        if(capturedVersion!=resourceVersion) error="Resources reloaded: reopen F9 to refresh textures.";
+        if(snapshot!=null && (SelectedSource.current()!=source || client.world!=snapshot.world)) error="Source changed: inspect again and reopen the terrain preview.";
+        if(capturedVersion!=resourceVersion) error="Resources reloaded: reopen the terrain preview to refresh textures.";
         if(error==null && shader==null) error="Terrain shader unavailable: see game log.";
         if(error==null) {
             try {
+                if(live) {
+                    camera=client.gameRenderer.getCamera().getPos();
+                    yaw=client.gameRenderer.getCamera().getYaw();pitch=client.gameRenderer.getCamera().getPitch();
+                    if(!snapshot.contains(camera)) {error="Left captured region; move closer and press F10.";return;}
+                    if(camera.distanceTo(centre())/source.schwarzschildRadius()<1.05) {error="Exterior limit reached; live terrain stopped.";return;}
+                }
                 snapshot.advance();
+                if(snapshot.ready() && publishedAt==0) {publishedAt=System.nanoTime();generation=1;}
+                if(live && snapshot.ready() && !client.isPaused()) refresh();
                 if(snapshot.ready()) renderTerrain();
-                else context.fill(0,0,width,height,0xFF101A28);
+                else if(!live) context.fill(0,0,width,height,0xFF101A28);
             } catch(RuntimeException failure) {error="Terrain preview failed: see game log.";Interstellar.LOGGER.error(error,failure);}
+        }
+        if(live) {
+            context.fill(6,6,Math.min(width-6,410),46,0xCD101824);
+            context.drawTextWithShadow(textRenderer,"INTERSTELLAR | Live camera | F10: off | F12: timing",12,12,0xFF88D8FF);
+            String age=publishedAt==0?snapshot.status():String.format(Locale.ROOT,"Published %.1fs ago | %s | generation %d",
+                    (System.nanoTime()-publishedAt)/1e9,pending==null?"waiting to refresh":"refreshing",generation);
+            context.drawTextWithShadow(textRenderer,age,12,24,0xFFFFFFFF);
+            context.drawTextWithShadow(textRenderer,benchmark==null?"Opaque cubes | Interactions use straight aim":benchmark.status().replace("B cancels","F12 cancels"),12,36,0xFFFFD59A);
+            return;
         }
         if(error!=null) context.fill(0,0,width,height,0xFF201018);
         context.fill(6,6,Math.min(width-6,440),94,0xCD101824);
@@ -68,6 +91,16 @@ final class TerrainScreen extends Screen {
         context.drawTextWithShadow(textRenderer,benchmark==null?"B: benchmark terrain pass":benchmark.status(),12,60,0xFF88D8FF);
         context.drawTextWithShadow(textRenderer,validationStatus,12,72,0xFF88D8FF);
         context.drawTextWithShadow(textRenderer,"Frozen cubes | Amber: missing | Pink: unsupported/budget",12,height-16,0xFFFFD59A);
+    }
+    private void refresh() {
+        if(pending==null && System.nanoTime()-publishedAt>=1_000_000_000L) pending=new TerrainSnapshot(client.world,centre());
+        if(pending!=null) {
+            pending.advance();
+            if(pending.ready()) {
+                snapshot.close();snapshot=pending;pending=null;
+                publishedAt=System.nanoTime();generation++;
+            }
+        }
     }
     private void renderTerrain() {
         int w=Math.max(1,Math.round(client.getWindow().getFramebufferWidth()*scale));
@@ -117,7 +150,7 @@ final class TerrainScreen extends Screen {
     @Override public boolean keyPressed(int key,int scan,int modifiers) {
         if(key==GLFW.GLFW_KEY_B && snapshot!=null && snapshot.ready() && error==null) {
             if(benchmark!=null)cancelBenchmark();
-            else benchmark=new LabBenchmark(String.format(Locale.ROOT,"TERRAIN %dx%d, scale=%.2f, r/rs=%.5f, lensing=%s, fine=%s, snapshot=%s",
+            else benchmark=new LabBenchmark(String.format(Locale.ROOT,"TERRAIN %dx%d, scale=%.2f, r/rs=%.5f, lensing=%s, fine=%s, snapshot=%s, live="+live,
                     target.textureWidth,target.textureHeight,scale,camera.distanceTo(centre())/source.schwarzschildRadius(),lensing,fine,snapshot.status()));
             return true;
         }
@@ -136,6 +169,6 @@ final class TerrainScreen extends Screen {
         }
         return true;
     }
-    @Override public void removed() {cancelBenchmark();if(snapshot!=null)snapshot.close();if(target!=null)target.delete();}
+    @Override public void removed() {cancelBenchmark();if(snapshot!=null)snapshot.close();if(pending!=null)pending.close();if(target!=null)target.delete();}
     @Override public boolean shouldPause() {return true;}
 }

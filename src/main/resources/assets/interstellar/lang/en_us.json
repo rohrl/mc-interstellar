@@ -1,4 +1,6 @@
 {
+  "key.interstellar.live_terrain": "Toggle live terrain lensing",
+  "key.interstellar.live_timing": "Benchmark live terrain",
   "key.interstellar.terrain": "Open terrain lensing prototype",
   "block.interstellar.mass_block": "Mass Block",
   "key.categories.interstellar": "Interstellar",

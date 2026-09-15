@@ -3,12 +3,13 @@
   "id": "interstellar",
   "version": "${version}",
   "name": "Interstellar",
-  "description": "An educational relativistic optics experiment. Current build: calibration HUD only.",
+  "description": "An educational relativistic optics experiment. Sky and bounded Minecraft terrain lensing prototypes.",
   "environment": "*",
   "entrypoints": {
     "main": ["io.github.rohrl.interstellar.Interstellar"],
     "client": ["io.github.rohrl.interstellar.client.InterstellarClient"]
   },
+  "mixins": [{"config":"interstellar.client.mixins.json","environment":"client"}],
   "contact": {
     "sources": "https://github.com/rohrl/mc-interstellar",
     "issues": "https://github.com/rohrl/mc-interstellar/issues"
