@@ -90,3 +90,15 @@ F9 renders actual textured opaque-block snapshots, curved-ray intersections and 
 ### Live-camera checkpoint (2026-09-15)
 
 F10 integrates moving-camera terrain with bounded periodic recapture and the vanilla HUD. F9 stays frozen. This is an explorable exterior preview, not full scene/model coverage or relativistic player motion. Next prioritize unsupported terrain models (snow is visible in the test scene), secondary-image filtering and independent finite-surface accuracy. See docs/live-terrain.md.
+
+## Current delivery order — owner reaffirmed 2026-09-15
+
+This order takes precedence over older checkpoint suggestions above. Diagnostics should support a usable demo, not indefinitely postpone it.
+
+| Step | Status and remaining work |
+| --- | --- |
+| 1. Stable exploration | Selection survives unrelated chunks and F10 recovers at viewing limits. **Next: bounded automatic source metadata refresh after relevant edits**, with explicit handling of removed/split/extended sources. Current relevant changes still require inspection. |
+| 2. Wider useful viewing range | Outside-capture viewing up to 128 blocks is implemented. Targeted independent curved-surface checks now supplement flat checks. Outside terrain/background and foreground occlusion remain limitations. |
+| 3. Demo packaging | HUD, controls, launcher, saved scene and measured defaults exist. Finish a repeatable self-contained scene/setup and coherent source/range state presentation. Preserve the owner's existing world. |
+| 4. Visual refinement | Snow layers supported. Separate AA WIP remains unverified; measure it, improve secondary images and broaden block-model coverage after packaging. |
+| 5. Deeper relativity | Terrain horizon crossing, actual player-body images, then independent observer-speed feature. Sky-lab crossing does not complete terrain crossing. |

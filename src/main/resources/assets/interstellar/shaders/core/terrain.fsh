@@ -15,6 +15,7 @@ vec3 missing(vec3 direction) {
     float grid=step(.92,fract(atan(direction.x,direction.z)*8.0))+step(.92,fract(asin(clamp(direction.y,-1,1))*8.0));
     return mix(vec3(.055,.085,.12),vec3(.28,.19,.07),min(grid,1.0));
 }
+vec3 dark() {diagnostic=vec4(0,0,0,-1);return vec3(0);}
 
 // Exact voxel traversal along one straight chord. -1=clear segment, 0=left snapshot, >0=material.
 int segment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
@@ -104,7 +105,7 @@ void trace() {
         bool horizon=Lensing>.5 && mu<0.0;
         if(horizon) distance=r-Radius;
         int value=segment(Camera,Camera+direction*distance,hit,normal);
-        fragColor=vec4(value>0?surface(value,hit,normal):(horizon&&value==-1?vec3(0):missing(direction)),1);return;
+        fragColor=vec4(value>0?surface(value,hit,normal):(horizon&&value==-1?dark():missing(direction)),1);return;
     }
     vec3 tangentAxis=tangentVector/tangent;
     float u=Radius/r;
@@ -125,9 +126,9 @@ void trace() {
         if(next.x<=0.0) {fragColor=vec4(missing(direction),1);return;}
         vec3 end=Source+(Radius/next.x)*(cos(angle)*radialAxis+sin(angle)*tangentAxis);
         int value=segment(p,end,hit,normal);
-        if(value>0) {fragColor=vec4(length(hit-Source)<Radius?vec3(0):surface(value,hit,normal),1);return;}
+        if(value>0) {fragColor=vec4(length(hit-Source)<Radius?dark():surface(value,hit,normal),1);return;}
         if(value==0) {fragColor=vec4(missing(normalize(end-p)),1);return;}
-        if(captured) {fragColor=vec4(0,0,0,1);return;}
+        if(captured) {fragColor=vec4(dark(),1);return;}
         phi=angle;q=next;p=end;
         if(phi>=16.0) break;
     }

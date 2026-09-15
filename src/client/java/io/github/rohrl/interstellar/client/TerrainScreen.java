@@ -23,7 +23,8 @@ final class TerrainScreen extends Screen {
     private static int resourceVersion;
     private final int capturedVersion=resourceVersion;
     private boolean validate;
-    private String validationStatus="V: check geometry (brief pause)";
+    private boolean curvedValidation;
+    private String validationStatus="V: flat check | C: curved check (brief pause)";
     private final SourcePayload source;
     private TerrainSnapshot snapshot, pending;
     private final boolean live;
@@ -142,7 +143,7 @@ final class TerrainScreen extends Screen {
                 validate=false;
                 Interstellar.LOGGER.info("Terrain validation observer: camera={}, source={}, yaw={}, pitch={}, pathStep={}",camera,centre(),yaw,pitch,fine?.225:.45);
                 validationStatus=TerrainValidation.run(shader,snapshot,camera.subtract(Vec3d.of(snapshot.origin)),forward,right,right.crossProduct(forward),
-                        (double)w/h,lensing,()->drawQuad(w,h));
+                        (double)w/h,lensing,centre().subtract(Vec3d.of(snapshot.origin)),source.schwarzschildRadius(),curvedValidation,()->drawQuad(w,h));
             }
             if(benchmark!=null)benchmark.begin();
             drawQuad(w,h);
@@ -170,7 +171,8 @@ final class TerrainScreen extends Screen {
         }
         cancelBenchmark();
         switch(key) {
-            case GLFW.GLFW_KEY_V -> validate=true;
+            case GLFW.GLFW_KEY_V -> {validate=true;curvedValidation=false;}
+            case GLFW.GLFW_KEY_C -> {validate=true;curvedValidation=true;}
             case GLFW.GLFW_KEY_SPACE -> lensing=!lensing;
             case GLFW.GLFW_KEY_Q -> scale=scale==.5f?1f:.5f;
             case GLFW.GLFW_KEY_J -> fine=!fine;

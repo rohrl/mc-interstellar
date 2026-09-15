@@ -62,7 +62,7 @@ Press **C** in the lab for the near-critical ray stress test (brief blocking pau
 
 ## Terrain preview
 
-Inspect a black-hole proxy, move outside 1.05 r_s, and press **F9**. **Space** compares lensing; arrows look around; **L** aims at the source; **Q** changes resolution; **J** changes path sampling; **V** checks geometry; **B** measures GPU cost. Esc returns to Minecraft. Reopen to capture a new view. This is a frozen opaque-block preview with explicit missing-data boundaries. [Controls, performance, limits and saved test scene](docs/terrain-prototype.md).
+Inspect a black-hole proxy, move outside 1.05 r_s, and press **F9**. **Space** compares lensing; arrows look around; **L** aims at the source; **Q** changes resolution; **J** changes path sampling; **V** checks flat geometry; **C** compares curved hits against an independent CPU reference; **B** measures GPU cost. Esc returns to Minecraft. Reopen to capture a new view. This is a frozen opaque-block preview with explicit missing-data boundaries. [Controls, performance, limits and saved test scene](docs/terrain-prototype.md).
 
 ## Live terrain
 
