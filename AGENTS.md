@@ -24,3 +24,12 @@ Run the Gradle build for Java/resource changes and relevant mathematical tests f
 ## Runtime testing ownership
 
 The owner explicitly requests autonomous in-game inputs and verification. Operate the development client, capture results, and iterate without expecting owner attendance. An open client is for optional exploration, not a pending test assignment.
+
+## Token-efficient workflow (owner request)
+
+- On resume, read the current checkpoint and relevant changed sections; do not repeatedly dump entire growing logs/docs. Read the four start documents once per new context, using current summaries where already available.
+- Batch predictable GUI inputs into bounded scripts. Use log/state checks for readiness and reserve screenshots for visual acceptance or failures; prefer modest window resolution or a relevant crop.
+- Redirect verbose builds/runtime output to local logs; return completion status and relevant failures/timings only. Avoid repeatedly polling startup output.
+- Keep handoff.md focused on current state; put detailed evidence in feature docs and link it from progress/decision notes rather than copying it among all files.
+- Run appropriate tests once per meaningful change; repeat only for a change, failure or unresolved concern. Do not trade away shader visual checks or scientific validation.
+- No exact token savings are claimed without usage accounting. Do not change model settings or spawn agents to reduce costs without authorization.

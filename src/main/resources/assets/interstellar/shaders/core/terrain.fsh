@@ -30,7 +30,27 @@ int segment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
         hit=start+t*d;
         if(any(lessThan(cell,ivec3(0))) || any(greaterThanEqual(cell,ivec3(SIDE)))) return 0;
         int value=int(texelFetch(Voxels,ivec2(cell.x+cell.z*SIDE,cell.y),0).r+.5);
-        if(value!=0) return value;
+                if(value!=0) {
+            float height=value<3?1.0:texelFetch(Palette,ivec2(0,value),0).w;
+            if(height>=1.0) return value;
+            // Intersect the actual snow cuboid inside this voxel/chord, including its top.
+            vec3 lower=vec3(cell),upper=lower+vec3(1,height,1);
+            float enter=0.0,leave=1.0;vec3 faceNormal=normal;
+            bool intersects=true;
+            for(int a=0;a<3;a++) {
+                if(abs(d[a])<1e-12) {
+                    if(start[a]<lower[a] || start[a]>=upper[a]) intersects=false;
+                } else {
+                    float t0=(lower[a]-start[a])/d[a],t1=(upper[a]-start[a])/d[a];
+                    float nearT=min(t0,t1);
+                    if(nearT>enter) {enter=nearT;faceNormal=vec3(0);faceNormal[a]=-sign(d[a]);}
+                    leave=min(leave,max(t0,t1));
+                }
+            }
+            if(intersects && leave>=enter && enter>=t-1e-6) {
+                hit=start+enter*d;normal=faceNormal;return value;
+            }
+        }
         int axis=next.x<next.y?(next.x<next.z?0:2):(next.y<next.z?1:2);
         t=next[axis];
         if(t>1.0) return -1;

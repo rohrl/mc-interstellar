@@ -118,3 +118,7 @@ F10 now follows normal camera movement and periodically refreshes bounded opaque
 Saved scene retains 6960 opaque cells plus snowfall (2400 unsupported cells in the final F9 check); pink floor regions mark unsupported snow layers. Preserve owner edits and weather-created blocks. No user testing is pending. Next: improve non-full-cube terrain coverage (especially snow), filter secondary images and validate finite-surface intersections independently. Live source maintenance, actual body, terrain interior, radiometry and SR potion remain unfinished. Live interactions are straight vanilla rays; observer motion has no SR transformation yet.
 
 GitHub's default branch is codex/bootstrap-observatory, so its landing page shows the old bootstrap checkpoint. Development branches hold newer work; do not assume failed pushes from that page. Verify remote refs after publishing. Earlier usage-limit interruption left live changes local; this checkpoint resumes that work.
+
+## Snow and workflow checkpoint — 2026-09-15, codex/snow-layers
+
+Token-conscious workflow recorded in AGENTS.md; handoff shortened to current state. Snow layers now render at their actual heights in F9/F10. Build/32 tests pass; sampled GPU flat geometry has zero mismatches; snowy demo now has zero unsupported cells. Live 1440p/half-resolution GPU p95=4.244544 ms; frame interval p95=9.6169 ms. See docs/snow-layers.md for conditions and limitations. Client left in F10 for optional exploration. No owner testing is pending.

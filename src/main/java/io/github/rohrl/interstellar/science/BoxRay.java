@@ -4,13 +4,17 @@ package io.github.rohrl.interstellar.science;
 public final class BoxRay {
     private BoxRay() { }
     public static double entry(double ox,double oy,double oz,double dx,double dy,double dz,int x,int y,int z) {
+        return entry(ox,oy,oz,dx,dy,dz,x,y,z,1);
+    }
+    public static double entry(double ox,double oy,double oz,double dx,double dy,double dz,int x,int y,int z,double height) {
         double lo=0,hi=Double.POSITIVE_INFINITY;
         for(int axis=0;axis<3;axis++) {
             double o=axis==0?ox:axis==1?oy:oz,d=axis==0?dx:axis==1?dy:dz;
             int lower=axis==0?x:axis==1?y:z;
-            if(Math.abs(d)<1e-15) {if(o<lower || o>=lower+1) return Double.POSITIVE_INFINITY;}
+            double upper=lower+(axis==1?height:1);
+            if(Math.abs(d)<1e-15) {if(o<lower || o>=upper) return Double.POSITIVE_INFINITY;}
             else {
-                double a=(lower-o)/d,b=(lower+1-o)/d;
+                double a=(lower-o)/d,b=(upper-o)/d;
                 lo=Math.max(lo,Math.min(a,b));hi=Math.min(hi,Math.max(a,b));
                 if(hi<lo) return Double.POSITIVE_INFINITY;
             }

@@ -28,3 +28,5 @@ RTX 5070 Ti, driver 616.92, 2560x1440 output, 1280x720 internal, standard path s
 | Sampled frame interval | 8.3408 ms | 9.2535 ms | 9.5172 ms |
 
 The GPU measurement excludes native world rendering, capture/upload, upscale and HUD. Frame intervals include cap/vsync and surrounding work, but are a short scene-specific sample, not a general 60 FPS guarantee. No new optical equations or accuracy claims accompany this integration.
+
+Snow limitation update: vanilla snow layers are now supported; see [snow-layer verification](snow-layers.md). The unsupported-snow observations above describe the earlier live-camera checkpoint.

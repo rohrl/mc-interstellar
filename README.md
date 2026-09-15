@@ -66,4 +66,4 @@ Inspect a black-hole proxy, move outside 1.05 r_s, and press **F9**. **Space** c
 
 ## Live terrain
 
-After inspecting a black-hole proxy, press **F10** to explore terrain lensing with normal movement and the vanilla HUD. **F12** measures the pass; F10 returns to normal rendering. Terrain updates are delayed, interactions still use straight aim, and snow/non-cube models are unsupported. [Controls, checks and measured costs](docs/live-terrain.md).
+After inspecting a black-hole proxy, press **F10** to explore terrain lensing with normal movement and the vanilla HUD. **F12** measures the pass; F10 returns to normal rendering. Terrain updates are delayed, interactions still use straight aim, and other non-cube models are unsupported. Snow layers now render at their actual height. [Controls, checks and measured costs](docs/live-terrain.md).

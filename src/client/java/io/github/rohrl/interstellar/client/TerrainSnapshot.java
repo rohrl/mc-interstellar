@@ -3,6 +3,8 @@ package io.github.rohrl.interstellar.client;
 import com.mojang.blaze3d.systems.RenderSystem;
 import io.github.rohrl.interstellar.Interstellar;
 import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
+import net.minecraft.block.SnowBlock;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.model.BakedQuad;
 import net.minecraft.client.world.ClientWorld;
@@ -30,6 +32,7 @@ final class TerrainSnapshot implements AutoCloseable {
     private final ArrayList<float[]> palette=new ArrayList<>();
     final ArrayList<Integer> occupied=new ArrayList<>();
     int value(int index) {return (int)cells.get(index);}
+    float height(int index) {int id=value(index);return id<3?1f:palette.get(id)[3];}
     private boolean closed;
     private int cursor, opaque, unknown, unsupported;
     int voxelTexture, paletteTexture;
@@ -59,7 +62,7 @@ final class TerrainSnapshot implements AutoCloseable {
             else {
                 var state=world.getBlockState(pos);
                 if (state.isAir()) value=0;
-                else if (!state.isOpaqueFullCube(world,pos)) { value=2;unsupported++; }
+                else if (!state.isOf(Blocks.SNOW) && !state.isOpaqueFullCube(world,pos)) { value=2;unsupported++; }
                 else {
                     value=materials.computeIfAbsent(state,key->material(key,pos));
                     if(value==2) unsupported++; else opaque++;
@@ -76,8 +79,10 @@ final class TerrainSnapshot implements AutoCloseable {
         var client=MinecraftClient.getInstance();
         var model=client.getBlockRenderManager().getModel(state);
         float[] data=new float[72];
+        data[3]=state.isOf(Blocks.SNOW)?state.get(SnowBlock.LAYERS)/8f:1f;
         for(var face:Direction.values()) {
             var quads=model.getQuads(state,face,Random.create(0));
+            if(quads.isEmpty()) quads=model.getQuads(state,null,Random.create(0)).stream().filter(q->q.getFace()==face).toList();
             if(quads.isEmpty()) return 2;
             BakedQuad quad=quads.getFirst();
             int[] vertex=quad.getVertexData(); int stride=vertex.length/4;
@@ -88,7 +93,7 @@ final class TerrainSnapshot implements AutoCloseable {
             float ds1=Float.intBitsToFloat(vertex[stride+a])-s0,dt1=Float.intBitsToFloat(vertex[stride+b])-t0;
             float ds2=Float.intBitsToFloat(vertex[2*stride+a])-s0,dt2=Float.intBitsToFloat(vertex[2*stride+b])-t0;
             float det=ds1*dt2-ds2*dt1;
-            if(Math.abs(det)<.5) return 2; // Restrict the prototype to full, planar cube faces.
+            if(Math.abs(det)<1e-6) return 2; // Snow sides can be only one eighth of a block high.
             int offset=face.getId()*12;
             for(int uv=0;uv<2;uv++) {
                 float v0=Float.intBitsToFloat(vertex[4+uv]);

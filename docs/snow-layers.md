@@ -1,0 +1,9 @@
+# Snow-layer support — 2026-09-15
+
+F9 and F10 now support vanilla snow layers at heights 1/8 through 8/8 block. Texture UVs come from the baked faces, including unculled top faces. The palette stores each material height in the unused alpha of its first texel; full cubes retain height 1. The GPU traverses voxels as before, testing thin snow cuboids inside each straight chord. Empty space above snow is traversable. Curved integration itself is unchanged.
+
+The CPU diagnostic uses independent height-aware slab intersections. A regression test covers downward top hits, side hits and rays above all eight snow heights. Build passes with 32 tests. Final scene GPU diagnostic: 40x27 rays, 0 flat mismatches, 506 flat hits, 695 lensed opaque hits, 0 off-screen-with-margin hits and 0 unresolved samples. This validates sampled flat geometry, not full curved-surface accuracy. The snowy scene had 10895 supported opaque cells, 8 materials and zero unknown/unsupported cells. One modest-resolution visual check confirms white snow and secondary images instead of purple diagnostics. Existing snow, weather and owner edits were preserved.
+
+Live benchmark: RTX 5070 Ti / NVIDIA 616.92; output 2560x1440; internal 1280x720; standard path; r/r_s=4.51426; camera at the saved reference position; refresh active. Started at 10904 supported cells; snowfall continued during capture. 120 warmup frames, 300 samples. GPU pass p50/p95/p99: 4.145824/4.244544/4.268640 ms. Frame intervals: 8.3757/9.6169/10.0629 ms, including cap/vsync. GPU pass excludes native world, capture/upload, upscale and HUD. This is a short scene-specific measurement, not a universal FPS guarantee.
+
+Other non-cube models/fluids remain unsupported. Near-critical precision, finite-surface convergence, secondary-image filtering, entities/body, terrain interior and radiometry remain unfinished. No new physics claim accompanies snow support.

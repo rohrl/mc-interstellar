@@ -50,7 +50,7 @@ final class TerrainValidation {
                         double nearest=Double.POSITIVE_INFINITY;int best=-1;
                         for(int index:scene.occupied) {
                             int bx=index%TerrainSnapshot.SIDE,bz=(index/TerrainSnapshot.SIDE)%TerrainSnapshot.SIDE,by=index/(TerrainSnapshot.SIDE*TerrainSnapshot.SIDE);
-                            double t=BoxRay.entry(camera.x,camera.y,camera.z,direction.x,direction.y,direction.z,bx,by,bz);
+                            double t=BoxRay.entry(camera.x,camera.y,camera.z,direction.x,direction.y,direction.z,bx,by,bz,scene.height(index));
                             if(t<nearest) {nearest=t;best=index;}
                         }
                         if(best>=0)flatHits++;
