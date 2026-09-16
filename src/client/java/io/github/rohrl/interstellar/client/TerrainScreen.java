@@ -129,7 +129,9 @@ final class TerrainScreen extends Screen {
         }
         target.beginWrite(true);
         try {
+            var projection=WorldProjection.current();
             shader.getUniformOrDefault("Viewport").set((float)w,(float)h);
+            shader.getUniformOrDefault("ViewSlopes").set(projection.x(),projection.y(),projection.offsetX(),projection.offsetY());
             setVector("Camera",camera.subtract(Vec3d.of(snapshot.origin)));
             setVector("Source",centre().subtract(Vec3d.of(snapshot.origin)));
             Vec3d forward=Vec3d.fromPolar(pitch,yaw),right=Vec3d.fromPolar(0,yaw+90);
@@ -156,7 +158,7 @@ final class TerrainScreen extends Screen {
                 validate=false;
                 Interstellar.LOGGER.info("Terrain validation observer: camera={}, source={}, yaw={}, pitch={}, pathStep={}",camera,centre(),yaw,pitch,fine?.225:.45);
                 validationStatus=TerrainValidation.run(shader,snapshot,camera.subtract(Vec3d.of(snapshot.origin)),forward,right,right.crossProduct(forward),
-                        (double)w/h,lensing,centre().subtract(Vec3d.of(snapshot.origin)),source.schwarzschildRadius(),curvedValidation,()->drawQuad(w,h));
+                        projection,lensing,centre().subtract(Vec3d.of(snapshot.origin)),source.schwarzschildRadius(),curvedValidation,()->drawQuad(w,h));
             }
             if(benchmark!=null)benchmark.begin();
             drawQuad(w,h);

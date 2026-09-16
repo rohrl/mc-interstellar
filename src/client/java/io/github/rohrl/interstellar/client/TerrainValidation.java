@@ -14,7 +14,7 @@ import org.lwjgl.opengl.GL21;
 /** Opt-in flat slabs or independent affine curved-ray comparison with a separate refinement check. */
 final class TerrainValidation {
     static String run(ShaderProgram shader,TerrainSnapshot scene,Vec3d camera,Vec3d forward,Vec3d right,Vec3d up,
-                      double aspect,boolean lensing,Vec3d source,double radius,boolean curved,Runnable draw) {
+                      WorldProjection projection,boolean lensing,Vec3d source,double radius,boolean curved,Runnable draw) {
         long started=System.nanoTime();
         int rayBudget=Math.min(1536,12_000_000/Math.max(1,scene.occupied.size()));
         final int w=curved?12:Math.min(48,Math.max(1,(int)Math.sqrt(rayBudget*1.5)));
@@ -54,7 +54,7 @@ final class TerrainValidation {
                 for(int y=0;y<h;y++)for(int x=0;x<w;x++) {
                     int offset=4*(x+y*w),status=Math.round(pixels.get(offset+3));
                     int gx=Math.round(pixels.get(offset)),gy=Math.round(pixels.get(offset+1)),gz=Math.round(pixels.get(offset+2));
-                    double sx=((x+.5)/w*2-1)*.7002075382*aspect,sy=((y+.5)/h*2-1)*.7002075382;
+                    double sx=((x+.5)/w*2-1)*projection.x()+projection.offsetX(),sy=((y+.5)/h*2-1)*projection.y()+projection.offsetY();
                     Vec3d direction=forward.add(right.multiply(sx)).add(up.multiply(sy)).normalize();
                     if(mode==2) {
                         if((x+y*w)%11!=0)continue;
@@ -106,8 +106,8 @@ final class TerrainValidation {
                             Vec3d d=new Vec3d(gx+.5,gy+.5,gz+.5).subtract(camera);
                             double depth=d.dotProduct(forward);
                             // Two-block margin avoids counting cells straddling the ordinary FOV edge.
-                            if(depth<-2 || Math.abs(d.dotProduct(right))>depth*.7002075382*aspect+2 ||
-                                    Math.abs(d.dotProduct(up))>depth*.7002075382+2)outside++;
+                            if(depth<-2 || Math.abs(d.dotProduct(right)-depth*projection.offsetX())>depth*projection.x()+2 ||
+                                    Math.abs(d.dotProduct(up)-depth*projection.offsetY())>depth*projection.y()+2)outside++;
                         }
                     }
                 }
@@ -127,7 +127,7 @@ final class TerrainValidation {
             return "Curved: "+curvedMismatch+"/"+compared+" mismatch | inconclusive: "+(refinementFailures+referenceUnresolved);
         }
         Interstellar.LOGGER.info("Terrain diagnostic: {}x{}, aspect={}, flat mismatches={}, flat hits={}, lensed opaque hits={}, outside ordinary FOV with margin={}, lensed unresolved={}; flat reference brute-force cube slabs, not curved-ray validation",
-                w,h,aspect,mismatch,flatHits,lensedHits,outside,unresolved);
+                w,h,projection.x()/projection.y(),mismatch,flatHits,lensedHits,outside,unresolved);
         return "Flat check: "+mismatch+" mismatches | off-screen lensed hits: "+outside;
     }
     private static FiniteTerrainRay.Point point(Vec3d value) {return new FiniteTerrainRay.Point((float)value.x,(float)value.y,(float)value.z);}

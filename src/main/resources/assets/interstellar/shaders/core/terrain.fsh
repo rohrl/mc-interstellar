@@ -7,7 +7,7 @@ uniform sampler2D DistantAppearance,SkyAtlas,Lightmap;
 uniform vec4 FaceShades;
 uniform float Hybrid;
 uniform float DistantTop;
-uniform vec2 Viewport;
+uniform vec4 ViewSlopes;
 uniform vec3 Camera,Source,Forward,Right,Up;
 uniform float Radius,Lensing,PathStep,Diagnostic;
 vec4 diagnostic=vec4(0);
@@ -193,8 +193,8 @@ int sceneSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
 }
 vec2 derivative(vec2 q) {return vec2(q.y,1.5*q.x*q.x-q.x);}
 void trace() {
-    vec2 xy=(screenUv*2.0-1.0)*.7002075382;xy.x*=Viewport.x/Viewport.y;
-    vec3 direction=normalize(Forward+xy.x*Right-xy.y*Up);
+    vec2 xy=(screenUv*2.0-1.0)*ViewSlopes.xy;
+    vec3 direction=normalize(Forward+(xy.x+ViewSlopes.z)*Right+(-xy.y+ViewSlopes.w)*Up);
     vec3 hit,normal;
     vec3 radialAxis=normalize(Camera-Source);
     float r=length(Camera-Source),mu=dot(direction,radialAxis);
@@ -250,8 +250,8 @@ void trace() {
 }
 void main() {
     if(Diagnostic>1.5) {
-        vec2 xy=(screenUv*2.0-1.0)*.7002075382;xy.x*=Viewport.x/Viewport.y;
-        vec3 d=normalize(Forward+xy.x*Right-xy.y*Up),hit,normal;
+        vec2 xy=(screenUv*2.0-1.0)*ViewSlopes.xy;
+        vec3 d=normalize(Forward+(xy.x+ViewSlopes.z)*Right+(-xy.y+ViewSlopes.w)*Up),hit,normal;
         int value=distantSegment(Camera,Camera+d*1024.0,hit,normal);
         fragColor=vec4(value==0?0.0:length(hit-Camera),0,0,float(value));return;
     }

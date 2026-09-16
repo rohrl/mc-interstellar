@@ -19,6 +19,7 @@ final class AppearanceCapture {
     private static LinkedHashMap<String,Object> metadata;
     static void register() {
         WorldRenderEvents.END.register(context -> {
+            WorldProjection.capture(context.projectionMatrix());
             if(requested==null)return;
             var client=MinecraftClient.getInstance();
             if(client.currentScreen!=requested) {clear();return;}
@@ -37,7 +38,8 @@ final class AppearanceCapture {
                 metadata.put("yaw",camera.getYaw());metadata.put("pitch",camera.getPitch());
                 metadata.put("projection",context.projectionMatrix().get(new float[16]));
                 metadata.put("configuredFov",client.options.getFov().getValue());
-                metadata.put("candidateVerticalFov",70);
+                metadata.put("candidateVerticalFov",WorldProjection.current().verticalFov());
+                metadata.put("candidateRaySlopes",WorldProjection.current());
                 metadata.put("gamma",client.options.getGamma().getValue());
                 metadata.put("perspective",client.options.getPerspective().name());
                 metadata.put("dimension",client.world.getRegistryKey().getValue().toString());

@@ -4,6 +4,8 @@ Repo: C:\work\code\minecraft\interstellar\interstellar. Branch: codex/distant-he
 
 ## Current checkpoint — 2026-09-17
 
+LATEST: repair 6e3b69d pushed after owner explicitly confirmed origin. Subsequent projection fix now replaces hard-coded 70-degree FOV with actual world perspective scales/offsets (observed effective FOV 77 degrees despite configured70). Final build/45 tests and local/distant V pass. Two fixed daytime pairs inspected; wall/platform screen positions align, sky gradient/clouds and terrain shading/geometry remain different. Live far-pose GPU p95=9.685856 ms, frame p95=11.6756 ms. Detailed evidence and capture IDs: projection subsection in docs/native-appearance.md. Current logs projection-final-build.log and projection-verified-runtime.log. Client remains F10 at far pose below. Next resolve appearance errors, not camera-scale mismatch. The following initial-repair metrics are historical.
+
 Interrupted appearance implementation repaired and runtime verified. GLSL reserved name `packed` was the terrain compilation blocker; renamed `lightCode`. Native sky/cloud capture, Minecraft lightmap/face shading and separate snow-cap/side materials work in F9/H and F10. Same-frame vanilla/zero-bending capture (F9 P) and Java comparator implemented. Read docs/native-appearance.md for controls, results and limits.
 
 Build/45 tests and comparator self-tests pass. Local/distant V checks have zero mismatches. Snowy-terrain pair RGB MAE 0.0423; repeated vanilla references pixel-identical. Contact sheet inspected. Live F10 1440p/half-resolution GPU p95=9.90976 ms, frame interval p95=12.0548 ms; optical timer excludes capture/upload/sky/upscale. No universal performance or appearance-parity claim.

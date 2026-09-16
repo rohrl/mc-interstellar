@@ -158,3 +158,7 @@ Owner subsequently rejected the prototype's white mountains and dark sky. Assess
 ## Appearance repair and launch recovery — 2026-09-17
 
 Completed the interrupted native sky/light and cap/side material implementation; fixed the reserved GLSL identifier that blocked shader startup. Build/45 tests, comparator self-tests and actual F9/H/F10 runtime pass. First same-frame vanilla/zero-bending pair RGB MAE 0.0423; repeat vanilla references identical. Local/distant V diagnostics have zero mismatches. Live 1440p/half-resolution GPU p95=9.90976 ms, frame p95=12.0548 ms, with timer limitations documented. Final HUD wording edits rebuilt without redundant screenshots. See docs/native-appearance.md for evidence and remaining appearance errors. Client/local config left in F10 with experiment on; code default off, no block edits, AA separate. World integration and slow lensed reference remain unfinished.
+
+## World projection alignment — 2026-09-17
+
+Pushed repair 6e3b69d to explicitly confirmed origin. Fixed the next concrete comparison failure: actual world FOV was77 degrees while backend used70. F9/F10 and independent diagnostics now use world perspective scales/offsets. Final build/45 tests pass; local/distant V zero mismatches. Two daytime image pairs inspected, wall/platform alignment improved; cloud/sky/material/geometry errors remain. Live 1440p/half-resolution GPU p95=9.685856 ms, frame p95=11.6756 ms (documented exclusions). Client left F10 enabled at far reference; no block edits, AA separate. Exact evidence: docs/native-appearance.md.

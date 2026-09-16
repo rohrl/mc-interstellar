@@ -155,3 +155,7 @@ Owner rejected white mountain columns/dark flat sky and proposed slow-reference 
 ## D034 — Native appearance and first comparison checkpoint — accepted (2026-09-17)
 
 Reuse Minecraft sky/cloud rendering and lightmap/face brightness, with separate distant cap/side materials. This corrects the gross white-mountain/flat-sky failures without restoring ordinary terrain camera copies. Repair the interrupted shader's reserved `packed` identifier. Same-frame vanilla/zero-bending capture and regional Java comparison now run; appearance parity remains unfinished. Keep code default opt-in, enable locally for owner inspection. Owner explicitly defers automated movement/flicker checks, superseding that part of D033 for now. Evidence, timing boundaries and remaining approximations: docs/native-appearance.md.
+
+## D035 — Use the actual world projection — accepted (2026-09-17)
+
+Paired-image metadata revealed effective FOV 77 degrees despite configured70; the fixed70 backend enlarged terrain. Derive ray scales/offsets from the world projection each frame in F9/F10, use matching camera inputs in independent hit checks, and record effective candidate projection in metadata. Two fixed-pose images plus zero-mismatch diagnostics verify this correction, without claiming camera bob/hurt or appearance parity. Keep the shared vertex shader Viewport uniform independent of optical projection. Evidence: docs/native-appearance.md.
