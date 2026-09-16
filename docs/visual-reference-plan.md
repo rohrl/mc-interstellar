@@ -1,6 +1,6 @@
 # Visual integration reference: feasibility and next gate
 
-2026-09-16. Owner rejected the height-field appearance: white mountains and a dark, flat sky are not acceptable compromises. The experiment remains available for research, not a path to promote unchanged. This document specifies proposed work; no reference renderer or automated image suite has been implemented yet.
+2026-09-16 plan; checkpoint updated 2026-09-17. Owner rejected white mountains and a dark, flat sky. The first same-frame vanilla/zero-bending capture and regional comparison tool now runs, alongside native sky/light and snow-cap repairs: see [native-appearance.md](native-appearance.md). Appearance parity and the broader pose suite remain unfinished; the slow lensed reference is not implemented. Owner has deferred automated movement/flicker checks; retain periodic fixed-snapshot inspection.
 
 ## Diagnosis
 

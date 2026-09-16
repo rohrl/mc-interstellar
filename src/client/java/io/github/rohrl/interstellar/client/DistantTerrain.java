@@ -19,9 +19,11 @@ final class DistantTerrain implements AutoCloseable {
     static final int SIDE=256, OFFSET=(SIDE-TerrainSnapshot.SIDE)/2;
     private final TerrainSnapshot scene;
     private final FloatBuffer data=MemoryUtil.memCallocFloat(SIDE*SIDE*4);
+    private final FloatBuffer appearance=MemoryUtil.memCallocFloat(SIDE*SIDE*4);
     private final BlockPos.Mutable pos=new BlockPos.Mutable();
     private int cursor, lowerY=Integer.MIN_VALUE;
     int texture;
+    int appearanceTexture;
     float maxHeight=-1024;
     DistantTerrain(TerrainSnapshot scene) {this.scene=scene;}
     boolean ready() {return cursor==SIDE*SIDE;}
@@ -44,7 +46,10 @@ final class DistantTerrain implements AutoCloseable {
                 if(top>=scene.world.getBottomY()) surface(base);
                 boolean local=x>=0 && x<TerrainSnapshot.SIDE && z>=0 && z<TerrainSnapshot.SIDE;
                 if(local && top>=scene.origin.getY()) lowerY=scene.origin.getY()-1;
-                else {data.put(base+2,data.get(base));data.put(base+3,data.get(base+1));cursor++;}
+                else {
+                    data.put(base+2,data.get(base));data.put(base+3,data.get(base+1));
+                    appearance.put(base+2,appearance.get(base));appearance.put(base+3,appearance.get(base+1));cursor++;
+                }
             }
             if((reads&63)==63 && System.nanoTime()>=deadline)break;
         }
@@ -55,6 +60,14 @@ final class DistantTerrain implements AutoCloseable {
         int material=state.isAir()?0:!state.getFluidState().isEmpty()?-1:scene.materialId(state,pos);
         data.put(index,pos.getY()-scene.origin.getY()+height);
         data.put(index+1,material);
+        // Preserve the actual top cap, but do not stretch snow over the rock beneath it.
+        var below=scene.world.getBlockState(pos.down());
+        int side=below.isAir()?material:!below.getFluidState().isEmpty()?-1:scene.materialId(below,pos.down());
+        appearance.put(index,side);
+        var lit=pos.up();
+        int sky=scene.world.getLightLevel(net.minecraft.world.LightType.SKY,lit);
+        int block=scene.world.getLightLevel(net.minecraft.world.LightType.BLOCK,lit);
+        appearance.put(index+1,sky*16+block);
         int x=pos.getX()-scene.origin.getX(),z=pos.getZ()-scene.origin.getZ();
         boolean local=x>=0 && x<TerrainSnapshot.SIDE && z>=0 && z<TerrainSnapshot.SIDE;
         float top=data.get(index);
@@ -74,7 +87,11 @@ final class DistantTerrain implements AutoCloseable {
                 if(local && layer==1)top=Math.min(0,top);
                 if(top<=bottom)continue;
                 double t=BoxRay.entry(camera.x,camera.y,camera.z,direction.x,direction.y,direction.z,x,bottom,z,top-bottom);
-                if(t<nearest) {nearest=t;material=id;}
+                if(t<nearest) {
+                    nearest=t;material=id;
+                    double hitY=camera.y+t*direction.y;
+                    if(hitY<Math.floor(top-1e-4)-1e-5)material=(int)appearance.get(base+layer*2);
+                }
             }
         }
         return new Hit(nearest,material);
@@ -87,6 +104,14 @@ final class DistantTerrain implements AutoCloseable {
         GL11.glTexParameteri(GL11.GL_TEXTURE_2D,GL11.GL_TEXTURE_WRAP_S,GL30.GL_CLAMP_TO_EDGE);
         GL11.glTexParameteri(GL11.GL_TEXTURE_2D,GL11.GL_TEXTURE_WRAP_T,GL30.GL_CLAMP_TO_EDGE);
         GL11.glTexImage2D(GL11.GL_TEXTURE_2D,0,GL30.GL_RGBA32F,SIDE,SIDE,0,GL11.GL_RGBA,GL11.GL_FLOAT,data);
+        appearanceTexture=GL11.glGenTextures();RenderSystem.bindTexture(appearanceTexture);
+        GL11.glTexParameteri(GL11.GL_TEXTURE_2D,GL11.GL_TEXTURE_MIN_FILTER,GL11.GL_NEAREST);
+        GL11.glTexParameteri(GL11.GL_TEXTURE_2D,GL11.GL_TEXTURE_MAG_FILTER,GL11.GL_NEAREST);
+        GL11.glTexImage2D(GL11.GL_TEXTURE_2D,0,GL30.GL_RGBA32F,SIDE,SIDE,0,GL11.GL_RGBA,GL11.GL_FLOAT,appearance);
     }
-    @Override public void close() {MemoryUtil.memFree(data);if(texture!=0)RenderSystem.deleteTexture(texture);}
+    @Override public void close() {
+        MemoryUtil.memFree(data);MemoryUtil.memFree(appearance);
+        if(texture!=0)RenderSystem.deleteTexture(texture);
+        if(appearanceTexture!=0)RenderSystem.deleteTexture(appearanceTexture);
+    }
 }

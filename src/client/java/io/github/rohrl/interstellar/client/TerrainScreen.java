@@ -40,6 +40,7 @@ final class TerrainScreen extends Screen {
     private final TerrainOptions options=TerrainOptions.load();
     private float scale=options.renderScale();
     private boolean hybrid=options.distantPrototype();
+    private final NativeSky nativeSky=new NativeSky();
     TerrainScreen(SourcePayload source) {this(source,false);}
     TerrainScreen(SourcePayload source,boolean live) {super(Text.literal("Interstellar terrain prototype"));this.source=source;this.live=live;}
     String problem() {return error;}
@@ -79,7 +80,7 @@ final class TerrainScreen extends Screen {
                 snapshot.advance();
                 if(snapshot.ready() && publishedAt==0) {publishedAt=System.nanoTime();generation=1;}
                 if(live && snapshot.ready() && !client.isPaused()) refresh();
-                if(snapshot.ready()) renderTerrain();
+                if(snapshot.ready()) {AppearanceCapture.finish(this);renderTerrain();}
                 else if(!live) context.fill(0,0,width,height,0xFF101A28);
             } catch(RuntimeException failure) {error="Terrain preview failed: see game log.";Interstellar.LOGGER.error(error,failure);}
         }
@@ -89,7 +90,7 @@ final class TerrainScreen extends Screen {
             String age=publishedAt==0?snapshot.status():String.format(Locale.ROOT,"Published %.1fs ago | %s | generation %d",
                     (System.nanoTime()-publishedAt)/1e9,pending==null?"waiting to refresh":"refreshing",generation);
             context.drawTextWithShadow(textRenderer,age,12,24,0xFFFFFFFF);
-            context.drawTextWithShadow(textRenderer,benchmark==null?(hybrid?"EXPERIMENT: distant height field | Simplified sky":"Bounded terrain | Straight aim | Outside data omitted"):benchmark.status().replace("B cancels","F12 cancels"),12,36,0xFFFFD59A);
+            context.drawTextWithShadow(textRenderer,benchmark==null?(hybrid?"Native sky/light | Distant terrain approximate":"Bounded terrain | Straight aim | Outside data omitted"):benchmark.status().replace("B cancels","F12 cancels"),12,36,0xFFFFD59A);
             return;
         }
         if(error!=null) context.fill(0,0,width,height,0xFF201018);
@@ -100,8 +101,8 @@ final class TerrainScreen extends Screen {
         context.drawTextWithShadow(textRenderer,"Q: scale "+scale+" | J: path "+(fine?"fine":"standard")+" | Esc: return",12,48,0xFFE0E8EF);
         context.drawTextWithShadow(textRenderer,benchmark==null?"B: benchmark terrain pass":benchmark.status(),12,60,0xFF88D8FF);
         context.drawTextWithShadow(textRenderer,validationStatus,12,72,0xFF88D8FF);
-        context.drawTextWithShadow(textRenderer,"H: distant prototype "+(hybrid?"ON":"OFF"),12,84,0xFFFFD59A);
-        context.drawTextWithShadow(textRenderer,hybrid?"Distant columns approximate | Sky/fog simplified":"Frozen cubes | Amber: missing | Pink: unsupported/budget",12,height-16,0xFFFFD59A);
+        context.drawTextWithShadow(textRenderer,"H: distant "+(hybrid?"ON":"OFF")+" | P: appearance pair",12,84,0xFFFFD59A);
+        context.drawTextWithShadow(textRenderer,hybrid?"Native sky/light | Distant columns approximate":"Frozen cubes | Amber: missing | Pink: unsupported/budget",12,height-16,0xFFFFD59A);
     }
     private void renderPaused(DrawContext context) {
         context.fill(6,6,Math.min(width-6,440),46,0xCD101824);
@@ -120,6 +121,7 @@ final class TerrainScreen extends Screen {
         }
     }
     private void renderTerrain() {
+        if(hybrid)nativeSky.update();
         int w=Math.max(1,Math.round(client.getWindow().getFramebufferWidth()*scale));
         int h=Math.max(1,Math.round(client.getWindow().getFramebufferHeight()*scale));
         if(target==null || target.textureWidth!=w || target.textureHeight!=h) {
@@ -137,10 +139,15 @@ final class TerrainScreen extends Screen {
             shader.getUniformOrDefault("Lensing").set(lensing?1f:0f);
             shader.getUniformOrDefault("Hybrid").set(hybrid?1f:0f);
             shader.getUniformOrDefault("DistantTop").set(snapshot.distant==null?-1024f:snapshot.distant.maxHeight);
-            setVector("SkyColor",client.world.getSkyColor(camera,1f));
+            shader.getUniformOrDefault("FaceShades").set(client.world.getBrightness(net.minecraft.util.math.Direction.EAST,true),
+                    client.world.getBrightness(net.minecraft.util.math.Direction.SOUTH,true),client.world.getBrightness(net.minecraft.util.math.Direction.DOWN,true),
+                    client.world.getBrightness(net.minecraft.util.math.Direction.UP,true));
             shader.getUniformOrDefault("PathStep").set(fine?.225f:.45f);
             shader.addSampler("Voxels",snapshot.voxelTexture);
             shader.addSampler("Distant",snapshot.distant==null?snapshot.voxelTexture:snapshot.distant.texture);
+            shader.addSampler("DistantAppearance",snapshot.distant==null?snapshot.voxelTexture:snapshot.distant.appearanceTexture);
+            shader.addSampler("SkyAtlas",hybrid?nativeSky.texture():snapshot.voxelTexture);
+            shader.addSampler("Lightmap",((io.github.rohrl.interstellar.mixin.client.LightmapAccessor)client.gameRenderer.getLightmapTextureManager()).interstellar$texture().getGlId());
             shader.addSampler("Palette",snapshot.paletteTexture);
             shader.addSampler("Atlas",client.getTextureManager().getTexture(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE).getGlId());
             RenderSystem.disableDepthTest();RenderSystem.depthMask(false);RenderSystem.disableBlend();
@@ -167,6 +174,22 @@ final class TerrainScreen extends Screen {
         BufferRenderer.drawWithGlobalProgram(buffer.end());
     }
     private static void setVector(String name,Vec3d value) {shader.getUniformOrDefault(name).set((float)value.x,(float)value.y,(float)value.z);}
+    void checkAppearancePose() {
+        if(live || snapshot==null || !snapshot.ready() || error!=null || shader==null || capturedVersion!=resourceVersion)
+            throw new IllegalStateException("Wait for a ready frozen F9 snapshot");
+        var actual=client.gameRenderer.getCamera();
+        if(camera.squaredDistanceTo(actual.getPos())>1e-8 || Math.abs(yaw-actual.getYaw())>1e-4 || Math.abs(pitch-actual.getPitch())>1e-4)
+            throw new IllegalStateException("F9 view rotated: reopen F9 at the desired player pose");
+        if(client.world!=snapshot.world || SelectedSource.current()!=source)throw new IllegalStateException("Source/world changed");
+    }
+    String appearanceScene() {return snapshot.status()+"; distant="+hybrid+"; origin="+snapshot.origin;}
+    void appearanceStatus(String text) {validationStatus=text;}
+    void renderAppearanceCandidate() {
+        boolean oldLensing=lensing,oldValidate=validate;float oldScale=scale;
+        cancelBenchmark();
+        try {lensing=false;scale=1;validate=false;renderTerrain();}
+        finally {lensing=oldLensing;scale=oldScale;validate=oldValidate;}
+    }
     private void cancelBenchmark() {if(benchmark!=null) {benchmark.close();benchmark=null;}}
     @Override public boolean keyPressed(int key,int scan,int modifiers) {
         if(key==GLFW.GLFW_KEY_B && snapshot!=null && snapshot.ready() && error==null && paused==null && target!=null) {
@@ -177,6 +200,7 @@ final class TerrainScreen extends Screen {
         }
         cancelBenchmark();
         switch(key) {
+            case GLFW.GLFW_KEY_P -> {AppearanceCapture.request(this);validationStatus="Capturing same-frame appearance pair...";}
             case GLFW.GLFW_KEY_H -> hybrid=!hybrid;
             case GLFW.GLFW_KEY_V -> {validate=true;curvedValidation=false;}
             case GLFW.GLFW_KEY_C -> {validate=true;curvedValidation=true;}
@@ -192,6 +216,6 @@ final class TerrainScreen extends Screen {
         }
         return true;
     }
-    @Override public void removed() {cancelBenchmark();if(snapshot!=null)snapshot.close();if(pending!=null)pending.close();if(target!=null)target.delete();}
+    @Override public void removed() {cancelBenchmark();nativeSky.close();if(snapshot!=null)snapshot.close();if(pending!=null)pending.close();if(target!=null)target.delete();}
     @Override public boolean shouldPause() {return true;}
 }

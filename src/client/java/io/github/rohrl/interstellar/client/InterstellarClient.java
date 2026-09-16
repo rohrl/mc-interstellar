@@ -31,6 +31,7 @@ public final class InterstellarClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         SelectedSource.register();
+        AppearanceCapture.register();
         CoreShaderRegistrationCallback.EVENT.register(context -> context.register(Identifier.of("interstellar", "terrain"), VertexFormats.POSITION, TerrainScreen::setShader));
         KeyBinding terrain = KeyBindingHelper.registerKeyBinding(new KeyBinding("key.interstellar.terrain", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_F9, "key.categories.interstellar"));
         CoreShaderRegistrationCallback.EVENT.register(context -> context.register(

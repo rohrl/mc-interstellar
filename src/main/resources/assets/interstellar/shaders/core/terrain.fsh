@@ -3,21 +3,34 @@ uniform sampler2D Voxels;
 uniform sampler2D Palette;
 uniform sampler2D Atlas;
 uniform sampler2D Distant;
+uniform sampler2D DistantAppearance,SkyAtlas,Lightmap;
+uniform vec4 FaceShades;
 uniform float Hybrid;
 uniform float DistantTop;
-uniform vec3 SkyColor;
 uniform vec2 Viewport;
 uniform vec3 Camera,Source,Forward,Right,Up;
 uniform float Radius,Lensing,PathStep,Diagnostic;
 vec4 diagnostic=vec4(0);
 ivec3 materialCell;
 bool distantHit=false;
+vec2 surfaceLight=vec2(0,15);
 in vec2 screenUv;
 out vec4 fragColor;
 const int SIDE=96;
 
+vec3 nativeSky(vec3 d) {
+    vec3 a=abs(d),forward,up;int face;
+    if(a.x>=a.y && a.x>=a.z) {face=d.x>0?0:1;forward=vec3(sign(d.x),0,0);up=vec3(0,1,0);}
+    else if(a.y>=a.z) {face=d.y>0?2:3;forward=vec3(0,sign(d.y),0);up=vec3(0,0,sign(d.y));}
+    else {face=d.z>0?4:5;forward=vec3(0,0,sign(d.z));up=vec3(0,1,0);}
+    vec2 uv=vec2(dot(d,cross(forward,up)),dot(d,up))/dot(d,forward)*.5+.5;
+    uv=clamp(uv,vec2(.5/256.0),vec2(255.5/256.0));
+    return texture(SkyAtlas,vec2((float(face)+uv.x)/6.0,uv.y)).rgb;
+}
+vec3 worldLight() {return texture(Lightmap,(surfaceLight+.5)/16.0).rgb;}
+
 vec3 missing(vec3 direction) {
-    if(Hybrid>.5 && Diagnostic<.5) return SkyColor;
+    if(Hybrid>.5 && Diagnostic<.5) return nativeSky(direction);
     float grid=step(.92,fract(atan(direction.x,direction.z)*8.0))+step(.92,fract(asin(clamp(direction.y,-1,1))*8.0));
     return mix(vec3(.055,.085,.12),vec3(.28,.19,.07),min(grid,1.0));
 }
@@ -84,7 +97,7 @@ int segment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
 }
 vec3 surface(int value,vec3 hit,vec3 normal) {
     diagnostic=vec4(vec3(materialCell),float(value));
-    if(value==-1) return vec3(.08,.22,.32);
+    if(value==-1) return vec3(.08,.22,.32)*worldLight();
     if(value==1) return vec3(.85,.45,.06);
     if(value==2) return vec3(.7,.05,.5);
     int face=abs(normal.x)>.5?(normal.x<0?4:5):(abs(normal.y)>.5?(normal.y<0?0:1):(normal.z<0?2:3));
@@ -95,9 +108,10 @@ vec3 surface(int value,vec3 hit,vec3 normal) {
     vec3 tint=texelFetch(Palette,ivec2(face*3+2,value),0).rgb;
     vec2 uv=vec2(dot(u,vec3(st,1)),dot(v,vec3(st,1)));
     vec3 albedo=textureLod(Atlas,uv,0).rgb*tint;
-    float light=.55+.45*max(0.0,dot(normal,normalize(vec3(-.4,.8,-.3))));
-    vec3 colour=albedo*light;
-    return distantHit?mix(colour,SkyColor,smoothstep(80.0,128.0,length((hit-Source).xz))):colour;
+    float light=Hybrid>.5?(normal.y>.5?FaceShades.w:normal.y<-.5?FaceShades.z:abs(normal.x)>.5?FaceShades.x:FaceShades.y):
+            .55+.45*max(0.0,dot(normal,normalize(vec3(-.4,.8,-.3))));
+    vec3 colour=albedo*light*(Hybrid>.5?worldLight():vec3(1));
+    return distantHit?mix(colour,nativeSky(normalize(hit-Camera)),smoothstep(80.0,128.0,length((hit-Source).xz))):colour;
 }
 
 // Intersect one height-field column prism. Near volume is never represented here.
@@ -108,7 +122,7 @@ bool columnHit(vec3 start,vec3 delta,vec3 lower,vec3 upper,float from,float unti
         if(abs(delta[a])<1e-10) {if(start[a]<lower[a] || start[a]>=upper[a])return false;}
         else {
             float t0=(lower[a]-start[a])/delta[a],t1=(upper[a]-start[a])/delta[a];
-            if(min(t0,t1)>at) {at=min(t0,t1);normal=vec3(0);normal[a]=-sign(delta[a]);}
+            if(min(t0,t1)>=at) {at=min(t0,t1);normal=vec3(0);normal[a]=-sign(delta[a]);}
             leave=min(leave,max(t0,t1));
         }
     }
@@ -138,7 +152,7 @@ int distantSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
         if(any(lessThan(cell,ivec2(-80))) || any(greaterThanEqual(cell,ivec2(176))))return 0;
         vec4 field=texelFetch(Distant,cell+ivec2(80),0);
         bool local=all(greaterThanEqual(cell,ivec2(0))) && all(lessThan(cell,ivec2(SIDE)));
-        float until=min(leave,min(next.x,next.y)),best=2.0;int value=0;vec3 bestNormal;
+        float until=min(leave,min(next.x,next.y)),best=2.0;int value=0,bestLayer=0;vec3 bestNormal;
         for(int layer=0;layer<2;layer++) {
             if(layer==1 && !local)break;
             vec2 sampleValue=layer==0?field.xy:field.zw;
@@ -148,17 +162,25 @@ int distantSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
             if(upper<=lower)continue;
             float at;vec3 n;
             if(columnHit(start,delta,vec3(cell.x,lower,cell.y),vec3(cell.x+1,upper,cell.y+1),t,until,at,n) && at<best) {
-                best=at;value=id;bestNormal=n;
+                best=at;value=id;bestNormal=n;bestLayer=layer;
             }
         }
-        if(value!=0) {hit=start+best*delta;normal=bestNormal;materialCell=ivec3(cell.x,int(floor(hit.y)),cell.y);return value;}
+        if(value!=0) {
+            hit=start+best*delta;normal=bestNormal;materialCell=ivec3(cell.x,int(floor(hit.y)),cell.y);
+            vec4 appearance=texelFetch(DistantAppearance,cell+ivec2(80),0);
+            vec2 layerAppearance=bestLayer==0?appearance.xy:appearance.zw;
+            float top=bestLayer==0?field.x:min(0.0,field.z);
+            if(hit.y<floor(top-.0001)-.00001)value=int(layerAppearance.x);
+            int lightCode=int(layerAppearance.y);surfaceLight=vec2(lightCode%16,lightCode/16);
+            return value;
+        }
         int axis=next.x<next.y?0:1;t=next[axis];if(t>=leave)return 0;
         cell[axis]+=stepDirection[axis];next[axis]+=dt[axis];
     }
     return 2;
 }
 int sceneSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
-    distantHit=false;
+    distantHit=false;surfaceLight=vec2(0,15);
     int local=segment(start,end,hit,normal);
     if(Hybrid<.5 || Diagnostic>.5)return local;
     ivec3 savedCell=materialCell;vec3 farHit,farNormal;
