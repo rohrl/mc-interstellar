@@ -142,3 +142,7 @@ Implemented bounded, debounced refresh of the component containing the inspected
 Build/45 tests pass. Runtime verified N=63->64->63 live metadata updates, anchor removal/replacement recovery, chunk unload/reload, N=1 extended->N=27 black-hole recovery, split to the anchor's N=9 fragment, merge back to N=27, manual-off preservation and zero-mismatch F9 regression. Temporary blocks were removed and the original anchor restored before the owner's later edits. Detailed evidence and limitations: docs/source-refresh.md, D029.
 
 The owner subsequently authorized enlarging the edited source and reported RMB placement was blocked. Fixed inspection consuming held-item clicks; actual RMB placement and empty-hand inspection both verified. Filled only air in the original cube volume, adding 37 blocks: current source N=64, COM=(16,302,16), r_s=8. Final live GPU p95=5.066368 ms at 1440p/half-resolution, frame interval p95=9.423199 ms (r/r_s=4.80295 at start; not a fixed-camera comparison). Client left in F10. Step 1's bounded automatic-refresh work is complete; NEXT is repeatable demo packaging under the owner-reaffirmed order in plan.md.
+
+## Background fallback reverted — 2026-09-16
+
+Owner observed duplicated bent/unbent wall geometry during movement and rejected the same-screen fallback. Reverted 87dd3a1 with 0a264b0; build passes. No world edits or AA changes. Step 2 remains incomplete: prioritize coherent extended geometry and first-hit ordering before packaging. See plan.md and D030. Prior screenshot acceptance did not establish moving-view correctness.

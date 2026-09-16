@@ -31,3 +31,9 @@ Logs: refresh-runtime.log (transitions), refresh-final-runtime.log (manual-off/V
 Owner's order: stable exploration, wider useful viewing, demo packaging, visual refinement, deeper relativity. NEXT: repeatable self-contained demo setup and coherent source/range HUD. Preserve the owner's scene; further numerical polishing or AA must not displace packaging. Full-world background/foreground access remains a step-2 limitation. Actual player body, terrain crossing, observer speed and radiometry remain unfinished; disk/entity history deferred.
 
 Preserve native buffer lifetime and GL pixel-layout/PBO isolation. No forced pushes, world resets, local .idea changes or unsolicited cleanup. Keep detailed evidence in feature docs.
+
+## Latest priority override — 2026-09-16
+
+Current branch codex/demo-package. Mixed-camera background fallback 87dd3a1 was rejected by the owner because walking exposes duplicated coloured-wall geometry; reverted in 0a264b0. Missing-data grid restored; no world geometry changed. Build passes. NEXT is coherent extended scene coverage/foreground occlusion in step 2, ahead of demo packaging. Read plan.md's proposed architecture and acceptance scenes, and D030. Do not reintroduce straight-camera fallback. Sparse client geometry access is a proposal, not an implemented solution; validate costs and moving views before claiming success. AA remains separate at 8ad46eb.
+
+Revert runtime verified: shader compiles, F10 grid restored at the owner's saved position (72.8676,284.9985,-5.1802), N=64 and 11698 opaque cells. No teleport/block edits. Logs background-revert-build.log/background-revert-runtime.log; image run/background-reverted.png. Client left in F10. The 45 tests pass with zero failures/errors; previous performance measurements describe the restored renderer, no new timing claim.

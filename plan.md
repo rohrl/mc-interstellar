@@ -98,7 +98,17 @@ This order takes precedence over older checkpoint suggestions above. Diagnostics
 | Step | Status and remaining work |
 | --- | --- |
 | 1. Stable exploration | Implemented: unrelated-chunk stability, viewing-limit recovery and bounded automatic metadata refresh. Splits follow the inspected anchor; removed/unloaded/extended states pause and recover. See docs/source-refresh.md. |
-| 2. Wider useful viewing range | Outside-capture viewing up to 128 blocks is implemented. Targeted independent curved-surface checks now supplement flat checks. Outside terrain/background and foreground occlusion remain limitations. |
-| 3. Demo packaging | HUD, controls, launcher, saved scene and measured defaults exist. **NEXT:** finish a repeatable self-contained scene/setup and coherent source/range state presentation. Preserve the owner's existing world. |
+| 2. Wider useful viewing range | **NEXT:** coherent extended terrain/background and foreground occlusion. Outside-capture viewing up to 128 blocks and targeted independent curved-surface checks exist, but scene coverage is unfinished. Ordinary-screen background compositing was rejected and reverted. |
+| 3. Demo packaging | HUD, controls, launcher, saved scene and measured defaults exist. After coherent viewing: finish a repeatable self-contained scene/setup and coherent source/range state presentation. Preserve the owner's existing world. |
 | 4. Visual refinement | Snow layers supported. Separate AA WIP remains unverified; measure it, improve secondary images and broaden block-model coverage after packaging. |
 | 5. Deeper relativity | Terrain horizon crossing, actual player-body images, then independent observer-speed feature. Sky-lab crossing does not complete terrain crossing. |
+
+### Coherent world rendering — next implementation proposal (2026-09-16)
+
+Use one ray/first-hit result per pixel across local and extended terrain. Do not composite the ordinary camera image into missing rays: this duplicates original-position objects and breaks occlusion. Multiple images must arise from distinct curved light paths, not mixed cameras.
+
+Evaluate a bounded, client-side chunk/section geometry cache with hierarchical empty-space traversal, retaining the existing curved-ray solver and independent hit reference. Incrementally capture loaded geometry and invalidate changed/unloaded sections. Measure memory, upload work and traversal cost before selecting coverage/quality defaults. Increasing the dense 96-cubed array alone scales cubically and does not solve continuous exploration.
+
+Continue rays into extended geometry with consistent first-hit ordering; sample a defined sky boundary only after establishing escape through known clear space. Unavailable/unloaded data must remain explicit rather than being treated as empty. Finite loaded-world coverage remains a declared limit; this proposal does not promise infinite scene data or complete clouds/entities/transparency.
+
+Acceptance scenes: orbit the coloured wall (no extra straight-view copy), move the wall across cache boundaries, test a foreground occluder outside the old capture, compare zero-mass/straight rays with geometry references, check near/far curved hits against the independent solver, exercise edit/unload/reload, and measure frame times/memory at 1440p. Correctness and visual acceptance precede demo packaging. Architecture is proposed, not yet implemented or performance-certified.

@@ -135,3 +135,7 @@ Maintain one inspected anchor per player/world session. Relevant events immediat
 This completes the bounded automatic-refresh portion of delivery step 1. Next prioritize repeatable demo packaging (step 3), while retaining step 2's explicit outside-data limitations. AA and deeper-relativity work remain later in the owner-reaffirmed order.
 
 2026-09-16 owner-reported placement follow-up: MassBlock inspection consumed held-item right-clicks. Return PASS when either hand holds an item; retain inspection only with both hands empty. Actual RMB placement and empty-hand inspection verified. Owner authorized adding source blocks; the current saved cube is N=64/COM=(16,302,16)/r_s=8 after filling only air and removing the one-block RMB test protrusion.
+
+## D030 — Reject mixed-camera background fallback (2026-09-16)
+
+The ordinary-world fallback in 87dd3a1 visibly duplicated the coloured wall while walking: curved-ray hits and straight-camera pixels cannot form one consistent scene. Owner rejected it; reverted in 0a264b0. Earlier visual acceptance was insufficient. Restore the explicit missing-data grid until coherent extended ray/geometry access exists. Step 2's scene coverage and foreground ordering now take priority over packaging. Proposed architecture and concrete acceptance scenes are in plan.md; no claim that this is already implemented.
