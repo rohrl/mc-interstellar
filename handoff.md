@@ -31,7 +31,3 @@ Logs: refresh-runtime.log (transitions), refresh-final-runtime.log (manual-off/V
 Owner's order: stable exploration, wider useful viewing, demo packaging, visual refinement, deeper relativity. NEXT: repeatable self-contained demo setup and coherent source/range HUD. Preserve the owner's scene; further numerical polishing or AA must not displace packaging. Full-world background/foreground access remains a step-2 limitation. Actual player body, terrain crossing, observer speed and radiometry remain unfinished; disk/entity history deferred.
 
 Preserve native buffer lifetime and GL pixel-layout/PBO isolation. No forced pushes, world resets, local .idea changes or unsolicited cleanup. Keep detailed evidence in feature docs.
-
-## Latest override — live background, 2026-09-16
-
-Current branch codex/demo-package, based on dc50cbb source-refresh. Demo packaging was interrupted by the owner's request to replace the grid with the surrounding world. F10 now uses an ordinary, unbent same-screen world background for missing rays; F9 retains the diagnostic grid. Read docs/live-background.md and D030 for evidence and compositing limits. Build/45 tests, runtime shader, near/far visual, F9 transition/V and 1440p timing verified. No blocks changed. Client left in F10 at far player position (16.5,302,-85.5), yaw0.281/pitch0.91, 870x519. AA remains isolated. NEXT: resume repeatable demo packaging; no demo command code exists yet.

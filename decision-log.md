@@ -135,7 +135,3 @@ Maintain one inspected anchor per player/world session. Relevant events immediat
 This completes the bounded automatic-refresh portion of delivery step 1. Next prioritize repeatable demo packaging (step 3), while retaining step 2's explicit outside-data limitations. AA and deeper-relativity work remain later in the owner-reaffirmed order.
 
 2026-09-16 owner-reported placement follow-up: MassBlock inspection consumed held-item right-clicks. Return PASS when either hand holds an item; retain inspection only with both hands empty. Actual RMB placement and empty-hand inspection verified. Owner authorized adding source blocks; the current saved cube is N=64/COM=(16,302,16)/r_s=8 after filling only air and removing the one-block RMB test protrusion.
-
-## D030 — Ordinary-world fallback for live missing data — accepted (2026-09-16)
-
-Owner requested seeing the world instead of the background grid, taking priority over demo packaging. F10 uses same-screen colour from the already-rendered world for missing-ray outcomes, sampled while a separate target is bound. Captured hits/horizon and diagnostics remain unchanged; F9 keeps the grid because its camera can rotate independently. Distant scenery is unbent, with incomplete foreground occlusion and possible duplicate/boundary artifacts. This is an explicitly labelled visual fallback, not full-world lensing. Evidence: docs/live-background.md.

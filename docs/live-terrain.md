@@ -34,5 +34,3 @@ Snow limitation update: vanilla snow layers are now supported; see [snow-layer v
 Current observer-range and recovery behavior supersedes the original stopping limits above: see [stable exploration](stable-exploration.md). F10 pauses to normal view and automatically resumes between 1.05 r_s and 128 blocks; the scene itself remains bounded to 96^3.
 
 Automatic source refresh now supersedes the requirement to reinspect after relevant edits: [source refresh](source-refresh.md). F10 keeps its armed intent through refresh, removal, unloading and extended-source states; manual off remains off. Frozen F9 snapshots still require reopening after a source update.
-
-F10 now shows the ordinary world instead of the missing-data grid; distant scenery is unbent. F9 keeps the grid. See [live background](live-background.md) for compositing limitations and verification.

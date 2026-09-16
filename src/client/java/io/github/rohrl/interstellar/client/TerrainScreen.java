@@ -88,7 +88,7 @@ final class TerrainScreen extends Screen {
             String age=publishedAt==0?snapshot.status():String.format(Locale.ROOT,"Published %.1fs ago | %s | generation %d",
                     (System.nanoTime()-publishedAt)/1e9,pending==null?"waiting to refresh":"refreshing",generation);
             context.drawTextWithShadow(textRenderer,age,12,24,0xFFFFFFFF);
-            context.drawTextWithShadow(textRenderer,benchmark==null?"Local lensing | Distant world unbent | Straight aim":benchmark.status().replace("B cancels","F12 cancels"),12,36,0xFFFFD59A);
+            context.drawTextWithShadow(textRenderer,benchmark==null?"Bounded terrain | Straight aim | Outside data omitted":benchmark.status().replace("B cancels","F12 cancels"),12,36,0xFFFFD59A);
             return;
         }
         if(error!=null) context.fill(0,0,width,height,0xFF201018);
@@ -133,12 +133,10 @@ final class TerrainScreen extends Screen {
             setVector("Forward",forward);setVector("Right",right);setVector("Up",right.crossProduct(forward));
             shader.getUniformOrDefault("Radius").set((float)source.schwarzschildRadius());
             shader.getUniformOrDefault("Lensing").set(lensing?1f:0f);
-            shader.getUniformOrDefault("LiveBackground").set(live?1f:0f);
             shader.getUniformOrDefault("PathStep").set(fine?.225f:.45f);
             shader.addSampler("Voxels",snapshot.voxelTexture);
             shader.addSampler("Palette",snapshot.paletteTexture);
             shader.addSampler("Atlas",client.getTextureManager().getTexture(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE).getGlId());
-            shader.addSampler("Background",client.getFramebuffer().getColorAttachment());
             RenderSystem.disableDepthTest();RenderSystem.depthMask(false);RenderSystem.disableBlend();
             RenderSystem.setShader(()->shader);
             if(validate) {
