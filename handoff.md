@@ -4,6 +4,8 @@ Repo: C:\work\code\minecraft\interstellar\interstellar. Branch: codex/distant-he
 
 ## Current priority
 
+LATEST: owner rejected the height-field appearance (white mountain columns, dark flat sky). Read docs/visual-reference-plan.md and D033. Next establish deterministic vanilla-versus-zero-bending appearance comparisons and a Minecraft-compatible appearance path; only then build the slow lensed reference/fast-image suite. These are planned, not implemented. User wants automated metrics to reduce routine screenshot consumption; preserve human approval at major visual gates. No further approximation tuning before this parity gate. Latest assessment changed docs only; owner may have enabled distantPrototype locally, so do not assume the earlier restored config/client state still applies.
+
 Working demo must blend coherently into the world at usable frame rates. Owner welcomes distant heuristics with small/hard-to-notice errors and substantial gains. Step 2 remains unfinished and precedes packaging. Same-screen background copy was rejected for duplicated walls (87dd3a1, reverted 0a264b0). Do not reintroduce it or insist on exact whole-world tracing. Read plan.md, D031/D032 and docs/distant-prototype.md.
 
 ## Latest experiment
