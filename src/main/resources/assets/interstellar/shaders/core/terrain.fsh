@@ -2,9 +2,10 @@
 uniform sampler2D Voxels;
 uniform sampler2D Palette;
 uniform sampler2D Atlas;
+uniform sampler2D Background;
 uniform vec2 Viewport;
 uniform vec3 Camera,Source,Forward,Right,Up;
-uniform float Radius,Lensing,PathStep,Diagnostic;
+uniform float Radius,Lensing,PathStep,Diagnostic,LiveBackground;
 vec4 diagnostic=vec4(0);
 ivec3 materialCell;
 in vec2 screenUv;
@@ -12,6 +13,9 @@ out vec4 fragColor;
 const int SIDE=96;
 
 vec3 missing(vec3 direction) {
+    // Live-only same-screen fallback: distant scenery is visible, but is not lensed.
+    // The world framebuffer is read while a separate terrain target is bound.
+    if(LiveBackground>.5) return texture(Background,vec2(screenUv.x,1.0-screenUv.y)).rgb;
     float grid=step(.92,fract(atan(direction.x,direction.z)*8.0))+step(.92,fract(asin(clamp(direction.y,-1,1))*8.0));
     return mix(vec3(.055,.085,.12),vec3(.28,.19,.07),min(grid,1.0));
 }
