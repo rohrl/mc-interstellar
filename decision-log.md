@@ -139,3 +139,7 @@ This completes the bounded automatic-refresh portion of delivery step 1. Next pr
 ## D030 — Reject mixed-camera background fallback (2026-09-16)
 
 The ordinary-world fallback in 87dd3a1 visibly duplicated the coloured wall while walking: curved-ray hits and straight-camera pixels cannot form one consistent scene. Owner rejected it; reverted in 0a264b0. Earlier visual acceptance was insufficient. Restore the explicit missing-data grid until coherent extended ray/geometry access exists. Step 2's scene coverage and foreground ordering now take priority over packaging. Proposed architecture and concrete acceptance scenes are in plan.md; no claim that this is already implemented.
+
+## D031 — Practical hybrid world rendering is a demo requirement — accepted (2026-09-16)
+
+Owner clarifies that an accurate renderer which cannot fit into the world at usable performance is not useful. Permit distant-scene heuristics with small or hard-to-notice quality losses and substantial measured performance gains. Coherent world integration must ship in the working demo, not be deferred as polish. D030 rejects visibly inconsistent mixed-camera composition, not approximation itself. Prototype a hybrid local/remote representation and compare moving views, occlusion, transition artifacts and frame costs before committing to a large exact geometry cache. Candidate methods and acceptance criteria are in plan.md; no speedup or visual success has yet been established.

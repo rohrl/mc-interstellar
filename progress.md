@@ -146,3 +146,5 @@ The owner subsequently authorized enlarging the edited source and reported RMB p
 ## Background fallback reverted — 2026-09-16
 
 Owner observed duplicated bent/unbent wall geometry during movement and rejected the same-screen fallback. Reverted 87dd3a1 with 0a264b0; build passes. No world edits or AA changes. Step 2 remains incomplete: prioritize coherent extended geometry and first-hit ordering before packaging. See plan.md and D030. Prior screenshot acceptance did not establish moving-view correctness.
+
+Owner clarified the acceptance tradeoff: distant-scene heuristics are welcome if errors are small/hard to notice and performance gains substantial. Practical, coherent world integration is required in the working demo. Plan/D031 now prioritize a measured hybrid prototype rather than presupposing exact whole-world tracing. This checkpoint changes requirements only; renderer remains at the verified reverted build.
