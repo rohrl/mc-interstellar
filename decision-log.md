@@ -127,3 +127,11 @@ Extend observer access to 128 coordinate blocks while keeping 96^3 source-centre
 Add opt-in F9 C using an affine-parameter radial ODE, adaptive DP5(4), independent cuboid slabs, and paired CPU chord/tolerance refinement. Compare resolved outcomes and exact hit cells against production GPU rays; keep refinement failures, unresolved rays and invalid outputs distinct. Record horizon capture separately from missing data in terrain diagnostic output. Reason: flat-only validation cannot check bent-ray foreground ordering. This is sampled finite-surface evidence, not a universal accuracy claim. Details: docs/curved-terrain-validation.md.
 
 Owner reaffirmed the five-step delivery plan: stable exploration, wider useful viewing, demo packaging, visual refinement, deeper relativity. Finish bounded automatic source refresh and repeatable demo packaging next. Do not let further numerical polishing or deeper features displace that sequence.
+
+## D029 — Anchored event-driven source refresh — accepted (2026-09-15)
+
+Maintain one inspected anchor per player/world session. Relevant events immediately withdraw stale metadata, debounce a rescan, and preserve F10 intent through refreshing, unloaded, removed and extended-source states. Splits follow the anchor's fragment; anchor removal waits for replacement or explicit inspection elsewhere. Reuse the bounded probe queue and conservative in-flight epochs, with retry backoff and expanded dependencies for partial/growing components. No forced loads, periodic region polling, global cluster index or silent replacement-fragment selection. Details/evidence: docs/source-refresh.md.
+
+This completes the bounded automatic-refresh portion of delivery step 1. Next prioritize repeatable demo packaging (step 3), while retaining step 2's explicit outside-data limitations. AA and deeper-relativity work remain later in the owner-reaffirmed order.
+
+2026-09-16 owner-reported placement follow-up: MassBlock inspection consumed held-item right-clicks. Return PASS when either hand holds an item; retain inspection only with both hands empty. Actual RMB placement and empty-hand inspection verified. Owner authorized adding source blocks; the current saved cube is N=64/COM=(16,302,16)/r_s=8 after filling only air and removing the one-block RMB test protrusion.

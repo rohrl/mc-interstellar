@@ -17,6 +17,8 @@ public final class MassBlock extends Block {
     @Override public MapCodec<MassBlock> getCodec() { return CODEC; }
     @Override protected ActionResult onUse(BlockState state, World world, BlockPos pos,
                                           PlayerEntity player, BlockHitResult hit) {
+        // Let held items (including off-hand blocks) reach vanilla placement/use handling.
+        if(!player.getMainHandStack().isEmpty() || !player.getOffHandStack().isEmpty()) return ActionResult.PASS;
         if (world instanceof ServerWorld server && player instanceof ServerPlayerEntity user)
             SourceInspector.request(server,user,pos);
         return ActionResult.SUCCESS;

@@ -51,3 +51,7 @@ F10 armed successfully at (160.5,302,-19.5), showed the 128-block pause, and res
 Both captures had zero unknown/unsupported cells. These are sampled optical-pass costs, not full-frame GPU timings or universal FPS certification. Scene occupancy differs from the earlier snow checkpoint, so this is not a controlled performance comparison. No independent curved finite-surface validation, multiplayer/dimension-transfer regression or source-chunk-unload runtime test was performed in this iteration.
 
 Local ignored evidence: range3-runtime.log (final checks/timings), range-build.log, run/range-live.png (distant view), run/stable-invalidated.png, run/stable-final.png. Earlier failing logs remain local. Final distant and restored near images were inspected.
+
+## Follow-up — automatic refresh
+
+Relevant edits no longer require repeated inspection/F10: [source refresh](source-refresh.md) keeps an inspected anchor, withdraws stale metadata and resumes live rendering after a complete usable result. Earlier statements here that relevant changes stop F10 describe the prior stable-exploration checkpoint.

@@ -57,7 +57,7 @@ final class TerrainScreen extends Screen {
     private Vec3d centre() {return new Vec3d(source.x(),source.y(),source.z());}
     @Override public void render(DrawContext context,int mouseX,int mouseY,float delta) {
         context.draw();
-        if(snapshot!=null && (SelectedSource.current()!=source || client.world!=snapshot.world)) error="Source changed: inspect again and reopen the terrain preview.";
+        if(snapshot!=null && (SelectedSource.current()!=source || client.world!=snapshot.world)) error="Source changed: reopen the frozen terrain preview when ready.";
         if(capturedVersion!=resourceVersion) error="Resources reloaded: reopen the terrain preview to refresh textures.";
         if(error==null && shader==null) error="Terrain shader unavailable: see game log.";
         if(error==null) {

@@ -102,6 +102,8 @@ public final class InterstellarClient implements ClientModInitializer {
         if (selected != null) {
             lines.add(String.format(Locale.ROOT,"Selected N=%d | r_s %.3f | %s", selected.count(),
                     selected.schwarzschildRadius(), selected.blackHoleProxy()?"F8 then S: source lab":"extended source"));
+        } else if(SelectedSource.state()!=io.github.rohrl.interstellar.source.SourceState.NONE) {
+            lines.add(SelectedSource.state().message());
         }
         int width = lines.stream().mapToInt(client.textRenderer::getWidth).max().orElse(0) + 16;
         context.fill(6, 6, 6 + width, 16 + lines.size() * 12, 0xC0101824);

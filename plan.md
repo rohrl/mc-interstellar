@@ -97,8 +97,8 @@ This order takes precedence over older checkpoint suggestions above. Diagnostics
 
 | Step | Status and remaining work |
 | --- | --- |
-| 1. Stable exploration | Selection survives unrelated chunks and F10 recovers at viewing limits. **Next: bounded automatic source metadata refresh after relevant edits**, with explicit handling of removed/split/extended sources. Current relevant changes still require inspection. |
+| 1. Stable exploration | Implemented: unrelated-chunk stability, viewing-limit recovery and bounded automatic metadata refresh. Splits follow the inspected anchor; removed/unloaded/extended states pause and recover. See docs/source-refresh.md. |
 | 2. Wider useful viewing range | Outside-capture viewing up to 128 blocks is implemented. Targeted independent curved-surface checks now supplement flat checks. Outside terrain/background and foreground occlusion remain limitations. |
-| 3. Demo packaging | HUD, controls, launcher, saved scene and measured defaults exist. Finish a repeatable self-contained scene/setup and coherent source/range state presentation. Preserve the owner's existing world. |
+| 3. Demo packaging | HUD, controls, launcher, saved scene and measured defaults exist. **NEXT:** finish a repeatable self-contained scene/setup and coherent source/range state presentation. Preserve the owner's existing world. |
 | 4. Visual refinement | Snow layers supported. Separate AA WIP remains unverified; measure it, improve secondary images and broaden block-model coverage after packaging. |
 | 5. Deeper relativity | Terrain horizon crossing, actual player-body images, then independent observer-speed feature. Sky-lab crossing does not complete terrain crossing. |

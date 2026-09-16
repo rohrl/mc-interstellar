@@ -54,9 +54,9 @@ Edit **run/config/interstellar-optics.json** for persistent effect defaults, obs
 
 ## Mass blocks
 
-Use **/give @s interstellar:mass_block**, place connected blocks, then right-click with an empty hand to inspect mass and compactness. Operator command: **/interstellar inspect x y z**. Blocks do not yet activate world lensing. [Model, budgets and verified behavior](docs/mass-blocks.md).
+Use **/give @s interstellar:mass_block**, place connected blocks, then right-click with both hands empty to inspect mass and compactness. Holding a block uses normal RMB placement. Operator command: **/interstellar inspect x y z**. Blocks do not yet activate world lensing. [Model, budgets and verified behavior](docs/mass-blocks.md).
 
-After inspecting a black-hole proxy, open **F8** and press **S** to use its scale and camera distance in the sky lab. Extended sources are metadata-only. Changes in chunks around the selected source clear it; unrelated chunk activity preserves it. Inspect again after a relevant change. **R** restores the configured reference view. This does not yet bend terrain.
+After inspecting a black-hole proxy, open **F8** and press **S** to use its scale and camera distance in the sky lab. Extended sources are metadata-only. Relevant source changes now refresh automatically from the inspected block; unrelated chunk activity preserves the selection. F10 waits through removal, unloading or extended-source states and resumes when usable metadata returns. See [automatic source refresh](docs/source-refresh.md). **R** restores the configured reference view. This does not yet bend terrain.
 
 Press **C** in the lab for the near-critical ray stress test (brief blocking pause). **V** now also logs unwrapped-angle comparisons. [Measured accuracy limits](docs/critical-rays.md).
 

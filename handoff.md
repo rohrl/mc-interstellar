@@ -1,29 +1,33 @@
 # Current handoff
 
-Repo: C:\work\code\minecraft\interstellar\interstellar. Origin: rohrl/mc-interstellar. Current branch: codex/curved-terrain-validation, based on published stable-exploration (4440311). Java: C:\Portable\jdks\temurin-21.0.12.1. Fabric Minecraft 1.21.1. Read AGENTS.md for authorization and token-efficient workflow. GitHub default remains codex/bootstrap-observatory. No license selected.
+Repo: C:\work\code\minecraft\interstellar\interstellar. Origin: rohrl/mc-interstellar. Current branch: codex/source-refresh, based on published curved-terrain-validation (da7771e). Java: C:\Portable\jdks\temurin-21.0.12.1. Fabric Minecraft 1.21.1. Follow AGENTS.md and token-efficient workflow. GitHub default remains codex/bootstrap-observatory. No license selected.
 
 ## Current checkpoint
 
-F8: Schwarzschild sky lab and free-fall tour. F9: frozen bounded textured terrain and diagnostics. F10: normal controls/HUD with periodic terrain refresh. F12: live benchmark. Snow heights supported; other non-cube models remain unsupported.
+F8: sky lab and free-fall tour. F9: frozen terrain, V flat checks, C independent curved-hit checks. F10: normal controls/HUD with periodic terrain refresh. F12: live benchmark. Snow layers supported; other non-cube models remain unsupported.
 
-Completed source selection uses nearby chunk dependencies plus a one-block connectivity shell; unrelated chunk activity no longer clears it. In-flight inspection retains conservative world epochs. F10 stays armed outside 1.05 r_s to 128-block viewing limits, displays normal-view pause and automatically resumes on return. Relevant source edits, world changes and resource reload still invalidate it.
+Sources now track the inspected block. Relevant changes withdraw stale metadata and automatically rescan, bounded to eight queued jobs / 256 probe queries per tick, with five-tick debounce and 20-tick retry cooldown. Splits follow the anchor fragment. Removed, unloaded, limited and extended states pause F10 without disarming it; complete black-hole metadata resumes rendering. Manual off remains off. Disconnect/world changes clear tracking; respawn replacement guard compiled but not death-tested. Read docs/source-refresh.md and D029.
 
-Observer access extends to 128 blocks, but scene data is still source-centred 96^3; outside terrain/foreground occluders are omitted. Shader chords enter the data box from outside. Detailed semantics, checks, timings and limitations: docs/stable-exploration.md, D027. Build/40 tests pass. F9 C now compares curved finite hit cells against independent affine DP5(4) integration and cuboid slabs with paired refinement. Eight runs/768 samples had zero mismatches or inconclusive rays; final near/far counter checks and V regression passed. See docs/curved-terrain-validation.md and D028. Final live 1440p/half-resolution GPU p95=5.132864 ms. Sampled evidence, not universal accuracy or FPS certification.
+Fixed owner-reported RMB placement failure: inspection no longer consumes clicks while either hand holds an item. Normal block placement works; inspect with both hands empty or the command. Actual held-block RMB placement and empty-hand RMB inspection were runtime verified.
 
-## Antialiasing preserved separately
+Build/45 tests pass. Runtime checked edit/removal/restoration, unload/reload, extended-to-black-hole recovery, split/merge, manual-off preservation and zero-mismatch V regression. Earlier independent curved suite: eight runs/768 samples without mismatches/inconclusive rays (docs/curved-terrain-validation.md). Observer range remains 1.05 r_s to 128 blocks with automatic recovery; capture stays 96^3 with outside terrain omitted. Final live 1440p/half-resolution GPU p95=5.066368 ms; frame interval p95=9.423199 ms. Player moved from earlier reference; not a controlled comparison or universal FPS claim.
 
-codex/terrain-antialiasing at 8ad46eb contains the earlier uncommitted two-sample AA work, based on 585835c. No AA included in stable-exploration. Earlier build passed but image/timing comparison is unverified. Resume tasks are in docs/stable-exploration.md; external stable-exploration-resume.md and antialiasing-resume.md have been incorporated here. Do not describe AA as validated or enable it by default without measurements.
+## Current saved scene
 
-## Saved scene and runtime
+World: run/saves/Interstellar Calibration. Owner reduced the source, then explicitly authorized adding blocks after reporting RMB failure. Filled only air at (14,300,14)..(17,303,17), adding 37 blocks. Current verified source is a complete N=64 cube, COM=(16,302,16), r_s=8, enclosing R=sqrt(12). Existing non-air scene blocks preserved. Actual RMB added one test protrusion at (16,302,13), verified N=65 refresh, then removed it to restore N=64. Current selected anchor from empty-hand inspection is (16,302,14); /interstellar inspect 14 300 14 is also valid.
 
-World: run/saves/Interstellar Calibration. Preserve owner edits and weather-created snow. Cluster N=63, r_s=7.875, COM=(15.976190476190476,301.9761904761905,16.00793650793651). Select: /interstellar inspect 14 300 14. Reference: /tp @s 16.5 302 -19.5 0.84516 2.65028. F10 left active at this position in an 870x519 window. Test block (22,306,20) restored to air; original cluster preserved. No owner testing pending.
+Reference camera: /tp @s 16.5 302 -19.5 0.84516 2.65028. Client left in F10, 870x519 window; owner may move it. Latest benchmark began at r/r_s=4.80295. No owner testing pending. Preserve later edits and weather-created snow. All earlier temporary test blocks at (13,300,14) and (512,310,512)..(514,312,514) were removed; original anchor restored before the authorized enlargement.
 
-Launcher: double-click Launch Interstellar.cmd in the repository (current checkout, no branch switch). Uses JAVA_HOME with fallback to this machine's JDK21. Launcher code reviewed; runtime checks used Gradle directly. Do not launch another client on the same world.
+## Separate antialiasing and launcher
 
-GUI helper directory: C:\Users\karol\Documents\Codex\2026-09-13\i-want-to-create-a-minecraft\work. Command helper: C:\Users\karol\Documents\Codex\send-minecraft-command.ps1. Gate inputs on fresh world-entry evidence. Local ignored final logs: curved-final-runtime.log, curved-build.log; initial eight-run suite: curved-runtime.log. Image: run/curved-check.png. Earlier stability evidence remains in range3-runtime.log. Optional run/stable-init.gradle launches the saved world directly; do not commit run files.
+AA WIP remains at 8ad46eb on codex/terrain-antialiasing, based on 585835c; excluded here. Still needs fixed-camera comparison, timings, JSON false/template checks and a measured default. External resume notes incorporated in docs/stable-exploration.md.
 
-## Next work / cautions
+Double-click Launch Interstellar.cmd to run the current checkout with JAVA_HOME/fallback JDK21; no branch switch. Runtime checks used Gradle directly. Do not open the same world in two clients.
 
-Owner reaffirmed delivery order in plan.md: (1) stable exploration, (2) wider useful viewing, (3) demo packaging, (4) visual refinement, (5) deeper relativity. NEXT: finish bounded automatic source metadata refresh after relevant changes, then repeatable demo packaging and source/range HUD. Additional numerical polishing, broader model work and AA must not displace these priorities. Source invalidation remains conservative within nearby chunks; no automatic reinspection or maintained cluster index. Actual player body, terrain inside horizon, SR potion and radiometry remain unfinished. Disk/entity history deferred. Science assumptions: docs/science.md; critical-ray limits: docs/critical-rays.md.
+## Evidence and next priority
 
-Preserve native buffer lifetime and GL pixel-layout/PBO isolation. No forced pushes, world resets, local .idea edits or unsolicited cleanup. Keep detailed evidence in feature docs and this handoff short.
+Logs: refresh-runtime.log (transitions), refresh-final-runtime.log (manual-off/V), placement-runtime.log (final placement, enlargement, timing), refresh-build.log. Images: run/refresh-removed.png, run/refresh-extended.png, run/refresh-unloaded.png, run/placement-final.png. All local/ignored. GUI helpers: C:\Users\karol\Documents\Codex\2026-09-13\i-want-to-create-a-minecraft\work. Prefer local run/send-safe-command.ps1 in the existing STA PowerShell session: it clears chat input and pastes commands while restoring clipboard contents, avoiding Caps Lock/raw typing interference. No execution policy changes. Gate input on fresh world-entry logs; optional run/stable-init.gradle quick-plays the saved world.
+
+Owner's order: stable exploration, wider useful viewing, demo packaging, visual refinement, deeper relativity. NEXT: repeatable self-contained demo setup and coherent source/range HUD. Preserve the owner's scene; further numerical polishing or AA must not displace packaging. Full-world background/foreground access remains a step-2 limitation. Actual player body, terrain crossing, observer speed and radiometry remain unfinished; disk/entity history deferred.
+
+Preserve native buffer lifetime and GL pixel-layout/PBO isolation. No forced pushes, world resets, local .idea changes or unsolicited cleanup. Keep detailed evidence in feature docs.
