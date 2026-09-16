@@ -27,6 +27,7 @@ final class TerrainSnapshot implements AutoCloseable {
     static final int SIDE=96, TOTAL=SIDE*SIDE*SIDE;
     final ClientWorld world;
     final BlockPos origin;
+    final DistantTerrain distant;
     private final FloatBuffer cells=MemoryUtil.memAllocFloat(TOTAL);
     private final HashMap<BlockState,Integer> materials=new HashMap<>();
     private final ArrayList<float[]> palette=new ArrayList<>();
@@ -37,14 +38,15 @@ final class TerrainSnapshot implements AutoCloseable {
     private int cursor, opaque, unknown, unsupported;
     int voxelTexture, paletteTexture;
     private final long started=System.nanoTime();
-    TerrainSnapshot(ClientWorld world, Vec3d source) {
+    TerrainSnapshot(ClientWorld world, Vec3d source,boolean captureDistant) {
         this.world=world;
         origin=BlockPos.ofFloored(source).add(-SIDE/2,-SIDE/2,-SIDE/2);
+        distant=captureDistant?new DistantTerrain(this):null;
         for(int i=0;i<3;i++) palette.add(new float[72]);
     }
     boolean ready() { return voxelTexture!=0; }
     String status() { return ready()?opaque+" opaque | "+unknown+" unknown | "+unsupported+" unsupported":
-            "Capturing nearby blocks: "+(100*cursor/TOTAL)+"%"; }
+            cursor==TOTAL?"Capturing experimental distant surfaces...":"Capturing nearby blocks: "+(100*cursor/TOTAL)+"%"; }
     boolean contains(Vec3d point) {
         Vec3d p=point.subtract(Vec3d.of(origin));
         return p.x>=1 && p.y>=1 && p.z>=1 && p.x<SIDE-1 && p.y<SIDE-1 && p.z<SIDE-1;
@@ -72,8 +74,9 @@ final class TerrainSnapshot implements AutoCloseable {
             if(value!=0) occupied.add(cursor);
             if((reads&63)==63 && System.nanoTime()>=deadline) {cursor++;break;}
         }
-        if(cursor==TOTAL) upload();
+        if(cursor==TOTAL) {if(distant!=null)distant.advance();if(distant==null || distant.ready())upload();}
     }
+    int materialId(BlockState state,BlockPos pos) {return materials.computeIfAbsent(state,key->material(key,pos));}
     private int material(BlockState state,BlockPos pos) {
         if(palette.size()>=512) return 2;
         var client=MinecraftClient.getInstance();
@@ -128,6 +131,7 @@ final class TerrainSnapshot implements AutoCloseable {
             paletteTexture=GL11.glGenTextures();RenderSystem.bindTexture(paletteTexture);nearest();
             GL11.glTexImage2D(GL11.GL_TEXTURE_2D,0,GL30.GL_RGBA32F,18,palette.size(),0,GL11.GL_RGBA,GL11.GL_FLOAT,values);
             } finally {MemoryUtil.memFree(values);}
+            if(distant!=null)distant.upload();
         } finally {
             for(int i=0;i<names.length;i++)GL11.glPixelStorei(names[i],saved[i]);
             GL15.glBindBuffer(GL21.GL_PIXEL_UNPACK_BUFFER,unpackBuffer);
@@ -142,7 +146,7 @@ final class TerrainSnapshot implements AutoCloseable {
         GL11.glTexParameteri(GL11.GL_TEXTURE_2D,GL11.GL_TEXTURE_WRAP_T,GL30.GL_CLAMP_TO_EDGE);
     }
     @Override public void close() {
-        if(closed)return;closed=true;MemoryUtil.memFree(cells);
+        if(closed)return;closed=true;MemoryUtil.memFree(cells);if(distant!=null)distant.close();
         if(voxelTexture!=0) RenderSystem.deleteTexture(voxelTexture);
         if(paletteTexture!=0) RenderSystem.deleteTexture(paletteTexture);
         voxelTexture=paletteTexture=0;

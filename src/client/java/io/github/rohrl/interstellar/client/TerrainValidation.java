@@ -35,6 +35,7 @@ final class TerrainValidation {
         int mismatch=0,flatHits=0,lensedHits=0,outside=0,unresolved=0;
         int compared=0,curvedMismatch=0,refinementFailures=0,referenceUnresolved=0,gpuCaptured=0,gpuInvalid=0;
         double invariantError=0;
+        int farCompared=0,farMismatch=0,farHits=0;
         try {
             GL15.glBindBuffer(GL21.GL_PIXEL_PACK_BUFFER,0);
             GL11.glPixelStorei(GL11.GL_PACK_ALIGNMENT,1);
@@ -46,7 +47,8 @@ final class TerrainValidation {
             GL11.glViewport(0,0,w,h);shader.getUniformOrDefault("Diagnostic").set(1f);
             // Float camera uniforms are the actual GPU inputs; compare against those values.
             camera=new Vec3d((float)camera.x,(float)camera.y,(float)camera.z);
-            for(int mode=0;mode<2;mode++) {
+            for(int mode=0;mode<(scene.distant==null?2:3);mode++) {
+                shader.getUniformOrDefault("Diagnostic").set(mode==2?2f:1f);
                 shader.getUniformOrDefault("Lensing").set((float)mode);draw.run();pixels.clear();
                 GL11.glReadPixels(0,0,w,h,GL11.GL_RGBA,GL11.GL_FLOAT,pixels);
                 for(int y=0;y<h;y++)for(int x=0;x<w;x++) {
@@ -54,6 +56,17 @@ final class TerrainValidation {
                     int gx=Math.round(pixels.get(offset)),gy=Math.round(pixels.get(offset+1)),gz=Math.round(pixels.get(offset+2));
                     double sx=((x+.5)/w*2-1)*.7002075382*aspect,sy=((y+.5)/h*2-1)*.7002075382;
                     Vec3d direction=forward.add(right.multiply(sx)).add(up.multiply(sy)).normalize();
+                    if(mode==2) {
+                        if((x+y*w)%11!=0)continue;
+                        var reference=scene.distant.reference(camera,direction);farCompared++;
+                        if(reference.material()!=0)farHits++;
+                        float distance=pixels.get(offset);
+                        if(!Float.isFinite(distance) || status!=reference.material() || status!=0 && Math.abs(distance-reference.distance())>.02) {
+                            if(farMismatch<3)Interstellar.LOGGER.info("Distant mismatch: pixel=({},{}), reference={}, GPU distance={} material={}",x,y,reference,distance,status);
+                            farMismatch++;
+                        }
+                        continue;
+                    }
                     if(mode==0) {
                         // glReadPixels starts at the bottom; screenUv.y starts at the top.
                         double nearest=Double.POSITIVE_INFINITY;int best=-1;
@@ -107,6 +120,7 @@ final class TerrainValidation {
             GL30.glBindRenderbuffer(GL30.GL_RENDERBUFFER,previousBuffer);GL11.glViewport(viewport[0],viewport[1],viewport[2],viewport[3]);
             GL30.glDeleteRenderbuffers(color);GL30.glDeleteFramebuffers(framebuffer);
         }
+        if(scene.distant!=null)Interstellar.LOGGER.info("Distant flat diagnostic: compared={}, hits={}, mismatches={}; independent brute-force column slabs; does not validate height-field approximation or far curved-step error",farCompared,farHits,farMismatch);
         if(curved) {
             Interstellar.LOGGER.info("Curved terrain diagnostic: {}x{}, compared={}, mismatches={}, refinement failures={}, reference unresolved={}, GPU unresolved={}, GPU invalid={}, GPU opaque hits={}, GPU captured={}, flat mismatches={}, max invariant error={}, wall={} ms; affine DP5(4), chord .1/.05, tolerance 1e-9/1e-11; sampled convergence, not universal validation",
                     w,h,compared,curvedMismatch,refinementFailures,referenceUnresolved,unresolved,gpuInvalid,lensedHits,gpuCaptured,mismatch,invariantError,(System.nanoTime()-started)/1e6);

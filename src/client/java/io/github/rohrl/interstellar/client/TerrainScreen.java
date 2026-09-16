@@ -39,6 +39,7 @@ final class TerrainScreen extends Screen {
     private String paused;
     private final TerrainOptions options=TerrainOptions.load();
     private float scale=options.renderScale();
+    private boolean hybrid=options.distantPrototype();
     TerrainScreen(SourcePayload source) {this(source,false);}
     TerrainScreen(SourcePayload source,boolean live) {super(Text.literal("Interstellar terrain prototype"));this.source=source;this.live=live;}
     String problem() {return error;}
@@ -51,7 +52,7 @@ final class TerrainScreen extends Screen {
         camera=client.gameRenderer.getCamera().getPos();
         yaw=client.gameRenderer.getCamera().getYaw();pitch=client.gameRenderer.getCamera().getPitch();
         if(!live && camera.distanceTo(centre())/source.schwarzschildRadius()<1.05) {error="Terrain prototype needs an exterior camera: move beyond 1.05 r_s.";return;}
-        snapshot=new TerrainSnapshot(client.world,centre());
+        snapshot=new TerrainSnapshot(client.world,centre(),!live || hybrid);
         if(!live && camera.distanceTo(centre())>128) {error="Move within 128 blocks of the source, then reopen the terrain preview.";}
     }
     private Vec3d centre() {return new Vec3d(source.x(),source.y(),source.z());}
@@ -88,7 +89,7 @@ final class TerrainScreen extends Screen {
             String age=publishedAt==0?snapshot.status():String.format(Locale.ROOT,"Published %.1fs ago | %s | generation %d",
                     (System.nanoTime()-publishedAt)/1e9,pending==null?"waiting to refresh":"refreshing",generation);
             context.drawTextWithShadow(textRenderer,age,12,24,0xFFFFFFFF);
-            context.drawTextWithShadow(textRenderer,benchmark==null?"Bounded terrain | Straight aim | Outside data omitted":benchmark.status().replace("B cancels","F12 cancels"),12,36,0xFFFFD59A);
+            context.drawTextWithShadow(textRenderer,benchmark==null?(hybrid?"EXPERIMENT: distant height field | Simplified sky":"Bounded terrain | Straight aim | Outside data omitted"):benchmark.status().replace("B cancels","F12 cancels"),12,36,0xFFFFD59A);
             return;
         }
         if(error!=null) context.fill(0,0,width,height,0xFF201018);
@@ -99,7 +100,8 @@ final class TerrainScreen extends Screen {
         context.drawTextWithShadow(textRenderer,"Q: scale "+scale+" | J: path "+(fine?"fine":"standard")+" | Esc: return",12,48,0xFFE0E8EF);
         context.drawTextWithShadow(textRenderer,benchmark==null?"B: benchmark terrain pass":benchmark.status(),12,60,0xFF88D8FF);
         context.drawTextWithShadow(textRenderer,validationStatus,12,72,0xFF88D8FF);
-        context.drawTextWithShadow(textRenderer,"Frozen cubes | Amber: missing | Pink: unsupported/budget",12,height-16,0xFFFFD59A);
+        context.drawTextWithShadow(textRenderer,"H: distant prototype "+(hybrid?"ON":"OFF"),12,84,0xFFFFD59A);
+        context.drawTextWithShadow(textRenderer,hybrid?"Distant columns approximate | Sky/fog simplified":"Frozen cubes | Amber: missing | Pink: unsupported/budget",12,height-16,0xFFFFD59A);
     }
     private void renderPaused(DrawContext context) {
         context.fill(6,6,Math.min(width-6,440),46,0xCD101824);
@@ -108,7 +110,7 @@ final class TerrainScreen extends Screen {
         context.drawTextWithShadow(textRenderer,"Resumes automatically when back in range",12,36,0xFF88D8FF);
     }
     private void refresh() {
-        if(pending==null && System.nanoTime()-publishedAt>=1_000_000_000L) pending=new TerrainSnapshot(client.world,centre());
+        if(pending==null && System.nanoTime()-publishedAt>=1_000_000_000L) pending=new TerrainSnapshot(client.world,centre(),hybrid);
         if(pending!=null) {
             pending.advance();
             if(pending.ready()) {
@@ -133,8 +135,12 @@ final class TerrainScreen extends Screen {
             setVector("Forward",forward);setVector("Right",right);setVector("Up",right.crossProduct(forward));
             shader.getUniformOrDefault("Radius").set((float)source.schwarzschildRadius());
             shader.getUniformOrDefault("Lensing").set(lensing?1f:0f);
+            shader.getUniformOrDefault("Hybrid").set(hybrid?1f:0f);
+            shader.getUniformOrDefault("DistantTop").set(snapshot.distant==null?-1024f:snapshot.distant.maxHeight);
+            setVector("SkyColor",client.world.getSkyColor(camera,1f));
             shader.getUniformOrDefault("PathStep").set(fine?.225f:.45f);
             shader.addSampler("Voxels",snapshot.voxelTexture);
+            shader.addSampler("Distant",snapshot.distant==null?snapshot.voxelTexture:snapshot.distant.texture);
             shader.addSampler("Palette",snapshot.paletteTexture);
             shader.addSampler("Atlas",client.getTextureManager().getTexture(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE).getGlId());
             RenderSystem.disableDepthTest();RenderSystem.depthMask(false);RenderSystem.disableBlend();
@@ -165,12 +171,13 @@ final class TerrainScreen extends Screen {
     @Override public boolean keyPressed(int key,int scan,int modifiers) {
         if(key==GLFW.GLFW_KEY_B && snapshot!=null && snapshot.ready() && error==null && paused==null && target!=null) {
             if(benchmark!=null)cancelBenchmark();
-            else benchmark=new LabBenchmark(String.format(Locale.ROOT,"TERRAIN %dx%d, scale=%.2f, r/rs=%.5f, lensing=%s, fine=%s, snapshot=%s, live="+live,
+            else benchmark=new LabBenchmark(String.format(Locale.ROOT,"TERRAIN %dx%d, scale=%.2f, r/rs=%.5f, lensing=%s, fine=%s, snapshot=%s, hybrid="+hybrid+", live="+live,
                     target.textureWidth,target.textureHeight,scale,camera.distanceTo(centre())/source.schwarzschildRadius(),lensing,fine,snapshot.status()));
             return true;
         }
         cancelBenchmark();
         switch(key) {
+            case GLFW.GLFW_KEY_H -> hybrid=!hybrid;
             case GLFW.GLFW_KEY_V -> {validate=true;curvedValidation=false;}
             case GLFW.GLFW_KEY_C -> {validate=true;curvedValidation=true;}
             case GLFW.GLFW_KEY_SPACE -> lensing=!lensing;

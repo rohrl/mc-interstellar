@@ -1,41 +1,31 @@
 # Current handoff
 
-Repo: C:\work\code\minecraft\interstellar\interstellar. Origin: rohrl/mc-interstellar. Current branch: codex/source-refresh, based on published curved-terrain-validation (da7771e). Java: C:\Portable\jdks\temurin-21.0.12.1. Fabric Minecraft 1.21.1. Follow AGENTS.md and token-efficient workflow. GitHub default remains codex/bootstrap-observatory. No license selected.
+Repo: C:\work\code\minecraft\interstellar\interstellar. Branch: codex/distant-heightfield. Origin: https://github.com/rohrl/mc-interstellar.git. JDK: C:\Portable\jdks\temurin-21.0.12.1. Fabric/Minecraft 1.21.1. Read AGENTS.md; preserve worlds, .idea and secrets. Branches/commits/pushes and autonomous runtime checks authorized. No force pushes or subagents.
 
-## Current checkpoint
+## Current priority
 
-F8: sky lab and free-fall tour. F9: frozen terrain, V flat checks, C independent curved-hit checks. F10: normal controls/HUD with periodic terrain refresh. F12: live benchmark. Snow layers supported; other non-cube models remain unsupported.
+Working demo must blend coherently into the world at usable frame rates. Owner welcomes distant heuristics with small/hard-to-notice errors and substantial gains. Step 2 remains unfinished and precedes packaging. Same-screen background copy was rejected for duplicated walls (87dd3a1, reverted 0a264b0). Do not reintroduce it or insist on exact whole-world tracing. Read plan.md, D031/D032 and docs/distant-prototype.md.
 
-Sources now track the inspected block. Relevant changes withdraw stale metadata and automatically rescan, bounded to eight queued jobs / 256 probe queries per tick, with five-tick debounce and 20-tick retry cooldown. Splits follow the anchor fragment. Removed, unloaded, limited and extended states pause F10 without disarming it; complete black-hole metadata resumes rendering. Manual off remains off. Disconnect/world changes clear tracking; respawn replacement guard compiled but not death-tested. Read docs/source-refresh.md and D029.
+## Latest experiment
 
-Fixed owner-reported RMB placement failure: inspection no longer consumes clicks while either hand holds an item. Normal block placement works; inspect with both hands empty or the command. Actual held-block RMB placement and empty-hand RMB inspection were runtime verified.
+Opt-in 256-square distant height field, accurate local 96-cubed volume with exclusive ownership, nearest-hit comparison, independent GPU/CPU distant slabs. F9 H compares; F10 option distantPrototype defaults false. Unknown/far geometry fades into a simplified sky; distant caves/overhangs, materials and residual weak-field bending are approximated. No ordinary camera image is sampled.
 
-Build/45 tests pass. Runtime checked edit/removal/restoration, unload/reload, extended-to-black-hole recovery, split/merge, manual-off preservation and zero-mismatch V regression. Earlier independent curved suite: eight runs/768 samples without mismatches/inconclusive rays (docs/curved-terrain-validation.md). Observer range remains 1.05 r_s to 128 blocks with automatic recovery; capture stays 96^3 with outside terrain omitted. Final live 1440p/half-resolution GPU p95=5.066368 ms; frame interval p95=9.423199 ms. Player moved from earlier reference; not a controlled comparison or universal FPS claim.
+Build/45 tests pass. Distant 93 rays/21 hits and local V have zero mismatches. Major-rendering visual checks include downward landscape and live side strafe. Final frozen far-view 1440p/half-resolution GPU p95=9.932704 ms, frame interval p95=11.5638 ms. Details, failed optimization timings and limits are in docs/distant-prototype.md. The final HUD wording edits were built, without redundant screenshots. Prototype is NOT demo-ready: conspicuous fog cutoff/flat sky, near-boundary simplification and far-approximation error remain unresolved. Next evaluate sky/coverage continuity and camera-relative near/far representation; do not promote default until moving-view and performance gates pass.
 
-## Current saved scene
+Original run/config/interstellar-terrain.json restored from run/distant-config-backup.json. Client left running normal F10, experiment off, 870x519; local capture ~0.9 s restored. Player position restored to (72.867614,284.998488,-5.180181), selected source anchor (14,300,14). N=64, COM=(16,302,16), r_s=8; latest 11700 opaque/0 unknown/0 unsupported (snowfall changes counts). No blocks edited this iteration. User may move/edit afterward.
 
-World: run/saves/Interstellar Calibration. Owner reduced the source, then explicitly authorized adding blocks after reporting RMB failure. Filled only air at (14,300,14)..(17,303,17), adding 37 blocks. Current verified source is a complete N=64 cube, COM=(16,302,16), r_s=8, enclosing R=sqrt(12). Existing non-air scene blocks preserved. Actual RMB added one test protrusion at (16,302,13), verified N=65 refresh, then removed it to restore N=64. Current selected anchor from empty-hand inspection is (16,302,14); /interstellar inspect 14 300 14 is also valid.
+## Stable foundations
 
-Reference camera: /tp @s 16.5 302 -19.5 0.84516 2.65028. Client left in F10, 870x519 window; owner may move it. Latest benchmark began at r/r_s=4.80295. No owner testing pending. Preserve later edits and weather-created snow. All earlier temporary test blocks at (13,300,14) and (512,310,512)..(514,312,514) were removed; original anchor restored before the authorized enlargement.
+Source refresh/placement: dc50cbb, docs/source-refresh.md. Anchored source selection, bounded debounced recovery through edits/removal/unload/split/extended source; F10 intent retained. Manual off stays off. Respawn guard compiled, not death-tested. Empty-handed RMB inspection; held-item RMB placement fixed and verified. Owner authorized original source enlargement to 64 blocks.
 
-## Separate antialiasing and launcher
+Viewing: camera range 1.05 r_s to 128 blocks, automatic pause/recovery; docs/stable-exploration.md. Independent curved finite-hit validation: da7771e and docs/curved-terrain-validation.md (768 sampled comparisons at earlier checkpoint). F8 sky lab; F9 frozen view/V/C; F10 live; F12 timing. Actual player body, terrain crossing and observer speed unfinished.
 
-AA WIP remains at 8ad46eb on codex/terrain-antialiasing, based on 585835c; excluded here. Still needs fixed-camera comparison, timings, JSON false/template checks and a measured default. External resume notes incorporated in docs/stable-exploration.md.
+AA WIP stays separate at 8ad46eb on codex/terrain-antialiasing, unverified and excluded. Demo setup command not implemented. Existing launcher runs current checkout, never switches branches. No owner test assignment pending.
 
-Double-click Launch Interstellar.cmd to run the current checkout with JAVA_HOME/fallback JDK21; no branch switch. Runtime checks used Gradle directly. Do not open the same world in two clients.
+## Efficient runtime workflow
 
-## Evidence and next priority
+Redirect verbose Gradle output; build with JAVA_HOME above. run/stable-init.gradle quick-plays Interstellar Calibration. Close the identified Minecraft process normally with CloseMainWindow and wait for exit before relaunching; never open the save twice. Use a fresh runtime log path and gate input on joined-the-game. Process/window inspection requires the desktop-capable escalated context.
 
-Logs: refresh-runtime.log (transitions), refresh-final-runtime.log (manual-off/V), placement-runtime.log (final placement, enlargement, timing), refresh-build.log. Images: run/refresh-removed.png, run/refresh-extended.png, run/refresh-unloaded.png, run/placement-final.png. All local/ignored. GUI helpers: C:\Users\karol\Documents\Codex\2026-09-13\i-want-to-create-a-minecraft\work. Prefer local run/send-safe-command.ps1 in the existing STA PowerShell session: it clears chat input and pastes commands while restoring clipboard contents, avoiding Caps Lock/raw typing interference. No execution policy changes. Gate input on fresh world-entry logs; optional run/stable-init.gradle quick-plays the saved world.
+GUI helpers: C:\Users\karol\Documents\Codex\2026-09-13\i-want-to-create-a-minecraft\work. run/send-safe-command.ps1 pastes commands/restores clipboard. Use control-minecraft.ps1 -HoldKey with 100-150 ms for Escape/function keys (27, F9=120, F10=121, F12=123); transient SendKeys sometimes missed them. F3+T needs held keys and a logged resource reload. Wait for benchmark completion (bounded loop), not a fixed seven seconds, before resizing. Screenshot only major visual acceptance or failure diagnosis, at modest resolution. No screenshots needed for simple text/config edits.
 
-Owner's order: stable exploration, wider useful viewing, demo packaging, visual refinement, deeper relativity. NEXT: repeatable self-contained demo setup and coherent source/range HUD. Preserve the owner's scene; further numerical polishing or AA must not displace packaging. Full-world background/foreground access remains a step-2 limitation. Actual player body, terrain crossing, observer speed and radiometry remain unfinished; disk/entity history deferred.
-
-Preserve native buffer lifetime and GL pixel-layout/PBO isolation. No forced pushes, world resets, local .idea changes or unsolicited cleanup. Keep detailed evidence in feature docs.
-
-## Latest priority override — 2026-09-16
-
-Current branch codex/demo-package. Mixed-camera background fallback 87dd3a1 was rejected by the owner because walking exposes duplicated coloured-wall geometry; reverted in 0a264b0. Missing-data grid restored; no world geometry changed. Build passes. NEXT is coherent extended scene coverage/foreground occlusion in step 2, ahead of demo packaging. Read plan.md's proposed architecture and acceptance scenes, and D030. Do not reintroduce straight-camera fallback. Sparse client geometry access is a proposal, not an implemented solution; validate costs and moving views before claiming success. AA remains separate at 8ad46eb.
-
-Revert runtime verified: shader compiles, F10 grid restored at the owner's saved position (72.8676,284.9985,-5.1802), N=64 and 11698 opaque cells. No teleport/block edits. Logs background-revert-build.log/background-revert-runtime.log; image run/background-reverted.png. Client left in F10. The 45 tests pass with zero failures/errors; previous performance measurements describe the restored renderer, no new timing claim.
-
-Owner's latest constraint (D031): the working demo MUST blend into the world at practical frame rates. Distant approximations are explicitly welcome if inaccuracies are small/hard to notice and gains substantial. Do not interpret D030 as requiring exact whole-world tracing. NEXT: prototype and measure coherent local/remote hybrid rendering, checking walking/orbiting, parallax, occlusion, duplicates and transitions; use the accurate local/reference renderer for comparison. Sparse chunk caching is one candidate, not a fixed prerequisite. See plan.md's practical-world-integration acceptance section. No renderer changes in this requirements checkpoint.
+Evidence: distant-build.log, distant-verified-runtime.log, distant-bounds-runtime.log and run/distant-*.png (ignored). Avoid dumping logs/docs repeatedly; feature doc contains detailed evidence. Keep future handoffs concise instead of appending contradictory overrides.

@@ -32,4 +32,6 @@ The owner explicitly requests autonomous in-game inputs and verification. Operat
 - Redirect verbose builds/runtime output to local logs; return completion status and relevant failures/timings only. Avoid repeatedly polling startup output.
 - Keep handoff.md focused on current state; put detailed evidence in feature docs and link it from progress/decision notes rather than copying it among all files.
 - Run appropriate tests once per meaningful change; repeat only for a change, failure or unresolved concern. Do not trade away shader visual checks or scientific validation.
+- Owner clarification: simple text, HUD and nonvisual changes do not need screenshot feedback. Batch screenshots after major rendering changes, prioritizing a few representative moving-view checkpoints; use logs/tests for intermediate edits. Keep tool output and progress reports short.
+- Runtime efficiency: use held native keys for Escape/function keys; verify resource reload in the log. Gate benchmarks on completion rather than a fixed sleep. Before relaunching, close the identified client normally and wait for process exit; never launch a second client against the same saved world.
 - No exact token savings are claimed without usage accounting. Do not change model settings or spawn agents to reduce costs without authorization.

@@ -1,8 +1,11 @@
 {
   "vertex":"interstellar:optical_lab", "fragment":"interstellar:terrain",
   "attributes":["Position"],
-  "samplers":[{"name":"Voxels"},{"name":"Palette"},{"name":"Atlas"}],
+  "samplers":[{"name":"Voxels"},{"name":"Palette"},{"name":"Atlas"},{"name":"Distant"}],
   "uniforms":[
+    {"name":"Hybrid","type":"float","count":1,"values":[0]},
+    {"name":"DistantTop","type":"float","count":1,"values":[-1024]},
+    {"name":"SkyColor","type":"float","count":3,"values":[0.4,0.6,0.9]},
     {"name":"Viewport","type":"float","count":2,"values":[854,480]},
     {"name":"Camera","type":"float","count":3,"values":[48,48,12]},
     {"name":"Source","type":"float","count":3,"values":[48,48,48]},
