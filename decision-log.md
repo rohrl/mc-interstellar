@@ -159,3 +159,7 @@ Reuse Minecraft sky/cloud rendering and lightmap/face brightness, with separate 
 ## D035 — Use the actual world projection — accepted (2026-09-17)
 
 Paired-image metadata revealed effective FOV 77 degrees despite configured70; the fixed70 backend enlarged terrain. Derive ray scales/offsets from the world projection each frame in F9/F10, use matching camera inputs in independent hit checks, and record effective candidate projection in metadata. Two fixed-pose images plus zero-mismatch diagnostics verify this correction, without claiming camera bob/hurt or appearance parity. Keep the shared vertex shader Viewport uniform independent of optical projection. Evidence: docs/native-appearance.md.
+
+## D036 — Match the native sky caller's render state — accepted (2026-09-17)
+
+Pinned Minecraft bytecode shows renderSky inherits its initial shader and some sky elements use global matrices. Explicitly select the position shader and establish/restore world capture matrices and colour when capturing from the HUD stage; use current tick interpolation. Nighttime sky/moon/cloud alignment and repeated-reference identity verified; no claim of full atmosphere or cloud occlusion parity. Detailed captures, limits and live timings: docs/native-appearance.md.

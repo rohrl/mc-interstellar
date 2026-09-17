@@ -1,9 +1,11 @@
 package io.github.rohrl.interstellar.client;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.systems.VertexSorter;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gl.SimpleFramebuffer;
 import net.minecraft.client.render.BackgroundRenderer;
+import net.minecraft.client.render.GameRenderer;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.math.Vec3d;
 import org.joml.Matrix4f;
@@ -25,25 +27,40 @@ final class NativeSky implements AutoCloseable {
         if(target==null) {target=new SimpleFramebuffer(SIZE*6,SIZE,true,false);target.setTexFilter(GL11.GL_LINEAR);}
         float start=RenderSystem.getShaderFogStart(),end=RenderSystem.getShaderFogEnd();
         var shape=RenderSystem.getShaderFogShape();float[] fog=RenderSystem.getShaderFogColor().clone();
+        var previousProjection=new Matrix4f(RenderSystem.getProjectionMatrix());
+        var previousSorting=RenderSystem.getVertexSorting();
+        var previousShader=RenderSystem.getShader();float[] colour=RenderSystem.getShaderColor().clone();
+        var modelView=RenderSystem.getModelViewStack();modelView.pushMatrix();
+        float tickDelta=client.getRenderTickCounter().getTickDelta(false);
         boolean scissor=GL11.glIsEnabled(GL11.GL_SCISSOR_TEST);int[] box=new int[4];GL11.glGetIntegerv(GL11.GL_SCISSOR_BOX,box);
         var projection=new Matrix4f().perspective((float)(Math.PI/2),1,.05f,2048);
         try {
+            // Immediate sky geometry reads the global matrices; buffered sky uses the arguments below.
+            modelView.identity();RenderSystem.applyModelViewMatrix();
+            RenderSystem.setProjectionMatrix(projection,VertexSorter.BY_DISTANCE);
             RenderSystem.disableScissor();
+            RenderSystem.enableDepthTest();RenderSystem.depthMask(true);RenderSystem.enableCull();
             target.setClearColor(fog[0],fog[1],fog[2],1);target.clear(false);target.beginWrite(true);
             for(int face=0;face<6;face++) {
                 RenderSystem.viewport(face*SIZE,0,SIZE,SIZE);
                 var d=DIRECTIONS[face];var u=UPS[face];
                 var view=new Matrix4f().lookAt(0,0,0,d[0],d[1],d[2],u[0],u[1],u[2]);
-                client.worldRenderer.renderSky(view,projection,1,camera,false,
-                        () -> BackgroundRenderer.applyFog(camera,BackgroundRenderer.FogType.FOG_SKY,client.gameRenderer.getViewDistance(),false,1));
-                BackgroundRenderer.applyFog(camera,BackgroundRenderer.FogType.FOG_TERRAIN,client.gameRenderer.getViewDistance(),false,1);
-                client.worldRenderer.renderClouds(new MatrixStack(),view,projection,1,camera.getPos().x,camera.getPos().y,camera.getPos().z);
+                // renderSky intentionally inherits the position shader selected by its vanilla caller.
+                RenderSystem.setShader(GameRenderer::getPositionProgram);
+                RenderSystem.disableBlend();RenderSystem.defaultBlendFunc();
+                client.worldRenderer.renderSky(view,projection,tickDelta,camera,false,
+                        () -> BackgroundRenderer.applyFog(camera,BackgroundRenderer.FogType.FOG_SKY,client.gameRenderer.getViewDistance(),false,tickDelta));
+                BackgroundRenderer.applyFog(camera,BackgroundRenderer.FogType.FOG_TERRAIN,client.gameRenderer.getViewDistance(),false,tickDelta);
+                client.worldRenderer.renderClouds(new MatrixStack(),view,projection,tickDelta,camera.getPos().x,camera.getPos().y,camera.getPos().z);
             }
             capturedTick=tick;capturedPosition=camera.getPos();
         } finally {
+            modelView.popMatrix();RenderSystem.applyModelViewMatrix();
+            RenderSystem.setProjectionMatrix(previousProjection,previousSorting);
+            RenderSystem.setShader(()->previousShader);
             client.getFramebuffer().beginWrite(true);
             RenderSystem.setShaderFogStart(start);RenderSystem.setShaderFogEnd(end);RenderSystem.setShaderFogShape(shape);
-            RenderSystem.setShaderFogColor(fog[0],fog[1],fog[2],fog[3]);RenderSystem.setShaderColor(1,1,1,1);
+            RenderSystem.setShaderFogColor(fog[0],fog[1],fog[2],fog[3]);RenderSystem.setShaderColor(colour[0],colour[1],colour[2],colour[3]);
             RenderSystem.depthMask(true);RenderSystem.enableDepthTest();RenderSystem.enableCull();
             RenderSystem.enableBlend();RenderSystem.defaultBlendFunc();
             if(scissor)RenderSystem.enableScissor(box[0],box[1],box[2],box[3]);

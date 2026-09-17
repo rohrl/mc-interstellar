@@ -162,3 +162,7 @@ Completed the interrupted native sky/light and cap/side material implementation;
 ## World projection alignment — 2026-09-17
 
 Pushed repair 6e3b69d to explicitly confirmed origin. Fixed the next concrete comparison failure: actual world FOV was77 degrees while backend used70. F9/F10 and independent diagnostics now use world perspective scales/offsets. Final build/45 tests pass; local/distant V zero mismatches. Two daytime image pairs inspected, wall/platform alignment improved; cloud/sky/material/geometry errors remain. Live 1440p/half-resolution GPU p95=9.685856 ms, frame p95=11.6756 ms (documented exclusions). Client left F10 enabled at far reference; no block edits, AA separate. Exact evidence: docs/native-appearance.md.
+
+## Native sky state repair — 2026-09-17
+
+Corrected sky shader/global matrix setup and restoration. Build/45 tests pass. Near-wall nighttime pair top-third RGB MAE0.0040; moon/gradient align. Downward pair shows aligned cloud pattern, with remaining foreground-cloud and terrain errors. Repeated vanilla references pixel-identical. Live 1440p/half-resolution GPU p95=9.701568 ms, frame p95=11.5768 ms (documented exclusions). Client left F10 on in creative flight; no block edits, AA separate. Usage interruption recovered from saved evidence; improved fixture instructions avoid falling fresh players and stale-capture comparisons. See docs/native-appearance.md.
