@@ -31,8 +31,11 @@ final class WorldMesh implements VertexConsumer,AutoCloseable {
     private final long started=System.nanoTime();
     int triangleTexture,nodeTexture,nodeCount;
     EntityMesh entities;
+    final CloudMesh clouds=new CloudMesh();
+    private final BlockPos centre;
+    float extent=512;
     WorldMesh(ClientWorld world,BlockPos origin,BlockPos centre) {
-        this.world=world;this.origin=origin;
+        this.world=world;this.origin=origin;this.centre=centre;
         minChunkX=(centre.getX()>>4)-CHUNKS/2;minChunkZ=(centre.getZ()>>4)-CHUNKS/2;
         sections=world.countVerticalSections();total=CHUNKS*CHUNKS*sections*4096;
     }
@@ -68,8 +71,16 @@ final class WorldMesh implements VertexConsumer,AutoCloseable {
         } finally {net.minecraft.client.render.block.BlockModelRenderer.disableBrightnessCache();}
         if(cursor==total) {
             entities=new EntityMesh(this);entities.capture(origin,minChunkX,minChunkZ,CHUNKS);
+            clouds.capture(this,origin);
             var tree=new MeshTree(triangles,count);nodeCount=tree.size();
-            upload(tree.nodes());triangles=null;
+            var nodes=tree.nodes();
+            if(nodes.length>0) {
+                double radiusSquared=0;
+                int[] source={centre.getX()-origin.getX(),centre.getY()-origin.getY(),centre.getZ()-origin.getZ()};
+                for(int a=0;a<3;a++) {double distance=Math.max(Math.abs(nodes[a]-source[a]),Math.abs(nodes[a+4]-source[a]));radiusSquared+=distance*distance;}
+                extent=(float)Math.sqrt(radiusSquared)+2; // Include fractional source-centre rounding.
+            }
+            upload(nodes);triangles=null;
             Interstellar.LOGGER.info("World mesh ready: {}; {} omitted blocks; chunks=({}, {})..({}, {}), full build height; capture/build/upload={} ms",status(),omittedBlocks,minChunkX,minChunkZ,minChunkX+CHUNKS-1,minChunkZ+CHUNKS-1,(System.nanoTime()-started)/1e6);
         }
     }

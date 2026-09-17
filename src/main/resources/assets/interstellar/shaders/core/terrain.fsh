@@ -11,7 +11,10 @@ uniform sampler2D SmoothAtlas,LocalSmooth,DistantSmooth;
 #define MeshNodes Palette
 uniform float MeshMode,MeshNodeCount;
 uniform float MeshEntities;
+uniform float MeshClouds,MeshExtent;
 #define EntityAtlas LocalLight
+#define CloudAtlas Distant
+vec4 cloudLayer=vec4(0);
 vec3 meshColour;
 uniform vec4 FaceShades;
 uniform float Hybrid;
@@ -123,11 +126,18 @@ vec3 smoothLight(int id,int face,vec2 st) {
     return cornerLight(data.x)*weights.x+cornerLight(data.y)*weights.y+cornerLight(data.z)*weights.z+cornerLight(data.w)*weights.w;
 }
 vec4 meshData(sampler2D data,int index) {return texelFetch(data,ivec2(index%4096,index/4096),0);}
+float cloudFogDistance(vec3 position) {
+    vec3 d=position-Camera;
+    // Native cloud vertex shader measures fog after the view transform.
+    vec3 view=vec3(dot(d,Right),dot(d,Up),dot(d,Forward));
+    return TerrainFogRange.z>.5?max(length(view.xz),abs(view.y)):length(view);
+}
 // Stackless preorder traversal: escape links skip whole subtrees. Each chord has one nearest hit.
 int meshSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
     vec3 delta=end-start;float best=1.000001;bool found=false;int node=0;
+    float cloudAt=2.0;vec4 nearestCloud=vec4(0);
     for(int visited=0;visited<131072;visited++) {
-        if(node>=int(MeshNodeCount))return found?3:-1;
+        if(node>=int(MeshNodeCount))break;
         vec4 lower=meshData(MeshNodes,node*3),upper=meshData(MeshNodes,node*3+1);
         float enter=0,leave=min(1.0,best);bool inside=true;
         for(int axis=0;axis<3;axis++) {
@@ -144,10 +154,13 @@ int meshSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
             int base=(int(upper.w)+i)*9;
             vec4 vertexA=meshData(MeshTriangles,base);
             float entity=vertexA.w;
-            if(entity!=0.0 && MeshEntities<.5)continue;
+            bool cloud=entity>=5.0;
+            if(cloud && (MeshClouds<.5 || cloudLayer.a>0.0))continue;
+            if(!cloud && entity!=0.0 && MeshEntities<.5)continue;
             vec3 a=vertexA.xyz,b=meshData(MeshTriangles,base+3).xyz,c=meshData(MeshTriangles,base+6).xyz;
             vec3 edge1=b-a,edge2=c-a,p=cross(delta,edge2);
-            float det=dot(edge1,p);if(abs(entity)>1.5?abs(det)<1e-10:det<1e-10)continue;
+            bool twoSided=abs(entity)==2.0 || entity==6.0;
+            float det=dot(edge1,p);if(twoSided?abs(det)<1e-10:det<1e-10)continue;
             vec3 s=start-a;float u=dot(s,p)/det;if(u<0 || u>1)continue;
             vec3 q=cross(s,edge1);float v=dot(delta,q)/det;if(v<0 || u+v>1)continue;
             float t=dot(edge2,q)/det;if(t<0 || t>1 || t>=best)continue;
@@ -161,6 +174,16 @@ int meshSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
                 uvC.zw=clamp(uvC.zw+offset,vec2(.5/16.0),vec2(15.5/16.0));
             }
             vec2 uv=uvA.xy*weights.x+uvB.xy*weights.y+uvC.xy*weights.z;
+            if(cloud) {
+                if(t>=cloudAt)continue;
+                vec4 colour=textureLod(CloudAtlas,uv,0)*(meshData(MeshTriangles,base+2)*weights.x+
+                        meshData(MeshTriangles,base+5)*weights.y+meshData(MeshTriangles,base+8)*weights.z);
+                if(colour.a<.1)continue;
+                float distance=dot(vec3(cloudFogDistance(a),cloudFogDistance(b),cloudFogDistance(c)),weights);
+                float fog=TerrainFogRange.y>TerrainFogRange.x?smoothstep(TerrainFogRange.x,TerrainFogRange.y,distance):step(TerrainFogRange.y,distance);
+                colour.rgb=mix(colour.rgb,TerrainFogColour.rgb,fog*TerrainFogColour.a);
+                nearestCloud=colour;cloudAt=t;continue;
+            }
             vec4 texel=entity>0.0?textureLod(EntityAtlas,uv,0):textureLod(Atlas,uv,0);
             if(texel.a<.1)continue;
             vec3 colA=meshData(MeshTriangles,base+2).rgb*texture(Lightmap,uvA.zw).rgb;
@@ -171,7 +194,10 @@ int meshSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
         }
         node++;
     }
-    meshColour=vec3(1,0,1);hit=start;normal=vec3(0,1,0);return 3;
+    if(node<int(MeshNodeCount)) {meshColour=vec3(1,0,1);hit=start;normal=vec3(0,1,0);return 3;}
+    // Vanilla fancy clouds use a depth prepass: blend the nearest cloud surface once.
+    if(cloudAt<best && cloudLayer.a==0.0)cloudLayer=nearestCloud;
+    return found?3:-1;
 }
 vec3 surface(int value,vec3 hit,vec3 normal) {
     if(MeshMode>.5) {
@@ -340,7 +366,7 @@ void trace() {
             fragColor=vec4(distantHit?surface(farValue,farHit,farNormal):missing(outgoing),1);return;
         }
         // Once outgoing beyond the sphere enclosing all data, no future chord can re-enter.
-        if(q.y<0.0 && Radius/q.x>(Hybrid>.5 && Diagnostic<.5?512.0:max(1.5*Radius,length(max(abs(Source),abs(vec3(SIDE)-Source)))))) {
+        if(q.y<0.0 && Radius/q.x>(MeshMode>.5?MeshExtent:Hybrid>.5 && Diagnostic<.5?512.0:max(1.5*Radius,length(max(abs(Source),abs(vec3(SIDE)-Source)))))) {
             if(MeshMode>.5) {
                 vec3 radial=cos(phi)*radialAxis+sin(phi)*tangentAxis;
                 vec3 angular=-sin(phi)*radialAxis+cos(phi)*tangentAxis;
@@ -376,5 +402,7 @@ void main() {
         int value=distantSegment(Camera,Camera+d*1024.0,hit,normal);
         fragColor=vec4(value==0?0.0:length(hit-Camera),0,0,float(value));return;
     }
-    trace();if(Diagnostic>.5)fragColor=diagnostic;
+    trace();
+    if(MeshMode>.5 && MeshClouds>.5)fragColor.rgb=mix(fragColor.rgb,cloudLayer.rgb,cloudLayer.a);
+    if(Diagnostic>.5)fragColor=diagnostic;
 }

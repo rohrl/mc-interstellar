@@ -32,6 +32,8 @@ Final diagnostic timing only: frozen mesh, lensing on, 427×240 internal / 854×
 
 ## Remaining integration work
 
+Checkpoint update: supported frozen living entities are covered in [mesh-entities.md](mesh-entities.md); native foreground clouds and a bounds-derived escape sphere are now implemented in [mesh-clouds.md](mesh-clouds.md). The list below records the initial mesh checkpoint's limitations; coverage, general transparency and independent curved-ray validation remain open.
+
 - Foreground clouds need depth/opacity ordering; the inherited native sky capture only supplies the background on terrain misses.
 - Fluids, translucent blocks, entities/block entities and precipitation are omitted. Omitted-block statistics count fluid/translucent incidences, not entities; waterlogged translucent blocks can count twice.
 - Texture filtering/mip selection, animation freezing and full native material behavior are incomplete. Atlas sampling currently uses LOD0.

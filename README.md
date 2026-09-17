@@ -62,7 +62,7 @@ Press **C** in the lab for the near-critical ray stress test (brief blocking pau
 
 ## Terrain preview
 
-**Quality-first integration experiment:** in F9, press **M** to capture native terrain and frozen mob models (about 15 seconds in the test scene), then **Space** to enable lensing. **E** toggles mobs; **P** compares the unbent mesh with vanilla. This is separate from F10; fluids, foreground cloud composition and special entity effects remain incomplete. [Terrain evidence](docs/native-mesh.md) · [Mobs and lighting correction](docs/mesh-entities.md).
+**Quality-first integration experiment:** in F9, press **M** to capture native terrain, frozen mob models and clouds (about 15 seconds in the test scene), then **Space** to enable lensing. **E** toggles mobs; **N** compares foreground clouds with the previous background-only clouds; **P** compares the unbent mesh with vanilla. This is separate from F10; fluids, special entity effects and full visible-world coverage remain incomplete. [Terrain evidence](docs/native-mesh.md) · [Mobs and lighting correction](docs/mesh-entities.md) · [Cloud composition and measurements](docs/mesh-clouds.md).
 
 Inspect a black-hole proxy, move outside 1.05 r_s, and press **F9**. **Space** compares lensing; arrows look around; **L** aims at the source; **Q** changes resolution; **J** changes path sampling; **V** checks flat geometry; **C** compares curved hits against an independent CPU reference; **B** measures GPU cost. Esc returns to Minecraft. Reopen to capture a new view. This is a frozen opaque-block preview with explicit missing-data boundaries. [Controls, performance, limits and saved test scene](docs/terrain-prototype.md).
 

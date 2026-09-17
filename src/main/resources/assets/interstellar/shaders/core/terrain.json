@@ -5,6 +5,8 @@
   "uniforms":[
     {"name":"MeshMode","type":"float","count":1,"values":[0]},
     {"name":"MeshEntities","type":"float","count":1,"values":[1]},
+    {"name":"MeshClouds","type":"float","count":1,"values":[1]},
+    {"name":"MeshExtent","type":"float","count":1,"values":[512]},
     {"name":"MeshNodeCount","type":"float","count":1,"values":[0]},
     {"name":"Hybrid","type":"float","count":1,"values":[0]},
     {"name":"FaceLighting","type":"float","count":1,"values":[1]},
