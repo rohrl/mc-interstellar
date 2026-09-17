@@ -166,3 +166,7 @@ Pushed repair 6e3b69d to explicitly confirmed origin. Fixed the next concrete co
 ## Native sky state repair — 2026-09-17
 
 Corrected sky shader/global matrix setup and restoration. Build/45 tests pass. Near-wall nighttime pair top-third RGB MAE0.0040; moon/gradient align. Downward pair shows aligned cloud pattern, with remaining foreground-cloud and terrain errors. Repeated vanilla references pixel-identical. Live 1440p/half-resolution GPU p95=9.701568 ms, frame p95=11.5768 ms (documented exclusions). Client left F10 on in creative flight; no block edits, AA separate. Usage interruption recovered from saved evidence; improved fixture instructions avoid falling fresh players and stale-capture comparisons. See docs/native-appearance.md.
+
+## Native fog and reported boundary — 2026-09-17
+
+Replaced source-centred distant fade with native camera-relative opaque terrain fog. Build/45 tests and runtime pass. Just-inside-boundary pair has matched effective FOV77 and aligned platform; full RGB MAE0.0211, bottom-half0.0397, with visible remaining mountain errors. F10 automatically pauses/resumes across two fixed boundary poses. Hard128 cutoff and terrain lighting/geometry remain unfinished. Live1440p/half-resolution GPU p95=9.645760ms, frame p95=11.7428ms; exclusions documented. Client left F10 on, creative flight, no block edits or AA changes. Details: docs/native-fog.md.

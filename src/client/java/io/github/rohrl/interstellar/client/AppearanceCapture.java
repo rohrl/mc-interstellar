@@ -18,6 +18,7 @@ final class AppearanceCapture {
     private static BufferedImage reference;
     private static LinkedHashMap<String,Object> metadata;
     static void register() {
+        WorldFog.register();
         WorldRenderEvents.END.register(context -> {
             WorldProjection.capture(context.projectionMatrix());
             if(requested==null)return;
@@ -40,6 +41,7 @@ final class AppearanceCapture {
                 metadata.put("configuredFov",client.options.getFov().getValue());
                 metadata.put("candidateVerticalFov",WorldProjection.current().verticalFov());
                 metadata.put("candidateRaySlopes",WorldProjection.current());
+                metadata.put("terrainFog",WorldFog.current());
                 metadata.put("gamma",client.options.getGamma().getValue());
                 metadata.put("perspective",client.options.getPerspective().name());
                 metadata.put("dimension",client.world.getRegistryKey().getValue().toString());

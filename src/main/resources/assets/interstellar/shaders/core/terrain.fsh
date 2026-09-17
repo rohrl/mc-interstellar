@@ -8,6 +8,8 @@ uniform vec4 FaceShades;
 uniform float Hybrid;
 uniform float DistantTop;
 uniform vec4 ViewSlopes;
+uniform vec3 TerrainFogRange;
+uniform vec4 TerrainFogColour;
 uniform vec3 Camera,Source,Forward,Right,Up;
 uniform float Radius,Lensing,PathStep,Diagnostic;
 vec4 diagnostic=vec4(0);
@@ -111,7 +113,16 @@ vec3 surface(int value,vec3 hit,vec3 normal) {
     float light=Hybrid>.5?(normal.y>.5?FaceShades.w:normal.y<-.5?FaceShades.z:abs(normal.x)>.5?FaceShades.x:FaceShades.y):
             .55+.45*max(0.0,dot(normal,normalize(vec3(-.4,.8,-.3))));
     vec3 colour=albedo*light*(Hybrid>.5?worldLight():vec3(1));
-    return distantHit?mix(colour,nativeSky(normalize(hit-Camera)),smoothstep(80.0,128.0,length((hit-Source).xz))):colour;
+    if(Hybrid>.5) {
+        // Match vanilla's camera-relative spherical/cylindrical fog in the zero-bending limit.
+        // Curved paths use endpoint distance as an appearance approximation, not optical depth.
+        vec3 relative=hit-Camera;
+        float fogDistance=TerrainFogRange.z>.5?max(length(relative.xz),abs(relative.y)):length(relative);
+        float fogAmount=TerrainFogRange.y>TerrainFogRange.x?
+                smoothstep(TerrainFogRange.x,TerrainFogRange.y,fogDistance):step(TerrainFogRange.y,fogDistance);
+        colour=mix(colour,TerrainFogColour.rgb,fogAmount*TerrainFogColour.a);
+    }
+    return colour;
 }
 
 // Intersect one height-field column prism. Near volume is never represented here.

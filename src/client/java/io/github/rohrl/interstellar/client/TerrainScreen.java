@@ -132,6 +132,9 @@ final class TerrainScreen extends Screen {
             var projection=WorldProjection.current();
             shader.getUniformOrDefault("Viewport").set((float)w,(float)h);
             shader.getUniformOrDefault("ViewSlopes").set(projection.x(),projection.y(),projection.offsetX(),projection.offsetY());
+            var fog=WorldFog.current();
+            shader.getUniformOrDefault("TerrainFogRange").set(fog.start(),fog.end(),fog.cylindrical());
+            shader.getUniformOrDefault("TerrainFogColour").set(fog.red(),fog.green(),fog.blue(),fog.alpha());
             setVector("Camera",camera.subtract(Vec3d.of(snapshot.origin)));
             setVector("Source",centre().subtract(Vec3d.of(snapshot.origin)));
             Vec3d forward=Vec3d.fromPolar(pitch,yaw),right=Vec3d.fromPolar(0,yaw+90);

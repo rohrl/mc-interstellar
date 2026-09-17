@@ -163,3 +163,7 @@ Paired-image metadata revealed effective FOV 77 degrees despite configured70; th
 ## D036 — Match the native sky caller's render state — accepted (2026-09-17)
 
 Pinned Minecraft bytecode shows renderSky inherits its initial shader and some sky elements use global matrices. Explicitly select the position shader and establish/restore world capture matrices and colour when capturing from the HUD stage; use current tick interpolation. Nighttime sky/moon/cloud alignment and repeated-reference identity verified; no claim of full atmosphere or cloud occlusion parity. Detailed captures, limits and live timings: docs/native-appearance.md.
+
+## D037 — Native camera-relative opaque terrain fog — accepted (2026-09-17)
+
+Owner's boundary report exposed source-relative sky-colour fading unrelated to Minecraft fog. Replace it with actual terrain fog inputs captured before the HUD, applied to opaque hits with native spherical/cylindrical distance. Curved-ray endpoint fog is an appearance approximation, not optical-depth transport. Fixed zero-bending camera/FOV matches near128; hard activation cutoff still removes nonzero lensing and remains unresolved. Do not hide it by silently fading physical lensing. Evidence and limits: docs/native-fog.md.
