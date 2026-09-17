@@ -14,7 +14,9 @@ import java.nio.ByteOrder;
 /** Capture vanilla's frozen cloud faces/UV/colour, preserving their native camera-relative transform. */
 final class CloudMesh {
     int texture,triangles;
+    private boolean logged;
     void capture(WorldMesh mesh,BlockPos origin) {
+        texture=triangles=0;
         var client=MinecraftClient.getInstance();
         var mode=client.options.getCloudRenderModeValue();
         float height=client.world.getDimensionEffects().getCloudsHeight();
@@ -51,6 +53,7 @@ final class CloudMesh {
             }
         }
         texture=client.getTextureManager().getTexture(Identifier.ofVanilla("textures/environment/clouds.png")).getGlId();
-        Interstellar.LOGGER.info("Cloud mesh: {} triangles, mode={}, cloud height={}, cull={}",triangles,mode,height,kind==5);
+        if(!mesh.dynamic() || !logged)Interstellar.LOGGER.info("Cloud mesh: {} triangles, mode={}, cloud height={}, cull={}",triangles,mode,height,kind==5);
+        logged=true;
     }
 }

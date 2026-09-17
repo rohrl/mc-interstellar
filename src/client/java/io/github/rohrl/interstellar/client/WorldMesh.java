@@ -33,9 +33,16 @@ final class WorldMesh implements VertexConsumer,AutoCloseable {
     EntityMesh entities;
     final CloudMesh clouds=new CloudMesh();
     private final BlockPos centre;
+    private final boolean terrainOnly;
+    private boolean dynamic;
+    private long updates;
     float extent=512;
     WorldMesh(ClientWorld world,BlockPos origin,BlockPos centre) {
+        this(world,origin,centre,false);
+    }
+    WorldMesh(ClientWorld world,BlockPos origin,BlockPos centre,boolean terrainOnly) {
         this.world=world;this.origin=origin;this.centre=centre;
+        this.terrainOnly=terrainOnly;
         var client=MinecraftClient.getInstance();
         var camera=BlockPos.ofFloored(client.gameRenderer.getCamera().getPos());
         viewDistance=client.options.getViewDistance().getValue();
@@ -44,8 +51,22 @@ final class WorldMesh implements VertexConsumer,AutoCloseable {
         minChunkX=(camera.getX()>>4)-radius;minChunkZ=(camera.getZ()>>4)-radius;
         sections=world.countVerticalSections();total=chunks*chunks*sections*4096;
     }
+    WorldMesh movingScene() {
+        var moving=new WorldMesh(world,origin,centre,false);moving.dynamic=true;
+        moving.entities=new EntityMesh(moving);return moving;
+    }
+    boolean dynamic() {return dynamic;}
+    void updateMoving() {
+        if(!dynamic)throw new IllegalStateException("Not a moving scene");
+        count=0;
+        entities.capture(origin,minChunkX,minChunkZ,chunks);
+        clouds.capture(this,origin);
+        finishTree();
+        if(++updates==1 || updates==300 || updates==600 || updates%3600==0)
+            Interstellar.LOGGER.info("Live mesh update {}: {} triangles, {}; geometry fingerprint={}",updates,count,entities.status(),Arrays.hashCode(Arrays.copyOf(triangles,count*36)));
+    }
     boolean ready() {return nodeTexture!=0;}
-    String status() {return ready()?"Native mesh: "+count+" triangles | "+missingSections+" missing sections | "+entities.status():
+    String status() {return ready()?"Native mesh: "+count+" triangles | "+missingSections+" missing sections"+(entities==null?"": " | "+entities.status()):
             "Capturing native mesh: "+(100L*cursor/total)+"%";}
     void advance() {
         if(ready())return;
@@ -77,19 +98,24 @@ final class WorldMesh implements VertexConsumer,AutoCloseable {
             }
         } finally {net.minecraft.client.render.block.BlockModelRenderer.disableBrightnessCache();}
         if(cursor==total) {
-            entities=new EntityMesh(this);entities.capture(origin,minChunkX,minChunkZ,chunks);
-            clouds.capture(this,origin);
-            var tree=new MeshTree(triangles,count);nodeCount=tree.size();
-            var nodes=tree.nodes();
-            if(nodes.length>0) {
-                double radiusSquared=0;
-                int[] source={centre.getX()-origin.getX(),centre.getY()-origin.getY(),centre.getZ()-origin.getZ()};
-                for(int a=0;a<3;a++) {double distance=Math.max(Math.abs(nodes[a]-source[a]),Math.abs(nodes[a+4]-source[a]));radiusSquared+=distance*distance;}
-                extent=(float)Math.sqrt(radiusSquared)+2; // Include fractional source-centre rounding.
+            if(!terrainOnly) {
+                entities=new EntityMesh(this);entities.capture(origin,minChunkX,minChunkZ,chunks);
+                clouds.capture(this,origin);
             }
-            upload(nodes);triangles=null;
+            finishTree();triangles=null;
             Interstellar.LOGGER.info("World mesh ready: {}; {} omitted blocks; camera coverage {}x{} chunks=({}, {})..({}, {}), full build height; capture/build/upload={} ms",status(),omittedBlocks,chunks,chunks,minChunkX,minChunkZ,minChunkX+chunks-1,minChunkZ+chunks-1,(System.nanoTime()-started)/1e6);
         }
+    }
+    private void finishTree() {
+        var tree=new MeshTree(triangles,count);nodeCount=tree.size();
+        var nodes=tree.nodes();
+        if(nodes.length>0) {
+            double radiusSquared=0;
+            int[] source={centre.getX()-origin.getX(),centre.getY()-origin.getY(),centre.getZ()-origin.getZ()};
+            for(int a=0;a<3;a++) {double distance=Math.max(Math.abs(nodes[a]-source[a]),Math.abs(nodes[a+4]-source[a]));radiusSquared+=distance*distance;}
+            extent=(float)Math.sqrt(radiusSquared)+2; // Include fractional source-centre rounding.
+        }
+        upload(nodes);
     }
     @Override public void quad(MatrixStack.Entry entry,BakedQuad quad,float[] brightness,float red,float green,float blue,float alpha,int[] light,int overlay,boolean useQuadColor) {
         int[] vertices=quad.getVertexData();int stride=vertices.length/4;
@@ -110,6 +136,7 @@ final class WorldMesh implements VertexConsumer,AutoCloseable {
         add(0,1,2);add(2,3,0);
     }
     private void add(int a,int b,int c) {
+        if(dynamic && count>=200_000)throw new IllegalStateException("Moving scene exceeds 200,000 triangles");
         if(count==MAX_TRIANGLES)throw new IllegalStateException("Native mesh exceeds seven million triangles; lower render distance and reopen (no silent truncation)");
         if((count+1)*36>triangles.length)triangles=Arrays.copyOf(triangles,Math.min(MAX_TRIANGLES*36,triangles.length*2));
         int dst=count++*36;
@@ -126,8 +153,16 @@ final class WorldMesh implements VertexConsumer,AutoCloseable {
         int[] saved=new int[names.length];
         for(int i=0;i<names.length;i++) {saved[i]=GL11.glGetInteger(names[i]);GL11.glPixelStorei(names[i],i==0?4:0);}
         GL15.glBindBuffer(GL21.GL_PIXEL_UNPACK_BUFFER,0);
-        try {triangleTexture=texture(triangles,count*36);nodeTexture=texture(nodes,nodes.length);}
+        int newTriangles=0,newNodes=0;
+        try {
+            newTriangles=texture(triangles,count*36);newNodes=texture(nodes,nodes.length);
+            if(triangleTexture!=0)RenderSystem.deleteTexture(triangleTexture);
+            if(nodeTexture!=0)RenderSystem.deleteTexture(nodeTexture);
+            triangleTexture=newTriangles;nodeTexture=newNodes;newTriangles=newNodes=0;
+        }
         finally {
+            if(newTriangles!=0)RenderSystem.deleteTexture(newTriangles);
+            if(newNodes!=0)RenderSystem.deleteTexture(newNodes);
             for(int i=0;i<names.length;i++)GL11.glPixelStorei(names[i],saved[i]);
             GL15.glBindBuffer(GL21.GL_PIXEL_UNPACK_BUFFER,pbo);RenderSystem.bindTexture(previous);
         }

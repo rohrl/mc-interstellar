@@ -38,6 +38,8 @@ final class EntityMesh implements VertexConsumerProvider,AutoCloseable {
         });
     }
     void capture(BlockPos origin,int minChunkX,int minChunkZ,int chunks) {
+        collectors.clear();unsupported.clear();vertices=entities=omittedEntities=0;
+        int oldTextures=tiles.size();
         var client=MinecraftClient.getInstance();var dispatcher=client.getEntityRenderDispatcher();
         float delta=client.getRenderTickCounter().getTickDelta(false);
         for(var entity:client.world.getEntities()) {
@@ -53,8 +55,9 @@ final class EntityMesh implements VertexConsumerProvider,AutoCloseable {
             if(vertices>before)entities++;else omittedEntities++;
         }
         for(var collector:collectors.values())collector.finish();
-        upload();
-        Interstellar.LOGGER.info("Entity mesh: {} living entities with supported geometry, {} wholly omitted, {} vertices, {} textures; omitted layers={}",entities,omittedEntities,vertices,tiles.size(),unsupported);
+        if(texture==0 || tiles.size()!=oldTextures)upload();
+        if(!mesh.dynamic() || tiles.size()!=oldTextures)
+            Interstellar.LOGGER.info("Entity mesh: {} living entities with supported geometry, {} wholly omitted, {} vertices, {} textures; omitted layers={}",entities,omittedEntities,vertices,tiles.size(),unsupported);
     }
     String status() {return entities+" mobs | "+omittedEntities+" omitted";}
     @Override public VertexConsumer getBuffer(RenderLayer layer) {
@@ -109,7 +112,7 @@ final class EntityMesh implements VertexConsumerProvider,AutoCloseable {
         for(int i=0;i<names.length;i++) {saved[i]=GL11.glGetInteger(names[i]);GL11.glPixelStorei(names[i],i==0?4:0);}
         GL15.glBindBuffer(GL21.GL_PIXEL_UNPACK_BUFFER,0);
         try {
-            texture=GL11.glGenTextures();RenderSystem.bindTexture(texture);
+            if(texture==0)texture=GL11.glGenTextures();RenderSystem.bindTexture(texture);
             GL11.glTexParameteri(GL11.GL_TEXTURE_2D,GL11.GL_TEXTURE_MIN_FILTER,GL11.GL_NEAREST);
             GL11.glTexParameteri(GL11.GL_TEXTURE_2D,GL11.GL_TEXTURE_MAG_FILTER,GL11.GL_NEAREST);
             GL11.glTexImage2D(GL11.GL_TEXTURE_2D,0,GL11.GL_RGBA8,SIZE,SIZE,0,GL11.GL_RGBA,GL11.GL_UNSIGNED_BYTE,pixels);

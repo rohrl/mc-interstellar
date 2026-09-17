@@ -28,6 +28,7 @@ final class TerrainScreen extends Screen {
     private final SourcePayload source;
     private TerrainSnapshot snapshot, pending;
     private WorldMesh mesh;
+    private WorldMesh moving;
     private boolean meshMode;
     private boolean meshEntities=true;
     private boolean meshClouds=true;
@@ -61,6 +62,9 @@ final class TerrainScreen extends Screen {
         yaw=client.gameRenderer.getCamera().getYaw();pitch=client.gameRenderer.getCamera().getPitch();
         if(!live && camera.distanceTo(centre())/source.schwarzschildRadius()<1.05) {error="Terrain prototype needs an exterior camera: move beyond 1.05 r_s.";return;}
         snapshot=new TerrainSnapshot(client.world,centre(),!live || hybrid);
+        if(live) {
+            meshMode=true;hybrid=true;
+        }
         if(!live && camera.distanceTo(centre())>128) {error="Move within 128 blocks of the source, then reopen the terrain preview.";}
     }
     private Vec3d centre() {return new Vec3d(source.x(),source.y(),source.z());}
@@ -85,9 +89,14 @@ final class TerrainScreen extends Screen {
                     if(paused!=null) {renderPaused(context);return;}
                 }
                 snapshot.advance();
+                if(live && mesh==null)mesh=new WorldMesh(client.world,snapshot.origin,net.minecraft.util.math.BlockPos.ofFloored(centre()),true);
                 if(snapshot.ready() && publishedAt==0) {publishedAt=System.nanoTime();generation=1;}
-                if(live && snapshot.ready() && !client.isPaused()) refresh();
+                if(live && !meshMode && snapshot.ready() && !client.isPaused()) refresh();
                 if(meshMode && mesh!=null)mesh.advance();
+                if(live && meshMode && mesh.ready()) {
+                    if(moving==null)moving=mesh.movingScene();
+                    if(!moving.ready() || !client.isPaused())moving.updateMoving();
+                }
                 if(snapshot.ready() && (!meshMode || mesh.ready())) {AppearanceCapture.finish(this);renderTerrain();}
                 else if(!live) context.fill(0,0,width,height,0xFF101A28);
             } catch(RuntimeException failure) {error="Terrain preview failed: see game log.";Interstellar.LOGGER.error(error,failure);}
@@ -95,10 +104,10 @@ final class TerrainScreen extends Screen {
         if(live) {
             context.fill(6,6,Math.min(width-6,410),46,0xCD101824);
             context.drawTextWithShadow(textRenderer,"INTERSTELLAR | Live camera | F10: off | F12: timing",12,12,0xFF88D8FF);
-            String age=publishedAt==0?snapshot.status():String.format(Locale.ROOT,"Published %.1fs ago | %s | generation %d",
+            String age=meshMode?mesh.ready()?"Live mobs/clouds | Terrain held from initial capture":mesh.status():publishedAt==0?snapshot.status():String.format(Locale.ROOT,"Published %.1fs ago | %s | generation %d",
                     (System.nanoTime()-publishedAt)/1e9,pending==null?"waiting to refresh":"refreshing",generation);
             context.drawTextWithShadow(textRenderer,age,12,24,0xFFFFFFFF);
-            context.drawTextWithShadow(textRenderer,benchmark==null?(hybrid?"Native sky/light | Distant terrain approximate":"Bounded terrain | Straight aim | Outside data omitted"):benchmark.status().replace("B cancels","F12 cancels"),12,36,0xFFFFD59A);
+            context.drawTextWithShadow(textRenderer,benchmark==null?(meshMode?"Terrain edits/chunk streaming pending | F10: off":hybrid?"Native sky/light | Distant terrain approximate":"Bounded terrain | Straight aim | Outside data omitted"):benchmark.status().replace("B cancels","F12 cancels"),12,36,0xFFFFD59A);
             return;
         }
         if(error!=null) context.fill(0,0,width,height,0xFF201018);
@@ -161,7 +170,8 @@ final class TerrainScreen extends Screen {
             int oldX=((net.minecraft.util.math.BlockPos.ofFloored(centre()).getX()>>4)-8)*16-snapshot.origin.getX();
             int oldZ=((net.minecraft.util.math.BlockPos.ofFloored(centre()).getZ()>>4)-8)*16-snapshot.origin.getZ();
             shader.getUniformOrDefault("OldMeshBounds").set((float)oldX,(float)oldZ,(float)oldX+256,(float)oldZ+256);
-            shader.getUniformOrDefault("MeshExtent").set(meshMode?mesh.extent:512f);
+            shader.getUniformOrDefault("MeshExtent").set(meshMode?Math.max(mesh.extent,moving==null?0:moving.extent):512f);
+            shader.getUniformOrDefault("MovingNodeCount").set(moving==null?0f:(float)moving.nodeCount);
             shader.getUniformOrDefault("MeshNodeCount").set(meshMode?(float)mesh.nodeCount:0f);
             shader.getUniformOrDefault("DistantTop").set(snapshot.distant==null?-1024f:snapshot.distant.maxHeight);
             shader.getUniformOrDefault("FaceShades").set(client.world.getBrightness(net.minecraft.util.math.Direction.EAST,true),
@@ -169,13 +179,13 @@ final class TerrainScreen extends Screen {
                     client.world.getBrightness(net.minecraft.util.math.Direction.UP,true));
             shader.getUniformOrDefault("PathStep").set(fine?.225f:.45f);
             shader.addSampler("Voxels",meshMode?mesh.triangleTexture:snapshot.voxelTexture);
-            shader.addSampler("LocalLight",meshMode?mesh.entities.texture:snapshot.lightTexture);
+            shader.addSampler("LocalLight",meshMode?(moving!=null?moving.entities.texture:mesh.entities.texture):snapshot.lightTexture);
             shader.addSampler("SmoothAtlas",snapshot.smoothLight.texture);
             shader.addSampler("LocalSmooth",snapshot.smoothTexture);
             shader.addSampler("DistantSmooth",snapshot.distant==null?snapshot.smoothTexture:snapshot.distant.smoothTexture);
-            shader.addSampler("DistantLight",snapshot.distant==null?snapshot.lightTexture:snapshot.distant.lightTexture);
-            shader.addSampler("Distant",meshMode?mesh.clouds.texture:snapshot.distant==null?snapshot.voxelTexture:snapshot.distant.texture);
-            shader.addSampler("DistantAppearance",snapshot.distant==null?snapshot.voxelTexture:snapshot.distant.appearanceTexture);
+            shader.addSampler("DistantLight",moving!=null?moving.nodeTexture:snapshot.distant==null?snapshot.lightTexture:snapshot.distant.lightTexture);
+            shader.addSampler("Distant",meshMode?(moving!=null?moving.clouds.texture:mesh.clouds.texture):snapshot.distant==null?snapshot.voxelTexture:snapshot.distant.texture);
+            shader.addSampler("DistantAppearance",moving!=null?moving.triangleTexture:snapshot.distant==null?snapshot.voxelTexture:snapshot.distant.appearanceTexture);
             shader.addSampler("SkyAtlas",hybrid?nativeSky.texture():snapshot.voxelTexture);
             shader.addSampler("Lightmap",((io.github.rohrl.interstellar.mixin.client.LightmapAccessor)client.gameRenderer.getLightmapTextureManager()).interstellar$texture().getGlId());
             shader.addSampler("Palette",meshMode?mesh.nodeTexture:snapshot.paletteTexture);
@@ -259,6 +269,6 @@ final class TerrainScreen extends Screen {
         }
         return true;
     }
-    @Override public void removed() {cancelBenchmark();nativeSky.close();if(mesh!=null)mesh.close();if(snapshot!=null)snapshot.close();if(pending!=null)pending.close();if(target!=null)target.delete();}
+    @Override public void removed() {cancelBenchmark();nativeSky.close();if(moving!=null)moving.close();if(mesh!=null)mesh.close();if(snapshot!=null)snapshot.close();if(pending!=null)pending.close();if(target!=null)target.delete();}
     @Override public boolean shouldPause() {return true;}
 }

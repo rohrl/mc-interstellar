@@ -12,7 +12,7 @@ uniform sampler2D SmoothAtlas,LocalSmooth,DistantSmooth;
 uniform float MeshMode,MeshNodeCount;
 uniform float MeshEntities;
 uniform float MeshClouds,MeshExtent;
-uniform float MeshCoverage;
+uniform float MeshCoverage,MovingNodeCount;
 uniform vec4 OldMeshBounds;
 #define EntityAtlas LocalLight
 #define CloudAtlas Distant
@@ -134,13 +134,18 @@ float cloudFogDistance(vec3 position) {
     vec3 view=vec3(dot(d,Right),dot(d,Up),dot(d,Forward));
     return TerrainFogRange.z>.5?max(length(view.xz),abs(view.y)):length(view);
 }
+// The live actor tree shares nearest-hit and cloud ordering with the retained terrain tree.
+vec4 sceneTriangle(int tree,int index) {return tree==0?meshData(MeshTriangles,index):meshData(DistantAppearance,index);}
+vec4 sceneNode(int tree,int index) {return tree==0?meshData(MeshNodes,index):meshData(DistantLight,index);}
 // Stackless preorder traversal: escape links skip whole subtrees. Each chord has one nearest hit.
 int meshSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
-    vec3 delta=end-start;float best=1.000001;bool found=false;int node=0;
+    vec3 delta=end-start;float best=1.000001;bool found=false;
     float cloudAt=2.0;vec4 nearestCloud=vec4(0);
+    for(int tree=0;tree<2;tree++) {
+    int node=0,nodeCount=int(tree==0?MeshNodeCount:MovingNodeCount);
     for(int visited=0;visited<131072;visited++) {
-        if(node>=int(MeshNodeCount))break;
-        vec4 lower=meshData(MeshNodes,node*3),upper=meshData(MeshNodes,node*3+1);
+        if(node>=nodeCount)break;
+        vec4 lower=sceneNode(tree,node*3),upper=sceneNode(tree,node*3+1);
         float enter=0,leave=min(1.0,best);bool inside=true;
         for(int axis=0;axis<3;axis++) {
             if(abs(delta[axis])<1e-12) {
@@ -151,15 +156,15 @@ int meshSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
             }
         }
         if(!inside || leave<enter) {node=int(lower.w);continue;}
-        int count=int(meshData(MeshNodes,node*3+2).x);
+        int count=int(sceneNode(tree,node*3+2).x);
         for(int i=0;i<count;i++) {
             int base=(int(upper.w)+i)*9;
-            vec4 vertexA=meshData(MeshTriangles,base);
+            vec4 vertexA=sceneTriangle(tree,base);
             float entity=vertexA.w;
             bool cloud=entity>=5.0;
             if(cloud && (MeshClouds<.5 || cloudLayer.a>0.0))continue;
             if(!cloud && entity!=0.0 && MeshEntities<.5)continue;
-            vec3 a=vertexA.xyz,b=meshData(MeshTriangles,base+3).xyz,c=meshData(MeshTriangles,base+6).xyz;
+            vec3 a=vertexA.xyz,b=sceneTriangle(tree,base+3).xyz,c=sceneTriangle(tree,base+6).xyz;
             vec3 edge1=b-a,edge2=c-a,p=cross(delta,edge2);
             bool twoSided=abs(entity)==2.0 || entity==6.0;
             float det=dot(edge1,p);if(twoSided?abs(det)<1e-10:det<1e-10)continue;
@@ -170,7 +175,7 @@ int meshSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
             vec2 location=(start+delta*t).xz;
             if(entity==0.0 && MeshCoverage<.5 && (any(lessThan(location,OldMeshBounds.xy)) || any(greaterThanEqual(location,OldMeshBounds.zw))))continue;
             vec3 weights=vec3(1-u-v,u,v);
-            vec4 uvA=meshData(MeshTriangles,base+1),uvB=meshData(MeshTriangles,base+4),uvC=meshData(MeshTriangles,base+7);
+            vec4 uvA=sceneTriangle(tree,base+1),uvB=sceneTriangle(tree,base+4),uvC=sceneTriangle(tree,base+7);
             if(entity==0.0) {
                 // K retains the old half-texel offset for controlled appearance comparisons.
                 vec2 offset=vec2(FaceLighting>.5?0.0:.5/16.0);
@@ -181,8 +186,8 @@ int meshSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
             vec2 uv=uvA.xy*weights.x+uvB.xy*weights.y+uvC.xy*weights.z;
             if(cloud) {
                 if(t>=cloudAt)continue;
-                vec4 colour=textureLod(CloudAtlas,uv,0)*(meshData(MeshTriangles,base+2)*weights.x+
-                        meshData(MeshTriangles,base+5)*weights.y+meshData(MeshTriangles,base+8)*weights.z);
+                vec4 colour=textureLod(CloudAtlas,uv,0)*(sceneTriangle(tree,base+2)*weights.x+
+                        sceneTriangle(tree,base+5)*weights.y+sceneTriangle(tree,base+8)*weights.z);
                 if(colour.a<.1)continue;
                 float distance=dot(vec3(cloudFogDistance(a),cloudFogDistance(b),cloudFogDistance(c)),weights);
                 float fog=TerrainFogRange.y>TerrainFogRange.x?smoothstep(TerrainFogRange.x,TerrainFogRange.y,distance):step(TerrainFogRange.y,distance);
@@ -191,15 +196,16 @@ int meshSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
             }
             vec4 texel=entity>0.0?textureLod(EntityAtlas,uv,0):textureLod(Atlas,uv,0);
             if(texel.a<.1)continue;
-            vec3 colA=meshData(MeshTriangles,base+2).rgb*texture(Lightmap,uvA.zw).rgb;
-            vec3 colB=meshData(MeshTriangles,base+5).rgb*texture(Lightmap,uvB.zw).rgb;
-            vec3 colC=meshData(MeshTriangles,base+8).rgb*texture(Lightmap,uvC.zw).rgb;
+            vec3 colA=sceneTriangle(tree,base+2).rgb*texture(Lightmap,uvA.zw).rgb;
+            vec3 colB=sceneTriangle(tree,base+5).rgb*texture(Lightmap,uvB.zw).rgb;
+            vec3 colC=sceneTriangle(tree,base+8).rgb*texture(Lightmap,uvC.zw).rgb;
             meshColour=texel.rgb*(colA*weights.x+colB*weights.y+colC*weights.z);
             best=t;hit=start+t*delta;normal=normalize(cross(edge1,edge2));found=true;
         }
         node++;
     }
-    if(node<int(MeshNodeCount)) {meshColour=vec3(1,0,1);hit=start;normal=vec3(0,1,0);return 3;}
+    if(node<nodeCount) {meshColour=vec3(1,0,1);hit=start;normal=vec3(0,1,0);return 3;}
+    }
     // Vanilla fancy clouds use a depth prepass: blend the nearest cloud surface once.
     if(cloudAt<best && cloudLayer.a==0.0)cloudLayer=nearestCloud;
     return found?3:-1;
