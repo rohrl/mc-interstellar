@@ -31,6 +31,7 @@ final class TerrainScreen extends Screen {
     private boolean meshMode;
     private boolean meshEntities=true;
     private boolean meshClouds=true;
+    private boolean meshCoverage=true;
     private final boolean live;
     private long publishedAt;
     private int generation;
@@ -110,7 +111,7 @@ final class TerrainScreen extends Screen {
         context.drawTextWithShadow(textRenderer,validationStatus,12,72,0xFF88D8FF);
         context.drawTextWithShadow(textRenderer,meshMode?"E: mobs "+(meshEntities?"ON":"OFF")+" | K: native light "+(faceLighting?"ON":"OFF")+" | P: pair":
                 "H: distant "+(hybrid?"ON":"OFF")+" | K: face "+(faceLighting?"ON":"OFF")+" | O: smooth "+(smoothLighting?"ON":"OFF")+" | P: pair",12,84,0xFFFFD59A);
-        context.drawTextWithShadow(textRenderer,meshMode?"M: mesh | N: foreground clouds "+(meshClouds?"ON":"OFF")+" | Fluids/special effects incomplete":"M: native mesh experiment | "+(hybrid?"Distant columns approximate":"Frozen cubes"),12,height-16,0xFFFFD59A);
+        context.drawTextWithShadow(textRenderer,meshMode?"N: clouds "+(meshClouds?"ON":"OFF")+" | U: coverage "+(meshCoverage?"CAMERA":"OLD BOUNDS")+" | Fluids incomplete":"M: native mesh experiment | "+(hybrid?"Distant columns approximate":"Frozen cubes"),12,height-16,0xFFFFD59A);
     }
     private void renderPaused(DrawContext context) {
         context.fill(6,6,Math.min(width-6,440),46,0xCD101824);
@@ -156,6 +157,10 @@ final class TerrainScreen extends Screen {
             shader.getUniformOrDefault("MeshMode").set(meshMode?1f:0f);
             shader.getUniformOrDefault("MeshEntities").set(meshEntities?1f:0f);
             shader.getUniformOrDefault("MeshClouds").set(meshClouds?1f:0f);
+            shader.getUniformOrDefault("MeshCoverage").set(meshCoverage?1f:0f);
+            int oldX=((net.minecraft.util.math.BlockPos.ofFloored(centre()).getX()>>4)-8)*16-snapshot.origin.getX();
+            int oldZ=((net.minecraft.util.math.BlockPos.ofFloored(centre()).getZ()>>4)-8)*16-snapshot.origin.getZ();
+            shader.getUniformOrDefault("OldMeshBounds").set((float)oldX,(float)oldZ,(float)oldX+256,(float)oldZ+256);
             shader.getUniformOrDefault("MeshExtent").set(meshMode?mesh.extent:512f);
             shader.getUniformOrDefault("MeshNodeCount").set(meshMode?(float)mesh.nodeCount:0f);
             shader.getUniformOrDefault("DistantTop").set(snapshot.distant==null?-1024f:snapshot.distant.maxHeight);
@@ -207,7 +212,7 @@ final class TerrainScreen extends Screen {
             throw new IllegalStateException("F9 view rotated: reopen F9 at the desired player pose");
         if(client.world!=snapshot.world || SelectedSource.current()!=source)throw new IllegalStateException("Source/world changed");
     }
-    String appearanceScene() {return (meshMode?mesh.status():snapshot.status())+"; mesh="+meshMode+"; entities="+meshEntities+"; clouds="+meshClouds+"; distant="+hybrid+"; faceLight="+faceLighting+"; smoothLight="+smoothLighting+"; origin="+snapshot.origin;}
+    String appearanceScene() {return (meshMode?mesh.status():snapshot.status())+"; mesh="+meshMode+"; entities="+meshEntities+"; coverage="+meshCoverage+"; clouds="+meshClouds+"; distant="+hybrid+"; faceLight="+faceLighting+"; smoothLight="+smoothLighting+"; origin="+snapshot.origin;}
     void appearanceStatus(String text) {validationStatus=text;}
     void renderAppearanceCandidate() {
         boolean oldLensing=lensing,oldValidate=validate;float oldScale=scale;
@@ -219,13 +224,14 @@ final class TerrainScreen extends Screen {
     @Override public boolean keyPressed(int key,int scan,int modifiers) {
         if(key==GLFW.GLFW_KEY_B && snapshot!=null && snapshot.ready() && error==null && paused==null && target!=null) {
             if(benchmark!=null)cancelBenchmark();
-            else benchmark=new LabBenchmark(String.format(Locale.ROOT,"TERRAIN %dx%d, scale=%.2f, r/rs=%.5f, lensing=%s, fine=%s, snapshot=%s, hybrid="+hybrid+", live="+live+", mesh="+meshMode+", entities="+meshEntities+", nativeLight="+faceLighting+", clouds="+meshClouds,
+            else benchmark=new LabBenchmark(String.format(Locale.ROOT,"TERRAIN %dx%d, scale=%.2f, r/rs=%.5f, lensing=%s, fine=%s, snapshot=%s, hybrid="+hybrid+", live="+live+", mesh="+meshMode+", entities="+meshEntities+", nativeLight="+faceLighting+", coverage="+meshCoverage+", clouds="+meshClouds,
                     target.textureWidth,target.textureHeight,scale,camera.distanceTo(centre())/source.schwarzschildRadius(),lensing,fine,meshMode?mesh.status():snapshot.status()));
             return true;
         }
         cancelBenchmark();
         switch(key) {
             case GLFW.GLFW_KEY_N -> {if(meshMode)meshClouds=!meshClouds;}
+            case GLFW.GLFW_KEY_U -> {if(meshMode)meshCoverage=!meshCoverage;}
             case GLFW.GLFW_KEY_E -> {if(meshMode)meshEntities=!meshEntities;}
             case GLFW.GLFW_KEY_M -> {
                 if(!live && snapshot!=null && error==null) {

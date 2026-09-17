@@ -18,10 +18,10 @@ import java.util.Arrays;
 
 /** Frozen, client-only native model capture. No filled-column approximation or generated chunks. */
 final class WorldMesh implements VertexConsumer,AutoCloseable {
-    private static final int CHUNKS=16,MAX_TRIANGLES=4_000_000;
+    private static final int MAX_TRIANGLES=7_000_000;
     private final ClientWorld world;
     private final BlockPos origin;
-    private final int minChunkX,minChunkZ,sections,total;
+    private final int minChunkX,minChunkZ,chunks,sections,total,viewDistance;
     private final MatrixStack matrices=new MatrixStack();
     private final Random random=Random.create(0);
     private final float[] quadData=new float[48];
@@ -36,14 +36,21 @@ final class WorldMesh implements VertexConsumer,AutoCloseable {
     float extent=512;
     WorldMesh(ClientWorld world,BlockPos origin,BlockPos centre) {
         this.world=world;this.origin=origin;this.centre=centre;
-        minChunkX=(centre.getX()>>4)-CHUNKS/2;minChunkZ=(centre.getZ()>>4)-CHUNKS/2;
-        sections=world.countVerticalSections();total=CHUNKS*CHUNKS*sections*4096;
+        var client=MinecraftClient.getInstance();
+        var camera=BlockPos.ofFloored(client.gameRenderer.getCamera().getPos());
+        viewDistance=client.options.getViewDistance().getValue();
+        // Include every direction for bent rays, plus one chunk beyond the native fog distance.
+        int radius=Math.max(2,Math.min(16,viewDistance))+1;chunks=radius*2+1;
+        minChunkX=(camera.getX()>>4)-radius;minChunkZ=(camera.getZ()>>4)-radius;
+        sections=world.countVerticalSections();total=chunks*chunks*sections*4096;
     }
     boolean ready() {return nodeTexture!=0;}
     String status() {return ready()?"Native mesh: "+count+" triangles | "+missingSections+" missing sections | "+entities.status():
             "Capturing native mesh: "+(100L*cursor/total)+"%";}
     void advance() {
         if(ready())return;
+        // Fail inside the preview's guarded capture loop, not its key handler.
+        if(viewDistance>16)throw new IllegalStateException("Native mesh reference supports render distance up to 16 chunks; lower it and reopen");
         var manager=MinecraftClient.getInstance().getBlockRenderManager();
         var pos=new BlockPos.Mutable();
         long deadline=System.nanoTime()+5_000_000;
@@ -51,7 +58,7 @@ final class WorldMesh implements VertexConsumer,AutoCloseable {
         try {
             while(cursor<total && System.nanoTime()<deadline) {
                 int section=cursor/4096,block=cursor%4096,chunk=section/sections;
-                int cx=minChunkX+chunk%CHUNKS,cz=minChunkZ+chunk/CHUNKS,sy=section%sections;
+                int cx=minChunkX+chunk%chunks,cz=minChunkZ+chunk/chunks,sy=section%sections;
                 if(!world.getChunkManager().isChunkLoaded(cx,cz)) {missingSections++;cursor=(section+1)*4096;continue;}
                 var terrain=world.getChunk(cx,cz);
                 if(terrain.getSection(sy).isEmpty()) {cursor=(section+1)*4096;continue;}
@@ -70,7 +77,7 @@ final class WorldMesh implements VertexConsumer,AutoCloseable {
             }
         } finally {net.minecraft.client.render.block.BlockModelRenderer.disableBrightnessCache();}
         if(cursor==total) {
-            entities=new EntityMesh(this);entities.capture(origin,minChunkX,minChunkZ,CHUNKS);
+            entities=new EntityMesh(this);entities.capture(origin,minChunkX,minChunkZ,chunks);
             clouds.capture(this,origin);
             var tree=new MeshTree(triangles,count);nodeCount=tree.size();
             var nodes=tree.nodes();
@@ -81,7 +88,7 @@ final class WorldMesh implements VertexConsumer,AutoCloseable {
                 extent=(float)Math.sqrt(radiusSquared)+2; // Include fractional source-centre rounding.
             }
             upload(nodes);triangles=null;
-            Interstellar.LOGGER.info("World mesh ready: {}; {} omitted blocks; chunks=({}, {})..({}, {}), full build height; capture/build/upload={} ms",status(),omittedBlocks,minChunkX,minChunkZ,minChunkX+CHUNKS-1,minChunkZ+CHUNKS-1,(System.nanoTime()-started)/1e6);
+            Interstellar.LOGGER.info("World mesh ready: {}; {} omitted blocks; camera coverage {}x{} chunks=({}, {})..({}, {}), full build height; capture/build/upload={} ms",status(),omittedBlocks,chunks,chunks,minChunkX,minChunkZ,minChunkX+chunks-1,minChunkZ+chunks-1,(System.nanoTime()-started)/1e6);
         }
     }
     @Override public void quad(MatrixStack.Entry entry,BakedQuad quad,float[] brightness,float red,float green,float blue,float alpha,int[] light,int overlay,boolean useQuadColor) {
@@ -103,7 +110,7 @@ final class WorldMesh implements VertexConsumer,AutoCloseable {
         add(0,1,2);add(2,3,0);
     }
     private void add(int a,int b,int c) {
-        if(count==MAX_TRIANGLES)throw new IllegalStateException("Native mesh exceeds four million triangles; capture refused (no silent truncation)");
+        if(count==MAX_TRIANGLES)throw new IllegalStateException("Native mesh exceeds seven million triangles; lower render distance and reopen (no silent truncation)");
         if((count+1)*36>triangles.length)triangles=Arrays.copyOf(triangles,Math.min(MAX_TRIANGLES*36,triangles.length*2));
         int dst=count++*36;
         System.arraycopy(quadData,a*12,triangles,dst,12);System.arraycopy(quadData,b*12,triangles,dst+12,12);System.arraycopy(quadData,c*12,triangles,dst+24,12);

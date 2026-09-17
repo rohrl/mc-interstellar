@@ -6,19 +6,19 @@ Repo: C:\work\code\minecraft\interstellar\interstellar. Branch: codex/world-mesh
 
 Owner visually accepts the native mesh terrain as essentially matching vanilla, and requests mobs. Quality-first: FPS optimization deferred. Step 2 integration precedes packaging. Automated movement/flicker tests deferred to owner; use fixed-frame numeric pairs and occasional milestone images.
 
-F9 M captures native terrain, supported frozen living-entity bodies/equipment and native clouds in one BVH. Capture ~15 s / 2.5 million triangles, loaded 16×16 chunks over full height, four-million-triangle cap. M starts unbent; Space enables lensing; E toggles mobs; N compares foreground clouds with the old background-only path; P captures vanilla/zero-bending pairs; K compares native terrain lighting with the previous offset. Existing F10 still uses the older live voxel/column backend.
+F9 M captures native terrain, supported frozen living-entity bodies/equipment and native clouds in one BVH. Capture ~40 s / 6.2 million triangles at render distance12. Camera-centred render distance plus one chunk, full height, seven-million-triangle cap; distance above16 refused. U compares old terrain bounds. M starts unbent; Space enables lensing; E toggles mobs; N compares foreground clouds with the old background-only path; P captures vanilla/zero-bending pairs; K compares native terrain lighting with the previous offset. Existing F10 still uses the older live voxel/column backend.
 
 Fixed terrain lighting: native terrain filters/clamps UV2/256, whereas entities fetch discrete UV2/16 texels. Removed incorrect terrain half-texel offset. Controlled close-up RGB MAE with mobs 0.0188→0.0024; mobs OFF gives 0.0070. All three vanilla references identical. 96 supported bodies, zero wholly omitted bodies; shadow/translucent/eyes feature layers still omitted. See docs/mesh-entities.md for implementation, exact pairs, timings and limits; initial mesh evidence in docs/native-mesh.md.
 
-Cloud checkpoint: native cloud vertices/UV/RGBA and nearest-surface blend now order against terrain/mobs; foreground mode uses a sky-only cube. Escape sphere encloses actual mesh bounds. Daylight mountain RGB MAE 0.0126→0.0071; clear below-cloud night 0.0013→0.0007, identical A/B references. See docs/mesh-clouds.md for exact evidence and limitations. Largest daylight residual is terrain capture coverage.
+Cloud checkpoint: native cloud vertices/UV/RGBA and nearest-surface blend now order against terrain/mobs; foreground mode uses a sky-only cube. Escape sphere encloses actual mesh bounds. Daylight mountain RGB MAE 0.0126→0.0071; clear below-cloud night 0.0013→0.0007, identical A/B references. See docs/mesh-clouds.md for exact evidence and limitations. Camera coverage checkpoint now addresses the missing edge terrain; see below.
 
-Final build: 47 tests, zero failures/errors, cloud-build.log. Runtime shader/mixin startup, above/below-cloud pairs, lensed inspection, cleanup/F10 reentry and mesh reopening passed in cloud-runtime.log / cloud-final-runtime.log. Diagnostic GPU p95=11.507328 ms at only 427×240 internal; no FPS claim. No block/time/weather/population edits. Creative flight retained.
+Coverage checkpoint: identical-reference mountain comparison improves lower-half RGB MAE0.0364→0.0206. Snowfall is active and absent in our renderer, so aggregate error is not comparable with the previous clear-weather cloud test. See docs/mesh-coverage.md. Final build: 47 tests, zero failures/errors, coverage-final-build.log. Runtime shader, 6.18-million-triangle capture, pair/lensed inspection and cleanup/F10 recovery passed in coverage-runtime.log. Final client restarted and captured6,104,960 triangles /97 mobs /2,880 missing sections in36.54s at the wall pose, coverage-final-runtime.log. Diagnostic GPU p95=20.837664 ms at427×240 internal; no FPS claim. No block/time/weather/population edits. Creative flight retained.
 
-Client left F9 M / lensing ON / mobs ON / native light ON / foreground clouds ON, at player (16.5,302,-45.5), yaw0.281/pitch0.91, small 870×519 window. Final reopened mesh: 2,526,480 triangles, 82 supported mobs, 2,688 cloud triangles, zero missing sections. Owner may move/close it. Esc returns to play; F10 uses the older backend. Never open the save in two clients.
+Client left F9 M / lensing ON / mobs ON / native light ON / foreground clouds ON, at player (16.5,302,-45.5), yaw0.281/pitch0.91, small 870×519 window. Owner may move/close it. Esc returns to play; F10 uses the older backend. Never open the save in two clients.
 
 ## Next work
 
-1. Broader camera-relative terrain coverage/viewing boundary and daytime pairs. Camera guard remains 128 blocks. Missing capture edges dominate the daylight mountain residual. Preserve coherent ray hits; no straight-camera terrain overlay.
+1. Precipitation is visibly absent in current snowy mountain pairs. Add coherent native rain/snow support, with controlled appearance comparisons. Capture now follows the camera but only loaded chunks are available. Camera guard remains128; broader camera access and daytime/weather coverage still open.
 2. Transparent/emissive layers. Mob eye glow, shadows, hurt/flash, glint, nameplates/leashes and special shaders incomplete; non-living/block entities absent. Clouds use native nearest-surface behavior, not general transparency/volumetric transport; only FANCY runtime-certified.
 3. Bring the proven representation into live rendering, then optimize. Frozen mesh is not a converged optical oracle: independent curved-mesh checks and chord/escape/fog limits remain open.
 
@@ -28,7 +28,7 @@ Never revive straight-camera terrain overlays: they duplicated the wall (87dd3a1
 
 Selection/recovery/RMB: dc50cbb, docs/source-refresh.md; viewing: docs/stable-exploration.md. Earlier appearance fixes: docs/native-appearance.md, docs/native-fog.md, docs/face-lighting.md, docs/smooth-lighting.md. Optical/voxel diagnostics do not validate mesh appearance.
 
-AA WIP stays 8ad46eb on codex/terrain-antialiasing, excluded/unverified. Source anchor (14,300,14), N64, COM=(16,302,16), r_s8. Final reopened local snapshot 11725 opaque, zero unknown, 28 unsupported. Ignored terrain config: enabled=true, distantPrototype=true, renderScale=0.5; code distant default off.
+AA WIP stays 8ad46eb on codex/terrain-antialiasing, excluded/unverified. Source anchor (14,300,14), N64, COM=(16,302,16), r_s8. Final wall local snapshot 11736 opaque, zero unknown, 28 unsupported; source unchanged. Ignored terrain config: enabled=true, distantPrototype=true, renderScale=0.5; code distant default off.
 
 ## Efficient runtime
 

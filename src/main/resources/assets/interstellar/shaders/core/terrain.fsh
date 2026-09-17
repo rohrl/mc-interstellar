@@ -12,6 +12,8 @@ uniform sampler2D SmoothAtlas,LocalSmooth,DistantSmooth;
 uniform float MeshMode,MeshNodeCount;
 uniform float MeshEntities;
 uniform float MeshClouds,MeshExtent;
+uniform float MeshCoverage;
+uniform vec4 OldMeshBounds;
 #define EntityAtlas LocalLight
 #define CloudAtlas Distant
 vec4 cloudLayer=vec4(0);
@@ -164,6 +166,9 @@ int meshSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
             vec3 s=start-a;float u=dot(s,p)/det;if(u<0 || u>1)continue;
             vec3 q=cross(s,edge1);float v=dot(delta,q)/det;if(v<0 || u+v>1)continue;
             float t=dot(edge2,q)/det;if(t<0 || t>1 || t>=best)continue;
+            // U isolates terrain missing beyond the previous source-centred footprint.
+            vec2 location=(start+delta*t).xz;
+            if(entity==0.0 && MeshCoverage<.5 && (any(lessThan(location,OldMeshBounds.xy)) || any(greaterThanEqual(location,OldMeshBounds.zw))))continue;
             vec3 weights=vec3(1-u-v,u,v);
             vec4 uvA=meshData(MeshTriangles,base+1),uvB=meshData(MeshTriangles,base+4),uvC=meshData(MeshTriangles,base+7);
             if(entity==0.0) {
