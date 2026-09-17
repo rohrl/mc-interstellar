@@ -29,6 +29,7 @@ final class TerrainScreen extends Screen {
     private TerrainSnapshot snapshot, pending;
     private WorldMesh mesh;
     private boolean meshMode;
+    private boolean meshEntities=true;
     private final boolean live;
     private long publishedAt;
     private int generation;
@@ -106,8 +107,9 @@ final class TerrainScreen extends Screen {
         context.drawTextWithShadow(textRenderer,"Q: scale "+scale+" | J: path "+(fine?"fine":"standard")+" | Esc: return",12,48,0xFFE0E8EF);
         context.drawTextWithShadow(textRenderer,benchmark==null?"B: benchmark terrain pass":benchmark.status(),12,60,0xFF88D8FF);
         context.drawTextWithShadow(textRenderer,validationStatus,12,72,0xFF88D8FF);
-        context.drawTextWithShadow(textRenderer,"H: distant "+(hybrid?"ON":"OFF")+" | K: face "+(faceLighting?"ON":"OFF")+" | O: smooth "+(smoothLighting?"ON":"OFF")+" | P: pair",12,84,0xFFFFD59A);
-        context.drawTextWithShadow(textRenderer,meshMode?"M: native mesh ON | Fluids/entities/foreground clouds omitted":"M: native mesh experiment | "+(hybrid?"Distant columns approximate":"Frozen cubes"),12,height-16,0xFFFFD59A);
+        context.drawTextWithShadow(textRenderer,meshMode?"E: mobs "+(meshEntities?"ON":"OFF")+" | K: native light "+(faceLighting?"ON":"OFF")+" | P: pair":
+                "H: distant "+(hybrid?"ON":"OFF")+" | K: face "+(faceLighting?"ON":"OFF")+" | O: smooth "+(smoothLighting?"ON":"OFF")+" | P: pair",12,84,0xFFFFD59A);
+        context.drawTextWithShadow(textRenderer,meshMode?"M: mesh | E: mobs "+(meshEntities?"ON":"OFF")+" | Fluids/foreground clouds omitted":"M: native mesh experiment | "+(hybrid?"Distant columns approximate":"Frozen cubes"),12,height-16,0xFFFFD59A);
     }
     private void renderPaused(DrawContext context) {
         context.fill(6,6,Math.min(width-6,440),46,0xCD101824);
@@ -151,6 +153,7 @@ final class TerrainScreen extends Screen {
             shader.getUniformOrDefault("FaceLighting").set(faceLighting?1f:0f);
             shader.getUniformOrDefault("SmoothLighting").set(smoothLighting?1f:0f);
             shader.getUniformOrDefault("MeshMode").set(meshMode?1f:0f);
+            shader.getUniformOrDefault("MeshEntities").set(meshEntities?1f:0f);
             shader.getUniformOrDefault("MeshNodeCount").set(meshMode?(float)mesh.nodeCount:0f);
             shader.getUniformOrDefault("DistantTop").set(snapshot.distant==null?-1024f:snapshot.distant.maxHeight);
             shader.getUniformOrDefault("FaceShades").set(client.world.getBrightness(net.minecraft.util.math.Direction.EAST,true),
@@ -158,7 +161,7 @@ final class TerrainScreen extends Screen {
                     client.world.getBrightness(net.minecraft.util.math.Direction.UP,true));
             shader.getUniformOrDefault("PathStep").set(fine?.225f:.45f);
             shader.addSampler("Voxels",meshMode?mesh.triangleTexture:snapshot.voxelTexture);
-            shader.addSampler("LocalLight",snapshot.lightTexture);
+            shader.addSampler("LocalLight",meshMode?mesh.entities.texture:snapshot.lightTexture);
             shader.addSampler("SmoothAtlas",snapshot.smoothLight.texture);
             shader.addSampler("LocalSmooth",snapshot.smoothTexture);
             shader.addSampler("DistantSmooth",snapshot.distant==null?snapshot.smoothTexture:snapshot.distant.smoothTexture);
@@ -201,7 +204,7 @@ final class TerrainScreen extends Screen {
             throw new IllegalStateException("F9 view rotated: reopen F9 at the desired player pose");
         if(client.world!=snapshot.world || SelectedSource.current()!=source)throw new IllegalStateException("Source/world changed");
     }
-    String appearanceScene() {return (meshMode?mesh.status():snapshot.status())+"; mesh="+meshMode+"; distant="+hybrid+"; faceLight="+faceLighting+"; smoothLight="+smoothLighting+"; origin="+snapshot.origin;}
+    String appearanceScene() {return (meshMode?mesh.status():snapshot.status())+"; mesh="+meshMode+"; entities="+meshEntities+"; distant="+hybrid+"; faceLight="+faceLighting+"; smoothLight="+smoothLighting+"; origin="+snapshot.origin;}
     void appearanceStatus(String text) {validationStatus=text;}
     void renderAppearanceCandidate() {
         boolean oldLensing=lensing,oldValidate=validate;float oldScale=scale;
@@ -213,12 +216,13 @@ final class TerrainScreen extends Screen {
     @Override public boolean keyPressed(int key,int scan,int modifiers) {
         if(key==GLFW.GLFW_KEY_B && snapshot!=null && snapshot.ready() && error==null && paused==null && target!=null) {
             if(benchmark!=null)cancelBenchmark();
-            else benchmark=new LabBenchmark(String.format(Locale.ROOT,"TERRAIN %dx%d, scale=%.2f, r/rs=%.5f, lensing=%s, fine=%s, snapshot=%s, hybrid="+hybrid+", live="+live+", mesh="+meshMode,
+            else benchmark=new LabBenchmark(String.format(Locale.ROOT,"TERRAIN %dx%d, scale=%.2f, r/rs=%.5f, lensing=%s, fine=%s, snapshot=%s, hybrid="+hybrid+", live="+live+", mesh="+meshMode+", entities="+meshEntities+", nativeLight="+faceLighting,
                     target.textureWidth,target.textureHeight,scale,camera.distanceTo(centre())/source.schwarzschildRadius(),lensing,fine,meshMode?mesh.status():snapshot.status()));
             return true;
         }
         cancelBenchmark();
         switch(key) {
+            case GLFW.GLFW_KEY_E -> {if(meshMode)meshEntities=!meshEntities;}
             case GLFW.GLFW_KEY_M -> {
                 if(!live && snapshot!=null && error==null) {
                     meshMode=!meshMode;

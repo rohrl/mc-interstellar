@@ -4,6 +4,7 @@
   "samplers":[{"name":"Voxels"},{"name":"Palette"},{"name":"Atlas"},{"name":"Distant"},{"name":"DistantAppearance"},{"name":"SkyAtlas"},{"name":"Lightmap"},{"name":"LocalLight"},{"name":"DistantLight"},{"name":"SmoothAtlas"},{"name":"LocalSmooth"},{"name":"DistantSmooth"}],
   "uniforms":[
     {"name":"MeshMode","type":"float","count":1,"values":[0]},
+    {"name":"MeshEntities","type":"float","count":1,"values":[1]},
     {"name":"MeshNodeCount","type":"float","count":1,"values":[0]},
     {"name":"Hybrid","type":"float","count":1,"values":[0]},
     {"name":"FaceLighting","type":"float","count":1,"values":[1]},

@@ -19,6 +19,7 @@ final class AppearanceCapture {
     private static LinkedHashMap<String,Object> metadata;
     static void register() {
         WorldFog.register();
+        EntityMesh.register();
         WorldRenderEvents.END.register(context -> {
             WorldProjection.capture(context.projectionMatrix());
             if(requested==null)return;

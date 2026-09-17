@@ -30,13 +30,14 @@ final class WorldMesh implements VertexConsumer,AutoCloseable {
     private int cursor,count,missingSections,omittedBlocks;
     private final long started=System.nanoTime();
     int triangleTexture,nodeTexture,nodeCount;
+    EntityMesh entities;
     WorldMesh(ClientWorld world,BlockPos origin,BlockPos centre) {
         this.world=world;this.origin=origin;
         minChunkX=(centre.getX()>>4)-CHUNKS/2;minChunkZ=(centre.getZ()>>4)-CHUNKS/2;
         sections=world.countVerticalSections();total=CHUNKS*CHUNKS*sections*4096;
     }
     boolean ready() {return nodeTexture!=0;}
-    String status() {return ready()?"Native mesh: "+count+" triangles | "+missingSections+" missing sections | "+omittedBlocks+" omitted blocks":
+    String status() {return ready()?"Native mesh: "+count+" triangles | "+missingSections+" missing sections | "+entities.status():
             "Capturing native mesh: "+(100L*cursor/total)+"%";}
     void advance() {
         if(ready())return;
@@ -66,9 +67,10 @@ final class WorldMesh implements VertexConsumer,AutoCloseable {
             }
         } finally {net.minecraft.client.render.block.BlockModelRenderer.disableBrightnessCache();}
         if(cursor==total) {
+            entities=new EntityMesh(this);entities.capture(origin,minChunkX,minChunkZ,CHUNKS);
             var tree=new MeshTree(triangles,count);nodeCount=tree.size();
             upload(tree.nodes());triangles=null;
-            Interstellar.LOGGER.info("World mesh ready: {}; chunks=({}, {})..({}, {}), full build height; capture/build/upload={} ms",status(),minChunkX,minChunkZ,minChunkX+CHUNKS-1,minChunkZ+CHUNKS-1,(System.nanoTime()-started)/1e6);
+            Interstellar.LOGGER.info("World mesh ready: {}; {} omitted blocks; chunks=({}, {})..({}, {}), full build height; capture/build/upload={} ms",status(),omittedBlocks,minChunkX,minChunkZ,minChunkX+CHUNKS-1,minChunkZ+CHUNKS-1,(System.nanoTime()-started)/1e6);
         }
     }
     @Override public void quad(MatrixStack.Entry entry,BakedQuad quad,float[] brightness,float red,float green,float blue,float alpha,int[] light,int overlay,boolean useQuadColor) {
@@ -79,7 +81,8 @@ final class WorldMesh implements VertexConsumer,AutoCloseable {
             entry.getPositionMatrix().transformPosition(position);
             quadData[dst]=position.x;quadData[dst+1]=position.y;quadData[dst+2]=position.z;
             quadData[dst+4]=Float.intBitsToFloat(vertices[src+4]);quadData[dst+5]=Float.intBitsToFloat(vertices[src+5]);
-            quadData[dst+6]=((light[i]&65535)+8)/256f;quadData[dst+7]=((light[i]>>>16)+8)/256f;
+            // Terrain's native shader filters UV2/256; entity shaders use discrete texel centres.
+            quadData[dst+6]=(light[i]&65535)/256f;quadData[dst+7]=(light[i]>>>16)/256f;
             int colour=vertices[src+3];
             quadData[dst+8]=red*brightness[i]*(useQuadColor?(colour&255)/255f:1);
             quadData[dst+9]=green*brightness[i]*(useQuadColor?((colour>>>8)&255)/255f:1);
@@ -93,6 +96,11 @@ final class WorldMesh implements VertexConsumer,AutoCloseable {
         if((count+1)*36>triangles.length)triangles=Arrays.copyOf(triangles,Math.min(MAX_TRIANGLES*36,triangles.length*2));
         int dst=count++*36;
         System.arraycopy(quadData,a*12,triangles,dst,12);System.arraycopy(quadData,b*12,triangles,dst+12,12);System.arraycopy(quadData,c*12,triangles,dst+24,12);
+    }
+    void entityQuad(float[] data,boolean twoSided) {
+        System.arraycopy(data,0,quadData,0,48);
+        if(twoSided)for(int v=0;v<4;v++)quadData[v*12+3]*=2;
+        add(0,1,2);add(2,3,0);
     }
     private void upload(float[] nodes) {
         int previous=GL11.glGetInteger(GL11.GL_TEXTURE_BINDING_2D),pbo=GL11.glGetInteger(GL21.GL_PIXEL_UNPACK_BUFFER_BINDING);
@@ -120,7 +128,7 @@ final class WorldMesh implements VertexConsumer,AutoCloseable {
         } catch(RuntimeException e) {RenderSystem.deleteTexture(id);throw e;}
         finally {MemoryUtil.memFree(buffer);}
     }
-    @Override public void close() {triangles=null;if(triangleTexture!=0)RenderSystem.deleteTexture(triangleTexture);if(nodeTexture!=0)RenderSystem.deleteTexture(nodeTexture);triangleTexture=nodeTexture=0;}
+    @Override public void close() {triangles=null;if(entities!=null) {entities.close();entities=null;}if(triangleTexture!=0)RenderSystem.deleteTexture(triangleTexture);if(nodeTexture!=0)RenderSystem.deleteTexture(nodeTexture);triangleTexture=nodeTexture=0;}
     @Override public VertexConsumer vertex(float x,float y,float z) {throw new IllegalStateException("Expected native quad");}
     @Override public VertexConsumer color(int r,int g,int b,int a) {return this;}
     @Override public VertexConsumer texture(float u,float v) {return this;}

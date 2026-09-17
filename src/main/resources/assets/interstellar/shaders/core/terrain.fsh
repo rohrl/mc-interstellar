@@ -10,6 +10,8 @@ uniform sampler2D SmoothAtlas,LocalSmooth,DistantSmooth;
 #define MeshTriangles Voxels
 #define MeshNodes Palette
 uniform float MeshMode,MeshNodeCount;
+uniform float MeshEntities;
+#define EntityAtlas LocalLight
 vec3 meshColour;
 uniform vec4 FaceShades;
 uniform float Hybrid;
@@ -140,15 +142,26 @@ int meshSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
         int count=int(meshData(MeshNodes,node*3+2).x);
         for(int i=0;i<count;i++) {
             int base=(int(upper.w)+i)*9;
-            vec3 a=meshData(MeshTriangles,base).xyz,b=meshData(MeshTriangles,base+3).xyz,c=meshData(MeshTriangles,base+6).xyz;
+            vec4 vertexA=meshData(MeshTriangles,base);
+            float entity=vertexA.w;
+            if(entity!=0.0 && MeshEntities<.5)continue;
+            vec3 a=vertexA.xyz,b=meshData(MeshTriangles,base+3).xyz,c=meshData(MeshTriangles,base+6).xyz;
             vec3 edge1=b-a,edge2=c-a,p=cross(delta,edge2);
-            float det=dot(edge1,p);if(det<1e-10)continue; // Native back-face culling.
+            float det=dot(edge1,p);if(abs(entity)>1.5?abs(det)<1e-10:det<1e-10)continue;
             vec3 s=start-a;float u=dot(s,p)/det;if(u<0 || u>1)continue;
             vec3 q=cross(s,edge1);float v=dot(delta,q)/det;if(v<0 || u+v>1)continue;
             float t=dot(edge2,q)/det;if(t<0 || t>1 || t>=best)continue;
             vec3 weights=vec3(1-u-v,u,v);
             vec4 uvA=meshData(MeshTriangles,base+1),uvB=meshData(MeshTriangles,base+4),uvC=meshData(MeshTriangles,base+7);
-            vec4 texel=textureLod(Atlas,uvA.xy*weights.x+uvB.xy*weights.y+uvC.xy*weights.z,0);
+            if(entity==0.0) {
+                // K retains the old half-texel offset for controlled appearance comparisons.
+                vec2 offset=vec2(FaceLighting>.5?0.0:.5/16.0);
+                uvA.zw=clamp(uvA.zw+offset,vec2(.5/16.0),vec2(15.5/16.0));
+                uvB.zw=clamp(uvB.zw+offset,vec2(.5/16.0),vec2(15.5/16.0));
+                uvC.zw=clamp(uvC.zw+offset,vec2(.5/16.0),vec2(15.5/16.0));
+            }
+            vec2 uv=uvA.xy*weights.x+uvB.xy*weights.y+uvC.xy*weights.z;
+            vec4 texel=entity>0.0?textureLod(EntityAtlas,uv,0):textureLod(Atlas,uv,0);
             if(texel.a<.1)continue;
             vec3 colA=meshData(MeshTriangles,base+2).rgb*texture(Lightmap,uvA.zw).rgb;
             vec3 colB=meshData(MeshTriangles,base+5).rgb*texture(Lightmap,uvB.zw).rgb;
