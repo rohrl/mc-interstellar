@@ -171,3 +171,7 @@ Owner's boundary report exposed source-relative sky-colour fading unrelated to M
 ## D038 — Captured face light with frozen A/B checks — accepted (2026-09-17)
 
 Capture six-face sky/block levels for local opaque cells and separate distant cap/side samples, replacing unconditional local sky15 and reused top-only distant light. Keep geometry/ray equations unchanged. F9 K enables controlled same-scene old/new comparison; F10 uses the correction. Under-platform RGB error0.0656→0.0001 justifies the fix; downward improvement is tiny, so do not present it as solving mountain shading. Additional two-snapshot memory35MiB, measured live frame p9512.2304ms with usual limitations. Evidence and remaining smooth-light/geometry work: docs/face-lighting.md.
+
+## D039 — Native corner lighting with bounded shared records — accepted (2026-09-17)
+
+Reuse BlockModelRenderer's corner brightness and lightmap coordinates, preserving quad triangulation in the ray-hit shading. Deduplicate into a capped atlas; fallback to captured face light on unsupported layouts/cap exhaustion. Controlled wall and daylight-mountain pairs improve with identical references. Accept the measured appearance gain while documenting slower refresh (~3.8 s) and additional bounded resources; per-frame GPU cost stays close in the sampled scene. Scope the native brightness cache to one capture slice and check budgets every cell. F9 O retains the comparison path. Evidence and limitations: docs/smooth-lighting.md.

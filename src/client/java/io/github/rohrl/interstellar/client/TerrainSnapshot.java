@@ -30,6 +30,8 @@ final class TerrainSnapshot implements AutoCloseable {
     final DistantTerrain distant;
     private final FloatBuffer cells=MemoryUtil.memAllocFloat(TOTAL);
     private final FloatBuffer lights=MemoryUtil.memCallocFloat(TOTAL*2);
+    private final FloatBuffer smoothIds=MemoryUtil.memCallocFloat(TOTAL);
+    final SmoothLight smoothLight=new SmoothLight();
     private final HashMap<BlockState,Integer> materials=new HashMap<>();
     private final ArrayList<float[]> palette=new ArrayList<>();
     final ArrayList<Integer> occupied=new ArrayList<>();
@@ -37,7 +39,7 @@ final class TerrainSnapshot implements AutoCloseable {
     float height(int index) {int id=value(index);return id<3?1f:palette.get(id)[3];}
     private boolean closed;
     private int cursor, opaque, unknown, unsupported;
-    int voxelTexture, paletteTexture,lightTexture;
+    int voxelTexture, paletteTexture,lightTexture,smoothTexture;
     private final long started=System.nanoTime();
     TerrainSnapshot(ClientWorld world, Vec3d source,boolean captureDistant) {
         this.world=world;
@@ -54,6 +56,11 @@ final class TerrainSnapshot implements AutoCloseable {
     }
     void advance() {
         if (ready()) return;
+        net.minecraft.client.render.block.BlockModelRenderer.enableBrightnessCache();
+        try {advanceCapture();}
+        finally {net.minecraft.client.render.block.BlockModelRenderer.disableBrightnessCache();}
+    }
+    private void advanceCapture() {
         long deadline=System.nanoTime()+3_000_000;
         BlockPos.Mutable pos=new BlockPos.Mutable();
         for(int reads=0;reads<8192 && cursor<TOTAL;reads++,cursor++) {
@@ -71,12 +78,13 @@ final class TerrainSnapshot implements AutoCloseable {
                     if(value==2) unsupported++; else {
                         opaque++;
                         for(int group=0;group<2;group++)lights.put(cursor*2+group,FaceLight.capture(world,pos,state,group,false));
+                        smoothIds.put(cursor,smoothLight.capture(world,pos,state));
                     }
                 }
             }
             cells.put(cursor,value);
             if(value!=0) occupied.add(cursor);
-            if((reads&63)==63 && System.nanoTime()>=deadline) {cursor++;break;}
+            if(System.nanoTime()>=deadline) {cursor++;break;}
         }
         if(cursor==TOTAL) {if(distant!=null)distant.advance();if(distant==null || distant.ready())upload();}
     }
@@ -131,6 +139,8 @@ final class TerrainSnapshot implements AutoCloseable {
             GL11.glTexImage2D(GL11.GL_TEXTURE_2D,0,GL30.GL_R32F,SIDE*SIDE,SIDE,0,GL11.GL_RED,GL11.GL_FLOAT,cells);
             lightTexture=GL11.glGenTextures();RenderSystem.bindTexture(lightTexture);nearest();
             GL11.glTexImage2D(GL11.GL_TEXTURE_2D,0,GL30.GL_RG32F,SIDE*SIDE,SIDE,0,GL30.GL_RG,GL11.GL_FLOAT,lights);
+            smoothTexture=GL11.glGenTextures();RenderSystem.bindTexture(smoothTexture);nearest();
+            GL11.glTexImage2D(GL11.GL_TEXTURE_2D,0,GL30.GL_R32F,SIDE*SIDE,SIDE,0,GL11.GL_RED,GL11.GL_FLOAT,smoothIds);
             var values=MemoryUtil.memAllocFloat(palette.size()*72);
             try {
             for(float[] row:palette) values.put(row); values.flip();
@@ -138,6 +148,7 @@ final class TerrainSnapshot implements AutoCloseable {
             GL11.glTexImage2D(GL11.GL_TEXTURE_2D,0,GL30.GL_RGBA32F,18,palette.size(),0,GL11.GL_RGBA,GL11.GL_FLOAT,values);
             } finally {MemoryUtil.memFree(values);}
             if(distant!=null)distant.upload();
+            smoothLight.upload();
         } finally {
             for(int i=0;i<names.length;i++)GL11.glPixelStorei(names[i],saved[i]);
             GL15.glBindBuffer(GL21.GL_PIXEL_UNPACK_BUFFER,unpackBuffer);
@@ -154,6 +165,7 @@ final class TerrainSnapshot implements AutoCloseable {
     @Override public void close() {
         if(closed)return;closed=true;MemoryUtil.memFree(cells);MemoryUtil.memFree(lights);if(distant!=null)distant.close();
         if(lightTexture!=0)RenderSystem.deleteTexture(lightTexture);
+        MemoryUtil.memFree(smoothIds);smoothLight.close();if(smoothTexture!=0)RenderSystem.deleteTexture(smoothTexture);
         if(voxelTexture!=0) RenderSystem.deleteTexture(voxelTexture);
         if(paletteTexture!=0) RenderSystem.deleteTexture(paletteTexture);
         voxelTexture=paletteTexture=0;

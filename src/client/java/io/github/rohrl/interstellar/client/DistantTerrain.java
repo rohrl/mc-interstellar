@@ -21,11 +21,13 @@ final class DistantTerrain implements AutoCloseable {
     private final FloatBuffer data=MemoryUtil.memCallocFloat(SIDE*SIDE*4);
     private final FloatBuffer appearance=MemoryUtil.memCallocFloat(SIDE*SIDE*4);
     private final FloatBuffer lights=MemoryUtil.memCallocFloat(SIDE*SIDE*8);
+    private final FloatBuffer smoothIds=MemoryUtil.memCallocFloat(SIDE*SIDE*4);
     private final BlockPos.Mutable pos=new BlockPos.Mutable();
     private int cursor, lowerY=Integer.MIN_VALUE;
     int texture;
     int appearanceTexture;
     int lightTexture;
+    int smoothTexture;
     float maxHeight=-1024;
     DistantTerrain(TerrainSnapshot scene) {this.scene=scene;}
     boolean ready() {return cursor==SIDE*SIDE;}
@@ -52,9 +54,10 @@ final class DistantTerrain implements AutoCloseable {
                     data.put(base+2,data.get(base));data.put(base+3,data.get(base+1));
                     appearance.put(base+2,appearance.get(base));appearance.put(base+3,appearance.get(base+1));
                     for(int i=0;i<4;i++)lights.put(base*2+4+i,lights.get(base*2+i));cursor++;
+                    smoothIds.put(base+2,smoothIds.get(base));smoothIds.put(base+3,smoothIds.get(base+1));
                 }
             }
-            if((reads&63)==63 && System.nanoTime()>=deadline)break;
+            if(System.nanoTime()>=deadline)break;
         }
     }
     private void surface(int index) {
@@ -67,6 +70,8 @@ final class DistantTerrain implements AutoCloseable {
         var below=scene.world.getBlockState(pos.down());
         int side=below.isAir()?material:!below.getFluidState().isEmpty()?-1:scene.materialId(below,pos.down());
         appearance.put(index,side);
+        smoothIds.put(index,material>=3?scene.smoothLight.capture(scene.world,pos,state):0);
+        smoothIds.put(index+1,side>=3?scene.smoothLight.capture(scene.world,below.isAir()?pos:pos.down(),below.isAir()?state:below):0);
         var lit=pos.up();
         int sky=scene.world.getLightLevel(net.minecraft.world.LightType.SKY,lit);
         int block=scene.world.getLightLevel(net.minecraft.world.LightType.BLOCK,lit);
@@ -119,10 +124,15 @@ final class DistantTerrain implements AutoCloseable {
         GL11.glTexParameteri(GL11.GL_TEXTURE_2D,GL11.GL_TEXTURE_MIN_FILTER,GL11.GL_NEAREST);
         GL11.glTexParameteri(GL11.GL_TEXTURE_2D,GL11.GL_TEXTURE_MAG_FILTER,GL11.GL_NEAREST);
         GL11.glTexImage2D(GL11.GL_TEXTURE_2D,0,GL30.GL_RGBA32F,SIDE*2,SIDE,0,GL11.GL_RGBA,GL11.GL_FLOAT,lights);
+        smoothTexture=GL11.glGenTextures();RenderSystem.bindTexture(smoothTexture);
+        GL11.glTexParameteri(GL11.GL_TEXTURE_2D,GL11.GL_TEXTURE_MIN_FILTER,GL11.GL_NEAREST);
+        GL11.glTexParameteri(GL11.GL_TEXTURE_2D,GL11.GL_TEXTURE_MAG_FILTER,GL11.GL_NEAREST);
+        GL11.glTexImage2D(GL11.GL_TEXTURE_2D,0,GL30.GL_RGBA32F,SIDE,SIDE,0,GL11.GL_RGBA,GL11.GL_FLOAT,smoothIds);
     }
     @Override public void close() {
         MemoryUtil.memFree(data);MemoryUtil.memFree(appearance);MemoryUtil.memFree(lights);
         if(lightTexture!=0)RenderSystem.deleteTexture(lightTexture);
+        MemoryUtil.memFree(smoothIds);if(smoothTexture!=0)RenderSystem.deleteTexture(smoothTexture);
         if(texture!=0)RenderSystem.deleteTexture(texture);
         if(appearanceTexture!=0)RenderSystem.deleteTexture(appearanceTexture);
     }

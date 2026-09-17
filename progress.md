@@ -174,3 +174,7 @@ Replaced source-centred distant fade with native camera-relative opaque terrain 
 ## Captured face lighting — 2026-09-17
 
 Implemented local/distant face-specific sky/block light, separate cap/side records, and F9 K comparison. Controlled under-platform RGB MAE 0.0656→0.0001; downward mountains improve only marginally and vanilla snowfall remains omitted. Reference images are identical within both A/B tests. Build/45 tests, runtime and live 1440p timing pass (GPU p95 9.658944 ms, frame p95 12.2304 ms, documented exclusions). New buffers are bounded/released; extra two-snapshot memory 35 MiB. No block edits, creative flight/F10 retained, AA separate. See docs/face-lighting.md; smooth shading, geometry/coverage and hard boundary remain unfinished.
+
+## Native smooth corner lighting — 2026-09-17
+
+Implemented captured native corner light/AO, shared records, quad interpolation and F9 O comparison. Wall/floor RGB MAE 0.0409→0.0333; daylight mountains 0.0380→0.0262, bottom half 0.0716→0.0483. Both paired references identical; contact sheets inspected. Usage-limit interruption recovered, final cache optimization built and runtime verified. Build/45 tests pass. Live 1440p/half-resolution GPU p95 9.719936 ms, frame p95 11.8643 ms; capture ~3.8 s, slower than face-only. No agent block edits; AA separate; F10 left on in creative flight. Foreground clouds, geometry/coverage, hard boundary and refresh efficiency remain next. See docs/smooth-lighting.md.

@@ -5,9 +5,11 @@ uniform sampler2D Atlas;
 uniform sampler2D Distant;
 uniform sampler2D DistantAppearance,SkyAtlas,Lightmap;
 uniform sampler2D LocalLight,DistantLight;
+uniform sampler2D SmoothAtlas,LocalSmooth,DistantSmooth;
 uniform vec4 FaceShades;
 uniform float Hybrid;
 uniform float FaceLighting;
+uniform float SmoothLighting;
 uniform float DistantTop;
 uniform vec4 ViewSlopes;
 uniform vec3 TerrainFogRange;
@@ -101,6 +103,18 @@ int segment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
     }
     return 2;
 }
+vec3 cornerLight(float encoded) {
+    int code=int(abs(encoded));
+    vec2 uv=(vec2(code&255,(code>>8)&255)+8.0)/256.0;
+    return texture(Lightmap,uv).rgb*(float(code>>16)/255.0);
+}
+vec3 smoothLight(int id,int face,vec2 st) {
+    vec4 data=texelFetch(SmoothAtlas,ivec2((id%128)*6+face,id/128),0);
+    vec4 weights;
+    if(data.x<0.0) weights=st.y<=st.x?vec4(1-st.x,st.x-st.y,0,st.y):vec4(1-st.y,0,st.y-st.x,st.x);
+    else weights=st.x+st.y<=1?vec4(1-st.x-st.y,st.x,st.y,0):vec4(0,1-st.y,1-st.x,st.x+st.y-1);
+    return cornerLight(data.x)*weights.x+cornerLight(data.y)*weights.y+cornerLight(data.z)*weights.z+cornerLight(data.w)*weights.w;
+}
 vec3 surface(int value,vec3 hit,vec3 normal) {
     diagnostic=vec4(vec3(materialCell),float(value));
     if(value==-1) return vec3(.08,.22,.32)*worldLight();
@@ -127,6 +141,16 @@ vec3 surface(int value,vec3 hit,vec3 normal) {
     float light=Hybrid>.5?(normal.y>.5?FaceShades.w:normal.y<-.5?FaceShades.z:abs(normal.x)>.5?FaceShades.x:FaceShades.y):
             .55+.45*max(0.0,dot(normal,normalize(vec3(-.4,.8,-.3))));
     vec3 colour=albedo*light*(Hybrid>.5?worldLight():vec3(1));
+    if(Hybrid>.5 && FaceLighting>.5 && SmoothLighting>.5) {
+        int id;
+        if(distantHit) {
+            vec4 ids=texelFetch(DistantSmooth,materialCell.xz+ivec2(80),0);
+            id=int(ids[distantLayer*2+(distantSide?1:0)]);
+        } else id=int(texelFetch(LocalSmooth,ivec2(materialCell.x+materialCell.z*SIDE,materialCell.y),0).r);
+        vec2 corner=st;
+        if(abs(normal.y)<.5)corner.y/=texelFetch(Palette,ivec2(0,value),0).w;
+        if(id>0)colour=albedo*smoothLight(id,face,clamp(corner,0.0,1.0));
+    }
     if(Hybrid>.5) {
         // Match vanilla's camera-relative spherical/cylindrical fog in the zero-bending limit.
         // Curved paths use endpoint distance as an appearance approximation, not optical depth.
