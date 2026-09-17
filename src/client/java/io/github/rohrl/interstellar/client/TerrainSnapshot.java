@@ -29,6 +29,7 @@ final class TerrainSnapshot implements AutoCloseable {
     final BlockPos origin;
     final DistantTerrain distant;
     private final FloatBuffer cells=MemoryUtil.memAllocFloat(TOTAL);
+    private final FloatBuffer lights=MemoryUtil.memCallocFloat(TOTAL*2);
     private final HashMap<BlockState,Integer> materials=new HashMap<>();
     private final ArrayList<float[]> palette=new ArrayList<>();
     final ArrayList<Integer> occupied=new ArrayList<>();
@@ -36,7 +37,7 @@ final class TerrainSnapshot implements AutoCloseable {
     float height(int index) {int id=value(index);return id<3?1f:palette.get(id)[3];}
     private boolean closed;
     private int cursor, opaque, unknown, unsupported;
-    int voxelTexture, paletteTexture;
+    int voxelTexture, paletteTexture,lightTexture;
     private final long started=System.nanoTime();
     TerrainSnapshot(ClientWorld world, Vec3d source,boolean captureDistant) {
         this.world=world;
@@ -67,7 +68,10 @@ final class TerrainSnapshot implements AutoCloseable {
                 else if (!state.isOf(Blocks.SNOW) && !state.isOpaqueFullCube(world,pos)) { value=2;unsupported++; }
                 else {
                     value=materials.computeIfAbsent(state,key->material(key,pos));
-                    if(value==2) unsupported++; else opaque++;
+                    if(value==2) unsupported++; else {
+                        opaque++;
+                        for(int group=0;group<2;group++)lights.put(cursor*2+group,FaceLight.capture(world,pos,state,group,false));
+                    }
                 }
             }
             cells.put(cursor,value);
@@ -125,6 +129,8 @@ final class TerrainSnapshot implements AutoCloseable {
             voxelTexture=GL11.glGenTextures(); RenderSystem.bindTexture(voxelTexture);
             nearest();
             GL11.glTexImage2D(GL11.GL_TEXTURE_2D,0,GL30.GL_R32F,SIDE*SIDE,SIDE,0,GL11.GL_RED,GL11.GL_FLOAT,cells);
+            lightTexture=GL11.glGenTextures();RenderSystem.bindTexture(lightTexture);nearest();
+            GL11.glTexImage2D(GL11.GL_TEXTURE_2D,0,GL30.GL_RG32F,SIDE*SIDE,SIDE,0,GL30.GL_RG,GL11.GL_FLOAT,lights);
             var values=MemoryUtil.memAllocFloat(palette.size()*72);
             try {
             for(float[] row:palette) values.put(row); values.flip();
@@ -146,7 +152,8 @@ final class TerrainSnapshot implements AutoCloseable {
         GL11.glTexParameteri(GL11.GL_TEXTURE_2D,GL11.GL_TEXTURE_WRAP_T,GL30.GL_CLAMP_TO_EDGE);
     }
     @Override public void close() {
-        if(closed)return;closed=true;MemoryUtil.memFree(cells);if(distant!=null)distant.close();
+        if(closed)return;closed=true;MemoryUtil.memFree(cells);MemoryUtil.memFree(lights);if(distant!=null)distant.close();
+        if(lightTexture!=0)RenderSystem.deleteTexture(lightTexture);
         if(voxelTexture!=0) RenderSystem.deleteTexture(voxelTexture);
         if(paletteTexture!=0) RenderSystem.deleteTexture(paletteTexture);
         voxelTexture=paletteTexture=0;

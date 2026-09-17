@@ -4,8 +4,10 @@ uniform sampler2D Palette;
 uniform sampler2D Atlas;
 uniform sampler2D Distant;
 uniform sampler2D DistantAppearance,SkyAtlas,Lightmap;
+uniform sampler2D LocalLight,DistantLight;
 uniform vec4 FaceShades;
 uniform float Hybrid;
+uniform float FaceLighting;
 uniform float DistantTop;
 uniform vec4 ViewSlopes;
 uniform vec3 TerrainFogRange;
@@ -15,6 +17,8 @@ uniform float Radius,Lensing,PathStep,Diagnostic;
 vec4 diagnostic=vec4(0);
 ivec3 materialCell;
 bool distantHit=false;
+int distantLayer=0;
+bool distantSide=false;
 vec2 surfaceLight=vec2(0,15);
 in vec2 screenUv;
 out vec4 fragColor;
@@ -103,6 +107,16 @@ vec3 surface(int value,vec3 hit,vec3 normal) {
     if(value==1) return vec3(.85,.45,.06);
     if(value==2) return vec3(.7,.05,.5);
     int face=abs(normal.x)>.5?(normal.x<0?4:5):(abs(normal.y)>.5?(normal.y<0?0:1):(normal.z<0?2:3));
+    if(Hybrid>.5 && FaceLighting>.5) {
+        vec2 codes;
+        if(distantHit) {
+            ivec2 column=materialCell.xz+ivec2(80);
+            vec4 layers=texelFetch(DistantLight,ivec2(column.x*2+distantLayer,column.y),0);
+            codes=distantSide?layers.zw:layers.xy;
+        } else codes=texelFetch(LocalLight,ivec2(materialCell.x+materialCell.z*SIDE,materialCell.y),0).rg;
+        int lightCode=(int(codes[face/3])>>((face%3)*8))&255;
+        surfaceLight=vec2(lightCode&15,lightCode>>4);
+    }
     vec3 local=distantHit?fract(hit):clamp(hit-vec3(materialCell),vec3(.0001),vec3(.9999));
     vec2 st=abs(normal.x)>.5?local.zy:(abs(normal.y)>.5?local.xz:local.xy);
     vec3 u=texelFetch(Palette,ivec2(face*3,value),0).xyz;
@@ -178,10 +192,12 @@ int distantSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
         }
         if(value!=0) {
             hit=start+best*delta;normal=bestNormal;materialCell=ivec3(cell.x,int(floor(hit.y)),cell.y);
+            distantLayer=bestLayer;
             vec4 appearance=texelFetch(DistantAppearance,cell+ivec2(80),0);
             vec2 layerAppearance=bestLayer==0?appearance.xy:appearance.zw;
             float top=bestLayer==0?field.x:min(0.0,field.z);
-            if(hit.y<floor(top-.0001)-.00001)value=int(layerAppearance.x);
+            distantSide=hit.y<floor(top-.0001)-.00001;
+            if(distantSide)value=int(layerAppearance.x);
             int lightCode=int(layerAppearance.y);surfaceLight=vec2(lightCode%16,lightCode/16);
             return value;
         }

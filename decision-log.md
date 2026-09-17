@@ -167,3 +167,7 @@ Pinned Minecraft bytecode shows renderSky inherits its initial shader and some s
 ## D037 — Native camera-relative opaque terrain fog — accepted (2026-09-17)
 
 Owner's boundary report exposed source-relative sky-colour fading unrelated to Minecraft fog. Replace it with actual terrain fog inputs captured before the HUD, applied to opaque hits with native spherical/cylindrical distance. Curved-ray endpoint fog is an appearance approximation, not optical-depth transport. Fixed zero-bending camera/FOV matches near128; hard activation cutoff still removes nonzero lensing and remains unresolved. Do not hide it by silently fading physical lensing. Evidence and limits: docs/native-fog.md.
+
+## D038 — Captured face light with frozen A/B checks — accepted (2026-09-17)
+
+Capture six-face sky/block levels for local opaque cells and separate distant cap/side samples, replacing unconditional local sky15 and reused top-only distant light. Keep geometry/ray equations unchanged. F9 K enables controlled same-scene old/new comparison; F10 uses the correction. Under-platform RGB error0.0656→0.0001 justifies the fix; downward improvement is tiny, so do not present it as solving mountain shading. Additional two-snapshot memory35MiB, measured live frame p9512.2304ms with usual limitations. Evidence and remaining smooth-light/geometry work: docs/face-lighting.md.

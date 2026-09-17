@@ -170,3 +170,7 @@ Corrected sky shader/global matrix setup and restoration. Build/45 tests pass. N
 ## Native fog and reported boundary — 2026-09-17
 
 Replaced source-centred distant fade with native camera-relative opaque terrain fog. Build/45 tests and runtime pass. Just-inside-boundary pair has matched effective FOV77 and aligned platform; full RGB MAE0.0211, bottom-half0.0397, with visible remaining mountain errors. F10 automatically pauses/resumes across two fixed boundary poses. Hard128 cutoff and terrain lighting/geometry remain unfinished. Live1440p/half-resolution GPU p95=9.645760ms, frame p95=11.7428ms; exclusions documented. Client left F10 on, creative flight, no block edits or AA changes. Details: docs/native-fog.md.
+
+## Captured face lighting — 2026-09-17
+
+Implemented local/distant face-specific sky/block light, separate cap/side records, and F9 K comparison. Controlled under-platform RGB MAE 0.0656→0.0001; downward mountains improve only marginally and vanilla snowfall remains omitted. Reference images are identical within both A/B tests. Build/45 tests, runtime and live 1440p timing pass (GPU p95 9.658944 ms, frame p95 12.2304 ms, documented exclusions). New buffers are bounded/released; extra two-snapshot memory 35 MiB. No block edits, creative flight/F10 retained, AA separate. See docs/face-lighting.md; smooth shading, geometry/coverage and hard boundary remain unfinished.

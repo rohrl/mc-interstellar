@@ -20,10 +20,12 @@ final class DistantTerrain implements AutoCloseable {
     private final TerrainSnapshot scene;
     private final FloatBuffer data=MemoryUtil.memCallocFloat(SIDE*SIDE*4);
     private final FloatBuffer appearance=MemoryUtil.memCallocFloat(SIDE*SIDE*4);
+    private final FloatBuffer lights=MemoryUtil.memCallocFloat(SIDE*SIDE*8);
     private final BlockPos.Mutable pos=new BlockPos.Mutable();
     private int cursor, lowerY=Integer.MIN_VALUE;
     int texture;
     int appearanceTexture;
+    int lightTexture;
     float maxHeight=-1024;
     DistantTerrain(TerrainSnapshot scene) {this.scene=scene;}
     boolean ready() {return cursor==SIDE*SIDE;}
@@ -48,7 +50,8 @@ final class DistantTerrain implements AutoCloseable {
                 if(local && top>=scene.origin.getY()) lowerY=scene.origin.getY()-1;
                 else {
                     data.put(base+2,data.get(base));data.put(base+3,data.get(base+1));
-                    appearance.put(base+2,appearance.get(base));appearance.put(base+3,appearance.get(base+1));cursor++;
+                    appearance.put(base+2,appearance.get(base));appearance.put(base+3,appearance.get(base+1));
+                    for(int i=0;i<4;i++)lights.put(base*2+4+i,lights.get(base*2+i));cursor++;
                 }
             }
             if((reads&63)==63 && System.nanoTime()>=deadline)break;
@@ -68,6 +71,10 @@ final class DistantTerrain implements AutoCloseable {
         int sky=scene.world.getLightLevel(net.minecraft.world.LightType.SKY,lit);
         int block=scene.world.getLightLevel(net.minecraft.world.LightType.BLOCK,lit);
         appearance.put(index+1,sky*16+block);
+        for(int group=0;group<2;group++) {
+            lights.put(index*2+group,FaceLight.capture(scene.world,pos,state,group,false));
+            lights.put(index*2+2+group,FaceLight.capture(scene.world,pos,state,group,true));
+        }
         int x=pos.getX()-scene.origin.getX(),z=pos.getZ()-scene.origin.getZ();
         boolean local=x>=0 && x<TerrainSnapshot.SIDE && z>=0 && z<TerrainSnapshot.SIDE;
         float top=data.get(index);
@@ -108,9 +115,14 @@ final class DistantTerrain implements AutoCloseable {
         GL11.glTexParameteri(GL11.GL_TEXTURE_2D,GL11.GL_TEXTURE_MIN_FILTER,GL11.GL_NEAREST);
         GL11.glTexParameteri(GL11.GL_TEXTURE_2D,GL11.GL_TEXTURE_MAG_FILTER,GL11.GL_NEAREST);
         GL11.glTexImage2D(GL11.GL_TEXTURE_2D,0,GL30.GL_RGBA32F,SIDE,SIDE,0,GL11.GL_RGBA,GL11.GL_FLOAT,appearance);
+        lightTexture=GL11.glGenTextures();RenderSystem.bindTexture(lightTexture);
+        GL11.glTexParameteri(GL11.GL_TEXTURE_2D,GL11.GL_TEXTURE_MIN_FILTER,GL11.GL_NEAREST);
+        GL11.glTexParameteri(GL11.GL_TEXTURE_2D,GL11.GL_TEXTURE_MAG_FILTER,GL11.GL_NEAREST);
+        GL11.glTexImage2D(GL11.GL_TEXTURE_2D,0,GL30.GL_RGBA32F,SIDE*2,SIDE,0,GL11.GL_RGBA,GL11.GL_FLOAT,lights);
     }
     @Override public void close() {
-        MemoryUtil.memFree(data);MemoryUtil.memFree(appearance);
+        MemoryUtil.memFree(data);MemoryUtil.memFree(appearance);MemoryUtil.memFree(lights);
+        if(lightTexture!=0)RenderSystem.deleteTexture(lightTexture);
         if(texture!=0)RenderSystem.deleteTexture(texture);
         if(appearanceTexture!=0)RenderSystem.deleteTexture(appearanceTexture);
     }

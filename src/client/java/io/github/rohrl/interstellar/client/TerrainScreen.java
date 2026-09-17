@@ -40,6 +40,7 @@ final class TerrainScreen extends Screen {
     private final TerrainOptions options=TerrainOptions.load();
     private float scale=options.renderScale();
     private boolean hybrid=options.distantPrototype();
+    private boolean faceLighting=true;
     private final NativeSky nativeSky=new NativeSky();
     TerrainScreen(SourcePayload source) {this(source,false);}
     TerrainScreen(SourcePayload source,boolean live) {super(Text.literal("Interstellar terrain prototype"));this.source=source;this.live=live;}
@@ -101,7 +102,7 @@ final class TerrainScreen extends Screen {
         context.drawTextWithShadow(textRenderer,"Q: scale "+scale+" | J: path "+(fine?"fine":"standard")+" | Esc: return",12,48,0xFFE0E8EF);
         context.drawTextWithShadow(textRenderer,benchmark==null?"B: benchmark terrain pass":benchmark.status(),12,60,0xFF88D8FF);
         context.drawTextWithShadow(textRenderer,validationStatus,12,72,0xFF88D8FF);
-        context.drawTextWithShadow(textRenderer,"H: distant "+(hybrid?"ON":"OFF")+" | P: appearance pair",12,84,0xFFFFD59A);
+        context.drawTextWithShadow(textRenderer,"H: distant "+(hybrid?"ON":"OFF")+" | K: face light "+(faceLighting?"ON":"OFF")+" | P: pair",12,84,0xFFFFD59A);
         context.drawTextWithShadow(textRenderer,hybrid?"Native sky/light | Distant columns approximate":"Frozen cubes | Amber: missing | Pink: unsupported/budget",12,height-16,0xFFFFD59A);
     }
     private void renderPaused(DrawContext context) {
@@ -143,12 +144,15 @@ final class TerrainScreen extends Screen {
             shader.getUniformOrDefault("Radius").set((float)source.schwarzschildRadius());
             shader.getUniformOrDefault("Lensing").set(lensing?1f:0f);
             shader.getUniformOrDefault("Hybrid").set(hybrid?1f:0f);
+            shader.getUniformOrDefault("FaceLighting").set(faceLighting?1f:0f);
             shader.getUniformOrDefault("DistantTop").set(snapshot.distant==null?-1024f:snapshot.distant.maxHeight);
             shader.getUniformOrDefault("FaceShades").set(client.world.getBrightness(net.minecraft.util.math.Direction.EAST,true),
                     client.world.getBrightness(net.minecraft.util.math.Direction.SOUTH,true),client.world.getBrightness(net.minecraft.util.math.Direction.DOWN,true),
                     client.world.getBrightness(net.minecraft.util.math.Direction.UP,true));
             shader.getUniformOrDefault("PathStep").set(fine?.225f:.45f);
             shader.addSampler("Voxels",snapshot.voxelTexture);
+            shader.addSampler("LocalLight",snapshot.lightTexture);
+            shader.addSampler("DistantLight",snapshot.distant==null?snapshot.lightTexture:snapshot.distant.lightTexture);
             shader.addSampler("Distant",snapshot.distant==null?snapshot.voxelTexture:snapshot.distant.texture);
             shader.addSampler("DistantAppearance",snapshot.distant==null?snapshot.voxelTexture:snapshot.distant.appearanceTexture);
             shader.addSampler("SkyAtlas",hybrid?nativeSky.texture():snapshot.voxelTexture);
@@ -187,7 +191,7 @@ final class TerrainScreen extends Screen {
             throw new IllegalStateException("F9 view rotated: reopen F9 at the desired player pose");
         if(client.world!=snapshot.world || SelectedSource.current()!=source)throw new IllegalStateException("Source/world changed");
     }
-    String appearanceScene() {return snapshot.status()+"; distant="+hybrid+"; origin="+snapshot.origin;}
+    String appearanceScene() {return snapshot.status()+"; distant="+hybrid+"; faceLight="+faceLighting+"; origin="+snapshot.origin;}
     void appearanceStatus(String text) {validationStatus=text;}
     void renderAppearanceCandidate() {
         boolean oldLensing=lensing,oldValidate=validate;float oldScale=scale;
@@ -207,6 +211,7 @@ final class TerrainScreen extends Screen {
         switch(key) {
             case GLFW.GLFW_KEY_P -> {AppearanceCapture.request(this);validationStatus="Capturing same-frame appearance pair...";}
             case GLFW.GLFW_KEY_H -> hybrid=!hybrid;
+            case GLFW.GLFW_KEY_K -> faceLighting=!faceLighting;
             case GLFW.GLFW_KEY_V -> {validate=true;curvedValidation=false;}
             case GLFW.GLFW_KEY_C -> {validate=true;curvedValidation=true;}
             case GLFW.GLFW_KEY_SPACE -> lensing=!lensing;
