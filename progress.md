@@ -178,3 +178,7 @@ Implemented local/distant face-specific sky/block light, separate cap/side recor
 ## Native smooth corner lighting — 2026-09-17
 
 Implemented captured native corner light/AO, shared records, quad interpolation and F9 O comparison. Wall/floor RGB MAE 0.0409→0.0333; daylight mountains 0.0380→0.0262, bottom half 0.0716→0.0483. Both paired references identical; contact sheets inspected. Usage-limit interruption recovered, final cache optimization built and runtime verified. Build/45 tests pass. Live 1440p/half-resolution GPU p95 9.719936 ms, frame p95 11.8643 ms; capture ~3.8 s, slower than face-only. No agent block edits; AA separate; F10 left on in creative flight. Foreground clouds, geometry/coverage, hard boundary and refresh efficiency remain next. See docs/smooth-lighting.md.
+
+## Native mesh quality experiment — 2026-09-17
+
+Owner defers FPS optimization until convincing integration. F9 M now captures native baked quads, tint/AO/light and actual full-height loaded terrain into a bounded BVH, with coherent straight/curved triangle hits. F10 unchanged. Build/47 tests pass; runtime mountain/wall pairs and lensed foreground ordering inspected. Nighttime mountain RGB MAE 0.0162→0.0134; wall 0.0106→0.0105, identical vanilla A/B references. Capture 14–16 s, 2.26–2.51 million triangles; memory-heavy reference experiment. Clouds, entities, transparency, coverage and viewing boundary remain open. See docs/native-mesh.md for evidence and diagnostic timings; this does not complete step 2. AA preserved, no block/time/weather edits.

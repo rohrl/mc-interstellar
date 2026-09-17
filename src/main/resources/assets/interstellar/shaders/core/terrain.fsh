@@ -6,6 +6,11 @@ uniform sampler2D Distant;
 uniform sampler2D DistantAppearance,SkyAtlas,Lightmap;
 uniform sampler2D LocalLight,DistantLight;
 uniform sampler2D SmoothAtlas,LocalSmooth,DistantSmooth;
+// Mesh and voxel backends are mutually exclusive; stay within Minecraft's 12 texture units.
+#define MeshTriangles Voxels
+#define MeshNodes Palette
+uniform float MeshMode,MeshNodeCount;
+vec3 meshColour;
 uniform vec4 FaceShades;
 uniform float Hybrid;
 uniform float FaceLighting;
@@ -115,7 +120,53 @@ vec3 smoothLight(int id,int face,vec2 st) {
     else weights=st.x+st.y<=1?vec4(1-st.x-st.y,st.x,st.y,0):vec4(0,1-st.y,1-st.x,st.x+st.y-1);
     return cornerLight(data.x)*weights.x+cornerLight(data.y)*weights.y+cornerLight(data.z)*weights.z+cornerLight(data.w)*weights.w;
 }
+vec4 meshData(sampler2D data,int index) {return texelFetch(data,ivec2(index%4096,index/4096),0);}
+// Stackless preorder traversal: escape links skip whole subtrees. Each chord has one nearest hit.
+int meshSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
+    vec3 delta=end-start;float best=1.000001;bool found=false;int node=0;
+    for(int visited=0;visited<131072;visited++) {
+        if(node>=int(MeshNodeCount))return found?3:-1;
+        vec4 lower=meshData(MeshNodes,node*3),upper=meshData(MeshNodes,node*3+1);
+        float enter=0,leave=min(1.0,best);bool inside=true;
+        for(int axis=0;axis<3;axis++) {
+            if(abs(delta[axis])<1e-12) {
+                if(start[axis]<lower[axis]-.00001 || start[axis]>upper[axis]+.00001)inside=false;
+            } else {
+                float a=(lower[axis]-.00001-start[axis])/delta[axis],b=(upper[axis]+.00001-start[axis])/delta[axis];
+                enter=max(enter,min(a,b));leave=min(leave,max(a,b));
+            }
+        }
+        if(!inside || leave<enter) {node=int(lower.w);continue;}
+        int count=int(meshData(MeshNodes,node*3+2).x);
+        for(int i=0;i<count;i++) {
+            int base=(int(upper.w)+i)*9;
+            vec3 a=meshData(MeshTriangles,base).xyz,b=meshData(MeshTriangles,base+3).xyz,c=meshData(MeshTriangles,base+6).xyz;
+            vec3 edge1=b-a,edge2=c-a,p=cross(delta,edge2);
+            float det=dot(edge1,p);if(det<1e-10)continue; // Native back-face culling.
+            vec3 s=start-a;float u=dot(s,p)/det;if(u<0 || u>1)continue;
+            vec3 q=cross(s,edge1);float v=dot(delta,q)/det;if(v<0 || u+v>1)continue;
+            float t=dot(edge2,q)/det;if(t<0 || t>1 || t>=best)continue;
+            vec3 weights=vec3(1-u-v,u,v);
+            vec4 uvA=meshData(MeshTriangles,base+1),uvB=meshData(MeshTriangles,base+4),uvC=meshData(MeshTriangles,base+7);
+            vec4 texel=textureLod(Atlas,uvA.xy*weights.x+uvB.xy*weights.y+uvC.xy*weights.z,0);
+            if(texel.a<.1)continue;
+            vec3 colA=meshData(MeshTriangles,base+2).rgb*texture(Lightmap,uvA.zw).rgb;
+            vec3 colB=meshData(MeshTriangles,base+5).rgb*texture(Lightmap,uvB.zw).rgb;
+            vec3 colC=meshData(MeshTriangles,base+8).rgb*texture(Lightmap,uvC.zw).rgb;
+            meshColour=texel.rgb*(colA*weights.x+colB*weights.y+colC*weights.z);
+            best=t;hit=start+t*delta;normal=normalize(cross(edge1,edge2));found=true;
+        }
+        node++;
+    }
+    meshColour=vec3(1,0,1);hit=start;normal=vec3(0,1,0);return 3;
+}
 vec3 surface(int value,vec3 hit,vec3 normal) {
+    if(MeshMode>.5) {
+        vec3 relative=hit-Camera;
+        float fogDistance=TerrainFogRange.z>.5?max(length(relative.xz),abs(relative.y)):length(relative);
+        float amount=TerrainFogRange.y>TerrainFogRange.x?smoothstep(TerrainFogRange.x,TerrainFogRange.y,fogDistance):step(TerrainFogRange.y,fogDistance);
+        return mix(meshColour,TerrainFogColour.rgb,amount*TerrainFogColour.a);
+    }
     diagnostic=vec4(vec3(materialCell),float(value));
     if(value==-1) return vec3(.08,.22,.32)*worldLight();
     if(value==1) return vec3(.85,.45,.06);
@@ -232,6 +283,7 @@ int distantSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
 }
 int sceneSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
     distantHit=false;surfaceLight=vec2(0,15);
+    if(MeshMode>.5)return meshSegment(start,end,hit,normal);
     int local=segment(start,end,hit,normal);
     if(Hybrid<.5 || Diagnostic>.5)return local;
     ivec3 savedCell=materialCell;vec3 farHit,farNormal;
@@ -266,7 +318,7 @@ void trace() {
         // Prototype heuristic: retain the curved outgoing direction, then use a
         // straight far continuation beyond both the local sphere and 12 r_s.
         // This omits remaining weak-field deflection; never paste camera pixels.
-        if(Hybrid>.5 && Diagnostic<.5 && q.y<0.0 && Radius/q.x>max(96.0,12.0*Radius)) {
+        if(MeshMode<.5 && Hybrid>.5 && Diagnostic<.5 && q.y<0.0 && Radius/q.x>max(96.0,12.0*Radius)) {
             vec3 radial=cos(phi)*radialAxis+sin(phi)*tangentAxis;
             vec3 angular=-sin(phi)*radialAxis+cos(phi)*tangentAxis;
             vec3 outgoing=normalize(-q.y*radial+q.x*angular),farHit,farNormal;
@@ -276,6 +328,11 @@ void trace() {
         }
         // Once outgoing beyond the sphere enclosing all data, no future chord can re-enter.
         if(q.y<0.0 && Radius/q.x>(Hybrid>.5 && Diagnostic<.5?512.0:max(1.5*Radius,length(max(abs(Source),abs(vec3(SIDE)-Source)))))) {
+            if(MeshMode>.5) {
+                vec3 radial=cos(phi)*radialAxis+sin(phi)*tangentAxis;
+                vec3 angular=-sin(phi)*radialAxis+cos(phi)*tangentAxis;
+                fragColor=vec4(missing(normalize(-q.y*radial+q.x*angular)),1);return;
+            }
             fragColor=vec4(missing(normalize(p-Source)),1);return;
         }
         float speed=Radius*length(q)/(q.x*q.x);

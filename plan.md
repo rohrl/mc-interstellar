@@ -56,6 +56,8 @@ Accretion disk, dynamic entity/player histories, higher-order image antialiasing
 
 ## Performance acceptance
 
+Owner override (2026-09-17): the next world-integration experiment is quality-first. Establish convincing integration before optimizing toward the FPS target. Record costs and bound resources, but do not reject this reference path merely because it is slow.
+
 2560x1440 / 60 FPS is a target, not guaranteed yet. Record actual framebuffer resolution, render distance, world/scene, mod versions, preset, GPU/CPU times, frame-time percentiles and warm-up. A capped 60 FPS counter is insufficient evidence. Do not silently switch off effects to claim success.
 
 ### Iteration 1 checkpoint (2026-09-14)

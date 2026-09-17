@@ -27,6 +27,8 @@ final class TerrainScreen extends Screen {
     private String validationStatus="V: flat check | C: curved check (brief pause)";
     private final SourcePayload source;
     private TerrainSnapshot snapshot, pending;
+    private WorldMesh mesh;
+    private boolean meshMode;
     private final boolean live;
     private long publishedAt;
     private int generation;
@@ -82,7 +84,8 @@ final class TerrainScreen extends Screen {
                 snapshot.advance();
                 if(snapshot.ready() && publishedAt==0) {publishedAt=System.nanoTime();generation=1;}
                 if(live && snapshot.ready() && !client.isPaused()) refresh();
-                if(snapshot.ready()) {AppearanceCapture.finish(this);renderTerrain();}
+                if(meshMode && mesh!=null)mesh.advance();
+                if(snapshot.ready() && (!meshMode || mesh.ready())) {AppearanceCapture.finish(this);renderTerrain();}
                 else if(!live) context.fill(0,0,width,height,0xFF101A28);
             } catch(RuntimeException failure) {error="Terrain preview failed: see game log.";Interstellar.LOGGER.error(error,failure);}
         }
@@ -98,13 +101,13 @@ final class TerrainScreen extends Screen {
         if(error!=null) context.fill(0,0,width,height,0xFF201018);
         context.fill(6,6,Math.min(width-6,440),94,0xCD101824);
         context.drawTextWithShadow(textRenderer,"INTERSTELLAR | Minecraft terrain snapshot",12,12,0xFF88D8FF);
-        context.drawTextWithShadow(textRenderer,error!=null?error:snapshot.status(),12,24,0xFFFFFFFF);
+        context.drawTextWithShadow(textRenderer,error!=null?error:meshMode?mesh.status():snapshot.status(),12,24,0xFFFFFFFF);
         context.drawTextWithShadow(textRenderer,"Space: lensing "+(lensing?"ON":"OFF")+" | Arrows: look | L: aim at source",12,36,0xFFE0E8EF);
         context.drawTextWithShadow(textRenderer,"Q: scale "+scale+" | J: path "+(fine?"fine":"standard")+" | Esc: return",12,48,0xFFE0E8EF);
         context.drawTextWithShadow(textRenderer,benchmark==null?"B: benchmark terrain pass":benchmark.status(),12,60,0xFF88D8FF);
         context.drawTextWithShadow(textRenderer,validationStatus,12,72,0xFF88D8FF);
         context.drawTextWithShadow(textRenderer,"H: distant "+(hybrid?"ON":"OFF")+" | K: face "+(faceLighting?"ON":"OFF")+" | O: smooth "+(smoothLighting?"ON":"OFF")+" | P: pair",12,84,0xFFFFD59A);
-        context.drawTextWithShadow(textRenderer,hybrid?"Native sky/light | Distant columns approximate":"Frozen cubes | Amber: missing | Pink: unsupported/budget",12,height-16,0xFFFFD59A);
+        context.drawTextWithShadow(textRenderer,meshMode?"M: native mesh ON | Fluids/entities/foreground clouds omitted":"M: native mesh experiment | "+(hybrid?"Distant columns approximate":"Frozen cubes"),12,height-16,0xFFFFD59A);
     }
     private void renderPaused(DrawContext context) {
         context.fill(6,6,Math.min(width-6,440),46,0xCD101824);
@@ -147,12 +150,14 @@ final class TerrainScreen extends Screen {
             shader.getUniformOrDefault("Hybrid").set(hybrid?1f:0f);
             shader.getUniformOrDefault("FaceLighting").set(faceLighting?1f:0f);
             shader.getUniformOrDefault("SmoothLighting").set(smoothLighting?1f:0f);
+            shader.getUniformOrDefault("MeshMode").set(meshMode?1f:0f);
+            shader.getUniformOrDefault("MeshNodeCount").set(meshMode?(float)mesh.nodeCount:0f);
             shader.getUniformOrDefault("DistantTop").set(snapshot.distant==null?-1024f:snapshot.distant.maxHeight);
             shader.getUniformOrDefault("FaceShades").set(client.world.getBrightness(net.minecraft.util.math.Direction.EAST,true),
                     client.world.getBrightness(net.minecraft.util.math.Direction.SOUTH,true),client.world.getBrightness(net.minecraft.util.math.Direction.DOWN,true),
                     client.world.getBrightness(net.minecraft.util.math.Direction.UP,true));
             shader.getUniformOrDefault("PathStep").set(fine?.225f:.45f);
-            shader.addSampler("Voxels",snapshot.voxelTexture);
+            shader.addSampler("Voxels",meshMode?mesh.triangleTexture:snapshot.voxelTexture);
             shader.addSampler("LocalLight",snapshot.lightTexture);
             shader.addSampler("SmoothAtlas",snapshot.smoothLight.texture);
             shader.addSampler("LocalSmooth",snapshot.smoothTexture);
@@ -162,7 +167,7 @@ final class TerrainScreen extends Screen {
             shader.addSampler("DistantAppearance",snapshot.distant==null?snapshot.voxelTexture:snapshot.distant.appearanceTexture);
             shader.addSampler("SkyAtlas",hybrid?nativeSky.texture():snapshot.voxelTexture);
             shader.addSampler("Lightmap",((io.github.rohrl.interstellar.mixin.client.LightmapAccessor)client.gameRenderer.getLightmapTextureManager()).interstellar$texture().getGlId());
-            shader.addSampler("Palette",snapshot.paletteTexture);
+            shader.addSampler("Palette",meshMode?mesh.nodeTexture:snapshot.paletteTexture);
             shader.addSampler("Atlas",client.getTextureManager().getTexture(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE).getGlId());
             RenderSystem.disableDepthTest();RenderSystem.depthMask(false);RenderSystem.disableBlend();
             RenderSystem.setShader(()->shader);
@@ -189,14 +194,14 @@ final class TerrainScreen extends Screen {
     }
     private static void setVector(String name,Vec3d value) {shader.getUniformOrDefault(name).set((float)value.x,(float)value.y,(float)value.z);}
     void checkAppearancePose() {
-        if(live || snapshot==null || !snapshot.ready() || error!=null || shader==null || capturedVersion!=resourceVersion)
+        if(live || snapshot==null || !snapshot.ready() || (meshMode && !mesh.ready()) || error!=null || shader==null || capturedVersion!=resourceVersion)
             throw new IllegalStateException("Wait for a ready frozen F9 snapshot");
         var actual=client.gameRenderer.getCamera();
         if(camera.squaredDistanceTo(actual.getPos())>1e-8 || Math.abs(yaw-actual.getYaw())>1e-4 || Math.abs(pitch-actual.getPitch())>1e-4)
             throw new IllegalStateException("F9 view rotated: reopen F9 at the desired player pose");
         if(client.world!=snapshot.world || SelectedSource.current()!=source)throw new IllegalStateException("Source/world changed");
     }
-    String appearanceScene() {return snapshot.status()+"; distant="+hybrid+"; faceLight="+faceLighting+"; smoothLight="+smoothLighting+"; origin="+snapshot.origin;}
+    String appearanceScene() {return (meshMode?mesh.status():snapshot.status())+"; mesh="+meshMode+"; distant="+hybrid+"; faceLight="+faceLighting+"; smoothLight="+smoothLighting+"; origin="+snapshot.origin;}
     void appearanceStatus(String text) {validationStatus=text;}
     void renderAppearanceCandidate() {
         boolean oldLensing=lensing,oldValidate=validate;float oldScale=scale;
@@ -208,18 +213,26 @@ final class TerrainScreen extends Screen {
     @Override public boolean keyPressed(int key,int scan,int modifiers) {
         if(key==GLFW.GLFW_KEY_B && snapshot!=null && snapshot.ready() && error==null && paused==null && target!=null) {
             if(benchmark!=null)cancelBenchmark();
-            else benchmark=new LabBenchmark(String.format(Locale.ROOT,"TERRAIN %dx%d, scale=%.2f, r/rs=%.5f, lensing=%s, fine=%s, snapshot=%s, hybrid="+hybrid+", live="+live,
-                    target.textureWidth,target.textureHeight,scale,camera.distanceTo(centre())/source.schwarzschildRadius(),lensing,fine,snapshot.status()));
+            else benchmark=new LabBenchmark(String.format(Locale.ROOT,"TERRAIN %dx%d, scale=%.2f, r/rs=%.5f, lensing=%s, fine=%s, snapshot=%s, hybrid="+hybrid+", live="+live+", mesh="+meshMode,
+                    target.textureWidth,target.textureHeight,scale,camera.distanceTo(centre())/source.schwarzschildRadius(),lensing,fine,meshMode?mesh.status():snapshot.status()));
             return true;
         }
         cancelBenchmark();
         switch(key) {
+            case GLFW.GLFW_KEY_M -> {
+                if(!live && snapshot!=null && error==null) {
+                    meshMode=!meshMode;
+                    if(meshMode) {hybrid=true;lensing=false;if(mesh==null)mesh=new WorldMesh(client.world,snapshot.origin,net.minecraft.util.math.BlockPos.ofFloored(centre()));}
+                    validationStatus=meshMode?"P: vanilla/mesh pair | Space: lensing | V/C are voxel-only":"V: flat check | C: curved check (brief pause)";
+                    validate=false;
+                }
+            }
             case GLFW.GLFW_KEY_P -> {AppearanceCapture.request(this);validationStatus="Capturing same-frame appearance pair...";}
-            case GLFW.GLFW_KEY_H -> hybrid=!hybrid;
+            case GLFW.GLFW_KEY_H -> {if(!meshMode)hybrid=!hybrid;}
             case GLFW.GLFW_KEY_K -> faceLighting=!faceLighting;
             case GLFW.GLFW_KEY_O -> smoothLighting=!smoothLighting;
-            case GLFW.GLFW_KEY_V -> {validate=true;curvedValidation=false;}
-            case GLFW.GLFW_KEY_C -> {validate=true;curvedValidation=true;}
+            case GLFW.GLFW_KEY_V -> {if(!meshMode) {validate=true;curvedValidation=false;}}
+            case GLFW.GLFW_KEY_C -> {if(!meshMode) {validate=true;curvedValidation=true;}}
             case GLFW.GLFW_KEY_SPACE -> lensing=!lensing;
             case GLFW.GLFW_KEY_Q -> scale=scale==.5f?1f:.5f;
             case GLFW.GLFW_KEY_J -> fine=!fine;
@@ -232,6 +245,6 @@ final class TerrainScreen extends Screen {
         }
         return true;
     }
-    @Override public void removed() {cancelBenchmark();nativeSky.close();if(snapshot!=null)snapshot.close();if(pending!=null)pending.close();if(target!=null)target.delete();}
+    @Override public void removed() {cancelBenchmark();nativeSky.close();if(mesh!=null)mesh.close();if(snapshot!=null)snapshot.close();if(pending!=null)pending.close();if(target!=null)target.delete();}
     @Override public boolean shouldPause() {return true;}
 }
