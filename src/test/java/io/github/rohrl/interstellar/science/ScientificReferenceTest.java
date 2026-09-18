@@ -7,6 +7,16 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class ScientificReferenceTest {
     @Test
+    void expandedObserverDistancesBracketTheAnalyticCaptureBoundary() {
+        double critical=1.5*Math.sqrt(3);
+        for(double radius:new double[]{16,24,32,64,128})for(double factor:new double[]{.99,1.01}) {
+            double sine=critical*factor*Math.sqrt(1-1/radius)/radius;
+            var ray=ExteriorRay.trace(radius,-Math.sqrt(1-sine*sine),1,.0005);
+            assertEquals(factor<1?ExteriorRay.Outcome.CAPTURED:ExteriorRay.Outcome.ESCAPED,ray.outcome(),"r/r_s="+radius+", b/b_c="+factor);
+            assertTrue(ray.maximumInvariantError()<1e-7);
+        }
+    }
+    @Test
     void distantShadowApproachesCriticalImpactParameterOverDistance() {
         var source = new Schwarzschild(8.0);
         double radius = 8.0e7;

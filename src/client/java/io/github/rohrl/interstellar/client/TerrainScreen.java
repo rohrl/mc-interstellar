@@ -19,6 +19,7 @@ import java.util.Locale;
 
 /** Shared frozen/live scene-data preview. World geometry is never moved or destroyed. */
 final class TerrainScreen extends Screen {
+    private static final int MESH_VIEW_RANGE=256,VOXEL_VIEW_RANGE=128;
     private static ShaderProgram shader;
     private static int resourceVersion;
     private final int capturedVersion=resourceVersion;
@@ -67,7 +68,12 @@ final class TerrainScreen extends Screen {
         if(live) {
             meshMode=true;hybrid=true;
         }
-        if(!live && camera.distanceTo(centre())>128) {error="Move within 128 blocks of the source, then reopen the terrain preview.";}
+        if(!live && camera.distanceTo(centre())>MESH_VIEW_RANGE) {error="Move within "+MESH_VIEW_RANGE+" blocks of the source, then reopen the terrain preview.";}
+        else if(!live && camera.distanceTo(centre())>VOXEL_VIEW_RANGE) {
+            // Distant inspection must not fall back to the old bounded voxel/column representation.
+            meshMode=true;streamedReference=true;hybrid=true;lensing=false;
+            validationStatus="Native mesh required at this distance | P: pair | Space: lensing";
+        }
     }
     private Vec3d centre() {return new Vec3d(source.x(),source.y(),source.z());}
     @Override public void render(DrawContext context,int mouseX,int mouseY,float delta) {
@@ -81,7 +87,7 @@ final class TerrainScreen extends Screen {
                     camera=client.gameRenderer.getCamera().getPos();
                     yaw=client.gameRenderer.getCamera().getYaw();pitch=client.gameRenderer.getCamera().getPitch();
 
-                    String reason=camera.distanceTo(centre())>128?"Beyond 128-block viewing range: move closer":
+                    String reason=camera.distanceTo(centre())>MESH_VIEW_RANGE?"Beyond "+MESH_VIEW_RANGE+"-block viewing range: move closer":
                             camera.distanceTo(centre())/source.schwarzschildRadius()<1.05?"Exterior limit: move beyond 1.05 r_s":null;
                     if(!java.util.Objects.equals(paused,reason)) {
                         paused=reason;cancelBenchmark();
@@ -91,7 +97,7 @@ final class TerrainScreen extends Screen {
                     if(paused!=null) {renderPaused(context);return;}
                 }
                 snapshot.advance();
-                if(live && mesh==null)mesh=new WorldMesh(client.world,snapshot.origin,net.minecraft.util.math.BlockPos.ofFloored(centre()),true);
+                if((live || streamedReference) && mesh==null)mesh=new WorldMesh(client.world,snapshot.origin,net.minecraft.util.math.BlockPos.ofFloored(centre()),true);
                 if(snapshot.ready() && publishedAt==0) {publishedAt=System.nanoTime();generation=1;}
                 if(live && !meshMode && snapshot.ready() && !client.isPaused()) refresh();
                 if(meshMode && mesh!=null)mesh.advance();
@@ -109,7 +115,7 @@ final class TerrainScreen extends Screen {
             String age=meshMode?mesh.status():publishedAt==0?snapshot.status():String.format(Locale.ROOT,"Published %.1fs ago | %s | generation %d",
                     (System.nanoTime()-publishedAt)/1e9,pending==null?"waiting to refresh":"refreshing",generation);
             context.drawTextWithShadow(textRenderer,age,12,24,0xFFFFFFFF);
-            context.drawTextWithShadow(textRenderer,benchmark==null?(meshMode?"Live terrain/mobs | Updates queued | F10: off":hybrid?"Native sky/light | Distant terrain approximate":"Bounded terrain | Straight aim | Outside data omitted"):benchmark.status().replace("B cancels","F12 cancels"),12,36,0xFFFFD59A);
+            context.drawTextWithShadow(textRenderer,benchmark==null?(meshMode?String.format(Locale.ROOT,"Camera %.0f / %d blocks | Updates queued",camera.distanceTo(centre()),MESH_VIEW_RANGE):hybrid?"Native sky/light | Distant terrain approximate":"Bounded terrain | Straight aim | Outside data omitted"):benchmark.status().replace("B cancels","F12 cancels"),12,36,0xFFFFD59A);
             return;
         }
         if(error!=null) context.fill(0,0,width,height,0xFF201018);
@@ -251,6 +257,9 @@ final class TerrainScreen extends Screen {
                     boolean replace=mesh!=null && nextStream!=streamedReference;
                     if(replace) {mesh.close();mesh=null;if(moving!=null){moving.close();moving=null;}}
                     meshMode=replace || !meshMode;
+                    if(!meshMode && camera.distanceTo(centre())>VOXEL_VIEW_RANGE) {
+                        meshMode=true;validationStatus="Native mesh required beyond "+VOXEL_VIEW_RANGE+" blocks";return true;
+                    }
                     if(meshMode) {
                         streamedReference=nextStream;hybrid=true;lensing=false;
                         if(mesh==null)try {mesh=new WorldMesh(client.world,snapshot.origin,net.minecraft.util.math.BlockPos.ofFloored(centre()),streamedReference);}

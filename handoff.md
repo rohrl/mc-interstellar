@@ -12,21 +12,25 @@ F10 streams native chunk meshes with live camera, animated mobs and clouds. Each
 
 GPU arenas reserve about1280MiB:4095-wide RGBA32F,16384 triangle rows and4096 node rows, first4 node rows reserved for top-level BVH. Rows align36-float triangles/12-float nodes. RowArena coalesces frees; no defragmentation fallback. Seven-million terrain triangle cap, render distance above16 refused. Window=render distance+1 chunk each way, full height, loaded data only. Initial loading waits; incremental updates may lag. F10 off still frees/reloads on reactivation.
 
-Source refresh now preserves terrain: invalid/refreshing metadata shows normal paused view, then updates optical centre/radius when usable. Initial source selection still manual; anchor removal needs replacement/new selection. No full terrain recapture for mass edits. Existing128-block/exterior guards remain.
+Source refresh now preserves terrain: invalid/refreshing metadata shows normal paused view, then updates optical centre/radius when usable. Initial source selection still manual; anchor removal needs replacement/new selection. No full terrain recapture for mass edits. Camera guard is now256 blocks; exterior/source-availability guards and recovery remain.
 
-F9 M remains monolithic frozen reference; Shift+M selects the chunk-based frozen reference. Switching backend recaptures without advancing world. P vanilla/unbent pair; Space lensing; E mobs; N clouds; U old bounds; K old lighting. F12 live timing.
+F9 beyond128 automatically uses the chunk-based native reference and cannot disable mesh rendering; all F9/F10 access is limited to256. Inside128, F9 M remains monolithic frozen reference; Shift+M selects the chunk-based frozen reference. Switching backend recaptures without advancing world. P vanilla/unbent pair; Space lensing; E mobs; N clouds; U old bounds; K old lighting. F12 live timing.
 
-## Verified
+## Latest range checkpoint
+
+viewing-range-build.log:51 tests pass, including CPU analytic capture-boundary brackets at r/r_s16,24,32,64,128. viewing-range-runtime.log: normal backward flight crossed the old128 limit to148 with live lensing; farther F9 auto-mesh pair17029190025041604486 has RGB MAE.0005 against vanilla, inspected. A vertical setup pose plus ordinary flight crossed256 (r263.514) and returned (r252.478), with automatic pause/resume and no terrain reload. Optical GPU p95=22.724896ms at427×240 during edge streaming, not a target FPS claim. docs/viewing-range.md contains details. Camera HUD shows distance/256. No block/time/weather edits; stars unchanged.
+
+## Streaming foundation checks
 
 streaming-final-build.log:50 tests, zero failures/errors. Allocator/coalescing/failure bounds and top-level index tests added. streaming-runtime.log: initial6,185,854 triangles/37.09s, temporary lime-block edit changes only chunk(0,-1), mass addition/removal automatically N64→65→64 without reload. Both originally empty cells (10,292,-8) and (13,300,14) restored/rechecked air. No time/weather or existing scene edits. Strafe across chunk(0,-1)→(1,-1) retained702/729 entries, queued27 new edges; rendering continued. GPU p95=18.435296ms, sampled frames p95=20.5804ms at427×240 during queued updates; not target FPS.
 
 streaming-final-runtime.log: frozen monolithic pair7608212941445763645 and streamed pair5953181202543252939 have identical candidate SHA-256 hashes, identical vanilla references, both RGB MAE.0025 against vanilla. Contact sheet inspected. Streamed terrain6,091,694 + moving9276 equals monolithic6,100,970. Initial streamed capture33.78s. Reference→voxel→F10 cleanup passed. Final running client differs only by an allocation-error guard added after runtime checks; final build passes. Detailed implementation/evidence/limits: docs/streaming-terrain.md.
 
-Client left F10 ON at player(16.5,302,-45.5), yaw.281/pitch.91, creative flight,870×519 window. Owner may move/close. Never open save in two clients.
+Client left F10 ON at player(16.51054,302,-132.422), yaw.281/pitch.91, creative flight,870×519 window. Owner may move/close. Never open save in two clients.
 
 ## Next
 
-1. Wider useful camera access (128 guard remains), coverage/update behavior and independent curved-mesh validation. Avoid reverting to full scene rebuilds for routine edits. Chunk-level updates are not globally atomic across neighbours; heavy edits can delay publication. Finer section updates and cache reuse across F10 toggles are useful follow-ups.
+1. Coverage/update behavior and independent curved-mesh validation, then repeatable demo packaging. Camera access is now256; the hard limit and loaded-source/data constraints remain. Avoid reverting to full scene rebuilds for routine edits. Chunk-level updates are not globally atomic across neighbours; heavy edits can delay publication. Finer section updates and cache reuse across F10 toggles are useful follow-ups.
 2. Remaining transparent/special materials and demo packaging. Rain/snow/teleport deferred. Shadows, eye glow, glint, translucent entity layers, fluids, non-living/block entities incomplete.
 3. AA then deeper relativity/player-body/horizon/observer-speed plan. No performance certification yet; two-level traversal currently costs more than monolithic in similar nearby views.
 
