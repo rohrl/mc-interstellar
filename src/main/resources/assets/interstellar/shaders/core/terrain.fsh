@@ -196,7 +196,7 @@ int meshSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
                 colour.rgb=mix(colour.rgb,TerrainFogColour.rgb,fog*TerrainFogColour.a);
                 nearestCloud=colour;cloudAt=t;continue;
             }
-            vec4 texel=entity>0.0?textureLod(EntityAtlas,uv,0):textureLod(Atlas,uv,0);
+            vec4 texel=Diagnostic>2.5?vec4(1):entity>0.0?textureLod(EntityAtlas,uv,0):textureLod(Atlas,uv,0);
             if(texel.a<.1)continue;
             vec3 colA=sceneTriangle(tree,base+2).rgb*texture(Lightmap,uvA.zw).rgb;
             vec3 colB=sceneTriangle(tree,base+5).rgb*texture(Lightmap,uvB.zw).rgb;
@@ -206,7 +206,7 @@ int meshSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
         }
         node=count>0?int(lower.w):node+1;
     }
-    if(node!=nodeCount) {meshColour=vec3(1,0,1);hit=start;normal=vec3(0,1,0);return 3;}
+    if(node!=nodeCount) {diagnostic=vec4(0,0,0,-2);meshColour=vec3(1,0,1);hit=start;normal=vec3(0,1,0);return 3;}
     }
     // Vanilla fancy clouds use a depth prepass: blend the nearest cloud surface once.
     if(cloudAt<best && cloudLayer.a==0.0)cloudLayer=nearestCloud;
@@ -214,6 +214,8 @@ int meshSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
 }
 vec3 surface(int value,vec3 hit,vec3 normal) {
     if(MeshMode>.5) {
+        // Synthetic opaque-box fixture: report the entered cell, preserving traversal failures.
+        if(Diagnostic>2.5) {if(diagnostic.w!=-2.0)diagnostic=vec4(floor(hit-normal*.001),3);return vec3(0);}
         vec3 relative=hit-Camera;
         float fogDistance=TerrainFogRange.z>.5?max(length(relative.xz),abs(relative.y)):length(relative);
         float amount=TerrainFogRange.y>TerrainFogRange.x?smoothstep(TerrainFogRange.x,TerrainFogRange.y,fogDistance):step(TerrainFogRange.y,fogDistance);
@@ -356,7 +358,7 @@ void trace() {
     vec3 tangentVector=direction-mu*radialAxis;
     float tangent=length(tangentVector);
     if(Lensing<.5 || tangent<1e-5) {
-        float distance=Hybrid>.5 && Diagnostic<.5?1024.0:400.0;
+        float distance=Hybrid>.5 && (Diagnostic<.5 || Diagnostic>2.5)?1024.0:400.0;
         bool horizon=Lensing>.5 && mu<0.0;
         if(horizon) distance=r-Radius;
         int value=sceneSegment(Camera,Camera+direction*distance,hit,normal);
@@ -389,7 +391,7 @@ void trace() {
         }
         float speed=Radius*length(q)/(q.x*q.x);
         float stepSize=PathStep;
-        if(Hybrid>.5 && Diagnostic<.5) stepSize=mix(PathStep,4.0,smoothstep(80.0,144.0,length(p-Source)));
+        if(Hybrid>.5 && (Diagnostic<.5 || Diagnostic>2.5)) stepSize=mix(PathStep,4.0,smoothstep(80.0,144.0,length(p-Source)));
         float h=min(.02,stepSize/max(speed,.0001));
         vec2 a=derivative(q),b=derivative(q+h*a*.5),c=derivative(q+h*b*.5),d=derivative(q+h*c);
         vec2 next=q+h*(a+2.0*b+2.0*c+d)/6.0;
@@ -409,7 +411,7 @@ void trace() {
     fragColor=vec4(.7,.05,.5,1);
 }
 void main() {
-    if(Diagnostic>1.5) {
+    if(Diagnostic>1.5 && Diagnostic<2.5) {
         vec2 xy=(screenUv*2.0-1.0)*ViewSlopes.xy;
         vec3 d=normalize(Forward+(xy.x+ViewSlopes.z)*Right+(-xy.y+ViewSlopes.w)*Up),hit,normal;
         int value=distantSegment(Camera,Camera+d*1024.0,hit,normal);

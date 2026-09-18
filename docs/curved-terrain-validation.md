@@ -1,5 +1,7 @@
 # Independent curved-terrain checks
 
+This page describes the legacy voxel check. In native mesh mode, F9 C now runs the separate [opaque mesh fixture](mesh-ray-validation.md).
+
 F9 **C** runs a bounded 12x8 comparison of production GPU curved rays against an independent CPU reference. V retains the larger flat-geometry diagnostic. Both briefly pause the frozen view; neither runs during normal F10 rendering. The C output separates compared rays, mismatches, CPU refinement failures, CPU/GPU budget exhaustion, invalid GPU data, actual opaque hits, and captured rays. Failed CPU refinement is inconclusive, never a pass.
 
 ## Reference and independence

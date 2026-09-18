@@ -147,6 +147,7 @@ final class TerrainScreen extends Screen {
         }
     }
     private void renderTerrain() {
+        if(validate && meshMode) {validate=false;validationStatus=MeshValidation.run(shader,()->drawQuad(1,1));}
         if(hybrid)nativeSky.update(!meshMode || !meshClouds);
         int w=Math.max(1,Math.round(client.getWindow().getFramebufferWidth()*scale));
         int h=Math.max(1,Math.round(client.getWindow().getFramebufferHeight()*scale));
@@ -265,7 +266,7 @@ final class TerrainScreen extends Screen {
                         if(mesh==null)try {mesh=new WorldMesh(client.world,snapshot.origin,net.minecraft.util.math.BlockPos.ofFloored(centre()),streamedReference);}
                         catch(RuntimeException failure) {error="Terrain preview allocation failed: see game log.";Interstellar.LOGGER.error(error,failure);}
                     }
-                    validationStatus=meshMode?"P: vanilla/mesh pair | Space: lensing | V/C are voxel-only":"V: flat check | C: curved check (brief pause)";
+                    validationStatus=meshMode?"P: vanilla/mesh pair | C: independent mesh fixture":"V: flat check | C: curved check (brief pause)";
                     validate=false;
                 }
             }
@@ -274,7 +275,7 @@ final class TerrainScreen extends Screen {
             case GLFW.GLFW_KEY_K -> faceLighting=!faceLighting;
             case GLFW.GLFW_KEY_O -> smoothLighting=!smoothLighting;
             case GLFW.GLFW_KEY_V -> {if(!meshMode) {validate=true;curvedValidation=false;}}
-            case GLFW.GLFW_KEY_C -> {if(!meshMode) {validate=true;curvedValidation=true;}}
+            case GLFW.GLFW_KEY_C -> {validate=true;curvedValidation=true;}
             case GLFW.GLFW_KEY_SPACE -> lensing=!lensing;
             case GLFW.GLFW_KEY_Q -> scale=scale==.5f?1f:.5f;
             case GLFW.GLFW_KEY_J -> fine=!fine;

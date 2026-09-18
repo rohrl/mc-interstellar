@@ -206,3 +206,7 @@ F10 now replaces dirty chunks independently and streams the camera window. Nativ
 ## Wider native viewing range — 2026-09-18
 
 F10 camera limit256 blocks; F9 beyond128 automatically chooses native mesh. Live HUD shows distance/limit. Normal backward flight from125 to148 blocks kept lensing active; inspected the lensed wall view. Farther unbent pair RGB MAE.0005 against vanilla; contact sheet inspected. Vertical flight crossed256 and recovered without a new terrain capture. Build51 tests pass, including analytic CPU shadow-boundary brackets at r/r_s16,24,32,64,128. Diagnostic GPU p95=22.724896ms at427×240 during edge streaming; no FPS claim. Source availability, missing geometry and a hard256 cutoff remain. No scene edits; stars/rain/snow/AA unchanged. Details: docs/viewing-range.md.
+
+## Independent curved mesh fixture — 2026-09-18
+
+F9 native mesh C now compares synthetic opaque-box triangle hits with the independent affine CPU/slab solver, retaining production distant steps. All720 near/far comparisons pass across two mesh layouts/two path settings; no inconclusive or unresolved rays, runtime577ms. Before/after candidate and vanilla hashes identical; contact sheet and lensed image inspected. Build51 tests pass; normal frozen GPU p95=15.975104ms at427×240, not an FPS claim. No source/world/AA edits. Synthetic hit-cell coverage only; arbitrary models/materials and stronger convergence remain limited. Details: docs/mesh-ray-validation.md. Next: repeatable demo packaging with current coverage limits clearly stated.

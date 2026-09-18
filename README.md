@@ -68,4 +68,6 @@ Inspect a black-hole proxy, move outside 1.05 r_s, and press **F9**. **Space** c
 
 ## Live terrain
 
+**Numerical mesh check:** in a ready F9 native mesh preview, **C** runs a small synthetic scene against the independent CPU ray solver (about0.6seconds here). It checks both mesh layouts at near/far distances without changing the world. [Results and limits](docs/mesh-ray-validation.md).
+
 After inspecting a black-hole proxy, press **F10** and allow initial native terrain capture (about40 seconds at render distance12). Then explore up to **256 blocks from the selected source**, with normal movement, animated mobs/clouds and the vanilla HUD. Source availability can impose an earlier limit. **F12** measures the pass; F10 returns to normal rendering. Block/light edits update affected chunks, and movement streams the camera window. Updates are queued rather than immediate. Source mass changes refresh automatically after initial selection, without reloading all terrain. Re-enabling F10 currently recaptures it. Interactions still use straight aim. [Current implementation and checks](docs/streaming-terrain.md) · [Live mob implementation](docs/live-native-mesh.md) · [Earlier voxel prototype](docs/live-terrain.md) · [Wider viewing controls and checks](docs/viewing-range.md).
