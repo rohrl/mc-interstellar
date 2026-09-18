@@ -1,43 +1,41 @@
 # Current handoff — 2026-09-18
 
-Repo: C:\work\code\minecraft\interstellar\interstellar. Branch codex/world-mesh-reference, origin https://github.com/rohrl/mc-interstellar.git. JDK C:\Portable\jdks\temurin-21.0.12.1, Fabric/Minecraft1.21.1. Read AGENTS.md. Branches/commits/pushes and autonomous runtime checks authorized; no force pushes/subagents. Preserve worlds, .idea and secrets.
+Repo C:\work\code\minecraft\interstellar\interstellar; branch codex/world-mesh-reference; origin https://github.com/rohrl/mc-interstellar.git. JDK C:\Portable\jdks\temurin-21.0.12.1, Fabric/Minecraft1.21.1. Read AGENTS.md. Branches/commits/pushes and autonomous runtime checks authorized. No force push/subagents. Preserve worlds/.idea/secrets.
 
 ## Owner priorities
 
-Native mesh terrain appearance accepted. Initial loading is acceptable for v1; teleport support excluded. Rain/snow deprioritized. Prioritize live exploration and animated mobs, then incremental terrain edits/chunk streaming. Quality before FPS. AA stays after integration/demo packaging. Automated movement/flicker acceptance deferred to owner; brief functional movement/animation checks and occasional milestone images are appropriate.
+Native terrain/live mobs visually accepted. Initial loading acceptable for v1; teleport support excluded. Rain/snow deferred. Continue live-world integration, then packaging, then AA. Quality before FPS. Owner handles movement/flicker acceptance; brief functional movement checks and fixed-pose images remain appropriate. Owner asks about automatic inspection and notices different stars: inspection already refreshes selected sources; star resampling is suspected, no star change made.
 
-## Current implementation
+## Current checkpoint
 
-F10 now uses native terrain, live camera and animated living mobs/clouds. Large terrain-only BVH is captured once; separate small BVH rebuilt per rendered frame with native entity interpolation. Entity texture tiles persist across frames. Both trees share nearest opaque-hit and nearest cloud ordering in the shader; no baked mob copies or ordinary-camera overlays. Uses existing12 sampler slots. Moving geometry capped200,000 triangles. Pausing the game retains the moving scene. Source/exterior/128-block automatic recovery retained.
+F10 streams native chunk meshes with live camera, animated mobs and clouds. Each terrain chunk has its own BVH/GPU row allocation, with a small top-level index. Native section-render/light invalidations queue chunks; Fabric load/unload events also invalidate neighbours. Capture slices5ms; revision changes during capture trigger retry. Publish individual chunks, preserve overlapping entries on camera movement, remove unloaded/retired data. Actors/clouds retain their separate per-frame BVH and persistent entity texture atlas. Shared curved nearest-hit ordering; no baked actor copies or straight-camera overlays.
 
-IMPORTANT: terrain geometry and baked light/AO stay captured at activation. Block edits/chunk streaming are NOT done; HUD labels this. F10 off releases data, so reactivation repeats initial capture. Initial capture while simulation runs is not atomic. Do not call this complete live-world integration.
+GPU arenas reserve about1280MiB:4095-wide RGBA32F,16384 triangle rows and4096 node rows, first4 node rows reserved for top-level BVH. Rows align36-float triangles/12-float nodes. RowArena coalesces frees; no defragmentation fallback. Seven-million terrain triangle cap, render distance above16 refused. Window=render distance+1 chunk each way, full height, loaded data only. Initial loading waits; incremental updates may lag. F10 off still frees/reloads on reactivation.
 
-Camera-centred terrain footprint: render distance plus one chunk each direction, full height, loaded chunks only. At distance12:27×27 request, ~6.2million triangles/~37s. Seven-million-triangle cap; configured distance above16 refused. F9 M remains frozen comparison, Space lensing, E mobs, N foreground clouds, U old terrain bounds, K old lighting, P vanilla/unbent pair. F12 live timing.
+Source refresh now preserves terrain: invalid/refreshing metadata shows normal paused view, then updates optical centre/radius when usable. Initial source selection still manual; anchor removal needs replacement/new selection. No full terrain recapture for mass edits. Existing128-block/exterior guards remain.
 
-## Latest verification
+F9 M remains monolithic frozen reference; Shift+M selects the chunk-based frozen reference. Switching backend recaptures without advancing world. P vanilla/unbent pair; Space lensing; E mobs; N clouds; U old bounds; K old lighting. F12 live timing.
 
-live-mesh-final-build.log: successful,47 tests, zero failures/errors. live-mesh-runtime.log: shader startup, initial terrain6,184,960 triangles/37.73s, first moving scene12,960 triangles/96 mobs/2,688 cloud triangles. Thousands of updates with changing geometry/entity counts. Inspected run/live-mesh-a.png and live-mesh-b.png six seconds apart: visible mob motion, coherent lensed wall/pillar, no frozen mob copies. Brief strafe changed position without terrain recapture. F10 off/on passed; second terrain6,185,826 triangles/36.15s. Final source differs from running client only by reduced diagnostic log frequency/indentation, rebuilt successfully.
+## Verified
 
-Diagnostic GPU p95=9.431040ms, sampled frame p95=11.3300ms at427×240 internal, close-up r/r_s3.95428. Not target-resolution FPS. See docs/live-native-mesh.md for architecture, evidence, controls and exact limits.
+streaming-final-build.log:50 tests, zero failures/errors. Allocator/coalescing/failure bounds and top-level index tests added. streaming-runtime.log: initial6,185,854 triangles/37.09s, temporary lime-block edit changes only chunk(0,-1), mass addition/removal automatically N64→65→64 without reload. Both originally empty cells (10,292,-8) and (13,300,14) restored/rechecked air. No time/weather or existing scene edits. Strafe across chunk(0,-1)→(1,-1) retained702/729 entries, queued27 new edges; rendering continued. GPU p95=18.435296ms, sampled frames p95=20.5804ms at427×240 during queued updates; not target FPS.
 
-Client left F10 ON, player ~(10.46095,292,-14.50311), yaw0.281/pitch15, creative flight, small870×519 window. Owner may move/close. Never open save in two clients. No block/time/weather/population edits made. Rain/snow was naturally active and remains unrendered by lensing.
+streaming-final-runtime.log: frozen monolithic pair7608212941445763645 and streamed pair5953181202543252939 have identical candidate SHA-256 hashes, identical vanilla references, both RGB MAE.0025 against vanilla. Contact sheet inspected. Streamed terrain6,091,694 + moving9276 equals monolithic6,100,970. Initial streamed capture33.78s. Reference→voxel→F10 cleanup passed. Final running client differs only by an allocation-error guard added after runtime checks; final build passes. Detailed implementation/evidence/limits: docs/streaming-terrain.md.
 
-## Next work
+Client left F10 ON at player(16.5,302,-45.5), yaw.281/pitch.91, creative flight,870×519 window. Owner may move/close. Never open save in two clients.
 
-1. Reusable terrain section/chunk geometry, bounded dirty-section updates and ordinary-movement streaming. Preserve source stability/recovery and accepted appearance; avoid full terrain rebuilds for routine edits/movement. Initial load allowed; teleport out of scope. Add scene cache lifecycle before claiming toggle reuse.
-2. Broader camera access (128 guard remains), remaining transparent/special material coverage and live appearance checks. Rain/snow deferred by owner. Native mob shadows, eyes/glow, hurt/flash, glint, translucent layers, non-living/block entities incomplete.
-3. Independent curved-mesh convergence checks and then optimization/packaging. Frozen mesh is not a certified optical oracle. Actual player-body returning light, horizon experiences and observer speed remain later.
+## Next
 
-## Stable foundations / evidence
+1. Wider useful camera access (128 guard remains), coverage/update behavior and independent curved-mesh validation. Avoid reverting to full scene rebuilds for routine edits. Chunk-level updates are not globally atomic across neighbours; heavy edits can delay publication. Finer section updates and cache reuse across F10 toggles are useful follow-ups.
+2. Remaining transparent/special materials and demo packaging. Rain/snow/teleport deferred. Shadows, eye glow, glint, translucent entity layers, fluids, non-living/block entities incomplete.
+3. AA then deeper relativity/player-body/horizon/observer-speed plan. No performance certification yet; two-level traversal currently costs more than monolithic in similar nearby views.
 
-AA WIP8ad46eb on codex/terrain-antialiasing, excluded/unverified. Source anchor(14,300,14), N64, COM(16,302,16), r_s8. Ignored terrain config enabled=true,distantPrototype=true,renderScale=.5; live native path enables mesh/sky independent of old distant flag.
-
-Earlier evidence: docs/mesh-coverage.md (U comparison, lower-half mountain MAE.0364→.0206 with snowfall), docs/mesh-clouds.md, docs/mesh-entities.md (lightmap parity), docs/native-mesh.md. Source selection/RMB/recovery: docs/source-refresh.md, docs/stable-exploration.md. Never revive rejected straight-camera overlays (87dd3a1 reverted0a264b0).
+AA remains8ad46eb on codex/terrain-antialiasing, excluded/unverified. Source anchor(14,300,14), N64, COM(16,302,16), r_s8. Prior evidence: docs/live-native-mesh.md, mesh-coverage.md, mesh-clouds.md, mesh-entities.md, native-mesh.md, source-refresh.md. Never revive rejected ordinary-camera overlays.
 
 ## Efficient runtime
 
-run/stable-init.gradle quickplays Interstellar Calibration. Redirect logs; gate readiness on joined-the-game. Close identified Minecraft window normally and wait for exit before relaunch. GUI/JDK/Gradle need escalated desktop context.
+run/stable-init.gradle quickplays Interstellar Calibration. Redirect logs, gate on joined-the-game, close identified game normally/wait before relaunch. GUI/JDK/Gradle need escalation.
 
-Helpers: C:\Users\karol\Documents\Codex\2026-09-13\i-want-to-create-a-minecraft\work\control-minecraft.ps1 and capture-minecraft.ps1. Held keys120ms: Esc27,F9=120,F10=121,F12=123,M77,N78,U85,E69,K75,P80,Space32,B66. run/send-safe-command.ps1 safely pastes commands/restores clipboard. Fresh logins may not fly: spectator→teleport→creative retains flight. Teleport is only a test-pose setup, not a v1 feature acceptance test.
+Helpers C:\Users\karol\Documents\Codex\2026-09-13\i-want-to-create-a-minecraft\work\control-minecraft.ps1 and capture-minecraft.ps1. Hold keys120ms: Esc27/F9=120/F10=121/F12=123/M77/N78/U85/E69/K75/P80/Space32/B66. Shift+M via helper -Keys '+m' works. run/send-safe-command.ps1 pastes safely/restores clipboard. Fresh logins may need spectator→test-pose teleport→creative for flight; this is setup, not v1 teleport acceptance.
 
-Comparator: java tools/CompareAppearance.java PAIR_DIRECTORY; three-path mode verifies reference identity. Logs/captures/worlds ignored. Use bounded log reads, numerical comparisons and occasional visual milestones; no screenshot for simple HUD/docs/logging changes.
+Comparator: java tools/CompareAppearance.java PAIR_DIRECTORY; three-path mode checks references/candidates. Logs/captures/worlds ignored. Use bounded log reads/numeric comparisons; screenshots only for meaningful rendering checkpoints.

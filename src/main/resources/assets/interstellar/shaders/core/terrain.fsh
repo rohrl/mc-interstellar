@@ -127,7 +127,7 @@ vec3 smoothLight(int id,int face,vec2 st) {
     else weights=st.x+st.y<=1?vec4(1-st.x-st.y,st.x,st.y,0):vec4(0,1-st.y,1-st.x,st.x+st.y-1);
     return cornerLight(data.x)*weights.x+cornerLight(data.y)*weights.y+cornerLight(data.z)*weights.z+cornerLight(data.w)*weights.w;
 }
-vec4 meshData(sampler2D data,int index) {return texelFetch(data,ivec2(index%4096,index/4096),0);}
+vec4 meshData(sampler2D data,int index) {int width=textureSize(data,0).x;return texelFetch(data,ivec2(index%width,index/width),0);}
 float cloudFogDistance(vec3 position) {
     vec3 d=position-Camera;
     // Native cloud vertex shader measures fog after the view transform.
@@ -142,9 +142,10 @@ int meshSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
     vec3 delta=end-start;float best=1.000001;bool found=false;
     float cloudAt=2.0;vec4 nearestCloud=vec4(0);
     for(int tree=0;tree<2;tree++) {
-    int node=0,nodeCount=int(tree==0?MeshNodeCount:MovingNodeCount);
+    int node=0,nodeCount=int(tree==0?MeshNodeCount:MovingNodeCount),returnTo=0;
     for(int visited=0;visited<131072;visited++) {
-        if(node>=nodeCount)break;
+        if(node<0)node=returnTo;
+        if(node==nodeCount)break;
         vec4 lower=sceneNode(tree,node*3),upper=sceneNode(tree,node*3+1);
         float enter=0,leave=min(1.0,best);bool inside=true;
         for(int axis=0;axis<3;axis++) {
@@ -157,6 +158,7 @@ int meshSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
         }
         if(!inside || leave<enter) {node=int(lower.w);continue;}
         int count=int(sceneNode(tree,node*3+2).x);
+        if(count<0) {returnTo=int(lower.w);node=int(upper.w);continue;}
         for(int i=0;i<count;i++) {
             int base=(int(upper.w)+i)*9;
             vec4 vertexA=sceneTriangle(tree,base);
@@ -202,9 +204,9 @@ int meshSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
             meshColour=texel.rgb*(colA*weights.x+colB*weights.y+colC*weights.z);
             best=t;hit=start+t*delta;normal=normalize(cross(edge1,edge2));found=true;
         }
-        node++;
+        node=count>0?int(lower.w):node+1;
     }
-    if(node<nodeCount) {meshColour=vec3(1,0,1);hit=start;normal=vec3(0,1,0);return 3;}
+    if(node!=nodeCount) {meshColour=vec3(1,0,1);hit=start;normal=vec3(0,1,0);return 3;}
     }
     // Vanilla fancy clouds use a depth prepass: blend the nearest cloud surface once.
     if(cloudAt<best && cloudLayer.a==0.0)cloudLayer=nearestCloud;

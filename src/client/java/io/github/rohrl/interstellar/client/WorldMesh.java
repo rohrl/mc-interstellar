@@ -34,6 +34,9 @@ final class WorldMesh implements VertexConsumer,AutoCloseable {
     final CloudMesh clouds=new CloudMesh();
     private final BlockPos centre;
     private final boolean terrainOnly;
+    private final boolean singleChunk;
+    private boolean prepared;
+    private StreamingTerrain streaming;
     private boolean dynamic;
     private long updates;
     float extent=512;
@@ -41,16 +44,26 @@ final class WorldMesh implements VertexConsumer,AutoCloseable {
         this(world,origin,centre,false);
     }
     WorldMesh(ClientWorld world,BlockPos origin,BlockPos centre,boolean terrainOnly) {
+        this(world,origin,centre,terrainOnly,false,0,0);
+    }
+    static WorldMesh chunk(ClientWorld world,BlockPos origin,BlockPos centre,int x,int z) {
+        return new WorldMesh(world,origin,centre,true,true,x,z);
+    }
+    private WorldMesh(ClientWorld world,BlockPos origin,BlockPos centre,boolean terrainOnly,boolean singleChunk,int chunkX,int chunkZ) {
         this.world=world;this.origin=origin;this.centre=centre;
-        this.terrainOnly=terrainOnly;
+        this.terrainOnly=terrainOnly;this.singleChunk=singleChunk;
         var client=MinecraftClient.getInstance();
         var camera=BlockPos.ofFloored(client.gameRenderer.getCamera().getPos());
         viewDistance=client.options.getViewDistance().getValue();
         // Include every direction for bent rays, plus one chunk beyond the native fog distance.
-        int radius=Math.max(2,Math.min(16,viewDistance))+1;chunks=radius*2+1;
-        minChunkX=(camera.getX()>>4)-radius;minChunkZ=(camera.getZ()>>4)-radius;
+        int radius=Math.max(2,Math.min(16,viewDistance))+1;chunks=singleChunk?1:radius*2+1;
+        minChunkX=singleChunk?chunkX:(camera.getX()>>4)-radius;minChunkZ=singleChunk?chunkZ:(camera.getZ()>>4)-radius;
         sections=world.countVerticalSections();total=chunks*chunks*sections*4096;
+        if(terrainOnly && !singleChunk){streaming=new StreamingTerrain(world,origin,centre);triangles=null;}
     }
+    float[] triangleData() {return triangles;}
+    int triangleCount() {return count;}
+    float sourceShift(net.minecraft.util.math.Vec3d source) {return (float)source.distanceTo(net.minecraft.util.math.Vec3d.of(centre));}
     WorldMesh movingScene() {
         var moving=new WorldMesh(world,origin,centre,false);moving.dynamic=true;
         moving.entities=new EntityMesh(moving);return moving;
@@ -59,16 +72,21 @@ final class WorldMesh implements VertexConsumer,AutoCloseable {
     void updateMoving() {
         if(!dynamic)throw new IllegalStateException("Not a moving scene");
         count=0;
-        entities.capture(origin,minChunkX,minChunkZ,chunks);
+        var camera=BlockPos.ofFloored(MinecraftClient.getInstance().gameRenderer.getCamera().getPos());
+        int radius=Math.max(2,Math.min(16,MinecraftClient.getInstance().options.getViewDistance().getValue()))+1;
+        entities.capture(origin,(camera.getX()>>4)-radius,(camera.getZ()>>4)-radius,2*radius+1);
         clouds.capture(this,origin);
         finishTree();
         if(++updates==1 || updates==300 || updates==600 || updates%3600==0)
             Interstellar.LOGGER.info("Live mesh update {}: {} triangles, {}; geometry fingerprint={}",updates,count,entities.status(),Arrays.hashCode(Arrays.copyOf(triangles,count*36)));
     }
-    boolean ready() {return nodeTexture!=0;}
-    String status() {return ready()?"Native mesh: "+count+" triangles | "+missingSections+" missing sections"+(entities==null?"": " | "+entities.status()):
+    boolean ready() {return streaming!=null?streaming.ready():singleChunk?prepared:nodeTexture!=0;}
+    String status() {return streaming!=null?streaming.status():ready()?"Native mesh: "+count+" triangles | "+missingSections+" missing sections"+(entities==null?"": " | "+entities.status()):
             "Capturing native mesh: "+(100L*cursor/total)+"%";}
     void advance() {
+        if(streaming!=null) {
+            streaming.advance();triangleTexture=streaming.triangleTexture();nodeTexture=streaming.nodeTexture();nodeCount=streaming.nodeCount;extent=streaming.extent;return;
+        }
         if(ready())return;
         // Fail inside the preview's guarded capture loop, not its key handler.
         if(viewDistance>16)throw new IllegalStateException("Native mesh reference supports render distance up to 16 chunks; lower it and reopen");
@@ -98,6 +116,7 @@ final class WorldMesh implements VertexConsumer,AutoCloseable {
             }
         } finally {net.minecraft.client.render.block.BlockModelRenderer.disableBrightnessCache();}
         if(cursor==total) {
+            if(singleChunk){prepared=true;return;}
             if(!terrainOnly) {
                 entities=new EntityMesh(this);entities.capture(origin,minChunkX,minChunkZ,chunks);
                 clouds.capture(this,origin);
@@ -181,7 +200,7 @@ final class WorldMesh implements VertexConsumer,AutoCloseable {
         } catch(RuntimeException e) {RenderSystem.deleteTexture(id);throw e;}
         finally {MemoryUtil.memFree(buffer);}
     }
-    @Override public void close() {triangles=null;if(entities!=null) {entities.close();entities=null;}if(triangleTexture!=0)RenderSystem.deleteTexture(triangleTexture);if(nodeTexture!=0)RenderSystem.deleteTexture(nodeTexture);triangleTexture=nodeTexture=0;}
+    @Override public void close() {triangles=null;if(entities!=null) {entities.close();entities=null;}if(streaming!=null){streaming.close();streaming=null;}else {if(triangleTexture!=0)RenderSystem.deleteTexture(triangleTexture);if(nodeTexture!=0)RenderSystem.deleteTexture(nodeTexture);}triangleTexture=nodeTexture=0;}
     @Override public VertexConsumer vertex(float x,float y,float z) {throw new IllegalStateException("Expected native quad");}
     @Override public VertexConsumer color(int r,int g,int b,int a) {return this;}
     @Override public VertexConsumer texture(float u,float v) {return this;}

@@ -25,11 +25,12 @@ final class TerrainScreen extends Screen {
     private boolean validate;
     private boolean curvedValidation;
     private String validationStatus="V: flat check | C: curved check (brief pause)";
-    private final SourcePayload source;
+    private SourcePayload source;
     private TerrainSnapshot snapshot, pending;
     private WorldMesh mesh;
     private WorldMesh moving;
     private boolean meshMode;
+    private boolean streamedReference;
     private boolean meshEntities=true;
     private boolean meshClouds=true;
     private boolean meshCoverage=true;
@@ -53,6 +54,7 @@ final class TerrainScreen extends Screen {
     TerrainScreen(SourcePayload source,boolean live) {super(Text.literal("Interstellar terrain prototype"));this.source=source;this.live=live;}
     String problem() {return error;}
     SourcePayload selectedSource() {return source;}
+    void adoptSource(SourcePayload next) {source=next;cancelBenchmark();}
     static void setShader(ShaderProgram program) {shader=program;resourceVersion++;}
     @Override protected void init() {
         if(snapshot!=null || error!=null) return;
@@ -70,7 +72,7 @@ final class TerrainScreen extends Screen {
     private Vec3d centre() {return new Vec3d(source.x(),source.y(),source.z());}
     @Override public void render(DrawContext context,int mouseX,int mouseY,float delta) {
         context.draw();
-        if(snapshot!=null && (SelectedSource.current()!=source || client.world!=snapshot.world)) error="Source changed: reopen the frozen terrain preview when ready.";
+        if(snapshot!=null && ((!live && SelectedSource.current()!=source) || client.world!=snapshot.world)) error="Source changed: reopen the frozen terrain preview when ready.";
         if(capturedVersion!=resourceVersion) error="Resources reloaded: reopen the terrain preview to refresh textures.";
         if(error==null && shader==null) error="Terrain shader unavailable: see game log.";
         if(error==null) {
@@ -93,9 +95,9 @@ final class TerrainScreen extends Screen {
                 if(snapshot.ready() && publishedAt==0) {publishedAt=System.nanoTime();generation=1;}
                 if(live && !meshMode && snapshot.ready() && !client.isPaused()) refresh();
                 if(meshMode && mesh!=null)mesh.advance();
-                if(live && meshMode && mesh.ready()) {
+                if((live || streamedReference) && meshMode && mesh.ready()) {
                     if(moving==null)moving=mesh.movingScene();
-                    if(!moving.ready() || !client.isPaused())moving.updateMoving();
+                    if(!moving.ready() || live && !client.isPaused())moving.updateMoving();
                 }
                 if(snapshot.ready() && (!meshMode || mesh.ready())) {AppearanceCapture.finish(this);renderTerrain();}
                 else if(!live) context.fill(0,0,width,height,0xFF101A28);
@@ -104,10 +106,10 @@ final class TerrainScreen extends Screen {
         if(live) {
             context.fill(6,6,Math.min(width-6,410),46,0xCD101824);
             context.drawTextWithShadow(textRenderer,"INTERSTELLAR | Live camera | F10: off | F12: timing",12,12,0xFF88D8FF);
-            String age=meshMode?mesh.ready()?"Live mobs/clouds | Terrain held from initial capture":mesh.status():publishedAt==0?snapshot.status():String.format(Locale.ROOT,"Published %.1fs ago | %s | generation %d",
+            String age=meshMode?mesh.status():publishedAt==0?snapshot.status():String.format(Locale.ROOT,"Published %.1fs ago | %s | generation %d",
                     (System.nanoTime()-publishedAt)/1e9,pending==null?"waiting to refresh":"refreshing",generation);
             context.drawTextWithShadow(textRenderer,age,12,24,0xFFFFFFFF);
-            context.drawTextWithShadow(textRenderer,benchmark==null?(meshMode?"Terrain edits/chunk streaming pending | F10: off":hybrid?"Native sky/light | Distant terrain approximate":"Bounded terrain | Straight aim | Outside data omitted"):benchmark.status().replace("B cancels","F12 cancels"),12,36,0xFFFFD59A);
+            context.drawTextWithShadow(textRenderer,benchmark==null?(meshMode?"Live terrain/mobs | Updates queued | F10: off":hybrid?"Native sky/light | Distant terrain approximate":"Bounded terrain | Straight aim | Outside data omitted"):benchmark.status().replace("B cancels","F12 cancels"),12,36,0xFFFFD59A);
             return;
         }
         if(error!=null) context.fill(0,0,width,height,0xFF201018);
@@ -170,8 +172,8 @@ final class TerrainScreen extends Screen {
             int oldX=((net.minecraft.util.math.BlockPos.ofFloored(centre()).getX()>>4)-8)*16-snapshot.origin.getX();
             int oldZ=((net.minecraft.util.math.BlockPos.ofFloored(centre()).getZ()>>4)-8)*16-snapshot.origin.getZ();
             shader.getUniformOrDefault("OldMeshBounds").set((float)oldX,(float)oldZ,(float)oldX+256,(float)oldZ+256);
-            shader.getUniformOrDefault("MeshExtent").set(meshMode?Math.max(mesh.extent,moving==null?0:moving.extent):512f);
-            shader.getUniformOrDefault("MovingNodeCount").set(moving==null?0f:(float)moving.nodeCount);
+            shader.getUniformOrDefault("MeshExtent").set(meshMode?Math.max(mesh.extent,moving==null?0:moving.extent)+mesh.sourceShift(centre()):512f);
+            shader.getUniformOrDefault("MovingNodeCount").set(!meshMode || moving==null?0f:(float)moving.nodeCount);
             shader.getUniformOrDefault("MeshNodeCount").set(meshMode?(float)mesh.nodeCount:0f);
             shader.getUniformOrDefault("DistantTop").set(snapshot.distant==null?-1024f:snapshot.distant.maxHeight);
             shader.getUniformOrDefault("FaceShades").set(client.world.getBrightness(net.minecraft.util.math.Direction.EAST,true),
@@ -183,9 +185,9 @@ final class TerrainScreen extends Screen {
             shader.addSampler("SmoothAtlas",snapshot.smoothLight.texture);
             shader.addSampler("LocalSmooth",snapshot.smoothTexture);
             shader.addSampler("DistantSmooth",snapshot.distant==null?snapshot.smoothTexture:snapshot.distant.smoothTexture);
-            shader.addSampler("DistantLight",moving!=null?moving.nodeTexture:snapshot.distant==null?snapshot.lightTexture:snapshot.distant.lightTexture);
+            shader.addSampler("DistantLight",meshMode && moving!=null?moving.nodeTexture:snapshot.distant==null?snapshot.lightTexture:snapshot.distant.lightTexture);
             shader.addSampler("Distant",meshMode?(moving!=null?moving.clouds.texture:mesh.clouds.texture):snapshot.distant==null?snapshot.voxelTexture:snapshot.distant.texture);
-            shader.addSampler("DistantAppearance",moving!=null?moving.triangleTexture:snapshot.distant==null?snapshot.voxelTexture:snapshot.distant.appearanceTexture);
+            shader.addSampler("DistantAppearance",meshMode && moving!=null?moving.triangleTexture:snapshot.distant==null?snapshot.voxelTexture:snapshot.distant.appearanceTexture);
             shader.addSampler("SkyAtlas",hybrid?nativeSky.texture():snapshot.voxelTexture);
             shader.addSampler("Lightmap",((io.github.rohrl.interstellar.mixin.client.LightmapAccessor)client.gameRenderer.getLightmapTextureManager()).interstellar$texture().getGlId());
             shader.addSampler("Palette",meshMode?mesh.nodeTexture:snapshot.paletteTexture);
@@ -222,7 +224,7 @@ final class TerrainScreen extends Screen {
             throw new IllegalStateException("F9 view rotated: reopen F9 at the desired player pose");
         if(client.world!=snapshot.world || SelectedSource.current()!=source)throw new IllegalStateException("Source/world changed");
     }
-    String appearanceScene() {return (meshMode?mesh.status():snapshot.status())+"; mesh="+meshMode+"; entities="+meshEntities+"; coverage="+meshCoverage+"; clouds="+meshClouds+"; distant="+hybrid+"; faceLight="+faceLighting+"; smoothLight="+smoothLighting+"; origin="+snapshot.origin;}
+    String appearanceScene() {return (meshMode?mesh.status():snapshot.status())+"; mesh="+meshMode+"; streamedReference="+streamedReference+"; entities="+meshEntities+"; coverage="+meshCoverage+"; clouds="+meshClouds+"; distant="+hybrid+"; faceLight="+faceLighting+"; smoothLight="+smoothLighting+"; origin="+snapshot.origin;}
     void appearanceStatus(String text) {validationStatus=text;}
     void renderAppearanceCandidate() {
         boolean oldLensing=lensing,oldValidate=validate;float oldScale=scale;
@@ -245,8 +247,15 @@ final class TerrainScreen extends Screen {
             case GLFW.GLFW_KEY_E -> {if(meshMode)meshEntities=!meshEntities;}
             case GLFW.GLFW_KEY_M -> {
                 if(!live && snapshot!=null && error==null) {
-                    meshMode=!meshMode;
-                    if(meshMode) {hybrid=true;lensing=false;if(mesh==null)mesh=new WorldMesh(client.world,snapshot.origin,net.minecraft.util.math.BlockPos.ofFloored(centre()));}
+                    boolean nextStream=(modifiers&GLFW.GLFW_MOD_SHIFT)!=0;
+                    boolean replace=mesh!=null && nextStream!=streamedReference;
+                    if(replace) {mesh.close();mesh=null;if(moving!=null){moving.close();moving=null;}}
+                    meshMode=replace || !meshMode;
+                    if(meshMode) {
+                        streamedReference=nextStream;hybrid=true;lensing=false;
+                        if(mesh==null)try {mesh=new WorldMesh(client.world,snapshot.origin,net.minecraft.util.math.BlockPos.ofFloored(centre()),streamedReference);}
+                        catch(RuntimeException failure) {error="Terrain preview allocation failed: see game log.";Interstellar.LOGGER.error(error,failure);}
+                    }
                     validationStatus=meshMode?"P: vanilla/mesh pair | Space: lensing | V/C are voxel-only":"V: flat check | C: curved check (brief pause)";
                     validate=false;
                 }

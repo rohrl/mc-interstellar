@@ -1,5 +1,7 @@
 # Live native terrain and moving mobs — 2026-09-18
 
+Subsequent checkpoint: [streaming-terrain.md](streaming-terrain.md) implements incremental chunk edits/movement and preserves terrain across source refresh. The retained-terrain restrictions below describe this initial live checkpoint.
+
 F10 now uses the accepted native terrain representation. After initial capture, the camera and Minecraft simulation remain live. Supported living mobs move and animate; clouds update too. F12 measures the optical pass. F9 M remains the frozen appearance-comparison path.
 
 Owner priorities: initial loading is acceptable, teleport support is excluded from v1, and rain/snow is deferred. This checkpoint deliberately retains terrain captured at activation. **Block edits and chunk streaming are not implemented yet.** The live HUD states this limitation. Toggling F10 off releases the scene; enabling it again currently repeats initial loading. Keeping a reusable terrain cache across toggles belongs with incremental scene ownership.

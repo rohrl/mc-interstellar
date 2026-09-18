@@ -29,8 +29,12 @@ public final class LiveTerrain {
         if(client.world!=armedWorld||SelectedSource.state()==SourceState.NONE) {stop();return;}
         var source=SelectedSource.current();
         if(renderer!=null&&renderer.selectedSource()==source)return;
-        releaseRenderer();
         if(source!=null&&source.blackHoleProxy()) {
+            if(renderer!=null) {
+                renderer.adoptSource(source);
+                Interstellar.LOGGER.info("Live source refreshed without terrain reload: N={}, r_s={}",source.count(),source.schwarzschildRadius());
+                return;
+            }
             renderer=new TerrainScreen(source,true);
             width=client.getWindow().getScaledWidth();height=client.getWindow().getScaledHeight();
             renderer.init(client,width,height);
@@ -53,7 +57,7 @@ public final class LiveTerrain {
         try {
             synchronize(client);
             if(!active())return;
-            if(renderer==null) {
+            if(renderer==null || SelectedSource.current()==null || !SelectedSource.current().blackHoleProxy()) {
                 context.fill(6,6,Math.min(client.getWindow().getScaledWidth()-6,440),46,0xCD101824);
                 context.drawTextWithShadow(client.textRenderer,"INTERSTELLAR | PAUSED - normal view | F10: off",12,12,0xFFFFD59A);
                 String reason=SelectedSource.current()!=null?"Extended source: waiting for black-hole compactness":SelectedSource.state().message();
