@@ -15,6 +15,11 @@ const float MeshMode=1.0;
 uniform float MeshMode;
 #endif
 uniform float MeshNodeCount;
+#ifdef INTERSTELLAR_VARIABLE_CHORD
+uniform float MeshStepLimit;
+#else
+const float MeshStepLimit=4.0;
+#endif
 #ifdef INTERSTELLAR_LIVE_DEFAULTS
 const float MeshEntities=1.0,MeshClouds=1.0,MeshCoverage=1.0;
 const float Hybrid=1.0,FaceLighting=1.0,Lensing=1.0,Diagnostic=0.0;
@@ -474,7 +479,7 @@ void trace(vec2 uv) {
             float normQ=length(q),u2=q.x*q.x;
             float curvature=1.5*u2*u2*q.x/max(Radius*normQ*normQ*normQ,1e-12);
             float tolerance=.001*(PathStep/.45)*(PathStep/.45);
-            stepSize=clamp(sqrt(8.0*tolerance/max(curvature,1e-12)),PathStep,4.0);
+            stepSize=clamp(sqrt(8.0*tolerance/max(curvature,1e-12)),PathStep,MeshStepLimit);
         }
         float h=min(.02,stepSize/max(speed,.0001));
         vec2 a=derivative(q),b=derivative(q+h*a*.5),c=derivative(q+h*b*.5),d=derivative(q+h*c);

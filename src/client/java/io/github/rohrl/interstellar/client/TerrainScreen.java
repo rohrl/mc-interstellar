@@ -21,10 +21,12 @@ import java.util.Locale;
 final class TerrainScreen extends Screen {
     private static final int MESH_VIEW_RANGE=256,VOXEL_VIEW_RANGE=128;
     private static ShaderProgram generalShader,meshShader,compactMeshShader,defaultMeshShader;
+    private static ShaderProgram longMeshShader,longDefaultShader;
     private ShaderProgram shader;
     private boolean specialized=true;
     private boolean compactNodes=true;
     private boolean liveDefaults=true;
+    private float meshStepLimit=16;
     private static int resourceVersion;
     private final int capturedVersion=resourceVersion;
     private boolean validate;
@@ -68,6 +70,8 @@ final class TerrainScreen extends Screen {
     static void setCompactMeshShader(ShaderProgram program) {compactMeshShader=program;resourceVersion++;}
     static boolean hasCompactShader() {return compactMeshShader!=null;}
     static void setDefaultMeshShader(ShaderProgram program) {defaultMeshShader=program;resourceVersion++;}
+    static void setLongMeshShader(ShaderProgram program) {longMeshShader=program;resourceVersion++;}
+    static void setLongDefaultShader(ShaderProgram program) {longDefaultShader=program;resourceVersion++;}
     @Override protected void init() {
         if(snapshot!=null || error!=null) return;
         if(!options.enabled()) {error="Terrain preview disabled in interstellar-terrain.json";return;}
@@ -158,11 +162,12 @@ final class TerrainScreen extends Screen {
         }
     }
     private void renderTerrain() {
-        shader=useDefaultShader()?defaultMeshShader:useMeshShader()?(compactNodes && compactMeshShader!=null?compactMeshShader:meshShader):generalShader;
+        shader=currentShader();
         if(validate && meshMode) {
             validate=false;
-            var diagnosticShader=useDefaultShader()?compactMeshShader:shader;
-            Interstellar.LOGGER.info("Mesh fixture program: {}",useDefaultShader()?"compact diagnostic variant (live defaults fix Diagnostic=0)":programName());
+            var diagnosticShader=useDefaultShader()?(useLongShader()?longMeshShader:compactMeshShader):shader;
+            diagnosticShader.getUniformOrDefault("MeshStepLimit").set(meshStepLimit);
+            Interstellar.LOGGER.info("Mesh fixture program: {}; step cap={}",useDefaultShader()?"compact diagnostic variant (live defaults fix Diagnostic=0)":programName(),useLongShader()?meshStepLimit:4);
             validationStatus=MeshValidation.run(diagnosticShader,()->drawQuad(1,1));
         }
         if(hybrid)nativeSky.update(!meshMode || !meshClouds);
@@ -204,6 +209,7 @@ final class TerrainScreen extends Screen {
                     client.world.getBrightness(net.minecraft.util.math.Direction.SOUTH,true),client.world.getBrightness(net.minecraft.util.math.Direction.DOWN,true),
                     client.world.getBrightness(net.minecraft.util.math.Direction.UP,true));
             shader.getUniformOrDefault("PathStep").set(fine?.225f:.45f);
+            shader.getUniformOrDefault("MeshStepLimit").set(meshStepLimit);
             shader.getUniformOrDefault("RaySamples").set(antialiasing==2?2f:antialiasing==4?4f:1f);
             shader.getUniformOrDefault("AdaptivePath").set(adaptivePath?1f:0f);
             shader.getUniformOrDefault("FastBounds").set(fastBounds?1f:0f);
@@ -301,7 +307,22 @@ final class TerrainScreen extends Screen {
         return liveDefaults && useMeshShader() && compactNodes && defaultMeshShader!=null && antialiasing==2 && lensing && hybrid
                 && faceLighting && meshEntities && meshClouds && meshCoverage && adaptivePath && fastBounds && fastFetch && emptyCells && emptyReach==1024;
     }
-    private String programName() {return useDefaultShader()?"native-live-defaults":useMeshShader()?(compactNodes && compactMeshShader!=null?"native-compact-nodes":"native-mesh"):"general";}
+    private boolean useLongShader() {return useMeshShader() && compactNodes && adaptivePath && meshStepLimit!=4 && longMeshShader!=null && longDefaultShader!=null;}
+    private ShaderProgram currentShader() {
+        if(!useMeshShader())return generalShader;
+        if(useDefaultShader())return useLongShader()?longDefaultShader:defaultMeshShader;
+        if(compactNodes && compactMeshShader!=null)return useLongShader()?longMeshShader:compactMeshShader;
+        return meshShader;
+    }
+    private String programName() {
+        if(useDefaultShader())return useLongShader()?"native-live-steps-"+meshStepLimit:"native-live-defaults";
+        return useMeshShader()?(compactNodes && compactMeshShader!=null?(useLongShader()?"native-compact-steps-"+meshStepLimit:"native-compact-nodes"):"native-mesh"):"general";
+    }
+    void renderStepLimitComparison(boolean reference) {
+        float old=meshStepLimit;cancelBenchmark();
+        try {if(reference)meshStepLimit=4;renderTerrain();}
+        finally {meshStepLimit=old;}
+    }
     void renderDefaultsComparison(boolean reference) {
         boolean old=liveDefaults;cancelBenchmark();
         try {if(reference)liveDefaults=false;renderTerrain();}
@@ -365,7 +386,10 @@ final class TerrainScreen extends Screen {
             case GLFW.GLFW_KEY_H -> {if(!meshMode)hybrid=!hybrid;}
             case GLFW.GLFW_KEY_K -> faceLighting=!faceLighting;
             case GLFW.GLFW_KEY_O -> smoothLighting=!smoothLighting;
-            case GLFW.GLFW_KEY_V -> {if(!meshMode) {validate=true;curvedValidation=false;}}
+            case GLFW.GLFW_KEY_V -> {
+                if(meshMode) {if((modifiers&GLFW.GLFW_MOD_SHIFT)!=0)AppearanceCapture.request(this,10);else meshStepLimit=meshStepLimit==4?16:4;validationStatus="V: step cap "+meshStepLimit+" | Shift+V: compare four-block cap";}
+                else {validate=true;curvedValidation=false;}
+            }
             case GLFW.GLFW_KEY_C -> {validate=true;curvedValidation=true;}
             case GLFW.GLFW_KEY_SPACE -> lensing=!lensing;
             case GLFW.GLFW_KEY_Q -> scale=scale==.5f?1f:.5f;

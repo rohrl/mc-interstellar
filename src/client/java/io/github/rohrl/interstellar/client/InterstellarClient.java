@@ -39,6 +39,8 @@ public final class InterstellarClient implements ClientModInitializer {
             if(org.lwjgl.opengl.GL.getCapabilities().GL_ARB_shader_bit_encoding) {
                 context.register(Identifier.of("interstellar", "terrain_mesh_compact"), VertexFormats.POSITION, TerrainScreen::setCompactMeshShader);
                 context.register(Identifier.of("interstellar", "terrain_live_defaults"), VertexFormats.POSITION, TerrainScreen::setDefaultMeshShader);
+                context.register(Identifier.of("interstellar", "terrain_mesh_long"), VertexFormats.POSITION, TerrainScreen::setLongMeshShader);
+                context.register(Identifier.of("interstellar", "terrain_live_long"), VertexFormats.POSITION, TerrainScreen::setLongDefaultShader);
             }
         });
         CoreShaderRegistrationCallback.EVENT.register(context -> context.register(Identifier.of("interstellar", "terrain_resolve"), VertexFormats.POSITION, TerrainResolve::setShader));

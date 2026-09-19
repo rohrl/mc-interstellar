@@ -247,3 +247,7 @@ Pack ordinary nodes into two texels with unchanged float32 bounds/escape links a
 ## D057 — Specialize unchanged live defaults — accepted (2026-09-19)
 
 Compile a normal-settings shader with diagnostics off and existing quality/coverage/optimization values fixed. Select it only when all fixed settings match; keep dynamic compact/general/original programs for alternatives and comparisons. C uses the compact diagnostic variant, so do not mislabel its26240 passing sampled classifications as direct tests of the specialized executable. Actual specialized output is pixel-identical across wall/down pairs and after diagnostics. Matched1440p GPU p95 gains17.6% wall/16.0% down, live animation check and53-test build justify acceptance. No optics/quality change;30FPS minimum remains active. docs/live-default-specialization.md.
+
+## D058 — Raise spatial cap under unchanged curvature/angular limits — accepted (2026-09-20)
+
+Use16 instead of4 blocks as the native adaptive step's upper clamp; keep local1mm sagitta estimate,0.02radian cap, equations and intersections. This changes sampling, not the curvature target; the local estimate is not a rigorous global bound. Fresh26240 sampled checks pass; tiny measured image differences across wall/down/away and visual inspection support acceptance. Matched1440p GPU p95 improves~21% in wall/down views.32 brings only2% more downward and is excluded from retained controls. Live wall median~35FPS clears30, live downward~23FPS does not; continue. Original4-block compiled programs remain behind V/Shift+V. docs/long-chords.md.
