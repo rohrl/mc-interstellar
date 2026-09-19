@@ -32,6 +32,7 @@ uniform vec2 Viewport;
 uniform float RaySamples;
 uniform float AdaptivePath;
 uniform float FastBounds;
+uniform float FastFetch;
 vec4 diagnostic=vec4(0);
 ivec3 materialCell;
 bool distantHit=false;
@@ -131,7 +132,16 @@ vec3 smoothLight(int id,int face,vec2 st) {
     else weights=st.x+st.y<=1?vec4(1-st.x-st.y,st.x,st.y,0):vec4(0,1-st.y,1-st.x,st.x+st.y-1);
     return cornerLight(data.x)*weights.x+cornerLight(data.y)*weights.y+cornerLight(data.z)*weights.z+cornerLight(data.w)*weights.w;
 }
-vec4 meshData(sampler2D data,int index) {int width=textureSize(data,0).x;return texelFetch(data,ivec2(index%width,index/width),0);}
+vec4 meshData(sampler2D data,int index) {
+    int width=textureSize(data,0).x;
+    // Known atlas widths let the compiler replace variable integer division.
+    // Keep integer coordinates and a general fallback; no float-address rounding.
+    if(FastFetch>.5) {
+        if(width==4095)return texelFetch(data,ivec2(index%4095,index/4095),0);
+        if(width==4096)return texelFetch(data,ivec2(index%4096,index/4096),0);
+    }
+    return texelFetch(data,ivec2(index%width,index/width),0);
+}
 float cloudFogDistance(vec3 position) {
     vec3 d=position-Camera;
     // Native cloud vertex shader measures fog after the view transform.

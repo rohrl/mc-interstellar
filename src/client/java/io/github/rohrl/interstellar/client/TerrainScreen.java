@@ -48,7 +48,7 @@ final class TerrainScreen extends Screen {
     private final TerrainOptions options=TerrainOptions.load();
     private float scale=options.renderScale();
     private int antialiasing=options.antialiasing();
-    private boolean adaptivePath=true,fastBounds=true;
+    private boolean adaptivePath=true,fastBounds=true,fastFetch=true;
     private boolean hybrid=options.distantPrototype();
     private boolean faceLighting=true;
     private boolean smoothLighting=true;
@@ -192,6 +192,7 @@ final class TerrainScreen extends Screen {
             shader.getUniformOrDefault("RaySamples").set(antialiasing==2?2f:antialiasing==4?4f:1f);
             shader.getUniformOrDefault("AdaptivePath").set(adaptivePath?1f:0f);
             shader.getUniformOrDefault("FastBounds").set(fastBounds?1f:0f);
+            shader.getUniformOrDefault("FastFetch").set(fastFetch?1f:0f);
             shader.addSampler("Voxels",meshMode?mesh.triangleTexture:snapshot.voxelTexture);
             shader.addSampler("LocalLight",meshMode?(moving!=null?moving.entities.texture:mesh.entities.texture):snapshot.lightTexture);
             shader.addSampler("SmoothAtlas",snapshot.smoothLight.texture);
@@ -245,7 +246,7 @@ final class TerrainScreen extends Screen {
         try {lensing=false;scale=1;validate=false;antialiasing=0;renderTerrain();}
         finally {lensing=oldLensing;scale=oldScale;validate=oldValidate;antialiasing=oldAa;}
     }
-    String qualitySettings() {return "AA="+aaName()+", scale="+scale+", lensing="+lensing+", fine="+fine+", adaptive="+adaptivePath+", fastBounds="+fastBounds;}
+    String qualitySettings() {return "AA="+aaName()+", scale="+scale+", lensing="+lensing+", fine="+fine+", adaptive="+adaptivePath+", fastBounds="+fastBounds+", fastFetch="+fastFetch;}
     private String aaName() {return antialiasing==0?"OFF":antialiasing==1?"EDGE":antialiasing==2?"2x":"4x reference";}
     void renderQuality(boolean reference) {
         int oldAa=antialiasing;float oldScale=scale;boolean oldValidate=validate;
@@ -264,11 +265,16 @@ final class TerrainScreen extends Screen {
         finally {fastBounds=old;}
     }
     private void cancelBenchmark() {if(benchmark!=null) {benchmark.close();benchmark=null;}}
+    void renderFetchComparison(boolean reference) {
+        boolean old=fastFetch;cancelBenchmark();
+        try {if(reference)fastFetch=false;renderTerrain();}
+        finally {fastFetch=old;}
+    }
     @Override public boolean keyPressed(int key,int scan,int modifiers) {
         if(key==GLFW.GLFW_KEY_B && snapshot!=null && snapshot.ready() && error==null && paused==null && target!=null) {
             if(benchmark!=null)cancelBenchmark();
             else benchmark=new LabBenchmark(String.format(Locale.ROOT,"TERRAIN %dx%d, scale=%.2f, r/rs=%.5f, lensing=%s, fine=%s, snapshot=%s, hybrid="+hybrid+", live="+live+", mesh="+meshMode+", entities="+meshEntities+", nativeLight="+faceLighting+", coverage="+meshCoverage+", clouds="+meshClouds,
-                    target.textureWidth,target.textureHeight,scale,camera.distanceTo(centre())/source.schwarzschildRadius(),lensing,fine,meshMode?mesh.status():snapshot.status())+"; AA="+aaName()+"; adaptive="+adaptivePath+"; fastBounds="+fastBounds+"; includes resolve");
+                    target.textureWidth,target.textureHeight,scale,camera.distanceTo(centre())/source.schwarzschildRadius(),lensing,fine,meshMode?mesh.status():snapshot.status())+"; AA="+aaName()+"; adaptive="+adaptivePath+"; fastBounds="+fastBounds+"; fastFetch="+fastFetch+"; includes resolve");
             return true;
         }
         cancelBenchmark();
@@ -294,7 +300,8 @@ final class TerrainScreen extends Screen {
                     validate=false;
                 }
             }
-            case GLFW.GLFW_KEY_P -> {AppearanceCapture.request(this,(modifiers&(GLFW.GLFW_MOD_CONTROL|GLFW.GLFW_MOD_SHIFT))==(GLFW.GLFW_MOD_CONTROL|GLFW.GLFW_MOD_SHIFT)?3:(modifiers&GLFW.GLFW_MOD_CONTROL)!=0?2:(modifiers&GLFW.GLFW_MOD_SHIFT)!=0?1:0);validationStatus="Capturing same-frame comparison...";}
+            case GLFW.GLFW_KEY_P -> {AppearanceCapture.request(this,(modifiers&GLFW.GLFW_MOD_ALT)!=0?4:(modifiers&(GLFW.GLFW_MOD_CONTROL|GLFW.GLFW_MOD_SHIFT))==(GLFW.GLFW_MOD_CONTROL|GLFW.GLFW_MOD_SHIFT)?3:(modifiers&GLFW.GLFW_MOD_CONTROL)!=0?2:(modifiers&GLFW.GLFW_MOD_SHIFT)!=0?1:0);validationStatus="Capturing same-frame comparison...";}
+            case GLFW.GLFW_KEY_R -> {fastFetch=!fastFetch;validationStatus="R: fast mesh addressing "+(fastFetch?"ON":"OFF")+" | Alt+P: compare addressing";}
             case GLFW.GLFW_KEY_T -> {fastBounds=!fastBounds;validationStatus="T: fast bounds "+(fastBounds?"ON":"OFF")+" | Ctrl+Shift+P: compare bounds";}
             case GLFW.GLFW_KEY_A -> antialiasing=(antialiasing+1)%3;
             case GLFW.GLFW_KEY_G -> {adaptivePath=!adaptivePath;validationStatus="G: adaptive paths "+(adaptivePath?"ON":"OFF")+" | Ctrl+P: compare old path";}

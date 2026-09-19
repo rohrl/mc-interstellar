@@ -74,3 +74,19 @@ F9 **T** toggles fast/original bounds; **Ctrl+Shift+P** captures original versus
 Matched GPU p95 reductions:7.5% small window,7.7%1440p. Small-window fast was measured first; fullscreen original first. Single frozen pose, not a multi-run whole-game certification. The1440p optimized frame median is still about9FPS. This scene has fewer live actors than the earlier checkpoint; do not attribute cross-session timing differences to this optimization.
 
 Pairs600111862750755422 (small) and3810031342862256033 (1440p) have zero pixel differences and identical reference/candidate PNG SHA-256 within each pair. Hashes respectively A75EE0AFCD865A43198763C40EE090455E85A03EF6071EB9C44B00647F787847 and71C4410F6E317E42C2F6D71A41FB53C910F7010C1A169D09930CE4A93FA02323. Small candidate inspected. No blocks, time, weather or saved quality settings changed. The main remaining cost is repeated ray/geometry traversal; this gain does not meet the FPS target.
+
+## Constant-width mesh addressing — 2026-09-19
+
+`meshData` specializes integer division/remainder for the actual4095-wide streamed arenas and4096-wide monolithic/moving textures. The shader compiler can simplify fixed-divisor arithmetic. Integer texel coordinates, geometry, traversal, optical paths, AA and all sampling stay unchanged; other texture widths retain the original general path. Default enabled in F9/F10. F9 **R** toggles original/specialized addressing; **Alt+P** captures a same-frame pair. Benchmarks and capture metadata include fastFetch.
+
+`fetch-build.log`: build51 tests pass. `fetch-runtime.log`: runtime shader compilation and5760 CPU/GPU sampled hit comparisons pass (974ms), zero mismatches/inconclusive/unresolved. This is180 distinct rays across addressing/bounds/path/layout/step variants, not5760 independent directions. The synthetic arenas are4095-wide; actual-world comparisons also exercise the4096-wide moving textures.
+
+Frozen streamed scene: player(16.5,302,-45.5), yaw.281/pitch.91, N65/r_s8.125;6,092,214 terrain and8412 moving triangles,50 supported mobs.2xAA, half-resolution, adaptive paths and fast bounds in both addressing modes. RTX5070Ti, driver616.92;120 warmup/300 samples. GPU timings include resolve. Actor counts and world state differ from previous sessions; compare within this session only.
+
+Small-window original GPU p50/p95/p99=40.389/44.300/44.696ms; specialized33.998/37.261/37.928ms (p95 reduction15.9%). Frame p50/p95 original41.514/45.371ms, specialized35.017/38.433ms.854x480 output,427x240 internal. Specialized measured first, then original.
+
+Same-frame pairs15920050732033724678 (small) and2859121864403485792 (1440p) have zero pixel differences. Small candidate visually inspected. Small pair reference/candidate PNG hash: C107D171FAE55D9F3525507C9AC254B0E07C68C3753A06B7FFDE50FD7E24682C. No blocks, weather, time or saved quality options edited.
+
+At2560x1440 output/1280x720 internal, original GPU p50/p95/p99=152.278/160.323/163.842ms; specialized128.636/135.443/138.134ms (p95 reduction15.5%). Frame p50/p95 original158.378/166.937ms, specialized133.422/142.031ms, about7.5FPS optimized median. Original measured first, then specialized. Fullscreen pair PNG hash13B4B1D5EF29992A4C7D5DC40CB93E6E256AC22549D3D81B8C30512AD00BF7FA in both images. These are one-pose frozen comparisons, not a multi-run statistical or whole-game FPS certification.
+
+Monolithic4096-wide layout: pair17256894883602490531 also has zero pixel differences; both PNG hashes C857AB790EE393F1B94AA7EDFBDA0C5411D72671292BE7A66C2837144A679BBB. This compares original/specialized addressing within that layout, not monolithic/streamed parity. Live F10 smoke check passed600 updates with changing45→54 mobs and geometry fingerprints; triangle/node allocations remain1/1. No separate live FPS comparison. Small window restored and F10 left active; no runtime ERROR/Exception logged.

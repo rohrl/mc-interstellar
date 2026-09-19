@@ -55,7 +55,8 @@ final class MeshValidation {
                 }
                 inconclusive+=unstable;
                 vector(shader,"Camera",320.25f,320.375f,320-distance);shader.getUniformOrDefault("ViewSlopes").set(sx,sy,0f,0f);
-                for(boolean fastBounds:new boolean[]{false,true}) for(boolean adaptive:new boolean[]{false,true}) for(boolean twoLevel:new boolean[]{false,true}) {
+                for(boolean fastFetch:new boolean[]{false,true}) for(boolean fastBounds:new boolean[]{false,true}) for(boolean adaptive:new boolean[]{false,true}) for(boolean twoLevel:new boolean[]{false,true}) {
+                    set(shader,"FastFetch",fastFetch?1:0);
                     set(shader,"FastBounds",fastBounds?1:0);
                     set(shader,"AdaptivePath",adaptive?1:0);
                     var geometry=fixture.geometry(twoLevel);
@@ -76,7 +77,7 @@ final class MeshValidation {
                             }
                         }
                         total+=compared;mismatches+=wrong;unresolved+=failed;
-                        Interstellar.LOGGER.info("Mesh fixture: distance={}, fastBounds={}, adaptive={}, twoLevel={}, pathStep={}, compared={}, mismatches={}, GPU unresolved/invalid={}, CPU inconclusive={}, hits={}, captured={}",distance,fastBounds,adaptive,twoLevel,step,compared,wrong,failed,unstable,referenceHits,referenceCaptured);
+                        Interstellar.LOGGER.info("Mesh fixture: distance={}, fastFetch={}, fastBounds={}, adaptive={}, twoLevel={}, pathStep={}, compared={}, mismatches={}, GPU unresolved/invalid={}, CPU inconclusive={}, hits={}, captured={}",distance,fastFetch,fastBounds,adaptive,twoLevel,step,compared,wrong,failed,unstable,referenceHits,referenceCaptured);
                     }
                 }
             }

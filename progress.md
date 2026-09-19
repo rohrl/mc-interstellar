@@ -220,3 +220,9 @@ Final live checks confirm changing mob geometry with only1/1 triangle/node alloc
 ## Faster geometry bounds checks — 2026-09-19
 
 Shared chord reciprocals and vector slab tests preserve existing geometry/optics/AA. Build51 tests and2880 sampled independent CPU/GPU hit checks pass; paired images are pixel-identical at854x480 and2560x1440. Matched frozen GPU p95 improves32.580 to30.121ms small-window and120.778 to111.447ms at1440p (7.7%). The latter still gives about9FPS median frame rate; this is a limited arithmetic improvement, not the target. Scene actor counts differ from the prior checkpoint; no cross-session speedup claim. F9 T toggles original/fast bounds, Ctrl+Shift+P compares them. Details: docs/aa-performance.md. Continue profiling larger traversal costs; packaging remains paused.
+
+## Faster exact mesh addressing — 2026-09-19
+
+Fixed-width integer texture addressing preserves exact texel selection while simplifying GPU arithmetic. Build51 tests and5760 sampled CPU/GPU comparisons pass. Streamed same-frame images are pixel-identical at854x480 and2560x1440; small candidate inspected. Matched1440p GPU p95 improves160.323→135.443ms (15.5%) with2xAA/adaptive/fast-bounds unchanged. Fullscreen optimized frame median133.422ms (~7.5FPS), still far from target; no cross-session or whole-game claim. F9 R toggles addressing, Alt+P compares. Detailed evidence: docs/aa-performance.md. Handoff shortened; larger traversal costs remain next, packaging stays paused.
+
+Final checks:4096-wide monolithic addressing pair is also pixel-identical. Live F10 passed600 changing actor updates with retained1/1 texture allocations. No new live FPS comparison. Client left F10 active in the small window.
