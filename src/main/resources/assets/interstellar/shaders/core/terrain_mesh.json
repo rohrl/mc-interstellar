@@ -30,6 +30,7 @@
     {"name":"FastBounds","type":"float","count":1,"values":[1]},
     {"name":"FastFetch","type":"float","count":1,"values":[1]},
     {"name":"EmptyCells","type":"float","count":1,"values":[1]},
+    {"name":"EmptySpans","type":"float","count":1,"values":[1]},
     {"name":"EmptyReach","type":"float","count":1,"values":[1024]}
   ]
 }

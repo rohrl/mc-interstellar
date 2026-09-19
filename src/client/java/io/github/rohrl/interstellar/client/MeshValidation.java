@@ -55,8 +55,8 @@ final class MeshValidation {
                 }
                 inconclusive+=unstable;
                 vector(shader,"Camera",320.25f,320.375f,320-distance);shader.getUniformOrDefault("ViewSlopes").set(sx,sy,0f,0f);
-                for(boolean emptyCells:new boolean[]{false,true}) for(float reach:emptyCells?new float[]{16,1024}:new float[]{16}) for(boolean fastFetch:new boolean[]{false,true}) for(boolean fastBounds:new boolean[]{false,true}) for(boolean adaptive:new boolean[]{false,true}) for(boolean twoLevel:new boolean[]{false,true}) {
-                    set(shader,"EmptyReach",reach);
+                for(boolean emptyCells:new boolean[]{false,true}) for(float reach:emptyCells?new float[]{16,1024}:new float[]{16}) for(boolean fastFetch:new boolean[]{false,true}) for(boolean fastBounds:new boolean[]{false,true}) for(boolean adaptive:new boolean[]{false,true}) for(boolean twoLevel:new boolean[]{false,true}) for(boolean emptySpans:emptyCells && adaptive?new boolean[]{false,true}:new boolean[]{false}) {
+                    set(shader,"EmptySpans",emptySpans?1:0);set(shader,"EmptyReach",reach);
                     set(shader,"EmptyCells",emptyCells?1:0);
                     set(shader,"FastFetch",fastFetch?1:0);
                     set(shader,"FastBounds",fastBounds?1:0);
@@ -79,10 +79,12 @@ final class MeshValidation {
                             }
                         }
                         total+=compared;mismatches+=wrong;unresolved+=failed;
-                        Interstellar.LOGGER.info("Mesh fixture: distance={}, reach={}, emptyCells={}, fastFetch={}, fastBounds={}, adaptive={}, twoLevel={}, pathStep={}, compared={}, mismatches={}, GPU unresolved/invalid={}, CPU inconclusive={}, hits={}, captured={}",distance,reach,emptyCells,fastFetch,fastBounds,adaptive,twoLevel,step,compared,wrong,failed,unstable,referenceHits,referenceCaptured);
+                        Interstellar.LOGGER.info("Mesh fixture: distance={}, reach={}, emptyCells={}, fastFetch={}, fastBounds={}, adaptive={}, twoLevel={}, emptySpans={}, pathStep={}, compared={}, mismatches={}, GPU unresolved/invalid={}, CPU inconclusive={}, hits={}, captured={}",distance,reach,emptyCells,fastFetch,fastBounds,adaptive,twoLevel,emptySpans,step,compared,wrong,failed,unstable,referenceHits,referenceCaptured);
                     }
                 }
             }
+            int[] boundary=criticalBoundary(shader,draw,pixels);
+            total+=boundary[0];mismatches+=boundary[1];unresolved+=boundary[2];
         } finally {
             set(shader,"Diagnostic",0);
             for(int i=0;i<4;i++)GL11.glPixelStorei(names[i],saved[i]);GL15.glBindBuffer(GL21.GL_PIXEL_PACK_BUFFER,pbo);
@@ -91,8 +93,38 @@ final class MeshValidation {
             GL30.glDeleteRenderbuffers(colour);GL30.glDeleteFramebuffers(framebuffer);
             RenderSystem.depthMask(true);RenderSystem.enableDepthTest();RenderSystem.enableBlend();RenderSystem.defaultBlendFunc();
         }
-        Interstellar.LOGGER.info("Mesh fixture complete: compared={}, mismatches={}, CPU inconclusive rays={}, GPU unresolved/invalid={}, max invariant={}, wall={} ms; opaque boxes, sampled cells, not arbitrary mesh/material certification",total,mismatches,inconclusive,unresolved,invariant,(System.nanoTime()-started)/1e6);
+        Interstellar.LOGGER.info("Mesh fixture complete: compared={}, mismatches={}, CPU inconclusive rays={}, GPU unresolved/invalid={}, max invariant={}, wall={} ms; opaque boxes plus empty-space capture boundary, not arbitrary mesh/material certification",total,mismatches,inconclusive,unresolved,invariant,(System.nanoTime()-started)/1e6);
         return "Mesh fixture: "+mismatches+"/"+total+" mismatch | inconclusive "+inconclusive;
+    }
+    private static int[] criticalBoundary(ShaderProgram shader,Runnable draw,java.nio.FloatBuffer pixels) {
+        int total=0,wrong=0,failed=0;
+        set(shader,"MeshNodeCount",0);set(shader,"MovingNodeCount",0);
+        set(shader,"EmptyCells",1);set(shader,"EmptyReach",1024);set(shader,"AdaptivePath",1);
+        for(int distance:new int[]{32,96,148,252}) {
+            double u=8.0/distance,sinCritical=Math.sqrt(27.0/4)*u*Math.sqrt(1-u);
+            float centre=(float)(sinCritical/Math.sqrt(1-sinCritical*sinCritical)),spread=centre*.0001f;
+            vector(shader,"Camera",320.25f,320.375f,320-distance);
+            shader.getUniformOrDefault("ViewSlopes").set(spread,spread,centre,0f);
+            for(boolean spans:new boolean[]{false,true})for(float step:new float[]{.45f,.225f}) {
+                set(shader,"EmptySpans",spans?1:0);set(shader,"PathStep",step);
+                draw.run();pixels.clear();GL11.glReadPixels(0,0,W,H,GL11.GL_RGBA,GL11.GL_FLOAT,pixels);
+                for(int y=0;y<H;y++)for(int x=0;x<W;x++) {
+                    if(x==W/2)continue; // Exact critical angle is intentionally not a finite-precision oracle.
+                    double dx=centre+((x+.5)/W*2-1)*spread,dy=((y+.5)/H*2-1)*spread;
+                    double transverse=dx*dx+dy*dy;
+                    double impactSquared=transverse/(1+transverse)/(u*u*(1-u));
+                    int expected=impactSquared<27.0/4?-1:0,index=4*(x+y*W);
+                    float code=pixels.get(index+3);int actual=Math.round(code);total++;
+                    if(!Float.isFinite(code) || actual==-2)failed++;
+                    if(!Float.isFinite(code) || actual!=expected) {
+                        if(wrong<5)Interstellar.LOGGER.info("Capture boundary mismatch: distance={}, spans={}, step={}, pixel=({},{}), bSquared={}, expected={}, actual={}",distance,spans,step,x,y,impactSquared,expected,code);
+                        wrong++;
+                    }
+                }
+            }
+        }
+        Interstellar.LOGGER.info("Empty-space capture boundary: compared={}, mismatches={}, unresolved/invalid={}; analytic bCriticalSquared=27/4, view-slope offsets approximately 0.0022–0.0089 percent",total,wrong,failed);
+        return new int[]{total,wrong,failed};
     }
     private static void set(ShaderProgram shader,String name,float value) {shader.getUniformOrDefault(name).set(value);}
     private static void vector(ShaderProgram shader,String name,float x,float y,float z) {shader.getUniformOrDefault(name).set(x,y,z);}

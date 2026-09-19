@@ -1,9 +1,8 @@
 {
-  "vertex":"interstellar:optical_lab", "fragment":"interstellar:terrain",
+  "vertex":"interstellar:optical_lab", "fragment":"interstellar:terrain_mesh_original",
   "attributes":["Position"],
-  "samplers":[{"name":"Voxels"},{"name":"Palette"},{"name":"Atlas"},{"name":"Distant"},{"name":"DistantAppearance"},{"name":"SkyAtlas"},{"name":"Lightmap"},{"name":"LocalLight"},{"name":"DistantLight"},{"name":"SmoothAtlas"},{"name":"LocalSmooth"},{"name":"DistantSmooth"}],
+  "samplers":[{"name":"Voxels"},{"name":"Palette"},{"name":"Atlas"},{"name":"Distant"},{"name":"DistantAppearance"},{"name":"SkyAtlas"},{"name":"Lightmap"},{"name":"LocalLight"},{"name":"DistantLight"}],
   "uniforms":[
-    {"name":"MeshMode","type":"float","count":1,"values":[0]},
     {"name":"MeshEntities","type":"float","count":1,"values":[1]},
     {"name":"MeshClouds","type":"float","count":1,"values":[1]},
     {"name":"MovingNodeCount","type":"float","count":1,"values":[0]},
@@ -13,9 +12,6 @@
     {"name":"MeshNodeCount","type":"float","count":1,"values":[0]},
     {"name":"Hybrid","type":"float","count":1,"values":[0]},
     {"name":"FaceLighting","type":"float","count":1,"values":[1]},
-    {"name":"SmoothLighting","type":"float","count":1,"values":[1]},
-    {"name":"DistantTop","type":"float","count":1,"values":[-1024]},
-    {"name":"FaceShades","type":"float","count":4,"values":[0.6,0.8,0.5,1]},
     {"name":"ViewSlopes","type":"float","count":4,"values":[1.245,0.7,0,0]},
     {"name":"TerrainFogRange","type":"float","count":3,"values":[1000000,1000000,0]},
     {"name":"TerrainFogColour","type":"float","count":4,"values":[0,0,0,1]},
@@ -34,7 +30,6 @@
     {"name":"FastBounds","type":"float","count":1,"values":[1]},
     {"name":"FastFetch","type":"float","count":1,"values":[1]},
     {"name":"EmptyCells","type":"float","count":1,"values":[1]},
-    {"name":"EmptySpans","type":"float","count":1,"values":[1]},
     {"name":"EmptyReach","type":"float","count":1,"values":[1024]}
   ]
 }

@@ -40,6 +40,7 @@ uniform float FastBounds;
 uniform float FastFetch;
 uniform float EmptyCells;
 uniform float EmptyReach;
+uniform float EmptySpans;
 vec4 diagnostic=vec4(0);
 ivec3 materialCell;
 bool distantHit=false;
@@ -405,6 +406,22 @@ int sceneSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
     materialCell=savedCell;return local;
 }
 vec2 derivative(vec2 q) {return vec2(q.y,1.5*q.x*q.x-q.x);}
+// Certify an angular span inside both learned empty boxes. Geometry cannot
+// occur there, so only the existing angular integration cap limits the step.
+// See docs/empty-spans.md for the exterior-state and distance bounds.
+float emptySpan(vec2 q,vec3 p) {
+    if(MeshMode<.5 || AdaptivePath<.5 || EmptySpans<.5 || !cellKnown[0] || !cellKnown[1])return 0.0;
+    vec3 clearance=min(p-max(emptyLow[0],emptyLow[1]),min(emptyHigh[0],emptyHigh[1])-p);
+    float room=min(clearance.x,min(clearance.y,clearance.z))-.01;
+    if(room<=0.0)return 0.0;
+    float speed=Radius*length(q)/(q.x*q.x);
+    float span=min(.1,.25*room/max(speed,.0001));
+    float drift=abs(q.y)*span+span*span;
+    float low=q.x-drift,high=q.x+drift,vMax=abs(q.y)+span;
+    if(low<=0.0 || high>=1.0)return 0.0;
+    float lengthBound=Radius*(high+vMax)/(low*low)*span;
+    return lengthBound*1.01<room?span:0.0;
+}
 void trace(vec2 uv) {
     cellKnown[0]=false;cellKnown[1]=false;
     vec2 xy=(uv*2.0-1.0)*ViewSlopes.xy;
@@ -458,6 +475,9 @@ void trace(vec2 uv) {
             stepSize=clamp(sqrt(8.0*tolerance/max(curvature,1e-12)),PathStep,4.0);
         }
         float h=min(.02,stepSize/max(speed,.0001));
+        #ifndef INTERSTELLAR_ORIGINAL_STEPS
+        h=max(h,min(.02,emptySpan(q,p)));
+        #endif
         vec2 a=derivative(q),b=derivative(q+h*a*.5),c=derivative(q+h*b*.5),d=derivative(q+h*c);
         vec2 next=q+h*(a+2.0*b+2.0*c+d)/6.0;
         bool captured=next.x>=1.0;
