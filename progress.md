@@ -232,3 +232,9 @@ Final checks:4096-wide monolithic addressing pair is also pixel-identical. Live 
 Renderer learns empty regions from its existing rejected-subtree checks and skips later geometry searches wholly inside them. Per-ray/per-tree state preserves AA and live geometry; optics and coverage unchanged. Build51 tests and11520 sampled CPU/GPU comparisons pass. Wall pairs at small/1440p sizes and a downward terrain pair are pixel-identical; images inspected. Matched GPU p95 improves161.340→77.698ms at1440p (51.8%), and48.696→31.966ms in the small downward view (34.4%).1440p cached frame median83.334ms (~12FPS), still not the target. Detailed results and scope: docs/aa-performance.md. Initial separate occupancy-search prototype was discarded for a slowdown. Continue measured traversal work; packaging stays paused.
 
 Final live check: changing actors over600 updates and active chunk streaming pass; benchmark confirms cache enabled. Live camera moved to a different radius, so live timings are observational only. F10 remains active; no subsequent camera reset.
+
+## Wider reuse of proven empty space — 2026-09-19
+
+Initial learned-box half-extent rises16→1024, with unchanged conservative clipping/publication rules. Build51 tests and17280 sampled CPU/GPU comparisons pass. Four pairs at wall/down/away views are pixel-identical; away image inspected. Same-quality GPU p95 improves84.342→61.369ms at1440p wall view (27.2%); small downward32.869→25.705ms (21.8%), away17.566→14.787ms (15.8%). Fullscreen median frame66.670ms (~15FPS), not target FPS. F9 Shift+I toggles extents; Ctrl+Alt+P compares. Details: docs/aa-performance.md. Next: occupied geometry traversal; packaging remains paused.
+
+Live F10 confirms the larger default, changing actors over600 updates and retained1/1 texture allocations. Small-window live median frame20.042ms; no matched live speedup claim. Client remains F10 active at the wall pose.

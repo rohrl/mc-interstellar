@@ -115,3 +115,31 @@ Pairs677871936328255550 (small) and1529780201675721445 (1440p) have zero pixel d
 Downward terrain view, same position/pitch35: pair9230438034004577933 is pixel-identical; candidate inspected.6,092,216 terrain plus12,336 moving triangles/95 mobs. Small-window cached GPU p50/p95/p99=29.581/31.966/32.499ms, uncached46.099/48.696/50.993ms (p95 reduction34.4%). Frame p50/p95 cached30.921/32.906ms, uncached47.222/49.960ms. Same2xAA/half-resolution and other flags; cached first. Confirms the benefit varies with view; not every scene is guaranteed a speedup.
 
 Live check: default cache enabled, changing96→97 mobs/geometry over600 updates, texture allocations still1/1. F12 confirmed live=true/emptyCells=true while the camera moved and streaming queued170 chunks: GPU p50/p95/p99=15.243/20.424/22.267ms, frame16.186/23.008/25.275ms at427x240. Camera r/r_s1.79676 and scene4,909,366 triangles differ from the frozen setup; this is an observational smoke test, not a controlled performance gain. No subsequent camera reset; owner may be exploring. F10 remains active in the small window.
+
+## Larger initial empty-region extent — 2026-09-19
+
+Raise the initial per-axis cache half-extent from16 to1024 blocks. Rejected subtree bounds still clip the learned box, and all conservative publication/strict-containment/per-ray reset rules stay unchanged. This controls reuse of proven empty space, not viewing range, captured terrain, optical step size or image resolution. F9 **Shift+I** switches16/1024; **Ctrl+Alt+P** captures16 versus the selected extent. I and Alt+Shift+P still compare caching with no cache.
+
+`reach-build.log`: build51 tests pass. `reach-runtime.log`:17280 sampled comparisons pass (180 distinct directions, both extents only where caching is enabled, other prior mode/layout variants), zero mismatch/inconclusive/unresolved;1832ms. Frozen wall scene: same player(16.5,302,-45.5), yaw.281/pitch.91, N65/r_s8.125;6,092,230 terrain and12,672 moving triangles/97 mobs.2xAA, adaptive/fast bounds/addressing/caching unchanged. RTX5070Ti;120 warmup/300 samples, GPU timing includes resolve. Within-session comparisons only.
+
+| Output/internal | Initial half-extent | GPU p50 / p95 / p99 ms | Frame p50 / p95 ms |
+| --- | --- | --- | --- |
+|854x480 /427x240|16|22.088 /23.950 /24.934|23.369 /25.205|
+|854x480 /427x240|1024|18.103 /19.645 /19.986|19.162 /20.790|
+|2560x1440 /1280x720|16|81.579 /84.342 /85.649|83.679 /92.059|
+|2560x1440 /1280x720|1024|59.221 /61.369 /62.382|66.670 /66.988|
+
+Wall-view p95 reduction18.0% small and27.2%1440p. Large extent measured first at small size,16 first at fullscreen. Fullscreen median frame about15FPS; no target or whole-game certification. Pairs18253456007042841607 (small) and4539380152757232634 (1440p) have identical PNG hashes within each pair and zero pixel differences. All performance claims use the same frozen scene and quality settings, not comparisons against previous sessions.
+
+Additional lensed views at854x480 output/427x240 internal, same position and settings:
+
+| View | Half-extent | GPU p50 / p95 / p99 ms | Frame p50 / p95 ms |
+| --- | --- | --- | --- |
+|Downward, yaw.281/pitch35|16|30.575 /32.869 /33.740|31.927 /34.111|
+|Downward, yaw.281/pitch35|1024|24.096 /25.705 /26.271|25.430 /27.102|
+|Away, yaw180/pitch25|16|16.623 /17.566 /18.050|17.653 /18.545|
+|Away, yaw180/pitch25|1024|13.902 /14.787 /15.221|14.815 /15.792|
+
+P95 reductions21.8% downward and15.8% away. Downward16 first; away1024 first. Pairs4772766165275653898 and12809664373608801229 have zero pixel differences and identical PNG hashes within each pair. Away candidate inspected. An initial downward run/pair7724198574473978919 had lensing OFF; it is excluded from these lensed performance claims. No block/time/weather/quality-config edits; these are frozen same-scene comparisons, not a universal speedup guarantee.
+
+Live check confirms emptyReach=1024, changing actors over600 updates, retained1/1 texture allocations. Small-window live GPU p50/p95/p99=18.709/19.612/20.308ms; frames20.042/21.848/23.307ms at the wall pose, source radius ratio7.57103 and zero queued chunks. This confirms live operation, not a matched16/1024 live gain. F10 left active in the small window. No renderer errors observed; authentication public-key timeouts in this log are nonblocking.

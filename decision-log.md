@@ -223,3 +223,7 @@ Use explicit4095/4096 fixed-divisor texture addressing so the shader compiler ca
 ## D051 — Learn empty regions from ordinary traversal — accepted (2026-09-19)
 
 Cache a ray-local empty box by intersecting separating half-spaces from rejected subtrees during existing traversal. Publish only after complete traversal with no triangle leaf entered; reuse only for segments strictly inside the box. Keep independent terrain/moving caches and reset each AA ray. This skips geometry checks while retaining identical optical chords, geometry and materials. A separate fixed-cell occupancy-query prototype was slower and rejected. The retained approach passes11520 sampled hit comparisons and pixel-identical wall/downward pairs, with GPU p95 reductions51.8% at1440p wall view and34.4% in the small downward view. F9 I/Alt+Shift+P retain uncached comparison. Evidence, invariants and limits: docs/aa-performance.md.
+
+## D052 — Expand the starting extent of learned empty regions — accepted (2026-09-19)
+
+Increase initial cache half-extent16→1024; geometry still clips it with the same conservative subtree separation rules. This expands reuse, not captured/viewing distance or optical steps. Adopt after17280 sampled comparisons pass and four wall/down/away pairs are pixel-identical. Matched GPU p95 reduction27.2% at1440p wall view;21.8% downward/15.8% away at small size. F9 Shift+I and Ctrl+Alt+P retain16/1024 comparisons. Full evidence/limitations in docs/aa-performance.md. No image-quality compromise; occupied-geometry traversal remains the next optimization target.

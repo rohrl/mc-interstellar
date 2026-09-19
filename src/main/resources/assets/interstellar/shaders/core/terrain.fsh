@@ -34,6 +34,7 @@ uniform float AdaptivePath;
 uniform float FastBounds;
 uniform float FastFetch;
 uniform float EmptyCells;
+uniform float EmptyReach;
 vec4 diagnostic=vec4(0);
 ivec3 materialCell;
 bool distantHit=false;
@@ -165,7 +166,7 @@ int meshSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
     for(int tree=0;tree<2;tree++) {
     if(EmptyCells>.5 && cellKnown[tree] &&
        all(greaterThan(min(start,end),emptyLow[tree])) && all(lessThan(max(start,end),emptyHigh[tree])))continue;
-    vec3 safeLow=start-vec3(16),safeHigh=start+vec3(16);
+    vec3 safeLow=start-vec3(EmptyReach),safeHigh=start+vec3(EmptyReach);
     bool canCache=true;
     int node=0,nodeCount=int(tree==0?MeshNodeCount:MovingNodeCount),returnTo=0;
     for(int visited=0;visited<131072;visited++) {
