@@ -1,0 +1,5 @@
+{
+  "vertex":"interstellar:optical_lab", "fragment":"interstellar:terrain_sample_fold",
+  "attributes":["Position"], "samplers":[{"name":"Samples"}],
+  "uniforms":[{"name":"Viewport","type":"float","count":2,"values":[1280,720]}]
+}

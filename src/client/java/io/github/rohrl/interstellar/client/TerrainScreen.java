@@ -22,6 +22,9 @@ final class TerrainScreen extends Screen {
     private static final int MESH_VIEW_RANGE=256,VOXEL_VIEW_RANGE=128;
     private static ShaderProgram generalShader,meshShader,compactMeshShader,defaultMeshShader;
     private static ShaderProgram longMeshShader,longDefaultShader;
+    private static ShaderProgram splitShader;
+    private boolean splitSamples=true;
+    private TerrainSamples samples;
     private ShaderProgram shader;
     private boolean specialized=true;
     private boolean compactNodes=true;
@@ -72,6 +75,7 @@ final class TerrainScreen extends Screen {
     static void setDefaultMeshShader(ShaderProgram program) {defaultMeshShader=program;resourceVersion++;}
     static void setLongMeshShader(ShaderProgram program) {longMeshShader=program;resourceVersion++;}
     static void setLongDefaultShader(ShaderProgram program) {longDefaultShader=program;resourceVersion++;}
+    static void setSplitShader(ShaderProgram program) {splitShader=program;resourceVersion++;}
     @Override protected void init() {
         if(snapshot!=null || error!=null) return;
         if(!options.enabled()) {error="Terrain preview disabled in interstellar-terrain.json";return;}
@@ -176,6 +180,10 @@ final class TerrainScreen extends Screen {
         if(target==null || target.textureWidth!=w || target.textureHeight!=h) {
             cancelBenchmark();if(target!=null)target.delete();target=new SimpleFramebuffer(w,h,false,false);
         }
+        boolean split=useSplitShader();
+        if(split && (samples==null || samples.width!=w || samples.height!=h)) {
+            if(samples!=null)samples.close();samples=new TerrainSamples(w,h);
+        }
         target.beginWrite(true);
         try {
             var projection=WorldProjection.current();
@@ -239,7 +247,11 @@ final class TerrainScreen extends Screen {
                         projection,lensing,centre().subtract(Vec3d.of(snapshot.origin)),source.schwarzschildRadius(),curvedValidation,()->drawQuad(w,h));
             }
             if(benchmark!=null)benchmark.begin();
-            drawQuad(w,h);
+            if(split) {
+                samples.begin(0);shader.getUniformOrDefault("SampleOffset").set(-.25f);drawQuad(w,h);
+                samples.begin(1);shader.getUniformOrDefault("SampleOffset").set(.25f);drawQuad(w,h);
+                samples.fold(target,()->drawQuad(w,h));
+            } else drawQuad(w,h);
         } finally {
             client.getFramebuffer().beginWrite(true);
             RenderSystem.depthMask(true);RenderSystem.enableDepthTest();RenderSystem.enableBlend();RenderSystem.defaultBlendFunc();
@@ -308,13 +320,17 @@ final class TerrainScreen extends Screen {
                 && faceLighting && meshEntities && meshClouds && meshCoverage && adaptivePath && fastBounds && fastFetch && emptyCells && emptyReach==1024;
     }
     private boolean useLongShader() {return useMeshShader() && compactNodes && adaptivePath && meshStepLimit!=4 && longMeshShader!=null && longDefaultShader!=null;}
+    private boolean useSplitShader() {return splitSamples && useDefaultShader() && useLongShader() && splitShader!=null
+            && TerrainSamples.supported(Math.max(1,Math.round(client.getWindow().getFramebufferWidth()*scale)));}
     private ShaderProgram currentShader() {
+        if(useSplitShader())return splitShader;
         if(!useMeshShader())return generalShader;
         if(useDefaultShader())return useLongShader()?longDefaultShader:defaultMeshShader;
         if(compactNodes && compactMeshShader!=null)return useLongShader()?longMeshShader:compactMeshShader;
         return meshShader;
     }
     private String programName() {
+        if(useSplitShader())return "native-live-split-"+meshStepLimit;
         if(useDefaultShader())return useLongShader()?"native-live-steps-"+meshStepLimit:"native-live-defaults";
         return useMeshShader()?(compactNodes && compactMeshShader!=null?(useLongShader()?"native-compact-steps-"+meshStepLimit:"native-compact-nodes"):"native-mesh"):"general";
     }
@@ -322,6 +338,11 @@ final class TerrainScreen extends Screen {
         float old=meshStepLimit;cancelBenchmark();
         try {if(reference)meshStepLimit=4;renderTerrain();}
         finally {meshStepLimit=old;}
+    }
+    void renderSplitComparison(boolean reference) {
+        boolean old=splitSamples;cancelBenchmark();
+        try {if(reference)splitSamples=false;renderTerrain();}
+        finally {splitSamples=old;}
     }
     void renderDefaultsComparison(boolean reference) {
         boolean old=liveDefaults;cancelBenchmark();
@@ -391,6 +412,7 @@ final class TerrainScreen extends Screen {
                 else {validate=true;curvedValidation=false;}
             }
             case GLFW.GLFW_KEY_C -> {validate=true;curvedValidation=true;}
+            case GLFW.GLFW_KEY_X -> {if((modifiers&GLFW.GLFW_MOD_SHIFT)!=0)AppearanceCapture.request(this,11);else splitSamples=!splitSamples;validationStatus="X: split AA "+(splitSamples?"ON":"OFF")+" | Shift+X: compare serial AA";}
             case GLFW.GLFW_KEY_SPACE -> lensing=!lensing;
             case GLFW.GLFW_KEY_Q -> scale=scale==.5f?1f:.5f;
             case GLFW.GLFW_KEY_J -> fine=!fine;
@@ -403,6 +425,6 @@ final class TerrainScreen extends Screen {
         }
         return true;
     }
-    @Override public void removed() {cancelBenchmark();nativeSky.close();if(moving!=null)moving.close();if(mesh!=null)mesh.close();if(snapshot!=null)snapshot.close();if(pending!=null)pending.close();if(target!=null)target.delete();}
+    @Override public void removed() {cancelBenchmark();nativeSky.close();if(moving!=null)moving.close();if(mesh!=null)mesh.close();if(snapshot!=null)snapshot.close();if(pending!=null)pending.close();if(target!=null)target.delete();if(samples!=null)samples.close();}
     @Override public boolean shouldPause() {return true;}
 }

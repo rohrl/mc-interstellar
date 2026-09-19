@@ -251,3 +251,7 @@ Compile a normal-settings shader with diagnostics off and existing quality/cover
 ## D058 — Raise spatial cap under unchanged curvature/angular limits — accepted (2026-09-20)
 
 Use16 instead of4 blocks as the native adaptive step's upper clamp; keep local1mm sagitta estimate,0.02radian cap, equations and intersections. This changes sampling, not the curvature target; the local estimate is not a rigorous global bound. Fresh26240 sampled checks pass; tiny measured image differences across wall/down/away and visual inspection support acceptance. Matched1440p GPU p95 improves~21% in wall/down views.32 brings only2% more downward and is excluded from retained controls. Live wall median~35FPS clears30, live downward~23FPS does not; continue. Original4-block compiled programs remain behind V/Shift+V. docs/long-chords.md.
+
+## D059 — Schedule AA rays in separate draws — accepted (2026-09-20)
+
+Keep identical sample positions/trace math and average RGBA32F samples before the original RGBA8 target and cubic reconstruction. Shorter shader execution saves34.3% wall/28.8% downward GPU p95, with pixel-identical wall/down/away pairs and53 passing tests. Extra28.125MiB temporary storage at1440p is justified; serial fallback remains for alternate settings, hardware width limits and X/Shift+X comparisons. Live median~44FPS wall/~29FPS down, so30FPS minimum still needs work. No claim that diagnostic-variant classifications directly test the split executable. docs/split-aa.md. Early-facing rejection rejected for no gain and preserved at7f9fad2.

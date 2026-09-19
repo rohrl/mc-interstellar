@@ -45,6 +45,9 @@ uniform vec4 TerrainFogColour;
 uniform vec3 Camera,Source,Forward,Right,Up;
 uniform float Radius,PathStep;
 uniform vec2 Viewport;
+#ifdef INTERSTELLAR_SPLIT_AA
+uniform float SampleOffset;
+#endif
 vec4 diagnostic=vec4(0);
 ivec3 materialCell;
 bool distantHit=false;
@@ -500,6 +503,12 @@ void trace(vec2 uv) {
     fragColor=vec4(.7,.05,.5,1);
 }
 void main() {
+#ifdef INTERSTELLAR_SPLIT_AA
+    // Identical two subpixel rays, scheduled in separate draws. Average in float
+    // before the original RGBA8 target and bounded cubic reconstruction.
+    trace(screenUv+vec2(SampleOffset)/Viewport);
+    fragColor.rgb=mix(fragColor.rgb,cloudLayer.rgb,cloudLayer.a);
+#else
     if(MeshMode<.5 && Diagnostic>1.5 && Diagnostic<2.5) {
         vec2 xy=(screenUv*2.0-1.0)*ViewSlopes.xy;
         vec3 d=normalize(Forward+(xy.x+ViewSlopes.z)*Right+(-xy.y+ViewSlopes.w)*Up),hit,normal;
@@ -520,4 +529,5 @@ void main() {
         sum+=fragColor;
     }
     fragColor=Diagnostic>.5?diagnostic:sum/float(samples);
+#endif
 }
