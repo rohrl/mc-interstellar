@@ -18,6 +18,14 @@ Diagnostic mode3 bypasses texture alpha/material shading for this deliberately o
 
 ## Scope
 
+### Additional analytic capture-boundary fixture (2026-09-19)
+
+The current suite also removes all geometry and samples close to the Schwarzschild critical impact parameter. For the static exterior observer, define `u=r_s/r`, `b/r_s=sin(alpha)/(u*sqrt(1-u))`; incoming rays are captured below `b²/r_s²=27/4` and escape above it. Use the existing four distances and two production path settings, with projection slopes offset about0.0022–0.0089% from the critical tangent. Exclude the central column: an exactly critical ray does not have a finite escape time and is not a finite-precision oracle.
+
+This adds320 comparisons across160 distinct directions. Together with the accumulated optimization/layout variants, the current total is17600 checks over340 distinct directions. The shader uses its ordinary stepping, horizon/escape handling and iteration budget. This checks classification, not outgoing-angle accuracy or every critical direction. Earlier immutable result sections below retain their original counts. The rejected empty-step experiment used640 boundary checks because it additionally repeated both experimental step modes; production does not retain that toggle.
+
+`performance-review-build.log`: build passes,51 existing tests successful. `performance-review-runtime.log`: native and general programs each pass17600 comparisons, zero mismatches/inconclusive/unresolved; runtime1773/1712ms. The native lensed image after both diagnostics was inspected (`2026-09-19_23.12.01.png`); normal world rendering resumes. These are sampled regression results, not universal correctness certification.
+
 This checks sampled curved paths, first-hit ownership and the two mesh layouts on synthetic opaque boxes. It is not an independent triangle-intersection implementation for arbitrary models, a guarantee at every subpixel boundary, a material/transparency test, or complete strong-lensing convergence. Both numerical methods approximate paths with chords. Hit-cell agreement can hide subcell position error. Actual-world appearance pairs remain separate evidence. No rendering FPS target follows from diagnostic runtime.
 
 The first development run caught an error in the fixture's compact child addresses: its first child overlapped the top-level termination sentinel. The production arena already keeps these addresses separate. Corrected the fixture before accepting two-level results; no production traversal change was needed for this issue.
