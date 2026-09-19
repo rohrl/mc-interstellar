@@ -95,6 +95,10 @@ F10 integrates moving-camera terrain with bounded periodic recapture and the van
 
 ## Current delivery order — owner reaffirmed 2026-09-15
 
+**Owner update (2026-09-18):** current FPS is acceptable for the demo. Demo packaging is now explicitly paused in favour of AA and low-hanging performance improvements. Preserve appearance; do not turn this into a broad FPS rewrite. Unverified packaging work is isolated on codex/demo-packaging-wip (2fe8674), excluded from the running build. Return to packaging after this AA/performance checkpoint unless the owner redirects.
+
+**Latest owner update (2026-09-19):** visuals are accepted, but FPS is now the priority. Continue measured performance improvements with minimal quality/fidelity loss; packaging stays paused. Keep identical-scene image and numerical checks alongside timings. This supersedes the earlier decision to defer FPS work.
+
 This order takes precedence over older checkpoint suggestions above. Diagnostics should support a usable demo, not indefinitely postpone it.
 
 | Step | Status and remaining work |

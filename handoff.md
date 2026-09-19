@@ -6,7 +6,13 @@ Repo C:\work\code\minecraft\interstellar\interstellar; branch codex/world-mesh-r
 
 Native terrain/live mobs visually accepted. Initial loading acceptable for v1; teleport support excluded. Rain/snow deferred. Continue live-world integration, then packaging, then AA. Quality before FPS. Owner handles movement/flicker acceptance; brief functional movement checks and fixed-pose images remain appropriate. Owner asks about automatic inspection and notices different stars: inspection already refreshes selected sources; star resampling is suspected, no star change made.
 
+**Latest override,2026-09-19:** packaging is paused; owner requested AA then performance with minimal quality/fidelity loss. Owner rejected the soft edge-filter blur. Unverified packaging is isolated at2fe8674 on codex/demo-packaging-wip, never built/launched. Active branch adds2x traced AA + sharper reconstruction, optional EDGE/OFF, adaptive paths and dynamic upload reuse. Preserve the accepted appearance; optimize based on paired images and timings, not FPS alone.
+
 ## Current checkpoint
+
+Latest AA/performance: adaptive-build.log build51 tests pass. adaptive-runtime.log expanded1440 independent original/adaptive hit checks all pass. Frozen streamed p95 at427×240 internal:2xAA original52.367ms→adaptive36.102ms; OFF27.598→19.573ms. Original/adaptive image pairs at straight/downward views differ over8 levels in~0.007% pixels. Full-resolution4-ray AA reference exists;2x improves mean error modestly, still costly and half-resolution. Dynamic live uploads retain GPU/native buffers; after600 frames both textures still only one allocation, with changing mob geometry. Detailed measurements/limitations: docs/aa-performance.md. F9 A cyclesAA; G toggles adaptive; Shift+P quality reference; Ctrl+P old/new path; P preserves vanilla unbent comparison withAAOFF. Benchmarks now include resolve.
+
+Full-screen live2560×1440 output/1280×720 internal,2xAA/adaptive: GPU median159.902ms/p95167.944ms; frame median166.240ms (~6FPS). Optical GPU work dominates; do not imply the target is met or extrapolate the small-window improvement. Window restored afterward. Prioritize ray/geometry traversal profiling/acceleration next, not just CPU upload costs.
 
 F10 streams native chunk meshes with live camera, animated mobs and clouds. Each terrain chunk has its own BVH/GPU row allocation, with a small top-level index. Native section-render/light invalidations queue chunks; Fabric load/unload events also invalidate neighbours. Capture slices5ms; revision changes during capture trigger retry. Publish individual chunks, preserve overlapping entries on camera movement, remove unloaded/retired data. Actors/clouds retain their separate per-frame BVH and persistent entity texture atlas. Shared curved nearest-hit ordering; no baked actor copies or straight-camera overlays.
 
@@ -32,11 +38,11 @@ Client left F10 ON at player(16.5,302,-45.5), yaw.281/pitch.91, creative flight,
 
 ## Next
 
-1. Repeatable demo packaging, with coverage limits clearly presented. Core live integration/range and the small independent curved-mesh fixture are checked. Arbitrary geometry/material and stronger critical-ray convergence remain open; don't call the fixture universal validation. Preserve the owner's existing world when making a self-contained setup. Camera access is256, with loaded-source/data constraints. Finer section updates and cache reuse across F10 toggles remain useful follow-ups.
+1. Continue performance work while retaining accepted appearance. The first same-quality GPU reduction is~31% at the small fixed test pose; no1440p/60 claim. Profile ray/BVH traversal next; don't silently disable AA/effects or omit geometry to claim a same-quality speedup. Keep original/adaptive comparisons and independent fixtures. Packaging remains paused on its WIP branch.
 2. Remaining transparent/special materials and demo packaging. Rain/snow/teleport deferred. Shadows, eye glow, glint, translucent entity layers, fluids, non-living/block entities incomplete.
 3. AA then deeper relativity/player-body/horizon/observer-speed plan. No performance certification yet; two-level traversal currently costs more than monolithic in similar nearby views.
 
-AA remains8ad46eb on codex/terrain-antialiasing, excluded/unverified. Source anchor(14,300,14), N64, COM(16,302,16), r_s8. Prior evidence: docs/live-native-mesh.md, mesh-coverage.md, mesh-clouds.md, mesh-entities.md, native-mesh.md, source-refresh.md. Never revive rejected ordinary-camera overlays.
+Original AA WIP8ad46eb remains preserved on codex/terrain-antialiasing; its two-ray idea is now adapted and tested in the current renderer. Owner's current source anchor(14,300,14), N65, COM approximately(16.01,302.04,15.99), r_s8.125; do not restore the old64-block scene. Prior evidence: docs/live-native-mesh.md, mesh-coverage.md, mesh-clouds.md, mesh-entities.md, native-mesh.md, source-refresh.md. Never revive rejected ordinary-camera overlays.
 
 ## Efficient runtime
 

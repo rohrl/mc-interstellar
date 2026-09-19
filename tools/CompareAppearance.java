@@ -54,7 +54,7 @@ public class CompareAppearance {
         var sheet=new BufferedImage(panel*3,height+24,BufferedImage.TYPE_INT_RGB);var g=sheet.createGraphics();
         try {
             g.setColor(Color.WHITE);g.setFont(new Font(Font.SANS_SERIF,Font.PLAIN,12));
-            var images=List.of(a,b,heat);var labels=List.of("Vanilla reference","Zero-bending candidate","Max RGB error (4x red scale)");
+            var images=List.of(a,b,heat);var labels=List.of("Reference (see metadata)","Candidate (see metadata)","Max RGB error (4x red scale)");
             for(int i=0;i<3;i++){g.drawString(labels.get(i),i*panel+4,16);g.drawImage(images.get(i),i*panel,24,panel,height,null);}
         } finally {g.dispose();}
         ImageIO.write(sheet,"PNG",out.resolve("contact.png").toFile());

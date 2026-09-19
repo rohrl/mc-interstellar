@@ -47,6 +47,8 @@ final class TerrainScreen extends Screen {
     private String paused;
     private final TerrainOptions options=TerrainOptions.load();
     private float scale=options.renderScale();
+    private int antialiasing=options.antialiasing();
+    private boolean adaptivePath=true;
     private boolean hybrid=options.distantPrototype();
     private boolean faceLighting=true;
     private boolean smoothLighting=true;
@@ -115,7 +117,7 @@ final class TerrainScreen extends Screen {
             String age=meshMode?mesh.status():publishedAt==0?snapshot.status():String.format(Locale.ROOT,"Published %.1fs ago | %s | generation %d",
                     (System.nanoTime()-publishedAt)/1e9,pending==null?"waiting to refresh":"refreshing",generation);
             context.drawTextWithShadow(textRenderer,age,12,24,0xFFFFFFFF);
-            context.drawTextWithShadow(textRenderer,benchmark==null?(meshMode?String.format(Locale.ROOT,"Camera %.0f / %d blocks | Updates queued",camera.distanceTo(centre()),MESH_VIEW_RANGE):hybrid?"Native sky/light | Distant terrain approximate":"Bounded terrain | Straight aim | Outside data omitted"):benchmark.status().replace("B cancels","F12 cancels"),12,36,0xFFFFD59A);
+            context.drawTextWithShadow(textRenderer,benchmark==null?(meshMode?String.format(Locale.ROOT,"Camera %.0f / %d blocks | AA %s",camera.distanceTo(centre()),MESH_VIEW_RANGE,aaName()):hybrid?"Native sky/light | Distant terrain approximate":"Bounded terrain | Straight aim | Outside data omitted"):benchmark.status().replace("B cancels","F12 cancels"),12,36,0xFFFFD59A);
             return;
         }
         if(error!=null) context.fill(0,0,width,height,0xFF201018);
@@ -123,7 +125,7 @@ final class TerrainScreen extends Screen {
         context.drawTextWithShadow(textRenderer,"INTERSTELLAR | Minecraft terrain snapshot",12,12,0xFF88D8FF);
         context.drawTextWithShadow(textRenderer,error!=null?error:meshMode?mesh.status():snapshot.status(),12,24,0xFFFFFFFF);
         context.drawTextWithShadow(textRenderer,"Space: lensing "+(lensing?"ON":"OFF")+" | Arrows: look | L: aim at source",12,36,0xFFE0E8EF);
-        context.drawTextWithShadow(textRenderer,"Q: scale "+scale+" | J: path "+(fine?"fine":"standard")+" | Esc: return",12,48,0xFFE0E8EF);
+        context.drawTextWithShadow(textRenderer,"Q: scale "+scale+" | J: path "+(fine?"fine":"standard")+" | A: AA "+aaName(),12,48,0xFFE0E8EF);
         context.drawTextWithShadow(textRenderer,benchmark==null?"B: benchmark terrain pass":benchmark.status(),12,60,0xFF88D8FF);
         context.drawTextWithShadow(textRenderer,validationStatus,12,72,0xFF88D8FF);
         context.drawTextWithShadow(textRenderer,meshMode?"E: mobs "+(meshEntities?"ON":"OFF")+" | K: native light "+(faceLighting?"ON":"OFF")+" | P: pair":
@@ -187,6 +189,8 @@ final class TerrainScreen extends Screen {
                     client.world.getBrightness(net.minecraft.util.math.Direction.SOUTH,true),client.world.getBrightness(net.minecraft.util.math.Direction.DOWN,true),
                     client.world.getBrightness(net.minecraft.util.math.Direction.UP,true));
             shader.getUniformOrDefault("PathStep").set(fine?.225f:.45f);
+            shader.getUniformOrDefault("RaySamples").set(antialiasing==2?2f:antialiasing==4?4f:1f);
+            shader.getUniformOrDefault("AdaptivePath").set(adaptivePath?1f:0f);
             shader.addSampler("Voxels",meshMode?mesh.triangleTexture:snapshot.voxelTexture);
             shader.addSampler("LocalLight",meshMode?(moving!=null?moving.entities.texture:mesh.entities.texture):snapshot.lightTexture);
             shader.addSampler("SmoothAtlas",snapshot.smoothLight.texture);
@@ -209,12 +213,13 @@ final class TerrainScreen extends Screen {
             }
             if(benchmark!=null)benchmark.begin();
             drawQuad(w,h);
-            if(benchmark!=null)benchmark.end();
         } finally {
             client.getFramebuffer().beginWrite(true);
             RenderSystem.depthMask(true);RenderSystem.enableDepthTest();RenderSystem.enableBlend();RenderSystem.defaultBlendFunc();
         }
-        target.draw(client.getWindow().getFramebufferWidth(),client.getWindow().getFramebufferHeight());
+        if(antialiasing==0)target.draw(client.getWindow().getFramebufferWidth(),client.getWindow().getFramebufferHeight());
+        else TerrainResolve.draw(target,client.getWindow().getFramebufferWidth(),client.getWindow().getFramebufferHeight(),antialiasing==1);
+        if(benchmark!=null)benchmark.end();
         RenderSystem.enableBlend();RenderSystem.defaultBlendFunc();
     }
     private static void drawQuad(int w,int h) {
@@ -234,17 +239,30 @@ final class TerrainScreen extends Screen {
     String appearanceScene() {return (meshMode?mesh.status():snapshot.status())+"; mesh="+meshMode+"; streamedReference="+streamedReference+"; entities="+meshEntities+"; coverage="+meshCoverage+"; clouds="+meshClouds+"; distant="+hybrid+"; faceLight="+faceLighting+"; smoothLight="+smoothLighting+"; origin="+snapshot.origin;}
     void appearanceStatus(String text) {validationStatus=text;}
     void renderAppearanceCandidate() {
-        boolean oldLensing=lensing,oldValidate=validate;float oldScale=scale;
+        boolean oldLensing=lensing,oldValidate=validate;float oldScale=scale;int oldAa=antialiasing;
         cancelBenchmark();
-        try {lensing=false;scale=1;validate=false;renderTerrain();}
-        finally {lensing=oldLensing;scale=oldScale;validate=oldValidate;}
+        try {lensing=false;scale=1;validate=false;antialiasing=0;renderTerrain();}
+        finally {lensing=oldLensing;scale=oldScale;validate=oldValidate;antialiasing=oldAa;}
+    }
+    String qualitySettings() {return "AA="+aaName()+", scale="+scale+", lensing="+lensing+", fine="+fine+", adaptive="+adaptivePath;}
+    private String aaName() {return antialiasing==0?"OFF":antialiasing==1?"EDGE":antialiasing==2?"2x":"4x reference";}
+    void renderQuality(boolean reference) {
+        int oldAa=antialiasing;float oldScale=scale;boolean oldValidate=validate;
+        cancelBenchmark();
+        try {validate=false;if(reference){antialiasing=4;scale=1;}renderTerrain();}
+        finally {antialiasing=oldAa;scale=oldScale;validate=oldValidate;}
+    }
+    void renderPathComparison(boolean reference) {
+        boolean old=adaptivePath;cancelBenchmark();
+        try {if(reference)adaptivePath=false;renderTerrain();}
+        finally {adaptivePath=old;}
     }
     private void cancelBenchmark() {if(benchmark!=null) {benchmark.close();benchmark=null;}}
     @Override public boolean keyPressed(int key,int scan,int modifiers) {
         if(key==GLFW.GLFW_KEY_B && snapshot!=null && snapshot.ready() && error==null && paused==null && target!=null) {
             if(benchmark!=null)cancelBenchmark();
             else benchmark=new LabBenchmark(String.format(Locale.ROOT,"TERRAIN %dx%d, scale=%.2f, r/rs=%.5f, lensing=%s, fine=%s, snapshot=%s, hybrid="+hybrid+", live="+live+", mesh="+meshMode+", entities="+meshEntities+", nativeLight="+faceLighting+", coverage="+meshCoverage+", clouds="+meshClouds,
-                    target.textureWidth,target.textureHeight,scale,camera.distanceTo(centre())/source.schwarzschildRadius(),lensing,fine,meshMode?mesh.status():snapshot.status()));
+                    target.textureWidth,target.textureHeight,scale,camera.distanceTo(centre())/source.schwarzschildRadius(),lensing,fine,meshMode?mesh.status():snapshot.status())+"; AA="+aaName()+"; adaptive="+adaptivePath+"; includes resolve");
             return true;
         }
         cancelBenchmark();
@@ -270,7 +288,9 @@ final class TerrainScreen extends Screen {
                     validate=false;
                 }
             }
-            case GLFW.GLFW_KEY_P -> {AppearanceCapture.request(this);validationStatus="Capturing same-frame appearance pair...";}
+            case GLFW.GLFW_KEY_P -> {AppearanceCapture.request(this,(modifiers&GLFW.GLFW_MOD_CONTROL)!=0?2:(modifiers&GLFW.GLFW_MOD_SHIFT)!=0?1:0);validationStatus="Capturing same-frame comparison...";}
+            case GLFW.GLFW_KEY_A -> antialiasing=(antialiasing+1)%3;
+            case GLFW.GLFW_KEY_G -> {adaptivePath=!adaptivePath;validationStatus="G: adaptive paths "+(adaptivePath?"ON":"OFF")+" | Ctrl+P: compare old path";}
             case GLFW.GLFW_KEY_H -> {if(!meshMode)hybrid=!hybrid;}
             case GLFW.GLFW_KEY_K -> faceLighting=!faceLighting;
             case GLFW.GLFW_KEY_O -> smoothLighting=!smoothLighting;

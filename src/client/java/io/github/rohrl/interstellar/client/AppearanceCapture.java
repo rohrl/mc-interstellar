@@ -15,6 +15,7 @@ import java.util.LinkedHashMap;
 /** Opt-in same-frame appearance pairs. Never changes simulation, camera or saved settings. */
 final class AppearanceCapture {
     private static TerrainScreen requested;
+    private static int comparison;
     private static BufferedImage reference;
     private static LinkedHashMap<String,Object> metadata;
     static void register() {
@@ -32,8 +33,9 @@ final class AppearanceCapture {
                 var camera=client.gameRenderer.getCamera();
                 metadata=new LinkedHashMap<>();
                 metadata.put("schema",1);
-                metadata.put("reference","vanilla-world-END-before-hand-and-HUD");
-                metadata.put("candidate","terrain-backend-zero-bending-full-resolution");
+                metadata.put("reference",comparison==2?"same-scene-original-path-same-AA-and-scale":comparison==1?"same-scene-four-rays-full-resolution":"vanilla-world-END-before-hand-and-HUD");
+                metadata.put("candidate",comparison!=0?"same-scene-selected-AA-scale-and-path":"terrain-backend-zero-bending-full-resolution");
+                metadata.put("qualitySettings",requested.qualitySettings());
                 metadata.put("sameFrame",true);
                 metadata.put("width",reference.getWidth());metadata.put("height",reference.getHeight());
                 metadata.put("camera",new double[]{camera.getPos().x,camera.getPos().y,camera.getPos().z});
@@ -52,13 +54,17 @@ final class AppearanceCapture {
             } catch(Exception failure) {fail(failure);}
         });
     }
-    static void request(TerrainScreen screen) {clear();requested=screen;}
+    static void request(TerrainScreen screen,int mode) {clear();requested=screen;comparison=mode;}
     static void finish(TerrainScreen screen) {
         if(requested!=screen || reference==null)return;
         try {
             screen.checkAppearancePose();
             metadata.put("candidateScene",screen.appearanceScene());
-            screen.renderAppearanceCandidate();
+            if(comparison==2) {
+                screen.renderPathComparison(true);reference=readFramebuffer();screen.renderPathComparison(false);
+            } else if(comparison==1) {
+                screen.renderQuality(true);reference=readFramebuffer();screen.renderQuality(false);
+            } else screen.renderAppearanceCandidate();
             var candidate=readFramebuffer();
             if(candidate.getWidth()!=reference.getWidth() || candidate.getHeight()!=reference.getHeight())throw new IllegalStateException("Framebuffer resized during capture");
             var root=FabricLoader.getInstance().getGameDir().resolve("interstellar-captures");
@@ -76,7 +82,7 @@ final class AppearanceCapture {
         if(requested!=null)requested.appearanceStatus("Pair rejected: "+failure.getMessage());
         Interstellar.LOGGER.warn("Appearance capture failed",failure);clear();
     }
-    private static void clear() {requested=null;reference=null;metadata=null;}
+    private static void clear() {requested=null;reference=null;metadata=null;comparison=0;}
     private static BufferedImage readFramebuffer() {
         var framebuffer=MinecraftClient.getInstance().getFramebuffer();
         int w=framebuffer.textureWidth,h=framebuffer.textureHeight;

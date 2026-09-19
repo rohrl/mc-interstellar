@@ -28,6 +28,8 @@
     {"name":"Radius","type":"float","count":1,"values":[8]},
     {"name":"Lensing","type":"float","count":1,"values":[1]},
     {"name":"Diagnostic","type":"float","count":1,"values":[0]},
-    {"name":"PathStep","type":"float","count":1,"values":[0.45]}
+    {"name":"PathStep","type":"float","count":1,"values":[0.45]},
+    {"name":"RaySamples","type":"float","count":1,"values":[1]},
+    {"name":"AdaptivePath","type":"float","count":1,"values":[0]}
   ]
 }

@@ -28,6 +28,9 @@ uniform vec3 TerrainFogRange;
 uniform vec4 TerrainFogColour;
 uniform vec3 Camera,Source,Forward,Right,Up;
 uniform float Radius,Lensing,PathStep,Diagnostic;
+uniform vec2 Viewport;
+uniform float RaySamples;
+uniform float AdaptivePath;
 vec4 diagnostic=vec4(0);
 ivec3 materialCell;
 bool distantHit=false;
@@ -349,8 +352,8 @@ int sceneSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
     materialCell=savedCell;return local;
 }
 vec2 derivative(vec2 q) {return vec2(q.y,1.5*q.x*q.x-q.x);}
-void trace() {
-    vec2 xy=(screenUv*2.0-1.0)*ViewSlopes.xy;
+void trace(vec2 uv) {
+    vec2 xy=(uv*2.0-1.0)*ViewSlopes.xy;
     vec3 direction=normalize(Forward+(xy.x+ViewSlopes.z)*Right+(-xy.y+ViewSlopes.w)*Up);
     vec3 hit,normal;
     vec3 radialAxis=normalize(Camera-Source);
@@ -392,6 +395,14 @@ void trace() {
         float speed=Radius*length(q)/(q.x*q.x);
         float stepSize=PathStep;
         if(Hybrid>.5 && (Diagnostic<.5 || Diagnostic>2.5)) stepSize=mix(PathStep,4.0,smoothstep(80.0,144.0,length(p-Source)));
+        if(MeshMode>.5 && AdaptivePath>.5) {
+            // Euclidean curvature of the embedded null orbit, u=rs/r, v=du/dphi:
+            // kappa=1.5*u^5/(rs*(u*u+v*v)^(3/2)). Local chord sagitta is ~kappa*length^2/8.
+            float normQ=length(q),u2=q.x*q.x;
+            float curvature=1.5*u2*u2*q.x/max(Radius*normQ*normQ*normQ,1e-12);
+            float tolerance=.001*(PathStep/.45)*(PathStep/.45);
+            stepSize=clamp(sqrt(8.0*tolerance/max(curvature,1e-12)),PathStep,4.0);
+        }
         float h=min(.02,stepSize/max(speed,.0001));
         vec2 a=derivative(q),b=derivative(q+h*a*.5),c=derivative(q+h*b*.5),d=derivative(q+h*c);
         vec2 next=q+h*(a+2.0*b+2.0*c+d)/6.0;
@@ -417,7 +428,18 @@ void main() {
         int value=distantSegment(Camera,Camera+d*1024.0,hit,normal);
         fragColor=vec4(value==0?0.0:length(hit-Camera),0,0,float(value));return;
     }
-    trace();
-    if(MeshMode>.5 && MeshClouds>.5)fragColor.rgb=mix(fragColor.rgb,cloudLayer.rgb,cloudLayer.a);
-    if(Diagnostic>.5)fragColor=diagnostic;
+    int samples=Diagnostic>.5?1:int(RaySamples);
+    vec4 sum=vec4(0);
+    for(int sampleIndex=0;sampleIndex<4;sampleIndex++) {
+        if(sampleIndex>=samples)break;
+        // Each ray owns its hit/cloud state; no cloud or far hit may leak into the next subpixel.
+        cloudLayer=vec4(0);diagnostic=vec4(0);distantHit=false;distantLayer=0;distantSide=false;
+        vec2 offset=vec2(0);
+        if(samples==2)offset=vec2(sampleIndex==0?-.25:.25);
+        if(samples==4)offset=vec2((sampleIndex%2)==0?-.25:.25,sampleIndex<2?-.25:.25);
+        trace(screenUv+offset/Viewport);
+        if(MeshMode>.5 && MeshClouds>.5)fragColor.rgb=mix(fragColor.rgb,cloudLayer.rgb,cloudLayer.a);
+        sum+=fragColor;
+    }
+    fragColor=Diagnostic>.5?diagnostic:sum/float(samples);
 }

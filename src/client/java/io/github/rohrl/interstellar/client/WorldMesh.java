@@ -18,6 +18,7 @@ import java.util.Arrays;
 
 /** Frozen, client-only native model capture. No filled-column approximation or generated chunks. */
 final class WorldMesh implements VertexConsumer,AutoCloseable {
+    private ReusableMeshTexture movingTriangles,movingNodes;
     private static final int MAX_TRIANGLES=7_000_000;
     private final ClientWorld world;
     private final BlockPos origin;
@@ -174,6 +175,14 @@ final class WorldMesh implements VertexConsumer,AutoCloseable {
         GL15.glBindBuffer(GL21.GL_PIXEL_UNPACK_BUFFER,0);
         int newTriangles=0,newNodes=0;
         try {
+            if(dynamic) {
+                if(movingTriangles==null)movingTriangles=new ReusableMeshTexture();
+                if(movingNodes==null)movingNodes=new ReusableMeshTexture();
+                movingTriangles.upload(triangles,count*36);movingNodes.upload(nodes,nodes.length);
+                triangleTexture=movingTriangles.id;nodeTexture=movingNodes.id;
+                if(updates==0 || updates==599)Interstellar.LOGGER.info("Moving mesh texture reuse: updates={}, triangle allocations={}, node allocations={}",updates,movingTriangles.allocations,movingNodes.allocations);
+                return;
+            }
             newTriangles=texture(triangles,count*36);newNodes=texture(nodes,nodes.length);
             if(triangleTexture!=0)RenderSystem.deleteTexture(triangleTexture);
             if(nodeTexture!=0)RenderSystem.deleteTexture(nodeTexture);
@@ -200,7 +209,7 @@ final class WorldMesh implements VertexConsumer,AutoCloseable {
         } catch(RuntimeException e) {RenderSystem.deleteTexture(id);throw e;}
         finally {MemoryUtil.memFree(buffer);}
     }
-    @Override public void close() {triangles=null;if(entities!=null) {entities.close();entities=null;}if(streaming!=null){streaming.close();streaming=null;}else {if(triangleTexture!=0)RenderSystem.deleteTexture(triangleTexture);if(nodeTexture!=0)RenderSystem.deleteTexture(nodeTexture);}triangleTexture=nodeTexture=0;}
+    @Override public void close() {triangles=null;if(entities!=null) {entities.close();entities=null;}if(movingTriangles!=null){movingTriangles.close();movingTriangles=null;triangleTexture=0;}if(movingNodes!=null){movingNodes.close();movingNodes=null;nodeTexture=0;}if(streaming!=null){streaming.close();streaming=null;}else {if(triangleTexture!=0)RenderSystem.deleteTexture(triangleTexture);if(nodeTexture!=0)RenderSystem.deleteTexture(nodeTexture);}triangleTexture=nodeTexture=0;}
     @Override public VertexConsumer vertex(float x,float y,float z) {throw new IllegalStateException("Expected native quad");}
     @Override public VertexConsumer color(int r,int g,int b,int a) {return this;}
     @Override public VertexConsumer texture(float u,float v) {return this;}

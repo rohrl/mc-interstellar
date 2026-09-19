@@ -1,0 +1,31 @@
+package io.github.rohrl.interstellar.client;
+
+import com.mojang.blaze3d.systems.RenderSystem;
+import org.lwjgl.opengl.*;
+import org.lwjgl.system.MemoryUtil;
+import java.nio.FloatBuffer;
+
+/** Render-thread streaming texture. Caller establishes/restores unpack state. */
+final class ReusableMeshTexture implements AutoCloseable {
+    final int id=GL11.glGenTextures();
+    private int rows;
+    private FloatBuffer staging;
+    int allocations;
+    void upload(float[] data,int length) {
+        int needed=Math.max(1,(length+16383)/16384);
+        RenderSystem.bindTexture(id);
+        if(needed>rows) {
+            int capacity=Integer.highestOneBit(needed-1)<<1;if(capacity==0)capacity=1;
+            if(capacity>GL11.glGetInteger(GL11.GL_MAX_TEXTURE_SIZE))throw new IllegalStateException("Moving mesh exceeds GPU texture capacity");
+            var next=MemoryUtil.memCallocFloat(capacity*16384);
+            if(staging!=null)MemoryUtil.memFree(staging);staging=next;rows=capacity;
+            GL11.glTexParameteri(GL11.GL_TEXTURE_2D,GL11.GL_TEXTURE_MIN_FILTER,GL11.GL_NEAREST);
+            GL11.glTexParameteri(GL11.GL_TEXTURE_2D,GL11.GL_TEXTURE_MAG_FILTER,GL11.GL_NEAREST);
+            GL11.glTexImage2D(GL11.GL_TEXTURE_2D,0,GL30.GL_RGBA32F,4096,rows,0,GL11.GL_RGBA,GL11.GL_FLOAT,(FloatBuffer)null);
+            allocations++;
+        }
+        staging.clear();staging.put(data,0,length);staging.position(0).limit(needed*16384);
+        GL11.glTexSubImage2D(GL11.GL_TEXTURE_2D,0,0,0,4096,needed,GL11.GL_RGBA,GL11.GL_FLOAT,staging);
+    }
+    @Override public void close() {RenderSystem.deleteTexture(id);if(staging!=null){MemoryUtil.memFree(staging);staging=null;}}
+}
