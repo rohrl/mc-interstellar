@@ -15,31 +15,31 @@ const float MeshMode=1.0;
 uniform float MeshMode;
 #endif
 uniform float MeshNodeCount;
+#ifdef INTERSTELLAR_LIVE_DEFAULTS
+const float MeshEntities=1.0,MeshClouds=1.0,MeshCoverage=1.0;
+const float Hybrid=1.0,FaceLighting=1.0,Lensing=1.0,Diagnostic=0.0;
+const float RaySamples=2.0,AdaptivePath=1.0,FastBounds=1.0,FastFetch=1.0,EmptyCells=1.0,EmptyReach=1024.0;
+#else
 uniform float MeshEntities;
-uniform float MeshClouds,MeshExtent;
-uniform float MeshCoverage,MovingNodeCount;
+uniform float MeshClouds,MeshCoverage;
+uniform float Hybrid,FaceLighting,Lensing,Diagnostic;
+uniform float RaySamples,AdaptivePath,FastBounds,FastFetch,EmptyCells,EmptyReach;
+#endif
+uniform float MeshExtent,MovingNodeCount;
 uniform vec4 OldMeshBounds;
 #define EntityAtlas LocalLight
 #define CloudAtlas Distant
 vec4 cloudLayer=vec4(0);
 vec3 meshColour;
 uniform vec4 FaceShades;
-uniform float Hybrid;
-uniform float FaceLighting;
 uniform float SmoothLighting;
 uniform float DistantTop;
 uniform vec4 ViewSlopes;
 uniform vec3 TerrainFogRange;
 uniform vec4 TerrainFogColour;
 uniform vec3 Camera,Source,Forward,Right,Up;
-uniform float Radius,Lensing,PathStep,Diagnostic;
+uniform float Radius,PathStep;
 uniform vec2 Viewport;
-uniform float RaySamples;
-uniform float AdaptivePath;
-uniform float FastBounds;
-uniform float FastFetch;
-uniform float EmptyCells;
-uniform float EmptyReach;
 vec4 diagnostic=vec4(0);
 ivec3 materialCell;
 bool distantHit=false;

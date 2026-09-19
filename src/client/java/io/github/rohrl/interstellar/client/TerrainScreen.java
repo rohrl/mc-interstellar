@@ -20,10 +20,11 @@ import java.util.Locale;
 /** Shared frozen/live scene-data preview. World geometry is never moved or destroyed. */
 final class TerrainScreen extends Screen {
     private static final int MESH_VIEW_RANGE=256,VOXEL_VIEW_RANGE=128;
-    private static ShaderProgram generalShader,meshShader,compactMeshShader;
+    private static ShaderProgram generalShader,meshShader,compactMeshShader,defaultMeshShader;
     private ShaderProgram shader;
     private boolean specialized=true;
     private boolean compactNodes=true;
+    private boolean liveDefaults=true;
     private static int resourceVersion;
     private final int capturedVersion=resourceVersion;
     private boolean validate;
@@ -66,6 +67,7 @@ final class TerrainScreen extends Screen {
     static void setMeshShader(ShaderProgram program) {meshShader=program;resourceVersion++;}
     static void setCompactMeshShader(ShaderProgram program) {compactMeshShader=program;resourceVersion++;}
     static boolean hasCompactShader() {return compactMeshShader!=null;}
+    static void setDefaultMeshShader(ShaderProgram program) {defaultMeshShader=program;resourceVersion++;}
     @Override protected void init() {
         if(snapshot!=null || error!=null) return;
         if(!options.enabled()) {error="Terrain preview disabled in interstellar-terrain.json";return;}
@@ -156,8 +158,13 @@ final class TerrainScreen extends Screen {
         }
     }
     private void renderTerrain() {
-        shader=useMeshShader()?(compactNodes && compactMeshShader!=null?compactMeshShader:meshShader):generalShader;
-        if(validate && meshMode) {validate=false;Interstellar.LOGGER.info("Mesh fixture program: {}",programName());validationStatus=MeshValidation.run(shader,()->drawQuad(1,1));}
+        shader=useDefaultShader()?defaultMeshShader:useMeshShader()?(compactNodes && compactMeshShader!=null?compactMeshShader:meshShader):generalShader;
+        if(validate && meshMode) {
+            validate=false;
+            var diagnosticShader=useDefaultShader()?compactMeshShader:shader;
+            Interstellar.LOGGER.info("Mesh fixture program: {}",useDefaultShader()?"compact diagnostic variant (live defaults fix Diagnostic=0)":programName());
+            validationStatus=MeshValidation.run(diagnosticShader,()->drawQuad(1,1));
+        }
         if(hybrid)nativeSky.update(!meshMode || !meshClouds);
         int w=Math.max(1,Math.round(client.getWindow().getFramebufferWidth()*scale));
         int h=Math.max(1,Math.round(client.getWindow().getFramebufferHeight()*scale));
@@ -290,7 +297,16 @@ final class TerrainScreen extends Screen {
         finally {emptyReach=old;}
     }
     private boolean useMeshShader() {return meshMode && specialized && meshShader!=null;}
-    private String programName() {return useMeshShader()?(compactNodes && compactMeshShader!=null?"native-compact-nodes":"native-mesh"):"general";}
+    private boolean useDefaultShader() {
+        return liveDefaults && useMeshShader() && compactNodes && defaultMeshShader!=null && antialiasing==2 && lensing && hybrid
+                && faceLighting && meshEntities && meshClouds && meshCoverage && adaptivePath && fastBounds && fastFetch && emptyCells && emptyReach==1024;
+    }
+    private String programName() {return useDefaultShader()?"native-live-defaults":useMeshShader()?(compactNodes && compactMeshShader!=null?"native-compact-nodes":"native-mesh"):"general";}
+    void renderDefaultsComparison(boolean reference) {
+        boolean old=liveDefaults;cancelBenchmark();
+        try {if(reference)liveDefaults=false;renderTerrain();}
+        finally {liveDefaults=old;}
+    }
     void renderCompactComparison(boolean reference) {
         boolean old=compactNodes;cancelBenchmark();
         try {if(reference)compactNodes=false;renderTerrain();}
@@ -340,6 +356,7 @@ final class TerrainScreen extends Screen {
             case GLFW.GLFW_KEY_P -> {AppearanceCapture.request(this,(modifiers&(GLFW.GLFW_MOD_ALT|GLFW.GLFW_MOD_CONTROL))==(GLFW.GLFW_MOD_ALT|GLFW.GLFW_MOD_CONTROL)?6:(modifiers&(GLFW.GLFW_MOD_ALT|GLFW.GLFW_MOD_SHIFT))==(GLFW.GLFW_MOD_ALT|GLFW.GLFW_MOD_SHIFT)?5:(modifiers&GLFW.GLFW_MOD_ALT)!=0?4:(modifiers&(GLFW.GLFW_MOD_CONTROL|GLFW.GLFW_MOD_SHIFT))==(GLFW.GLFW_MOD_CONTROL|GLFW.GLFW_MOD_SHIFT)?3:(modifiers&GLFW.GLFW_MOD_CONTROL)!=0?2:(modifiers&GLFW.GLFW_MOD_SHIFT)!=0?1:0);validationStatus="Capturing same-frame comparison...";}
             case GLFW.GLFW_KEY_S -> {if((modifiers&GLFW.GLFW_MOD_SHIFT)!=0)AppearanceCapture.request(this,7);else specialized=!specialized;validationStatus="S: program "+programName()+" | Shift+S: compare programs";}
             case GLFW.GLFW_KEY_F -> {if((modifiers&GLFW.GLFW_MOD_SHIFT)!=0)AppearanceCapture.request(this,8);else compactNodes=!compactNodes;validationStatus="F: program "+programName()+" | Shift+F: compare node layouts";}
+            case GLFW.GLFW_KEY_D -> {if((modifiers&GLFW.GLFW_MOD_SHIFT)!=0)AppearanceCapture.request(this,9);else liveDefaults=!liveDefaults;validationStatus="D: program "+programName()+" | Shift+D: compare default settings";}
             case GLFW.GLFW_KEY_I -> {if((modifiers&GLFW.GLFW_MOD_SHIFT)!=0)emptyReach=emptyReach==16?1024:16;else emptyCells=!emptyCells;validationStatus="I: cache "+emptyCells+" | Shift+I reach "+emptyReach+" | Ctrl+Alt+P: compare reach";}
             case GLFW.GLFW_KEY_R -> {fastFetch=!fastFetch;validationStatus="R: fast mesh addressing "+(fastFetch?"ON":"OFF")+" | Alt+P: compare addressing";}
             case GLFW.GLFW_KEY_T -> {fastBounds=!fastBounds;validationStatus="T: fast bounds "+(fastBounds?"ON":"OFF")+" | Ctrl+Shift+P: compare bounds";}
