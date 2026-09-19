@@ -143,3 +143,34 @@ Additional lensed views at854x480 output/427x240 internal, same position and set
 P95 reductions21.8% downward and15.8% away. Downward16 first; away1024 first. Pairs4772766165275653898 and12809664373608801229 have zero pixel differences and identical PNG hashes within each pair. Away candidate inspected. An initial downward run/pair7724198574473978919 had lensing OFF; it is excluded from these lensed performance claims. No block/time/weather/quality-config edits; these are frozen same-scene comparisons, not a universal speedup guarantee.
 
 Live check confirms emptyReach=1024, changing actors over600 updates, retained1/1 texture allocations. Small-window live GPU p50/p95/p99=18.709/19.612/20.308ms; frames20.042/21.848/23.307ms at the wall pose, source radius ratio7.57103 and zero queued chunks. This confirms live operation, not a matched16/1024 live gain. F10 left active in the small window. No renderer errors observed; authentication public-key timeouts in this log are nonblocking.
+
+## Native shader specialization and code review — 2026-09-19
+
+Compile native mesh rendering as a separate program with MeshMode fixed to1. Both programs import terrain_shared.glsl, keeping one implementation of optics, traversal, materials and all earlier optimization toggles. The native program omits voxel-only samplers/uniforms; its unreachable legacy column diagnostic is removed by constant propagation. No ray steps, AA, geometry or lighting changed. F9 S switches programs; Shift+S compares the general program with the selected program in one frame. Native is the default in F9 meshes/F10; voxels retain the general program. This is compiler specialization, not evidence about register occupancy (not measured).
+
+shader-split-build.log:51 tests pass; shader-split-final-build.log passes after equivalent JSON formatting cleanup. shader-split-runtime.log: both programs compile, each passes17280 sampled CPU/GPU comparisons, zero mismatches/inconclusive/unresolved (native1757ms, general1682ms). Each run covers180 distinct directions across existing layout/flag/path variants; the total is not34560 independent directions. Shared-source comparison confirms the original algorithm apart from the explicit backend/diagnostic selection. This is sampled opaque-box evidence, not arbitrary-material certification.
+
+Frozen streamed scene:6,092,214 terrain triangles plus10,404 moving triangles/67 mobs; source N65/r_s8.125; player(16.5,302,-45.5), yaw.281/pitch.91. RTX5070Ti/driver616.92,2xAA/half-resolution, adaptive steps/fast bounds/addressing/empty-region cache1024 enabled.120 warmup/300 samples; GPU pass includes resolve.
+
+| View / output | Program | GPU p50 / p95 / p99 ms | Frame p50 / p95 ms |
+| --- | --- | --- | --- |
+|Wall2560x1440, first pair|general|58.491 /61.011 /61.881|66.647 /67.047|
+|Wall2560x1440, first pair|native|56.583 /59.059 /60.616|58.451 /66.928|
+|Wall2560x1440, reversed order|native|56.740 /59.319 /60.169|58.539 /66.943|
+|Wall2560x1440, reversed order|general|58.468 /61.424 /63.038|66.647 /66.988|
+|Wall854x480|native|17.099 /18.332 /18.728|18.242 /19.271|
+|Wall854x480|general|17.454 /18.681 /19.467|18.579 /19.795|
+|Downward854x480, pitch35|native|24.860 /26.885 /27.571|26.174 /28.047|
+|Downward854x480, pitch35|general|25.145 /26.914 /27.724|26.430 /28.006|
+
+Wall GPU p95 reductions3.2–3.4% at1440p,1.9% small. No meaningful downward p95 gain (0.1%). Keep this modest, view-dependent improvement without claiming target FPS or multiplying earlier gains. Native fullscreen median frame about58.5ms (~17FPS), with cap/vsync effects; no whole-game GPU profiling. An interrupted downward run and an uncompleted repeat are excluded; completed timings alone appear above.
+
+Paired PNGs have matching SHA256 hashes and zero pixel differences:6081711448631759605 (1440p streamed wall),16001729553208532114 (small streamed downward; candidate inspected). Preliminary monolithic wall pair17285760811997495812 is also identical; its6,102,618 triangles include moving geometry. That preliminary small-window native/general GPU p95 was15.456/15.892ms, but the streamed comparisons above represent F10's layout. No block/time/weather/config edits.
+
+### Review conclusions and next experiments
+
+The current quality-preserving plan remains appropriate: the black-hole GPU pass still dominates measured frame cost. No new correctness bug was confirmed in the reviewed empty-region certificates, node/triangle address ranges, shader state or source-shift bounds. Existing incomplete materials/entities remain limitations; these checks are not a general correctness proof.
+
+Next, measure node/triangle visits and test a better occupied-geometry search tree (for example, binned surface-area splits versus the current midpoint split). Include capture time and live actor rebuild cost; tree reordering can change ties at coincident faces, so retain image and independent-hit comparisons. Another smaller experiment is shading only the final nearest opaque hit after alpha testing: current traversal repeats vertex/lightmap shading for temporary nearest candidates, but retaining hit data may increase register pressure, so the gain is uncertain. Compact integer node storage is a later option to reduce texture bandwidth. Do not reduce AA, ray accuracy, animation rate or captured coverage for these comparisons. Packaging remains paused.
+
+Final live check: F10 defaults to program=native-mesh with unchanged2xAA and other defaults;600 changing actor updates retain1/1 triangle/node allocations. At the small wall pose, GPU p50/p95/p99=17.686/19.018/19.918ms; frame18.848/20.621/21.748ms. Scene actors differ from the frozen tests; this is a live smoke test, not a matched live gain. An initial attempt found Minecraft paused after focus loss; resumed normally before the completed measurement. Client left in live F10 at the wall pose, small window. No renderer errors observed.

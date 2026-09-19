@@ -33,7 +33,7 @@ final class AppearanceCapture {
                 var camera=client.gameRenderer.getCamera();
                 metadata=new LinkedHashMap<>();
                 metadata.put("schema",1);
-                metadata.put("reference",comparison==6?"same-scene-cache-reach-16":comparison==5?"same-scene-no-empty-cell-cache":comparison==4?"same-scene-original-addressing-same-bounds-path-AA-and-scale":comparison==3?"same-scene-original-bounds-same-path-AA-and-scale":comparison==2?"same-scene-original-path-same-AA-and-scale":comparison==1?"same-scene-four-rays-full-resolution":"vanilla-world-END-before-hand-and-HUD");
+                metadata.put("reference",comparison==7?"same-scene-general-program":comparison==6?"same-scene-cache-reach-16":comparison==5?"same-scene-no-empty-cell-cache":comparison==4?"same-scene-original-addressing-same-bounds-path-AA-and-scale":comparison==3?"same-scene-original-bounds-same-path-AA-and-scale":comparison==2?"same-scene-original-path-same-AA-and-scale":comparison==1?"same-scene-four-rays-full-resolution":"vanilla-world-END-before-hand-and-HUD");
                 metadata.put("candidate",comparison!=0?"same-scene-selected-AA-scale-and-path":"terrain-backend-zero-bending-full-resolution");
                 metadata.put("qualitySettings",requested.qualitySettings());
                 metadata.put("sameFrame",true);
@@ -60,7 +60,9 @@ final class AppearanceCapture {
         try {
             screen.checkAppearancePose();
             metadata.put("candidateScene",screen.appearanceScene());
-            if(comparison==6) {
+            if(comparison==7) {
+                screen.renderShaderComparison(true);reference=readFramebuffer();screen.renderShaderComparison(false);
+            } else if(comparison==6) {
                 screen.renderReachComparison(true);reference=readFramebuffer();screen.renderReachComparison(false);
             } else if(comparison==5) {
                 screen.renderCellComparison(true);reference=readFramebuffer();screen.renderCellComparison(false);

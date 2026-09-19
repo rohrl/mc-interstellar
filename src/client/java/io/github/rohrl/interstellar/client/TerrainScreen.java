@@ -20,7 +20,9 @@ import java.util.Locale;
 /** Shared frozen/live scene-data preview. World geometry is never moved or destroyed. */
 final class TerrainScreen extends Screen {
     private static final int MESH_VIEW_RANGE=256,VOXEL_VIEW_RANGE=128;
-    private static ShaderProgram shader;
+    private static ShaderProgram generalShader,meshShader;
+    private ShaderProgram shader;
+    private boolean specialized=true;
     private static int resourceVersion;
     private final int capturedVersion=resourceVersion;
     private boolean validate;
@@ -59,7 +61,8 @@ final class TerrainScreen extends Screen {
     String problem() {return error;}
     SourcePayload selectedSource() {return source;}
     void adoptSource(SourcePayload next) {source=next;cancelBenchmark();}
-    static void setShader(ShaderProgram program) {shader=program;resourceVersion++;}
+    static void setShader(ShaderProgram program) {generalShader=program;resourceVersion++;}
+    static void setMeshShader(ShaderProgram program) {meshShader=program;resourceVersion++;}
     @Override protected void init() {
         if(snapshot!=null || error!=null) return;
         if(!options.enabled()) {error="Terrain preview disabled in interstellar-terrain.json";return;}
@@ -83,7 +86,7 @@ final class TerrainScreen extends Screen {
         context.draw();
         if(snapshot!=null && ((!live && SelectedSource.current()!=source) || client.world!=snapshot.world)) error="Source changed: reopen the frozen terrain preview when ready.";
         if(capturedVersion!=resourceVersion) error="Resources reloaded: reopen the terrain preview to refresh textures.";
-        if(error==null && shader==null) error="Terrain shader unavailable: see game log.";
+        if(error==null && generalShader==null) error="Terrain shader unavailable: see game log.";
         if(error==null) {
             try {
                 if(live) {
@@ -150,7 +153,8 @@ final class TerrainScreen extends Screen {
         }
     }
     private void renderTerrain() {
-        if(validate && meshMode) {validate=false;validationStatus=MeshValidation.run(shader,()->drawQuad(1,1));}
+        shader=useMeshShader()?meshShader:generalShader;
+        if(validate && meshMode) {validate=false;Interstellar.LOGGER.info("Mesh fixture program: {}",programName());validationStatus=MeshValidation.run(shader,()->drawQuad(1,1));}
         if(hybrid)nativeSky.update(!meshMode || !meshClouds);
         int w=Math.max(1,Math.round(client.getWindow().getFramebufferWidth()*scale));
         int h=Math.max(1,Math.round(client.getWindow().getFramebufferHeight()*scale));
@@ -232,7 +236,7 @@ final class TerrainScreen extends Screen {
         buffer.vertex(0,0,0);buffer.vertex(0,h,0);buffer.vertex(w,h,0);buffer.vertex(w,0,0);
         BufferRenderer.drawWithGlobalProgram(buffer.end());
     }
-    private static void setVector(String name,Vec3d value) {shader.getUniformOrDefault(name).set((float)value.x,(float)value.y,(float)value.z);}
+    private void setVector(String name,Vec3d value) {shader.getUniformOrDefault(name).set((float)value.x,(float)value.y,(float)value.z);}
     void checkAppearancePose() {
         if(live || snapshot==null || !snapshot.ready() || (meshMode && !mesh.ready()) || error!=null || shader==null || capturedVersion!=resourceVersion)
             throw new IllegalStateException("Wait for a ready frozen F9 snapshot");
@@ -249,7 +253,7 @@ final class TerrainScreen extends Screen {
         try {lensing=false;scale=1;validate=false;antialiasing=0;renderTerrain();}
         finally {lensing=oldLensing;scale=oldScale;validate=oldValidate;antialiasing=oldAa;}
     }
-    String qualitySettings() {return "AA="+aaName()+", scale="+scale+", lensing="+lensing+", fine="+fine+", adaptive="+adaptivePath+", fastBounds="+fastBounds+", fastFetch="+fastFetch+", emptyCells="+emptyCells+", emptyReach="+emptyReach;}
+    String qualitySettings() {return "AA="+aaName()+", scale="+scale+", lensing="+lensing+", fine="+fine+", adaptive="+adaptivePath+", fastBounds="+fastBounds+", fastFetch="+fastFetch+", emptyCells="+emptyCells+", emptyReach="+emptyReach+", program="+programName();}
     private String aaName() {return antialiasing==0?"OFF":antialiasing==1?"EDGE":antialiasing==2?"2x":"4x reference";}
     void renderQuality(boolean reference) {
         int oldAa=antialiasing;float oldScale=scale;boolean oldValidate=validate;
@@ -277,6 +281,13 @@ final class TerrainScreen extends Screen {
         try {if(reference)emptyReach=16;renderTerrain();}
         finally {emptyReach=old;}
     }
+    private boolean useMeshShader() {return meshMode && specialized && meshShader!=null;}
+    private String programName() {return useMeshShader()?"native-mesh":"general";}
+    void renderShaderComparison(boolean reference) {
+        boolean old=specialized;cancelBenchmark();
+        try {if(reference)specialized=false;renderTerrain();}
+        finally {specialized=old;}
+    }
     private void cancelBenchmark() {if(benchmark!=null) {benchmark.close();benchmark=null;}}
     void renderFetchComparison(boolean reference) {
         boolean old=fastFetch;cancelBenchmark();
@@ -287,7 +298,7 @@ final class TerrainScreen extends Screen {
         if(key==GLFW.GLFW_KEY_B && snapshot!=null && snapshot.ready() && error==null && paused==null && target!=null) {
             if(benchmark!=null)cancelBenchmark();
             else benchmark=new LabBenchmark(String.format(Locale.ROOT,"TERRAIN %dx%d, scale=%.2f, r/rs=%.5f, lensing=%s, fine=%s, snapshot=%s, hybrid="+hybrid+", live="+live+", mesh="+meshMode+", entities="+meshEntities+", nativeLight="+faceLighting+", coverage="+meshCoverage+", clouds="+meshClouds,
-                    target.textureWidth,target.textureHeight,scale,camera.distanceTo(centre())/source.schwarzschildRadius(),lensing,fine,meshMode?mesh.status():snapshot.status())+"; AA="+aaName()+"; adaptive="+adaptivePath+"; fastBounds="+fastBounds+"; fastFetch="+fastFetch+"; emptyCells="+emptyCells+"; emptyReach="+emptyReach+"; includes resolve");
+                    target.textureWidth,target.textureHeight,scale,camera.distanceTo(centre())/source.schwarzschildRadius(),lensing,fine,meshMode?mesh.status():snapshot.status())+"; AA="+aaName()+"; adaptive="+adaptivePath+"; fastBounds="+fastBounds+"; fastFetch="+fastFetch+"; emptyCells="+emptyCells+"; emptyReach="+emptyReach+"; program="+programName()+"; includes resolve");
             return true;
         }
         cancelBenchmark();
@@ -314,6 +325,7 @@ final class TerrainScreen extends Screen {
                 }
             }
             case GLFW.GLFW_KEY_P -> {AppearanceCapture.request(this,(modifiers&(GLFW.GLFW_MOD_ALT|GLFW.GLFW_MOD_CONTROL))==(GLFW.GLFW_MOD_ALT|GLFW.GLFW_MOD_CONTROL)?6:(modifiers&(GLFW.GLFW_MOD_ALT|GLFW.GLFW_MOD_SHIFT))==(GLFW.GLFW_MOD_ALT|GLFW.GLFW_MOD_SHIFT)?5:(modifiers&GLFW.GLFW_MOD_ALT)!=0?4:(modifiers&(GLFW.GLFW_MOD_CONTROL|GLFW.GLFW_MOD_SHIFT))==(GLFW.GLFW_MOD_CONTROL|GLFW.GLFW_MOD_SHIFT)?3:(modifiers&GLFW.GLFW_MOD_CONTROL)!=0?2:(modifiers&GLFW.GLFW_MOD_SHIFT)!=0?1:0);validationStatus="Capturing same-frame comparison...";}
+            case GLFW.GLFW_KEY_S -> {if((modifiers&GLFW.GLFW_MOD_SHIFT)!=0)AppearanceCapture.request(this,7);else specialized=!specialized;validationStatus="S: program "+programName()+" | Shift+S: compare programs";}
             case GLFW.GLFW_KEY_I -> {if((modifiers&GLFW.GLFW_MOD_SHIFT)!=0)emptyReach=emptyReach==16?1024:16;else emptyCells=!emptyCells;validationStatus="I: cache "+emptyCells+" | Shift+I reach "+emptyReach+" | Ctrl+Alt+P: compare reach";}
             case GLFW.GLFW_KEY_R -> {fastFetch=!fastFetch;validationStatus="R: fast mesh addressing "+(fastFetch?"ON":"OFF")+" | Alt+P: compare addressing";}
             case GLFW.GLFW_KEY_T -> {fastBounds=!fastBounds;validationStatus="T: fast bounds "+(fastBounds?"ON":"OFF")+" | Ctrl+Shift+P: compare bounds";}
