@@ -255,3 +255,7 @@ Use16 instead of4 blocks as the native adaptive step's upper clamp; keep local1m
 ## D059 — Schedule AA rays in separate draws — accepted (2026-09-20)
 
 Keep identical sample positions/trace math and average RGBA32F samples before the original RGBA8 target and cubic reconstruction. Shorter shader execution saves34.3% wall/28.8% downward GPU p95, with pixel-identical wall/down/away pairs and53 passing tests. Extra28.125MiB temporary storage at1440p is justified; serial fallback remains for alternate settings, hardware width limits and X/Shift+X comparisons. Live median~44FPS wall/~29FPS down, so30FPS minimum still needs work. No claim that diagnostic-variant classifications directly test the split executable. docs/split-aa.md. Early-facing rejection rejected for no gain and preserved at7f9fad2.
+
+## D060 — Specialize known streamed triangle dimensions — accepted (2026-09-20)
+
+Use exact4095-wide terrain and4096-wide actor addressing only when WorldMesh confirms a streamed backend, retaining existing programs for other cases. No texture/data/quality changes.53 tests, matching diagnostic26240 sampled checks, pixel-identical images and8.7%/10.7% wall/down GPU p95 gains justify acceptance. Verified actual F10 selection after fixing an experimental F9-only guard. Live medians~53/32FPS now clear30, though downward p95~33.5ms leaves limited headroom; try one small row-address reuse before considering more complex changes. docs/fixed-layout.md.

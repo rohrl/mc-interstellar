@@ -23,6 +23,8 @@ final class TerrainScreen extends Screen {
     private static ShaderProgram generalShader,meshShader,compactMeshShader,defaultMeshShader;
     private static ShaderProgram longMeshShader,longDefaultShader;
     private static ShaderProgram splitShader;
+    private static ShaderProgram layoutShader,layoutDiagnosticShader;
+    private boolean fixedLayout=true;
     private boolean splitSamples=true;
     private TerrainSamples samples;
     private ShaderProgram shader;
@@ -76,6 +78,8 @@ final class TerrainScreen extends Screen {
     static void setLongMeshShader(ShaderProgram program) {longMeshShader=program;resourceVersion++;}
     static void setLongDefaultShader(ShaderProgram program) {longDefaultShader=program;resourceVersion++;}
     static void setSplitShader(ShaderProgram program) {splitShader=program;resourceVersion++;}
+    static void setLayoutShader(ShaderProgram program) {layoutShader=program;resourceVersion++;}
+    static void setLayoutDiagnosticShader(ShaderProgram program) {layoutDiagnosticShader=program;resourceVersion++;}
     @Override protected void init() {
         if(snapshot!=null || error!=null) return;
         if(!options.enabled()) {error="Terrain preview disabled in interstellar-terrain.json";return;}
@@ -169,9 +173,9 @@ final class TerrainScreen extends Screen {
         shader=currentShader();
         if(validate && meshMode) {
             validate=false;
-            var diagnosticShader=useDefaultShader()?(useLongShader()?longMeshShader:compactMeshShader):shader;
+            var diagnosticShader=useLayoutShader()?layoutDiagnosticShader:useDefaultShader()?(useLongShader()?longMeshShader:compactMeshShader):shader;
             diagnosticShader.getUniformOrDefault("MeshStepLimit").set(meshStepLimit);
-            Interstellar.LOGGER.info("Mesh fixture program: {}; step cap={}",useDefaultShader()?"compact diagnostic variant (live defaults fix Diagnostic=0)":programName(),useLongShader()?meshStepLimit:4);
+            Interstellar.LOGGER.info("Mesh fixture program: {}; step cap={}",useLayoutShader()?"streamed-layout diagnostic variant":useDefaultShader()?"compact diagnostic variant (live defaults fix Diagnostic=0)":programName(),useLongShader()?meshStepLimit:4);
             validationStatus=MeshValidation.run(diagnosticShader,()->drawQuad(1,1));
         }
         if(hybrid)nativeSky.update(!meshMode || !meshClouds);
@@ -323,6 +327,7 @@ final class TerrainScreen extends Screen {
     private boolean useSplitShader() {return splitSamples && useDefaultShader() && useLongShader() && splitShader!=null
             && TerrainSamples.supported(Math.max(1,Math.round(client.getWindow().getFramebufferWidth()*scale)));}
     private ShaderProgram currentShader() {
+        if(useLayoutShader())return layoutShader;
         if(useSplitShader())return splitShader;
         if(!useMeshShader())return generalShader;
         if(useDefaultShader())return useLongShader()?longDefaultShader:defaultMeshShader;
@@ -330,6 +335,7 @@ final class TerrainScreen extends Screen {
         return meshShader;
     }
     private String programName() {
+        if(useLayoutShader())return "native-live-layout-"+meshStepLimit;
         if(useSplitShader())return "native-live-split-"+meshStepLimit;
         if(useDefaultShader())return useLongShader()?"native-live-steps-"+meshStepLimit:"native-live-defaults";
         return useMeshShader()?(compactNodes && compactMeshShader!=null?(useLongShader()?"native-compact-steps-"+meshStepLimit:"native-compact-nodes"):"native-mesh"):"general";
@@ -343,6 +349,12 @@ final class TerrainScreen extends Screen {
         boolean old=splitSamples;cancelBenchmark();
         try {if(reference)splitSamples=false;renderTerrain();}
         finally {splitSamples=old;}
+    }
+    private boolean useLayoutShader() {return fixedLayout && mesh!=null && mesh.streamed() && useSplitShader() && layoutShader!=null && layoutDiagnosticShader!=null;}
+    void renderLayoutComparison(boolean reference) {
+        boolean old=fixedLayout;cancelBenchmark();
+        try {if(reference)fixedLayout=false;renderTerrain();}
+        finally {fixedLayout=old;}
     }
     void renderDefaultsComparison(boolean reference) {
         boolean old=liveDefaults;cancelBenchmark();
@@ -412,6 +424,7 @@ final class TerrainScreen extends Screen {
                 else {validate=true;curvedValidation=false;}
             }
             case GLFW.GLFW_KEY_C -> {validate=true;curvedValidation=true;}
+            case GLFW.GLFW_KEY_Y -> {if((modifiers&GLFW.GLFW_MOD_SHIFT)!=0)AppearanceCapture.request(this,12);else fixedLayout=!fixedLayout;validationStatus="Y: fixed texture layouts "+(fixedLayout?"ON":"OFF")+" | Shift+Y: compare dynamic layout";}
             case GLFW.GLFW_KEY_X -> {if((modifiers&GLFW.GLFW_MOD_SHIFT)!=0)AppearanceCapture.request(this,11);else splitSamples=!splitSamples;validationStatus="X: split AA "+(splitSamples?"ON":"OFF")+" | Shift+X: compare serial AA";}
             case GLFW.GLFW_KEY_SPACE -> lensing=!lensing;
             case GLFW.GLFW_KEY_Q -> scale=scale==.5f?1f:.5f;

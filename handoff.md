@@ -4,11 +4,13 @@ Repo C:\work\code\minecraft\interstellar\interstellar; branch codex/world-mesh-r
 
 ## Active goal and next work
 
-Aim toward60+FPS at1440p with **at least30FPS**, without noticeable quality loss or correctness compromises. Owner rejected stopping at20FPS. Goal remains active: live wall now~44FPS, terrain-heavy downward~29FPS after accepted split-AA scheduling. Next specialize known streamed triangle texture layouts; keep all quality/optics. Do not mark complete at current downward FPS.
+Aim toward60+FPS at1440p with **at least30FPS**, without noticeable quality loss or correctness compromises. Owner rejected stopping at20FPS. Goal remains active: live wall now~53FPS, terrain-heavy downward~32FPS after accepted fixed-layout addressing. Medians clear30; down p95/p99=33.502/34.468ms, so more headroom is useful. Next try per-triangle row-address reuse; keep all quality/optics. Do not mark complete at current downward FPS.
 
 Precipitation assessed/deferred: geometry small, transparent ray-ordered composition needs new design and measurement; docs/precipitation-assessment.md. Feature brainstorm completed in docs/relativity-feature-ideas.md: clocks/opt-in devices, orbit probes, light-echo instruments first; existing actual-player-body and horizon-crossing requirements remain. These docs do not mean features are implemented or scope newly approved.
 
 Split AA accepted: docs/split-aa.md.53 tests pass, three pixel-identical pairs, sampled diagnostic26240pass, live~44/29FPS. X/Shift+X toggles/compares serial AA. Early-facing hints rejected/no gain, preserved/pushed codex/facing-hints-experiment7f9fad2.
+
+Fixed-layout addressing accepted: docs/fixed-layout.md.53 tests, matching diagnostic26240pass, wall/down/post-C identical images; frozen GPU p95 gains8.7%/10.7%. Y/Shift+Y toggles/compares. New experimental F9-only selection bug fixed by checking actual mesh.streamed(); old renderer optics unaffected.
 
 ## Latest accepted renderer
 
@@ -20,7 +22,7 @@ Matched frozen1440p GPU p95 cap4→16:wall38.849→30.592ms, down58.982→46.591
 
 ## Runtime state
 
-One client: split-aa-runtime.log, exec session87971; live F10 active, sourceN65, player(16.5,302,-45.5), yaw.281/pitch.91, exact2560x1440 client. Earlier down pose set by test command then restored; no manual block/time/weather changes or teleport-support claim. Current client has accepted split AA; final built source adds texture-width/completeness guards, same rendering math. Check process/log before inputs; never launch a second client on the same save. Normal close and wait actual exit before relaunch. F10 recaptures when turned off/on (~35–40s).
+One client: fixed-layout-live-runtime.log, exec session40776; live F10 active, sourceN65, player(16.5,302,-45.5), yaw.281/pitch.91, exact2560x1440 client. Earlier down pose set by test command then restored; no manual block/time/weather changes or teleport-support claim. Current client has accepted fixed-layout addressing and split-AA guards. Both live benchmark labels confirm native-live-layout-16.0. Check process/log before inputs; never launch a second client on the same save. Normal close and wait actual exit before relaunch. F10 recaptures when turned off/on (~35–40s).
 
 Launch: set JAVA_HOME above, .\gradlew.bat -I run/stable-init.gradle runClient redirected to a local log. Gradle/GUI tools need escalation; owner already authorized. Gate on joined-the-game. Initial source inspection still required after launch: /interstellar inspect 14 300 14. Source anchor(14,300,14),N65,r_s8.125, COM~(16.01,302.04,15.99); **do not restore oldN64**.
 

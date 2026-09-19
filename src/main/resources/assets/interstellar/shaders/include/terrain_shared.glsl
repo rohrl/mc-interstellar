@@ -164,7 +164,14 @@ float cloudFogDistance(vec3 position) {
     return TerrainFogRange.z>.5?max(length(view.xz),abs(view.y)):length(view);
 }
 // The live actor tree shares nearest-hit and cloud ordering with the retained terrain tree.
+#ifdef INTERSTELLAR_STREAMED_LAYOUT
+// Streamed terrain uses row-aligned 4095-wide arenas; moving meshes use 4096.
+vec4 sceneTriangle(int tree,int index) {
+    return tree==0?texelFetch(MeshTriangles,ivec2(index%4095,index/4095),0):texelFetch(DistantAppearance,ivec2(index%4096,index/4096),0);
+}
+#else
 vec4 sceneTriangle(int tree,int index) {return tree==0?meshData(MeshTriangles,index):meshData(DistantAppearance,index);}
+#endif
 vec4 sceneNode(int tree,int index) {return tree==0?meshData(MeshNodes,index):meshData(DistantLight,index);}
 #ifdef INTERSTELLAR_COMPACT_NODES
 uniform sampler2D CompactNodes;

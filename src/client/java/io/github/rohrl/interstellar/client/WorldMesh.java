@@ -83,6 +83,7 @@ final class WorldMesh implements VertexConsumer,AutoCloseable {
             Interstellar.LOGGER.info("Live mesh update {}: {} triangles, {}; geometry fingerprint={}",updates,count,entities.status(),Arrays.hashCode(Arrays.copyOf(triangles,count*36)));
     }
     boolean ready() {return streaming!=null?streaming.ready():singleChunk?prepared:nodeTexture!=0;}
+    boolean streamed() {return streaming!=null;}
     String status() {return streaming!=null?streaming.status():ready()?"Native mesh: "+count+" triangles | "+missingSections+" missing sections"+(entities==null?"": " | "+entities.status()):
             "Capturing native mesh: "+(100L*cursor/total)+"%";}
     void advance() {
