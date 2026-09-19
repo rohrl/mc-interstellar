@@ -69,6 +69,7 @@ final class MeshValidation {
                         leaf[3]=1;leaf[7]=0;leaf[8]=geometry.triangles().length/36;
                         geometry=new MeshRayFixture.Geometry(geometry.triangles(),leaf,1);
                     }
+                    for(int at=0;at<geometry.triangles().length;at+=36)io.github.rohrl.interstellar.scene.TriangleFacing.tag(geometry.triangles(),at);
                     triangles.write(0,geometry.triangles(),geometry.triangles().length);nodes.write(0,geometry.nodes(),geometry.nodes().length);compactNodes.write(0,geometry.nodes(),geometry.nodes().length);
                     set(shader,"MeshNodeCount",geometry.roots());
                     for(float step:new float[]{.45f,.225f}) {

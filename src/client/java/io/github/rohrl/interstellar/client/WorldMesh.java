@@ -162,6 +162,7 @@ final class WorldMesh implements VertexConsumer,AutoCloseable {
         if((count+1)*36>triangles.length)triangles=Arrays.copyOf(triangles,Math.min(MAX_TRIANGLES*36,triangles.length*2));
         int dst=count++*36;
         System.arraycopy(quadData,a*12,triangles,dst,12);System.arraycopy(quadData,b*12,triangles,dst+12,12);System.arraycopy(quadData,c*12,triangles,dst+24,12);
+        io.github.rohrl.interstellar.scene.TriangleFacing.tag(triangles,dst);
     }
     void entityQuad(float[] data,boolean twoSided) {
         System.arraycopy(data,0,quadData,0,48);

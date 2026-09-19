@@ -22,11 +22,13 @@ final class TerrainScreen extends Screen {
     private static final int MESH_VIEW_RANGE=256,VOXEL_VIEW_RANGE=128;
     private static ShaderProgram generalShader,meshShader,compactMeshShader,defaultMeshShader;
     private static ShaderProgram longMeshShader,longDefaultShader;
+    private static ShaderProgram facingMeshShader,facingDefaultShader;
     private ShaderProgram shader;
     private boolean specialized=true;
     private boolean compactNodes=true;
     private boolean liveDefaults=true;
     private float meshStepLimit=16;
+    private boolean facingHints=true;
     private static int resourceVersion;
     private final int capturedVersion=resourceVersion;
     private boolean validate;
@@ -72,6 +74,8 @@ final class TerrainScreen extends Screen {
     static void setDefaultMeshShader(ShaderProgram program) {defaultMeshShader=program;resourceVersion++;}
     static void setLongMeshShader(ShaderProgram program) {longMeshShader=program;resourceVersion++;}
     static void setLongDefaultShader(ShaderProgram program) {longDefaultShader=program;resourceVersion++;}
+    static void setFacingMeshShader(ShaderProgram program) {facingMeshShader=program;resourceVersion++;}
+    static void setFacingDefaultShader(ShaderProgram program) {facingDefaultShader=program;resourceVersion++;}
     @Override protected void init() {
         if(snapshot!=null || error!=null) return;
         if(!options.enabled()) {error="Terrain preview disabled in interstellar-terrain.json";return;}
@@ -165,9 +169,9 @@ final class TerrainScreen extends Screen {
         shader=currentShader();
         if(validate && meshMode) {
             validate=false;
-            var diagnosticShader=useDefaultShader()?(useLongShader()?longMeshShader:compactMeshShader):shader;
+            var diagnosticShader=useDefaultShader()?(useFacingShader()?facingMeshShader:useLongShader()?longMeshShader:compactMeshShader):shader;
             diagnosticShader.getUniformOrDefault("MeshStepLimit").set(meshStepLimit);
-            Interstellar.LOGGER.info("Mesh fixture program: {}; step cap={}",useDefaultShader()?"compact diagnostic variant (live defaults fix Diagnostic=0)":programName(),useLongShader()?meshStepLimit:4);
+            Interstellar.LOGGER.info("Mesh fixture program: {}; step cap={}",useDefaultShader()?(useFacingShader()?"facing-hint diagnostic variant":"compact diagnostic variant (live defaults fix Diagnostic=0)"):programName(),useLongShader()?meshStepLimit:4);
             validationStatus=MeshValidation.run(diagnosticShader,()->drawQuad(1,1));
         }
         if(hybrid)nativeSky.update(!meshMode || !meshClouds);
@@ -308,13 +312,15 @@ final class TerrainScreen extends Screen {
                 && faceLighting && meshEntities && meshClouds && meshCoverage && adaptivePath && fastBounds && fastFetch && emptyCells && emptyReach==1024;
     }
     private boolean useLongShader() {return useMeshShader() && compactNodes && adaptivePath && meshStepLimit!=4 && longMeshShader!=null && longDefaultShader!=null;}
+    private boolean useFacingShader() {return facingHints && useLongShader() && facingMeshShader!=null && facingDefaultShader!=null;}
     private ShaderProgram currentShader() {
         if(!useMeshShader())return generalShader;
-        if(useDefaultShader())return useLongShader()?longDefaultShader:defaultMeshShader;
-        if(compactNodes && compactMeshShader!=null)return useLongShader()?longMeshShader:compactMeshShader;
+        if(useDefaultShader())return useFacingShader()?facingDefaultShader:useLongShader()?longDefaultShader:defaultMeshShader;
+        if(compactNodes && compactMeshShader!=null)return useFacingShader()?facingMeshShader:useLongShader()?longMeshShader:compactMeshShader;
         return meshShader;
     }
     private String programName() {
+        if(useFacingShader())return (useDefaultShader()?"native-live-facing-":"native-compact-facing-")+meshStepLimit;
         if(useDefaultShader())return useLongShader()?"native-live-steps-"+meshStepLimit:"native-live-defaults";
         return useMeshShader()?(compactNodes && compactMeshShader!=null?(useLongShader()?"native-compact-steps-"+meshStepLimit:"native-compact-nodes"):"native-mesh"):"general";
     }
@@ -322,6 +328,11 @@ final class TerrainScreen extends Screen {
         float old=meshStepLimit;cancelBenchmark();
         try {if(reference)meshStepLimit=4;renderTerrain();}
         finally {meshStepLimit=old;}
+    }
+    void renderFacingComparison(boolean reference) {
+        boolean old=facingHints;cancelBenchmark();
+        try {if(reference)facingHints=false;renderTerrain();}
+        finally {facingHints=old;}
     }
     void renderDefaultsComparison(boolean reference) {
         boolean old=liveDefaults;cancelBenchmark();
@@ -378,6 +389,7 @@ final class TerrainScreen extends Screen {
             case GLFW.GLFW_KEY_S -> {if((modifiers&GLFW.GLFW_MOD_SHIFT)!=0)AppearanceCapture.request(this,7);else specialized=!specialized;validationStatus="S: program "+programName()+" | Shift+S: compare programs";}
             case GLFW.GLFW_KEY_F -> {if((modifiers&GLFW.GLFW_MOD_SHIFT)!=0)AppearanceCapture.request(this,8);else compactNodes=!compactNodes;validationStatus="F: program "+programName()+" | Shift+F: compare node layouts";}
             case GLFW.GLFW_KEY_D -> {if((modifiers&GLFW.GLFW_MOD_SHIFT)!=0)AppearanceCapture.request(this,9);else liveDefaults=!liveDefaults;validationStatus="D: program "+programName()+" | Shift+D: compare default settings";}
+            case GLFW.GLFW_KEY_X -> {if((modifiers&GLFW.GLFW_MOD_SHIFT)!=0)AppearanceCapture.request(this,11);else facingHints=!facingHints;validationStatus="X: program "+programName()+" | Shift+X: compare facing hints";}
             case GLFW.GLFW_KEY_I -> {if((modifiers&GLFW.GLFW_MOD_SHIFT)!=0)emptyReach=emptyReach==16?1024:16;else emptyCells=!emptyCells;validationStatus="I: cache "+emptyCells+" | Shift+I reach "+emptyReach+" | Ctrl+Alt+P: compare reach";}
             case GLFW.GLFW_KEY_R -> {fastFetch=!fastFetch;validationStatus="R: fast mesh addressing "+(fastFetch?"ON":"OFF")+" | Alt+P: compare addressing";}
             case GLFW.GLFW_KEY_T -> {fastBounds=!fastBounds;validationStatus="T: fast bounds "+(fastBounds?"ON":"OFF")+" | Ctrl+Shift+P: compare bounds";}

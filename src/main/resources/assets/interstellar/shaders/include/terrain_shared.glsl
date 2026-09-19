@@ -245,7 +245,16 @@ int meshSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
             bool cloud=entity>=5.0;
             if(cloud && (MeshClouds<.5 || cloudLayer.a>0.0))continue;
             if(!cloud && entity!=0.0 && MeshEntities<.5)continue;
+            #ifdef INTERSTELLAR_FACING_HINTS
+            vec4 vertexB=sceneTriangle(tree,base+3);
+            if(entity==0.0) {
+                int facing=int(vertexB.w);
+                if(facing>0 && facing<=6 && delta[(facing-1)/2]*((facing&1)==1?1.0:-1.0)>=0.0)continue;
+            }
+            vec3 a=vertexA.xyz,b=vertexB.xyz,c=sceneTriangle(tree,base+6).xyz;
+            #else
             vec3 a=vertexA.xyz,b=sceneTriangle(tree,base+3).xyz,c=sceneTriangle(tree,base+6).xyz;
+            #endif
             vec3 edge1=b-a,edge2=c-a,p=cross(delta,edge2);
             bool twoSided=abs(entity)==2.0 || entity==6.0;
             float det=dot(edge1,p);if(twoSided?abs(det)<1e-10:det<1e-10)continue;
