@@ -1,4 +1,4 @@
-# Current handoff — 2026-09-18
+# Current handoff — 2026-09-19
 
 Repo C:\work\code\minecraft\interstellar\interstellar; branch codex/world-mesh-reference; origin https://github.com/rohrl/mc-interstellar.git. JDK C:\Portable\jdks\temurin-21.0.12.1, Fabric/Minecraft1.21.1. Read AGENTS.md. Branches/commits/pushes and autonomous runtime checks authorized. No force push/subagents. Preserve worlds/.idea/secrets.
 
@@ -9,6 +9,10 @@ Native terrain/live mobs visually accepted. Initial loading acceptable for v1; t
 **Latest override,2026-09-19:** packaging is paused; owner requested AA then performance with minimal quality/fidelity loss. Owner rejected the soft edge-filter blur. Unverified packaging is isolated at2fe8674 on codex/demo-packaging-wip, never built/launched. Active branch adds2x traced AA + sharper reconstruction, optional EDGE/OFF, adaptive paths and dynamic upload reuse. Preserve the accepted appearance; optimize based on paired images and timings, not FPS alone.
 
 ## Current checkpoint
+
+Latest bounds optimization: `bounds-build.log` build51 tests pass; `bounds-runtime.log` runtime shader and2880 independent sampled original/fast bounds hit comparisons pass. Fast bounds reuse chord reciprocals and vectorize slab tests, preserving explicit near-parallel containment and previous padding/order. Matched frozen2xAA/adaptive GPU p95: small32.580→30.121ms;1440p120.778→111.447ms (7.7%). Same-frame original/fast images pixel-identical at both resolutions; small candidate inspected. Full details and pair IDs: docs/aa-performance.md. F9 T toggles bounds, Ctrl+Shift+P captures comparison. Default fast in F9/F10. This scene had28 mobs versus109 previously: do not claim cross-session timing differences as gains. Further GPU traversal work remains the priority.
+
+Client exited normally and saved before the final live smoke check/window restore could run. No new live benchmark this iteration; frozen streamed renderer and both fixture layouts verified. Do not launch a second client if owner has since started one. Last tested pose(16.5,302,-45.5), yaw.281/pitch.91, N65 preserved. Local options show fullscreen:false after exit. No block/time/weather/quality-config edits.
 
 Latest AA/performance: adaptive-build.log build51 tests pass. adaptive-runtime.log expanded1440 independent original/adaptive hit checks all pass. Frozen streamed p95 at427×240 internal:2xAA original52.367ms→adaptive36.102ms; OFF27.598→19.573ms. Original/adaptive image pairs at straight/downward views differ over8 levels in~0.007% pixels. Full-resolution4-ray AA reference exists;2x improves mean error modestly, still costly and half-resolution. Dynamic live uploads retain GPU/native buffers; after600 frames both textures still only one allocation, with changing mob geometry. Detailed measurements/limitations: docs/aa-performance.md. F9 A cyclesAA; G toggles adaptive; Shift+P quality reference; Ctrl+P old/new path; P preserves vanilla unbent comparison withAAOFF. Benchmarks now include resolve.
 

@@ -30,6 +30,7 @@
     {"name":"Diagnostic","type":"float","count":1,"values":[0]},
     {"name":"PathStep","type":"float","count":1,"values":[0.45]},
     {"name":"RaySamples","type":"float","count":1,"values":[1]},
-    {"name":"AdaptivePath","type":"float","count":1,"values":[0]}
+    {"name":"AdaptivePath","type":"float","count":1,"values":[0]},
+    {"name":"FastBounds","type":"float","count":1,"values":[1]}
   ]
 }

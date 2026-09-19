@@ -68,7 +68,7 @@ Inspect a black-hole proxy, move outside 1.05 r_s, and press **F9**. **Space** c
 
 ## Live terrain
 
-**AA and performance:** the default uses two traced subpixel samples with sharp reconstruction; the soft EDGE filter is optional. In F9, **A** cycles AA, **G** compares adaptive/original ray steps, **Shift+P** captures an AA quality pair, and **Ctrl+P** captures an original/adaptive pair. Adaptive steps reduced GPU p95 by about31% at the measured small-window, same-quality test pose. AA still costs time and does not restore all half-resolution detail. [Settings, measurements and limits](docs/aa-performance.md).
+**AA and performance:** the default uses two traced subpixel samples with sharp reconstruction; the soft EDGE filter is optional. In F9, **A** cycles AA, **G** compares adaptive/original ray steps, **Shift+P** captures an AA quality pair, and **Ctrl+P** captures an original/adaptive pair. **T** toggles faster bounds checks; **Ctrl+Shift+P** captures their original/selected comparison. Adaptive steps reduced GPU p95 by about31% at the measured small-window, same-quality test pose. Faster bounds checks save another7.7% in a matched1440p test with identical paired pixels. AA still costs time and does not restore all half-resolution detail. [Settings, measurements and limits](docs/aa-performance.md).
 
 **Numerical mesh check:** in a ready F9 native mesh preview, **C** runs a small synthetic scene against the independent CPU ray solver (about0.6seconds here). It checks both mesh layouts at near/far distances without changing the world. [Results and limits](docs/mesh-ray-validation.md).
 

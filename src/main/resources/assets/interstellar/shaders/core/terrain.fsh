@@ -31,6 +31,7 @@ uniform float Radius,Lensing,PathStep,Diagnostic;
 uniform vec2 Viewport;
 uniform float RaySamples;
 uniform float AdaptivePath;
+uniform float FastBounds;
 vec4 diagnostic=vec4(0);
 ivec3 materialCell;
 bool distantHit=false;
@@ -143,6 +144,10 @@ vec4 sceneNode(int tree,int index) {return tree==0?meshData(MeshNodes,index):mes
 // Stackless preorder traversal: escape links skip whole subtrees. Each chord has one nearest hit.
 int meshSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
     vec3 delta=end-start;float best=1.000001;bool found=false;
+    // One reciprocal per chord, shared by both BVHs. Parallel axes use finite
+    // placeholders and explicit containment, avoiding zero-times-infinity NaNs.
+    bvec3 parallel=lessThan(abs(delta),vec3(1e-12));
+    vec3 inverseDelta=1.0/mix(delta,vec3(1),parallel);
     float cloudAt=2.0;vec4 nearestCloud=vec4(0);
     for(int tree=0;tree<2;tree++) {
     int node=0,nodeCount=int(tree==0?MeshNodeCount:MovingNodeCount),returnTo=0;
@@ -151,7 +156,17 @@ int meshSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
         if(node==nodeCount)break;
         vec4 lower=sceneNode(tree,node*3),upper=sceneNode(tree,node*3+1);
         float enter=0,leave=min(1.0,best);bool inside=true;
-        for(int axis=0;axis<3;axis++) {
+        if(FastBounds>.5) {
+            vec3 low=lower.xyz-vec3(.00001),high=upper.xyz+vec3(.00001);
+            vec3 a=(low-start)*inverseDelta,b=(high-start)*inverseDelta;
+            vec3 nearT=mix(min(a,b),vec3(0),parallel);
+            vec3 farT=mix(max(a,b),vec3(1),parallel);
+            enter=max(0.0,max(nearT.x,max(nearT.y,nearT.z)));
+            leave=min(leave,min(farT.x,min(farT.y,farT.z)));
+            bvec3 outside=bvec3(start.x<low.x || start.x>high.x,
+                start.y<low.y || start.y>high.y,start.z<low.z || start.z>high.z);
+            inside=!(parallel.x && outside.x || parallel.y && outside.y || parallel.z && outside.z);
+        } else for(int axis=0;axis<3;axis++) {
             if(abs(delta[axis])<1e-12) {
                 if(start[axis]<lower[axis]-.00001 || start[axis]>upper[axis]+.00001)inside=false;
             } else {

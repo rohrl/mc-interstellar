@@ -55,3 +55,22 @@ Second path comparison, same player position with pitch35: pair19518355870807245
 Live checks: after600 updates with changing105→104 supported mobs, triangle/node allocation counters remain1/1. Animation fingerprints change. Live small-window GPU p50/p95/p99=34.324/38.111/40.561ms; frame intervals35.875/40.149/42.382ms. These runs are not a matched legacy/new-upload FPS comparison; only allocation reuse and ongoing geometry updates are established.
 
 **Full-screen limit:** live2560×1440 output,1280×720 internal,2xAA/adaptive paths, same pose/source: GPU p50/p95/p99=159.902/167.944/176.106ms; frame intervals166.240/177.935/183.302ms, about6FPS at the median.120 warmup/300 samples. This is far from the60FPS target. No same-pose full-screen original-step baseline was run, so do not extrapolate the31% small-window reduction as a measured1440p speedup. The optical GPU pass dominates this measured frame; prioritize ray/geometry traversal work next. Restored the870×519 window afterward, F10 active.
+
+## Reused, vectorized bounds checks — 2026-09-19
+
+The default mesh traversal computes reciprocal chord directions once, shared by terrain and moving BVHs, then uses vector slab intersections. Near-parallel axes (absolute delta below1e-12) retain explicit padded-box containment and finite placeholders; no zero-times-infinity arithmetic. The previous1e-5 box padding, traversal order, nearest-hit selection, triangle/material checks, optical integration, AA and resolution are preserved. This rearranges floating-point arithmetic, so sampled pixel identity is not a universal proof at all geometric boundaries.
+
+F9 **T** toggles fast/original bounds; **Ctrl+Shift+P** captures original versus selected bounds with the same path/AA/scale. Timing and capture metadata include fastBounds. F9 C now covers both bounds algorithms, both mesh layouts, both path algorithms and standard/fine steps:2880 comparisons over180 distinct rays.
+
+`bounds-build.log`: build and51 tests pass. `bounds-runtime.log`: runtime shader compilation;2880 comparisons pass with zero mismatches, inconclusive or unresolved rays (742ms). Frozen streamed pose(16.5,302,-45.5), yaw.281/pitch.91, owner source N65/r_s8.125,6,092,190 terrain triangles plus6516 moving triangles/28 mobs. Both modes use adaptive paths and2x AA. RTX5070Ti;120 warmup/300 samples; optical GPU time includes resolve.
+
+| Output / internal size | Bounds | GPU p50 / p95 / p99, ms | Frame p50 / p95, ms |
+| --- | --- | --- | --- |
+|854x480 /427x240|Original|29.528 /32.580 /33.520|30.599 /33.534|
+|854x480 /427x240|Fast|27.274 /30.121 /30.636|28.339 /31.157|
+|2560x1440 /1280x720|Original|114.520 /120.778 /126.873|119.373 /127.976|
+|2560x1440 /1280x720|Fast|106.926 /111.447 /115.449|111.499 /119.469|
+
+Matched GPU p95 reductions:7.5% small window,7.7%1440p. Small-window fast was measured first; fullscreen original first. Single frozen pose, not a multi-run whole-game certification. The1440p optimized frame median is still about9FPS. This scene has fewer live actors than the earlier checkpoint; do not attribute cross-session timing differences to this optimization.
+
+Pairs600111862750755422 (small) and3810031342862256033 (1440p) have zero pixel differences and identical reference/candidate PNG SHA-256 within each pair. Hashes respectively A75EE0AFCD865A43198763C40EE090455E85A03EF6071EB9C44B00647F787847 and71C4410F6E317E42C2F6D71A41FB53C910F7010C1A169D09930CE4A93FA02323. Small candidate inspected. No blocks, time, weather or saved quality settings changed. The main remaining cost is repeated ray/geometry traversal; this gain does not meet the FPS target.
