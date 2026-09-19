@@ -40,17 +40,20 @@ public final class MeshRayFixture implements FiniteTerrainRay.Scene {
     }
     public record Geometry(float[] triangles,float[] nodes,int roots) { }
     public Geometry geometry(boolean twoLevel) {
+        return geometry(twoLevel,false);
+    }
+    public Geometry geometry(boolean twoLevel,boolean surfaceArea) {
         float[] triangles=new float[boxes.size()*12*MeshTree.STRIDE];
         if(!twoLevel) {
             for(int i=0;i<boxes.size();i++)System.arraycopy(triangles(boxes.get(i)),0,triangles,i*12*MeshTree.STRIDE,12*MeshTree.STRIDE);
-            var tree=new MeshTree(triangles,boxes.size()*12);
+            var tree=new MeshTree(triangles,boxes.size()*12,surfaceArea);
             return new Geometry(triangles,tree.nodes(),tree.size());
         }
         // Keep child addresses beyond the top-level end sentinel, as the live row arena does.
         int roots=2*boxes.size()-1,childStart=64,next=childStart;
         var parts=new ArrayList<SceneTree.Part>();var children=new ArrayList<float[]>();
         for(int i=0;i<boxes.size();i++) {
-            var b=boxes.get(i);float[] local=triangles(b);var tree=new MeshTree(local,12);float[] nodes=tree.nodes();
+            var b=boxes.get(i);float[] local=triangles(b);var tree=new MeshTree(local,12,surfaceArea);float[] nodes=tree.nodes();
             System.arraycopy(local,0,triangles,i*12*MeshTree.STRIDE,local.length);
             parts.add(new SceneTree.Part(b.x,b.y,b.z,b.maxX,b.maxY,b.maxZ,next));
             for(int n=0;n<tree.size();n++) {

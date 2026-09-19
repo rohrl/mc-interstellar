@@ -23,6 +23,7 @@ final class TerrainScreen extends Screen {
     private static ShaderProgram generalShader,meshShader;
     private ShaderProgram shader;
     private boolean specialized=true;
+    private boolean terrainSah=true;
     private static int resourceVersion;
     private final int capturedVersion=resourceVersion;
     private boolean validate;
@@ -103,7 +104,7 @@ final class TerrainScreen extends Screen {
                     if(paused!=null) {renderPaused(context);return;}
                 }
                 snapshot.advance();
-                if((live || streamedReference) && mesh==null)mesh=new WorldMesh(client.world,snapshot.origin,net.minecraft.util.math.BlockPos.ofFloored(centre()),true);
+                if((live || streamedReference) && mesh==null)mesh=new WorldMesh(client.world,snapshot.origin,net.minecraft.util.math.BlockPos.ofFloored(centre()),true,terrainSah);
                 if(snapshot.ready() && publishedAt==0) {publishedAt=System.nanoTime();generation=1;}
                 if(live && !meshMode && snapshot.ready() && !client.isPaused()) refresh();
                 if(meshMode && mesh!=null)mesh.advance();
@@ -253,7 +254,7 @@ final class TerrainScreen extends Screen {
         try {lensing=false;scale=1;validate=false;antialiasing=0;renderTerrain();}
         finally {lensing=oldLensing;scale=oldScale;validate=oldValidate;antialiasing=oldAa;}
     }
-    String qualitySettings() {return "AA="+aaName()+", scale="+scale+", lensing="+lensing+", fine="+fine+", adaptive="+adaptivePath+", fastBounds="+fastBounds+", fastFetch="+fastFetch+", emptyCells="+emptyCells+", emptyReach="+emptyReach+", program="+programName();}
+    String qualitySettings() {return "AA="+aaName()+", scale="+scale+", lensing="+lensing+", fine="+fine+", adaptive="+adaptivePath+", fastBounds="+fastBounds+", fastFetch="+fastFetch+", emptyCells="+emptyCells+", emptyReach="+emptyReach+", terrainSAH="+terrainSah+", program="+programName();}
     private String aaName() {return antialiasing==0?"OFF":antialiasing==1?"EDGE":antialiasing==2?"2x":"4x reference";}
     void renderQuality(boolean reference) {
         int oldAa=antialiasing;float oldScale=scale;boolean oldValidate=validate;
@@ -298,7 +299,7 @@ final class TerrainScreen extends Screen {
         if(key==GLFW.GLFW_KEY_B && snapshot!=null && snapshot.ready() && error==null && paused==null && target!=null) {
             if(benchmark!=null)cancelBenchmark();
             else benchmark=new LabBenchmark(String.format(Locale.ROOT,"TERRAIN %dx%d, scale=%.2f, r/rs=%.5f, lensing=%s, fine=%s, snapshot=%s, hybrid="+hybrid+", live="+live+", mesh="+meshMode+", entities="+meshEntities+", nativeLight="+faceLighting+", coverage="+meshCoverage+", clouds="+meshClouds,
-                    target.textureWidth,target.textureHeight,scale,camera.distanceTo(centre())/source.schwarzschildRadius(),lensing,fine,meshMode?mesh.status():snapshot.status())+"; AA="+aaName()+"; adaptive="+adaptivePath+"; fastBounds="+fastBounds+"; fastFetch="+fastFetch+"; emptyCells="+emptyCells+"; emptyReach="+emptyReach+"; program="+programName()+"; includes resolve");
+                    target.textureWidth,target.textureHeight,scale,camera.distanceTo(centre())/source.schwarzschildRadius(),lensing,fine,meshMode?mesh.status():snapshot.status())+"; AA="+aaName()+"; adaptive="+adaptivePath+"; fastBounds="+fastBounds+"; fastFetch="+fastFetch+"; emptyCells="+emptyCells+"; emptyReach="+emptyReach+"; terrainSAH="+terrainSah+"; program="+programName()+"; includes resolve");
             return true;
         }
         cancelBenchmark();
@@ -317,7 +318,7 @@ final class TerrainScreen extends Screen {
                     }
                     if(meshMode) {
                         streamedReference=nextStream;hybrid=true;lensing=false;
-                        if(mesh==null)try {mesh=new WorldMesh(client.world,snapshot.origin,net.minecraft.util.math.BlockPos.ofFloored(centre()),streamedReference);}
+                        if(mesh==null)try {mesh=new WorldMesh(client.world,snapshot.origin,net.minecraft.util.math.BlockPos.ofFloored(centre()),streamedReference,terrainSah);}
                         catch(RuntimeException failure) {error="Terrain preview allocation failed: see game log.";Interstellar.LOGGER.error(error,failure);}
                     }
                     validationStatus=meshMode?"P: vanilla/mesh pair | C: independent mesh fixture":"V: flat check | C: curved check (brief pause)";
@@ -331,7 +332,16 @@ final class TerrainScreen extends Screen {
             case GLFW.GLFW_KEY_T -> {fastBounds=!fastBounds;validationStatus="T: fast bounds "+(fastBounds?"ON":"OFF")+" | Ctrl+Shift+P: compare bounds";}
             case GLFW.GLFW_KEY_A -> antialiasing=(antialiasing+1)%3;
             case GLFW.GLFW_KEY_G -> {adaptivePath=!adaptivePath;validationStatus="G: adaptive paths "+(adaptivePath?"ON":"OFF")+" | Ctrl+P: compare old path";}
-            case GLFW.GLFW_KEY_H -> {if(!meshMode)hybrid=!hybrid;}
+            case GLFW.GLFW_KEY_H -> {
+                if(!meshMode)hybrid=!hybrid;
+                else if(!live && mesh!=null && mesh.ready()) {
+                    terrainSah=!terrainSah;mesh.close();mesh=null;
+                    // Keep the same paused world, source, lensing and moving geometry.
+                    try {mesh=new WorldMesh(client.world,snapshot.origin,net.minecraft.util.math.BlockPos.ofFloored(centre()),streamedReference,terrainSah);}
+                    catch(RuntimeException failure) {error="Terrain tree rebuild failed: see game log.";Interstellar.LOGGER.error(error,failure);}
+                    validationStatus="H: rebuilt terrain tree "+(terrainSah?"surface area":"midpoint");
+                }
+            }
             case GLFW.GLFW_KEY_K -> faceLighting=!faceLighting;
             case GLFW.GLFW_KEY_O -> smoothLighting=!smoothLighting;
             case GLFW.GLFW_KEY_V -> {if(!meshMode) {validate=true;curvedValidation=false;}}

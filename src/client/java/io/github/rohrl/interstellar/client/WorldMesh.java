@@ -35,6 +35,7 @@ final class WorldMesh implements VertexConsumer,AutoCloseable {
     final CloudMesh clouds=new CloudMesh();
     private final BlockPos centre;
     private final boolean terrainOnly;
+    private final boolean surfaceArea;
     private final boolean singleChunk;
     private boolean prepared;
     private StreamingTerrain streaming;
@@ -45,14 +46,17 @@ final class WorldMesh implements VertexConsumer,AutoCloseable {
         this(world,origin,centre,false);
     }
     WorldMesh(ClientWorld world,BlockPos origin,BlockPos centre,boolean terrainOnly) {
-        this(world,origin,centre,terrainOnly,false,0,0);
+        this(world,origin,centre,terrainOnly,true);
+    }
+    WorldMesh(ClientWorld world,BlockPos origin,BlockPos centre,boolean terrainOnly,boolean surfaceArea) {
+        this(world,origin,centre,terrainOnly,false,0,0,surfaceArea);
     }
     static WorldMesh chunk(ClientWorld world,BlockPos origin,BlockPos centre,int x,int z) {
-        return new WorldMesh(world,origin,centre,true,true,x,z);
+        return new WorldMesh(world,origin,centre,true,true,x,z,false);
     }
-    private WorldMesh(ClientWorld world,BlockPos origin,BlockPos centre,boolean terrainOnly,boolean singleChunk,int chunkX,int chunkZ) {
+    private WorldMesh(ClientWorld world,BlockPos origin,BlockPos centre,boolean terrainOnly,boolean singleChunk,int chunkX,int chunkZ,boolean surfaceArea) {
         this.world=world;this.origin=origin;this.centre=centre;
-        this.terrainOnly=terrainOnly;this.singleChunk=singleChunk;
+        this.terrainOnly=terrainOnly;this.singleChunk=singleChunk;this.surfaceArea=surfaceArea;
         var client=MinecraftClient.getInstance();
         var camera=BlockPos.ofFloored(client.gameRenderer.getCamera().getPos());
         viewDistance=client.options.getViewDistance().getValue();
@@ -60,7 +64,7 @@ final class WorldMesh implements VertexConsumer,AutoCloseable {
         int radius=Math.max(2,Math.min(16,viewDistance))+1;chunks=singleChunk?1:radius*2+1;
         minChunkX=singleChunk?chunkX:(camera.getX()>>4)-radius;minChunkZ=singleChunk?chunkZ:(camera.getZ()>>4)-radius;
         sections=world.countVerticalSections();total=chunks*chunks*sections*4096;
-        if(terrainOnly && !singleChunk){streaming=new StreamingTerrain(world,origin,centre);triangles=null;}
+        if(terrainOnly && !singleChunk){streaming=new StreamingTerrain(world,origin,centre,surfaceArea);triangles=null;}
     }
     float[] triangleData() {return triangles;}
     int triangleCount() {return count;}
@@ -127,7 +131,7 @@ final class WorldMesh implements VertexConsumer,AutoCloseable {
         }
     }
     private void finishTree() {
-        var tree=new MeshTree(triangles,count);nodeCount=tree.size();
+        var tree=new MeshTree(triangles,count,surfaceArea && !dynamic);nodeCount=tree.size();
         var nodes=tree.nodes();
         if(nodes.length>0) {
             double radiusSquared=0;

@@ -70,3 +70,7 @@ Technical APIs checked against the pinned 1.21.1 family: [BakedQuad](https://mav
 ## Finite-surface independent diagnostic
 
 [Curved terrain checks](curved-terrain-validation.md) derive and implement an affine-parameter radial system from the Schwarzschild metric and constants of motion. Adaptive DP5(4), independent cuboid slabs and paired chord/tolerance refinement compare sampled finite hit cells to the production inverse-radius GPU solver. Shared scene/embedding and finite-chord limitations remain explicit; passing samples do not certify arbitrary critical rays or radiometric transport.
+
+## Terrain search-tree cost model
+
+The surface-area heuristic estimates child traversal cost using bounding-box surface area and primitive count; see [PBRT4, Bounding Volume Hierarchies](https://pbr-book.org/4ed/Primitives_and_Intersection_Acceleration/Bounding_Volume_Hierarchies). The current experiment evaluates12 centroid bins along each axis, minimizing the sum of child area times triangle count while retaining the existing leaf/depth limits. This is an acceleration heuristic, not a physical approximation: all triangles, padded bounds and intersection equations are preserved. We use ordinary Euclidean boxes to search the existing short optical chords; the heuristic's straight-ray distribution assumption only affects efficiency, not accepted hits. Build and rendering costs must be measured in the actual curved-ray scene. Implementation is original; no reference source code is copied.

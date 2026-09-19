@@ -6,6 +6,12 @@ Repo: C:\work\code\minecraft\interstellar\interstellar. Branch codex/world-mesh-
 
 Owner loves current appearance; optimize FPS with minimal fidelity loss. Packaging paused on codex/demo-packaging-wip at2fe8674 (pushed, unverified, never built/launched). Original AA WIP8ad46eb remains on codex/terrain-antialiasing; do not cherry-pick its obsolete renderer. Current2xAA is already adapted. Owner rejected soft EDGE blur; retain sharp default. Rain/snow, teleport support and star differences deferred; owner handles movement/flicker acceptance. Never revive rejected ordinary-camera background overlays.
 
+## Active goal / experiment
+
+New explicit goal: approach60+FPS at1440p without noticeable quality loss or correctness compromises; stop when only complex, small gains remain. Then assess efficient precipitation support (implement if reasonable, otherwise document why deferred), then brainstorm visual and functional black-hole/relativity features. This overrides the earlier unconditional precipitation deferral. Goal remains active; these later stages are not complete.
+
+This branch preserves the rejected12-bin surface-area terrain BVH experiment after b41b2f2. Do not merge into production:1440p GPU p95 gains only1.9% wall/3.3% downward, versus3.7–4.1x total CPU tree-build work.52 tests and34560 sampled CPU/GPU checks pass; wall/downward PNG hashes match. Evidence: docs/experiments/terrain-sah.md. Runtime sah-runtime.log; client PID11548 closed normally. F9 H rebuilds midpoint/SAH in the same paused world, preserving streamed moving geometry and lensing; capture metadata records terrainSAH. Production should retain midpoint trees and explore deferred coordinate conversions in certified empty space next. Handoff below describes the previous verified production checkpoint.
+
 ## Current verified optimization and review
 
 Native meshes use a dedicated shader with MeshMode fixed to1; both native/general programs import shaders/include/terrain_shared.glsl. Same optics/traversal/materials/AA and all earlier toggles. F9 S switches programs; Shift+S captures general versus selected in one frame. Native is the default in F9 meshes/F10; general remains the voxel backend/reference. Keep shared GLSL as the single optical implementation; shader JSON manifests differ in their active samplers/uniforms.

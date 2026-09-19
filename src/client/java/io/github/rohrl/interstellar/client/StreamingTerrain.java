@@ -15,6 +15,8 @@ public final class StreamingTerrain implements AutoCloseable {
     private static volatile StreamingTerrain active;
     private final ClientWorld world;
     private final BlockPos origin,centre;
+    private final boolean surfaceArea;
+    private long buildNanos,maxBuildNanos,builtNodes;
     private final MeshArena triangles,nodes;
     private final RowArena triangleRows=new RowArena(0,16384),nodeRows=new RowArena(4,4092);
     private record Entry(int triangleRow,int triangleRows,int nodeRow,int nodeRows,int triangles,SceneTree.Part part) {}
@@ -44,8 +46,8 @@ public final class StreamingTerrain implements AutoCloseable {
         var cache=active;if(cache==null)return;var w=cache.window;
         if(w!=null && Math.abs((long)x-w.x)<=w.radius+1 && Math.abs((long)z-w.z)<=w.radius+1)cache.incoming.add(ChunkPos.toLong(x,z));
     }
-    StreamingTerrain(ClientWorld world,BlockPos origin,BlockPos centre) {
-        this.world=world;this.origin=origin;this.centre=centre;
+    StreamingTerrain(ClientWorld world,BlockPos origin,BlockPos centre,boolean surfaceArea) {
+        this.world=world;this.origin=origin;this.centre=centre;this.surfaceArea=surfaceArea;
         triangles=new MeshArena(16384);
         try {nodes=new MeshArena(4096);}catch(RuntimeException e){triangles.close();throw e;}
         active=this;
@@ -89,6 +91,7 @@ public final class StreamingTerrain implements AutoCloseable {
         if(!ready && entries.keySet().containsAll(wanted)) {
             ready=true;
             Interstellar.LOGGER.info("Streaming terrain ready: {}; initial capture={} ms",status(),(System.nanoTime()-started)/1e6);
+            Interstellar.LOGGER.info("Terrain BVH: surfaceArea={}, nodes built={}, total build={} ms, max chunk build={} ms",surfaceArea,builtNodes,buildNanos/1e6,maxBuildNanos/1e6);
         }
     }
     private boolean loaded(long key) {return world.getChunkManager().isChunkLoaded(ChunkPos.getPackedX(key),ChunkPos.getPackedZ(key));}
@@ -113,7 +116,8 @@ public final class StreamingTerrain implements AutoCloseable {
         if(triangleCount-(old==null?0:old.triangles)+count>7_000_000)throw new IllegalStateException("Streaming terrain exceeds seven million triangles");
         Entry next=new Entry(0,0,0,0,0,null);
         if(count>0) {
-            var data=mesh.triangleData();var tree=new MeshTree(data,count);var treeNodes=tree.nodes();
+            var data=mesh.triangleData();long start=System.nanoTime();var tree=new MeshTree(data,count,surfaceArea);var treeNodes=tree.nodes();
+            long elapsed=System.nanoTime()-start;buildNanos+=elapsed;maxBuildNanos=Math.max(maxBuildNanos,elapsed);builtNodes+=tree.size();
             int tr=(count+MeshArena.TRIANGLES-1)/MeshArena.TRIANGLES,nr=(tree.size()+MeshArena.NODES-1)/MeshArena.NODES;
             int t=triangleRows.allocate(tr),n;
             try {n=nodeRows.allocate(nr);}catch(RuntimeException e){triangleRows.release(t,tr);throw e;}

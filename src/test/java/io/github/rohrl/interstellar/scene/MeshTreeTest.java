@@ -6,10 +6,12 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class MeshTreeTest {
     @Test void emptyAndCoincidentGeometryTerminate() {
-        assertEquals(0,new MeshTree(new float[0],0).size());
-        float[] triangles=new float[36*100];
-        var tree=new MeshTree(triangles,100);
-        verify(tree.nodes(),triangles,100);
+        for(boolean surfaceArea:new boolean[]{false,true}) {
+            assertEquals(0,new MeshTree(new float[0],0,surfaceArea).size());
+            float[] triangles=new float[36*100];
+            var tree=new MeshTree(triangles,100,surfaceArea);
+            verify(tree.nodes(),triangles,100);
+        }
     }
     @Test void randomScenePreservesEveryTriangleAndConservativeSubtreeBounds() {
         var random=new Random(1024);
@@ -18,11 +20,28 @@ class MeshTreeTest {
             for(int v=0;v<3;v++)for(int a=0;a<3;a++)triangles[i*36+v*12+a]=random.nextFloat()*500-250;
             triangles[i*36+3]=i; // Payload must stay attached when BVH construction reorders triangles.
         }
-        var tree=new MeshTree(triangles,count);
-        verify(tree.nodes(),triangles,count);
-        boolean[] found=new boolean[count];
-        for(int i=0;i<count;i++) {int id=(int)triangles[i*36+3];assertFalse(found[id]);found[id]=true;}
-        for(boolean value:found)assertTrue(value);
+        for(boolean surfaceArea:new boolean[]{false,true}) {
+            float[] reordered=triangles.clone();var tree=new MeshTree(reordered,count,surfaceArea);
+            verify(tree.nodes(),reordered,count);
+            boolean[] found=new boolean[count];
+            for(int i=0;i<count;i++) {
+                int id=(int)reordered[i*36+3];assertFalse(found[id]);found[id]=true;
+                for(int a=0;a<36;a++)assertEquals(triangles[id*36+a],reordered[i*36+a]);
+            }
+            for(boolean value:found)assertTrue(value);
+        }
+    }
+    @Test void planarAndSkewedScenesKeepValidBoundsAndEscapeLinks() {
+        int count=2000;float[] triangles=new float[count*36];
+        for(int i=0;i<count;i++)for(int v=0;v<3;v++) {
+            triangles[i*36+v*12]=(i==count-1?10000:i%40)+v;
+            triangles[i*36+v*12+1]=i/40;
+            triangles[i*36+v*12+2]=0;
+        }
+        for(boolean surfaceArea:new boolean[]{false,true}) {
+            float[] reordered=triangles.clone();var tree=new MeshTree(reordered,count,surfaceArea);
+            verify(tree.nodes(),reordered,count);
+        }
     }
     private void verify(float[] nodes,float[] triangles,int count) {
         assertEquals(nodes.length/12,(int)nodes[3]);
