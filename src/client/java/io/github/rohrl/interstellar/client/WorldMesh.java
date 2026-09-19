@@ -19,6 +19,7 @@ import java.util.Arrays;
 /** Frozen, client-only native model capture. No filled-column approximation or generated chunks. */
 final class WorldMesh implements VertexConsumer,AutoCloseable {
     private ReusableMeshTexture movingTriangles,movingNodes;
+    private ReusableMeshTexture compactNodes;
     private static final int MAX_TRIANGLES=7_000_000;
     private final ClientWorld world;
     private final BlockPos origin;
@@ -30,7 +31,7 @@ final class WorldMesh implements VertexConsumer,AutoCloseable {
     private float[] triangles=new float[36*8192];
     private int cursor,count,missingSections,omittedBlocks;
     private final long started=System.nanoTime();
-    int triangleTexture,nodeTexture,nodeCount;
+    int triangleTexture,nodeTexture,nodeCount,compactNodeTexture;
     EntityMesh entities;
     final CloudMesh clouds=new CloudMesh();
     private final BlockPos centre;
@@ -86,7 +87,7 @@ final class WorldMesh implements VertexConsumer,AutoCloseable {
             "Capturing native mesh: "+(100L*cursor/total)+"%";}
     void advance() {
         if(streaming!=null) {
-            streaming.advance();triangleTexture=streaming.triangleTexture();nodeTexture=streaming.nodeTexture();nodeCount=streaming.nodeCount;extent=streaming.extent;return;
+            streaming.advance();triangleTexture=streaming.triangleTexture();nodeTexture=streaming.nodeTexture();compactNodeTexture=streaming.compactNodeTexture();nodeCount=streaming.nodeCount;extent=streaming.extent;return;
         }
         if(ready())return;
         // Fail inside the preview's guarded capture loop, not its key handler.
@@ -175,6 +176,10 @@ final class WorldMesh implements VertexConsumer,AutoCloseable {
         GL15.glBindBuffer(GL21.GL_PIXEL_UNPACK_BUFFER,0);
         int newTriangles=0,newNodes=0;
         try {
+            if(TerrainScreen.hasCompactShader()) {
+                if(compactNodes==null)compactNodes=new ReusableMeshTexture(true);
+                compactNodes.upload(nodes,nodes.length);compactNodeTexture=compactNodes.id;
+            }
             if(dynamic) {
                 if(movingTriangles==null)movingTriangles=new ReusableMeshTexture();
                 if(movingNodes==null)movingNodes=new ReusableMeshTexture();
@@ -209,7 +214,7 @@ final class WorldMesh implements VertexConsumer,AutoCloseable {
         } catch(RuntimeException e) {RenderSystem.deleteTexture(id);throw e;}
         finally {MemoryUtil.memFree(buffer);}
     }
-    @Override public void close() {triangles=null;if(entities!=null) {entities.close();entities=null;}if(movingTriangles!=null){movingTriangles.close();movingTriangles=null;triangleTexture=0;}if(movingNodes!=null){movingNodes.close();movingNodes=null;nodeTexture=0;}if(streaming!=null){streaming.close();streaming=null;}else {if(triangleTexture!=0)RenderSystem.deleteTexture(triangleTexture);if(nodeTexture!=0)RenderSystem.deleteTexture(nodeTexture);}triangleTexture=nodeTexture=0;}
+    @Override public void close() {triangles=null;if(entities!=null) {entities.close();entities=null;}if(compactNodes!=null){compactNodes.close();compactNodes=null;}if(movingTriangles!=null){movingTriangles.close();movingTriangles=null;triangleTexture=0;}if(movingNodes!=null){movingNodes.close();movingNodes=null;nodeTexture=0;}if(streaming!=null){streaming.close();streaming=null;}else {if(triangleTexture!=0)RenderSystem.deleteTexture(triangleTexture);if(nodeTexture!=0)RenderSystem.deleteTexture(nodeTexture);}triangleTexture=nodeTexture=compactNodeTexture=0;}
     @Override public VertexConsumer vertex(float x,float y,float z) {throw new IllegalStateException("Expected native quad");}
     @Override public VertexConsumer color(int r,int g,int b,int a) {return this;}
     @Override public VertexConsumer texture(float u,float v) {return this;}

@@ -18,6 +18,8 @@ Diagnostic mode3 bypasses texture alpha/material shading for this deliberately o
 
 ## Scope
 
+The compact-node acceptance suite now has26240 comparisons: the prior flags/distances/path settings across three layouts (monolithic BVH, two-level BVH, and one48-triangle leaf), plus320 critical-boundary classifications. Two-level children start at node1364, crossing a4095-wide texture row. Both compact and original programs pass all checks; see [compact-node evidence](compact-nodes.md). There remain340 distinct directions; repeated layouts/flags do not multiply independent ray directions. Older checkpoint counts below remain historical.
+
 ### Additional analytic capture-boundary fixture (2026-09-19)
 
 The current suite also removes all geometry and samples close to the Schwarzschild critical impact parameter. For the static exterior observer, define `u=r_s/r`, `b/r_s=sin(alpha)/(u*sqrt(1-u))`; incoming rays are captured below `b²/r_s²=27/4` and escape above it. Use the existing four distances and two production path settings, with projection slopes offset about0.0022–0.0089% from the critical tangent. Exclude the central column: an exactly critical ray does not have a finite escape time and is not a finite-precision oracle.

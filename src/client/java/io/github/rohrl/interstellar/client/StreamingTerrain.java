@@ -15,7 +15,7 @@ public final class StreamingTerrain implements AutoCloseable {
     private static volatile StreamingTerrain active;
     private final ClientWorld world;
     private final BlockPos origin,centre;
-    private final MeshArena triangles,nodes;
+    private final MeshArena triangles,nodes,compactNodes;
     private final RowArena triangleRows=new RowArena(0,16384),nodeRows=new RowArena(4,4092);
     private record Entry(int triangleRow,int triangleRows,int nodeRow,int nodeRows,int triangles,SceneTree.Part part) {}
     private final Map<Long,Entry> entries=new HashMap<>();
@@ -48,11 +48,13 @@ public final class StreamingTerrain implements AutoCloseable {
         this.world=world;this.origin=origin;this.centre=centre;
         triangles=new MeshArena(16384);
         try {nodes=new MeshArena(4096);}catch(RuntimeException e){triangles.close();throw e;}
+        try {compactNodes=TerrainScreen.hasCompactShader()?new MeshArena(4096,true):null;}catch(RuntimeException e){nodes.close();triangles.close();throw e;}
         active=this;
     }
     boolean ready() {return ready;}
     int triangleTexture() {return triangles.texture;}
     int nodeTexture() {return nodes.texture;}
+    int compactNodeTexture() {return compactNodes==null?0:compactNodes.texture;}
     String status() {return ready?"Streaming terrain | "+triangleCount+" triangles | "+queue.size()+" queued chunks":"Loading terrain: "+entries.size()+"/"+wanted.size()+" chunks";}
     void advance() {
         var client=MinecraftClient.getInstance();
@@ -120,7 +122,7 @@ public final class StreamingTerrain implements AutoCloseable {
             int base=n*MeshArena.NODES,first=t*MeshArena.TRIANGLES;
             var part=new SceneTree.Part(treeNodes[0],treeNodes[1],treeNodes[2],treeNodes[4],treeNodes[5],treeNodes[6],base);
             for(int i=0;i<tree.size();i++) {int p=i*12;treeNodes[p+3]=treeNodes[p+3]==tree.size()?-1:treeNodes[p+3]+base;treeNodes[p+7]+=first;}
-            try {triangles.write(t,data,count*36);nodes.write(n,treeNodes,treeNodes.length);}
+            try {triangles.write(t,data,count*36);nodes.write(n,treeNodes,treeNodes.length);if(compactNodes!=null)compactNodes.write(n,treeNodes,treeNodes.length);}
             catch(RuntimeException e){triangleRows.release(t,tr);nodeRows.release(n,nr);throw e;}
             next=new Entry(t,tr,n,nr,count,part);
         }
@@ -133,6 +135,7 @@ public final class StreamingTerrain implements AutoCloseable {
         float[] data=new SceneTree(parts).nodes();nodeCount=data.length/12;
         if(data.length>4*MeshArena.FLOATS)throw new IllegalStateException("Streaming index capacity exceeded");
         nodes.write(0,data,data.length);
+        if(compactNodes!=null)compactNodes.write(0,data,data.length);
         if(nodeCount>0) {
             double r=0;int[] source={centre.getX()-origin.getX(),centre.getY()-origin.getY(),centre.getZ()-origin.getZ()};
             for(int a=0;a<3;a++){double d=Math.max(Math.abs(data[a]-source[a]),Math.abs(data[a+4]-source[a]));r+=d*d;}extent=(float)Math.sqrt(r)+2;
@@ -142,6 +145,6 @@ public final class StreamingTerrain implements AutoCloseable {
         if(entry.part==null)return;triangleRows.release(entry.triangleRow,entry.triangleRows);nodeRows.release(entry.nodeRow,entry.nodeRows);triangleCount-=entry.triangles;
     }
     @Override public void close() {
-        if(active==this)active=null;if(capture!=null)capture.close();triangles.close();nodes.close();entries.clear();incoming.clear();queue.clear();
+        if(active==this)active=null;if(capture!=null)capture.close();triangles.close();nodes.close();if(compactNodes!=null)compactNodes.close();entries.clear();incoming.clear();queue.clear();
     }
 }

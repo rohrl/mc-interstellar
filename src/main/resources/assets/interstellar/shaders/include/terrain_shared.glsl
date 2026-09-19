@@ -158,6 +158,14 @@ float cloudFogDistance(vec3 position) {
 // The live actor tree shares nearest-hit and cloud ordering with the retained terrain tree.
 vec4 sceneTriangle(int tree,int index) {return tree==0?meshData(MeshTriangles,index):meshData(DistantAppearance,index);}
 vec4 sceneNode(int tree,int index) {return tree==0?meshData(MeshNodes,index):meshData(DistantLight,index);}
+#ifdef INTERSTELLAR_COMPACT_NODES
+uniform sampler2D CompactNodes;
+uniform sampler2D CompactMovingNodes;
+vec4 compactNode(int tree,int node,int part) {
+    ivec2 address=ivec2(part<2?(node%1365)*2+part:2730+node%1365,node/1365);
+    return tree==0?texelFetch(CompactNodes,address,0):texelFetch(CompactMovingNodes,address,0);
+}
+#endif
 vec3 emptyLow[2],emptyHigh[2];
 bool cellKnown[2];
 // Stackless preorder traversal: escape links skip whole subtrees. Each chord has one nearest hit.
@@ -177,7 +185,11 @@ int meshSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
     for(int visited=0;visited<131072;visited++) {
         if(node<0)node=returnTo;
         if(node==nodeCount)break;
+        #ifdef INTERSTELLAR_COMPACT_NODES
+        vec4 lower=compactNode(tree,node,0),upper=compactNode(tree,node,1);
+        #else
         vec4 lower=sceneNode(tree,node*3),upper=sceneNode(tree,node*3+1);
+        #endif
         float enter=0,leave=min(1.0,best);bool inside=true;
         if(FastBounds>.5) {
             vec3 low=lower.xyz-vec3(.00001),high=upper.xyz+vec3(.00001);
@@ -211,7 +223,14 @@ int meshSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
             }
             node=int(lower.w);continue;
         }
+        #ifdef INTERSTELLAR_COMPACT_NODES
+        uint header=floatBitsToUint(upper.w)&0x07ffffffu;
+        int count=int(header&15u);upper.w=float(header>>4u);
+        if(count==9)count=-1;
+        else if(count==15) {vec2 descriptor=compactNode(tree,int(upper.w),2).xy;upper.w=descriptor.x;count=int(descriptor.y);}
+        #else
         int count=int(sceneNode(tree,node*3+2).x);
+        #endif
         if(count<0) {returnTo=int(lower.w);node=int(upper.w);continue;}
         if(count>0)canCache=false;
         for(int i=0;i<count;i++) {

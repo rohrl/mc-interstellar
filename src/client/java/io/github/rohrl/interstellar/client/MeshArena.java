@@ -4,12 +4,16 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import org.lwjgl.opengl.*;
 import org.lwjgl.system.MemoryUtil;
 import java.nio.FloatBuffer;
+import io.github.rohrl.interstellar.scene.CompactMeshNodes;
 
 /** Rows align both 36-float triangles and 12-float nodes, allowing independent chunk replacement. */
 final class MeshArena implements AutoCloseable {
     static final int WIDTH=4095,FLOATS=WIDTH*4,TRIANGLES=FLOATS/36,NODES=FLOATS/12;
     final int texture;
-    MeshArena(int height) {
+    private final boolean compact;
+    MeshArena(int height) {this(height,false);}
+    MeshArena(int height,boolean compact) {
+        this.compact=compact;
         if(height>GL11.glGetInteger(GL11.GL_MAX_TEXTURE_SIZE))throw new IllegalStateException("Native mesh atlas exceeds device limits");
         texture=GL11.glGenTextures();
         try {withUnpack(()-> {
@@ -22,7 +26,7 @@ final class MeshArena implements AutoCloseable {
     void write(int row,float[] data,int length) {
         int rows=(length+FLOATS-1)/FLOATS;if(rows==0)return;
         var staging=MemoryUtil.memCallocFloat(rows*FLOATS);
-        try {staging.put(data,0,length).position(0);withUnpack(()->GL11.glTexSubImage2D(GL11.GL_TEXTURE_2D,0,0,row,WIDTH,rows,GL11.GL_RGBA,GL11.GL_FLOAT,staging));}
+        try {if(compact)CompactMeshNodes.write(data,length,row,staging);else staging.put(data,0,length);staging.position(0);withUnpack(()->GL11.glTexSubImage2D(GL11.GL_TEXTURE_2D,0,0,row,WIDTH,rows,GL11.GL_RGBA,GL11.GL_FLOAT,staging));}
         finally {MemoryUtil.memFree(staging);}
     }
     private void withUnpack(Runnable action) {

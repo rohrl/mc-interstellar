@@ -20,7 +20,7 @@ final class MeshValidation {
         int[] names={GL11.GL_PACK_ALIGNMENT,GL11.GL_PACK_ROW_LENGTH,GL11.GL_PACK_SKIP_ROWS,GL11.GL_PACK_SKIP_PIXELS},saved=new int[4];
         for(int i=0;i<4;i++)saved[i]=GL11.glGetInteger(names[i]);
         int total=0,mismatches=0,inconclusive=0,unresolved=0;double invariant=0;
-        try(var triangles=new MeshArena(1);var nodes=new MeshArena(1)) {
+        try(var triangles=new MeshArena(1);var nodes=new MeshArena(2);var compactNodes=new MeshArena(2,true)) {
             GL15.glBindBuffer(GL21.GL_PIXEL_PACK_BUFFER,0);
             for(int i=0;i<4;i++)GL11.glPixelStorei(names[i],i==0?1:0);
             GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER,framebuffer);GL30.glBindRenderbuffer(GL30.GL_RENDERBUFFER,colour);
@@ -32,6 +32,7 @@ final class MeshValidation {
             // All sampler names are replaced by the caller before the next ordinary draw.
             for(String name:new String[]{"Voxels","Palette","Atlas","Distant","DistantAppearance","SkyAtlas","Lightmap","LocalLight","DistantLight","SmoothAtlas","LocalSmooth","DistantSmooth"})shader.addSampler(name,triangles.texture);
             shader.addSampler("Palette",nodes.texture);
+            shader.addSampler("CompactNodes",compactNodes.texture);shader.addSampler("CompactMovingNodes",compactNodes.texture);
             shader.getUniformOrDefault("Viewport").set(1f,1f);
             set(shader,"MeshMode",1);set(shader,"MeshCoverage",1);set(shader,"MeshClouds",0);set(shader,"MovingNodeCount",0);
             set(shader,"Lensing",1);set(shader,"Hybrid",1);set(shader,"Diagnostic",3);set(shader,"Radius",8);
@@ -55,14 +56,20 @@ final class MeshValidation {
                 }
                 inconclusive+=unstable;
                 vector(shader,"Camera",320.25f,320.375f,320-distance);shader.getUniformOrDefault("ViewSlopes").set(sx,sy,0f,0f);
-                for(boolean emptyCells:new boolean[]{false,true}) for(float reach:emptyCells?new float[]{16,1024}:new float[]{16}) for(boolean fastFetch:new boolean[]{false,true}) for(boolean fastBounds:new boolean[]{false,true}) for(boolean adaptive:new boolean[]{false,true}) for(boolean twoLevel:new boolean[]{false,true}) {
+                for(boolean emptyCells:new boolean[]{false,true}) for(float reach:emptyCells?new float[]{16,1024}:new float[]{16}) for(boolean fastFetch:new boolean[]{false,true}) for(boolean fastBounds:new boolean[]{false,true}) for(boolean adaptive:new boolean[]{false,true}) for(int layout:new int[]{0,1,2}) {
+                    boolean twoLevel=layout==1;
                     set(shader,"EmptyReach",reach);
                     set(shader,"EmptyCells",emptyCells?1:0);
                     set(shader,"FastFetch",fastFetch?1:0);
                     set(shader,"FastBounds",fastBounds?1:0);
                     set(shader,"AdaptivePath",adaptive?1:0);
                     var geometry=fixture.geometry(twoLevel);
-                    triangles.write(0,geometry.triangles(),geometry.triangles().length);nodes.write(0,geometry.nodes(),geometry.nodes().length);
+                    if(layout==2) {
+                        float[] leaf=java.util.Arrays.copyOf(geometry.nodes(),12);
+                        leaf[3]=1;leaf[7]=0;leaf[8]=geometry.triangles().length/36;
+                        geometry=new MeshRayFixture.Geometry(geometry.triangles(),leaf,1);
+                    }
+                    triangles.write(0,geometry.triangles(),geometry.triangles().length);nodes.write(0,geometry.nodes(),geometry.nodes().length);compactNodes.write(0,geometry.nodes(),geometry.nodes().length);
                     set(shader,"MeshNodeCount",geometry.roots());
                     for(float step:new float[]{.45f,.225f}) {
                         set(shader,"PathStep",step);draw.run();pixels.clear();GL11.glReadPixels(0,0,W,H,GL11.GL_RGBA,GL11.GL_FLOAT,pixels);
@@ -79,7 +86,7 @@ final class MeshValidation {
                             }
                         }
                         total+=compared;mismatches+=wrong;unresolved+=failed;
-                        Interstellar.LOGGER.info("Mesh fixture: distance={}, reach={}, emptyCells={}, fastFetch={}, fastBounds={}, adaptive={}, twoLevel={}, pathStep={}, compared={}, mismatches={}, GPU unresolved/invalid={}, CPU inconclusive={}, hits={}, captured={}",distance,reach,emptyCells,fastFetch,fastBounds,adaptive,twoLevel,step,compared,wrong,failed,unstable,referenceHits,referenceCaptured);
+                        Interstellar.LOGGER.info("Mesh fixture: distance={}, reach={}, emptyCells={}, fastFetch={}, fastBounds={}, adaptive={}, layout={}, pathStep={}, compared={}, mismatches={}, GPU unresolved/invalid={}, CPU inconclusive={}, hits={}, captured={}",distance,reach,emptyCells,fastFetch,fastBounds,adaptive,layout,step,compared,wrong,failed,unstable,referenceHits,referenceCaptured);
                     }
                 }
             }

@@ -47,7 +47,7 @@ public final class MeshRayFixture implements FiniteTerrainRay.Scene {
             return new Geometry(triangles,tree.nodes(),tree.size());
         }
         // Keep child addresses beyond the top-level end sentinel, as the live row arena does.
-        int roots=2*boxes.size()-1,childStart=64,next=childStart;
+        int roots=2*boxes.size()-1,childStart=1364,next=childStart;
         var parts=new ArrayList<SceneTree.Part>();var children=new ArrayList<float[]>();
         for(int i=0;i<boxes.size();i++) {
             var b=boxes.get(i);float[] local=triangles(b);var tree=new MeshTree(local,12);float[] nodes=tree.nodes();

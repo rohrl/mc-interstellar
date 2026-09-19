@@ -28,18 +28,18 @@ final class AppearanceCapture {
             if(client.currentScreen!=requested) {clear();return;}
             try {
                 if(!client.isInSingleplayer() || !client.isPaused())throw new IllegalStateException("Use a paused singleplayer F9 view");
-                requested.checkAppearancePose();
+                requested.checkAppearancePose(comparison==0);
                 reference=readFramebuffer();
-                var camera=client.gameRenderer.getCamera();
+                var camera=requested.appearanceCamera();
                 metadata=new LinkedHashMap<>();
                 metadata.put("schema",1);
-                metadata.put("reference",comparison==7?"same-scene-general-program":comparison==6?"same-scene-cache-reach-16":comparison==5?"same-scene-no-empty-cell-cache":comparison==4?"same-scene-original-addressing-same-bounds-path-AA-and-scale":comparison==3?"same-scene-original-bounds-same-path-AA-and-scale":comparison==2?"same-scene-original-path-same-AA-and-scale":comparison==1?"same-scene-four-rays-full-resolution":"vanilla-world-END-before-hand-and-HUD");
+                metadata.put("reference",comparison==8?"same-scene-original-native-nodes":comparison==7?"same-scene-general-program":comparison==6?"same-scene-cache-reach-16":comparison==5?"same-scene-no-empty-cell-cache":comparison==4?"same-scene-original-addressing-same-bounds-path-AA-and-scale":comparison==3?"same-scene-original-bounds-same-path-AA-and-scale":comparison==2?"same-scene-original-path-same-AA-and-scale":comparison==1?"same-scene-four-rays-full-resolution":"vanilla-world-END-before-hand-and-HUD");
                 metadata.put("candidate",comparison!=0?"same-scene-selected-AA-scale-and-path":"terrain-backend-zero-bending-full-resolution");
                 metadata.put("qualitySettings",requested.qualitySettings());
                 metadata.put("sameFrame",true);
                 metadata.put("width",reference.getWidth());metadata.put("height",reference.getHeight());
-                metadata.put("camera",new double[]{camera.getPos().x,camera.getPos().y,camera.getPos().z});
-                metadata.put("yaw",camera.getYaw());metadata.put("pitch",camera.getPitch());
+                metadata.put("camera",new double[]{camera.x,camera.y,camera.z});
+                metadata.put("yaw",requested.appearanceYaw());metadata.put("pitch",requested.appearancePitch());
                 metadata.put("projection",context.projectionMatrix().get(new float[16]));
                 metadata.put("configuredFov",client.options.getFov().getValue());
                 metadata.put("candidateVerticalFov",WorldProjection.current().verticalFov());
@@ -58,9 +58,11 @@ final class AppearanceCapture {
     static void finish(TerrainScreen screen) {
         if(requested!=screen || reference==null)return;
         try {
-            screen.checkAppearancePose();
+            screen.checkAppearancePose(comparison==0);
             metadata.put("candidateScene",screen.appearanceScene());
-            if(comparison==7) {
+            if(comparison==8) {
+                screen.renderCompactComparison(true);reference=readFramebuffer();screen.renderCompactComparison(false);
+            } else if(comparison==7) {
                 screen.renderShaderComparison(true);reference=readFramebuffer();screen.renderShaderComparison(false);
             } else if(comparison==6) {
                 screen.renderReachComparison(true);reference=readFramebuffer();screen.renderReachComparison(false);
