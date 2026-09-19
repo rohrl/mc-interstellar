@@ -33,7 +33,7 @@ final class AppearanceCapture {
                 var camera=client.gameRenderer.getCamera();
                 metadata=new LinkedHashMap<>();
                 metadata.put("schema",1);
-                metadata.put("reference",comparison==4?"same-scene-original-addressing-same-bounds-path-AA-and-scale":comparison==3?"same-scene-original-bounds-same-path-AA-and-scale":comparison==2?"same-scene-original-path-same-AA-and-scale":comparison==1?"same-scene-four-rays-full-resolution":"vanilla-world-END-before-hand-and-HUD");
+                metadata.put("reference",comparison==5?"same-scene-no-empty-cell-cache":comparison==4?"same-scene-original-addressing-same-bounds-path-AA-and-scale":comparison==3?"same-scene-original-bounds-same-path-AA-and-scale":comparison==2?"same-scene-original-path-same-AA-and-scale":comparison==1?"same-scene-four-rays-full-resolution":"vanilla-world-END-before-hand-and-HUD");
                 metadata.put("candidate",comparison!=0?"same-scene-selected-AA-scale-and-path":"terrain-backend-zero-bending-full-resolution");
                 metadata.put("qualitySettings",requested.qualitySettings());
                 metadata.put("sameFrame",true);
@@ -60,7 +60,9 @@ final class AppearanceCapture {
         try {
             screen.checkAppearancePose();
             metadata.put("candidateScene",screen.appearanceScene());
-            if(comparison==4) {
+            if(comparison==5) {
+                screen.renderCellComparison(true);reference=readFramebuffer();screen.renderCellComparison(false);
+            } else if(comparison==4) {
                 screen.renderFetchComparison(true);reference=readFramebuffer();screen.renderFetchComparison(false);
             } else if(comparison==3) {
                 screen.renderBoundsComparison(true);reference=readFramebuffer();screen.renderBoundsComparison(false);

@@ -32,6 +32,7 @@
     {"name":"RaySamples","type":"float","count":1,"values":[1]},
     {"name":"AdaptivePath","type":"float","count":1,"values":[0]},
     {"name":"FastBounds","type":"float","count":1,"values":[1]},
-    {"name":"FastFetch","type":"float","count":1,"values":[1]}
+    {"name":"FastFetch","type":"float","count":1,"values":[1]},
+    {"name":"EmptyCells","type":"float","count":1,"values":[1]}
   ]
 }

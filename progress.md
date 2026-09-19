@@ -226,3 +226,9 @@ Shared chord reciprocals and vector slab tests preserve existing geometry/optics
 Fixed-width integer texture addressing preserves exact texel selection while simplifying GPU arithmetic. Build51 tests and5760 sampled CPU/GPU comparisons pass. Streamed same-frame images are pixel-identical at854x480 and2560x1440; small candidate inspected. Matched1440p GPU p95 improves160.323→135.443ms (15.5%) with2xAA/adaptive/fast-bounds unchanged. Fullscreen optimized frame median133.422ms (~7.5FPS), still far from target; no cross-session or whole-game claim. F9 R toggles addressing, Alt+P compares. Detailed evidence: docs/aa-performance.md. Handoff shortened; larger traversal costs remain next, packaging stays paused.
 
 Final checks:4096-wide monolithic addressing pair is also pixel-identical. Live F10 passed600 changing actor updates with retained1/1 texture allocations. No new live FPS comparison. Client left F10 active in the small window.
+
+## Conservative empty-region reuse — 2026-09-19
+
+Renderer learns empty regions from its existing rejected-subtree checks and skips later geometry searches wholly inside them. Per-ray/per-tree state preserves AA and live geometry; optics and coverage unchanged. Build51 tests and11520 sampled CPU/GPU comparisons pass. Wall pairs at small/1440p sizes and a downward terrain pair are pixel-identical; images inspected. Matched GPU p95 improves161.340→77.698ms at1440p (51.8%), and48.696→31.966ms in the small downward view (34.4%).1440p cached frame median83.334ms (~12FPS), still not the target. Detailed results and scope: docs/aa-performance.md. Initial separate occupancy-search prototype was discarded for a slowdown. Continue measured traversal work; packaging stays paused.
+
+Final live check: changing actors over600 updates and active chunk streaming pass; benchmark confirms cache enabled. Live camera moved to a different radius, so live timings are observational only. F10 remains active; no subsequent camera reset.

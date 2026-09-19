@@ -90,3 +90,28 @@ Same-frame pairs15920050732033724678 (small) and2859121864403485792 (1440p) have
 At2560x1440 output/1280x720 internal, original GPU p50/p95/p99=152.278/160.323/163.842ms; specialized128.636/135.443/138.134ms (p95 reduction15.5%). Frame p50/p95 original158.378/166.937ms, specialized133.422/142.031ms, about7.5FPS optimized median. Original measured first, then specialized. Fullscreen pair PNG hash13B4B1D5EF29992A4C7D5DC40CB93E6E256AC22549D3D81B8C30512AD00BF7FA in both images. These are one-pose frozen comparisons, not a multi-run statistical or whole-game FPS certification.
 
 Monolithic4096-wide layout: pair17256894883602490531 also has zero pixel differences; both PNG hashes C857AB790EE393F1B94AA7EDFBDA0C5411D72671292BE7A66C2837144A679BBB. This compares original/specialized addressing within that layout, not monolithic/streamed parity. Live F10 smoke check passed600 updates with changing45→54 mobs and geometry fingerprints; triangle/node allocations remain1/1. No separate live FPS comparison. Small window restored and F10 left active; no runtime ERROR/Exception logged.
+
+## Empty regions learned during traversal — 2026-09-19
+
+Default ray-local cache: each terrain/moving-tree search starts a candidate box16 blocks around the segment start. For every rejected subtree, choose a separating axis and clip the box so it excludes that subtree's padded bounds. Publish only when traversal completes without entering any triangle leaf and every rejection has a strict separating axis. Later segments skip that tree only when both endpoints lie strictly inside the certified box. Boxes are convex, so the full straight segment is inside; the optical integrator still evaluates exactly the same curved path/chords. Any touched leaf, uncertain separation or exhausted traversal prevents caching. No alpha/material/cloud approximation. Separate caches for both trees reset for every ray/AA sample; nothing persists across frames or mob updates.
+
+F9 **I** toggles the cache; **Alt+Shift+P** captures uncached/selected comparisons. Internal flag/metadata is named emptyCells. This version adds no separate occupancy traversal. An earlier fixed16-cube occupancy-query prototype was rejected: GPU p95 regressed41.706→47.743ms despite identical pixels. Do not revive that prototype or conflate its timings with the retained implementation.
+
+`regions-build.log`: build51 tests pass. `cells-runtime.log` after the20:39 resource reload contains the retained shader's tests:11520 comparisons pass, zero mismatches/inconclusive/unresolved,1370ms.180 distinct directions over distances32/96/148/252, both layouts, path/bounds/addressing/cache modes, standard/fine steps. Limited synthetic opaque-box hit-cell validation, not universal mesh/material certification. Initial authentication public-key timeout was unrelated to rendering and did not prevent testing.
+
+Frozen streamed wall pose: player(16.5,302,-45.5), yaw.281/pitch.91, N65/r_s8.125,6,092,216 terrain plus12,252 moving triangles/94 mobs.2xAA, adaptive paths, fast bounds/addressing unchanged. RTX5070Ti, driver616.92,120 warmup/300 samples, GPU pass includes resolve.
+
+| Output/internal | Cache | GPU p50 / p95 / p99 ms | Frame p50 / p95 ms |
+| --- | --- | --- | --- |
+|854x480 /427x240|OFF|41.740 /44.630 /46.299|42.876 /45.940|
+|854x480 /427x240|ON|21.366 /22.954 /23.657|22.419 /24.374|
+|2560x1440 /1280x720|OFF|154.892 /161.340 /165.569|158.534 /170.419|
+|2560x1440 /1280x720|ON|74.884 /77.698 /78.982|83.334 /87.210|
+
+Matched GPU p95 reductions48.6% small and51.8%1440p. Small cache measured first; fullscreen uncached first. These compare toggles within the revised shader, not separately compiled releases; shader register allocation and scene changes prevent extrapolating across sessions. Fullscreen cached median frame is about12FPS, still below target. No quality settings or scene coverage reduced.
+
+Pairs677871936328255550 (small) and1529780201675721445 (1440p) have zero pixel differences. Small reference/candidate hashes383FD5BB80539FB22E959549E6A26C925E7DD113D4071C3F4BC3CFD3CC121C51 also match the inspected earlier candidate367943847523181633. No block/time/weather/config edits. Saved images/metrics and logs remain local ignored artifacts.
+
+Downward terrain view, same position/pitch35: pair9230438034004577933 is pixel-identical; candidate inspected.6,092,216 terrain plus12,336 moving triangles/95 mobs. Small-window cached GPU p50/p95/p99=29.581/31.966/32.499ms, uncached46.099/48.696/50.993ms (p95 reduction34.4%). Frame p50/p95 cached30.921/32.906ms, uncached47.222/49.960ms. Same2xAA/half-resolution and other flags; cached first. Confirms the benefit varies with view; not every scene is guaranteed a speedup.
+
+Live check: default cache enabled, changing96→97 mobs/geometry over600 updates, texture allocations still1/1. F12 confirmed live=true/emptyCells=true while the camera moved and streaming queued170 chunks: GPU p50/p95/p99=15.243/20.424/22.267ms, frame16.186/23.008/25.275ms at427x240. Camera r/r_s1.79676 and scene4,909,366 triangles differ from the frozen setup; this is an observational smoke test, not a controlled performance gain. No subsequent camera reset; owner may be exploring. F10 remains active in the small window.

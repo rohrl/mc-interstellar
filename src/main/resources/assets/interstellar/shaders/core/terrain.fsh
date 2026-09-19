@@ -33,6 +33,7 @@ uniform float RaySamples;
 uniform float AdaptivePath;
 uniform float FastBounds;
 uniform float FastFetch;
+uniform float EmptyCells;
 vec4 diagnostic=vec4(0);
 ivec3 materialCell;
 bool distantHit=false;
@@ -151,6 +152,8 @@ float cloudFogDistance(vec3 position) {
 // The live actor tree shares nearest-hit and cloud ordering with the retained terrain tree.
 vec4 sceneTriangle(int tree,int index) {return tree==0?meshData(MeshTriangles,index):meshData(DistantAppearance,index);}
 vec4 sceneNode(int tree,int index) {return tree==0?meshData(MeshNodes,index):meshData(DistantLight,index);}
+vec3 emptyLow[2],emptyHigh[2];
+bool cellKnown[2];
 // Stackless preorder traversal: escape links skip whole subtrees. Each chord has one nearest hit.
 int meshSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
     vec3 delta=end-start;float best=1.000001;bool found=false;
@@ -160,6 +163,10 @@ int meshSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
     vec3 inverseDelta=1.0/mix(delta,vec3(1),parallel);
     float cloudAt=2.0;vec4 nearestCloud=vec4(0);
     for(int tree=0;tree<2;tree++) {
+    if(EmptyCells>.5 && cellKnown[tree] &&
+       all(greaterThan(min(start,end),emptyLow[tree])) && all(lessThan(max(start,end),emptyHigh[tree])))continue;
+    vec3 safeLow=start-vec3(16),safeHigh=start+vec3(16);
+    bool canCache=true;
     int node=0,nodeCount=int(tree==0?MeshNodeCount:MovingNodeCount),returnTo=0;
     for(int visited=0;visited<131072;visited++) {
         if(node<0)node=returnTo;
@@ -184,9 +191,23 @@ int meshSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
                 enter=max(enter,min(a,b));leave=min(leave,max(a,b));
             }
         }
-        if(!inside || leave<enter) {node=int(lower.w);continue;}
+        if(!inside || leave<enter) {
+            if(EmptyCells>.5 && canCache) {
+                // Exclude this entire rejected subtree from a box around start.
+                // Intersecting these half-spaces certifies an empty region only
+                // if traversal finishes without entering a triangle leaf.
+                vec3 low=lower.xyz-vec3(.00001),high=upper.xyz+vec3(.00001);
+                vec3 gap=max(low-start,start-high);
+                int axis=gap.x>gap.y?0:1;if(gap.z>gap[axis])axis=2;
+                if(gap[axis]<=0.0)canCache=false;
+                else if(start[axis]<low[axis])safeHigh[axis]=min(safeHigh[axis],low[axis]);
+                else safeLow[axis]=max(safeLow[axis],high[axis]);
+            }
+            node=int(lower.w);continue;
+        }
         int count=int(sceneNode(tree,node*3+2).x);
         if(count<0) {returnTo=int(lower.w);node=int(upper.w);continue;}
+        if(count>0)canCache=false;
         for(int i=0;i<count;i++) {
             int base=(int(upper.w)+i)*9;
             vec4 vertexA=sceneTriangle(tree,base);
@@ -234,6 +255,7 @@ int meshSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
         }
         node=count>0?int(lower.w):node+1;
     }
+    if(EmptyCells>.5) {cellKnown[tree]=canCache && node==nodeCount;emptyLow[tree]=safeLow;emptyHigh[tree]=safeHigh;}
     if(node!=nodeCount) {diagnostic=vec4(0,0,0,-2);meshColour=vec3(1,0,1);hit=start;normal=vec3(0,1,0);return 3;}
     }
     // Vanilla fancy clouds use a depth prepass: blend the nearest cloud surface once.
@@ -378,6 +400,7 @@ int sceneSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
 }
 vec2 derivative(vec2 q) {return vec2(q.y,1.5*q.x*q.x-q.x);}
 void trace(vec2 uv) {
+    cellKnown[0]=false;cellKnown[1]=false;
     vec2 xy=(uv*2.0-1.0)*ViewSlopes.xy;
     vec3 direction=normalize(Forward+(xy.x+ViewSlopes.z)*Right+(-xy.y+ViewSlopes.w)*Up);
     vec3 hit,normal;
