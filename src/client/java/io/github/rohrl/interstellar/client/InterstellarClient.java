@@ -44,6 +44,8 @@ public final class InterstellarClient implements ClientModInitializer {
                 context.register(Identifier.of("interstellar", "terrain_live_split"), VertexFormats.POSITION, TerrainScreen::setSplitShader);
                 context.register(Identifier.of("interstellar", "terrain_live_layout"), VertexFormats.POSITION, TerrainScreen::setLayoutShader);
                 context.register(Identifier.of("interstellar", "terrain_mesh_layout"), VertexFormats.POSITION, TerrainScreen::setLayoutDiagnosticShader);
+                context.register(Identifier.of("interstellar", "terrain_live_row"), VertexFormats.POSITION, TerrainScreen::setRowShader);
+                context.register(Identifier.of("interstellar", "terrain_mesh_row"), VertexFormats.POSITION, TerrainScreen::setRowDiagnosticShader);
                 context.register(Identifier.of("interstellar", "terrain_sample_fold"), VertexFormats.POSITION, TerrainSamples::setShader);
             }
         });

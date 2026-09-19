@@ -24,6 +24,8 @@ final class TerrainScreen extends Screen {
     private static ShaderProgram longMeshShader,longDefaultShader;
     private static ShaderProgram splitShader;
     private static ShaderProgram layoutShader,layoutDiagnosticShader;
+    private static ShaderProgram rowShader,rowDiagnosticShader;
+    private boolean triangleRows=true;
     private boolean fixedLayout=true;
     private boolean splitSamples=true;
     private TerrainSamples samples;
@@ -80,6 +82,8 @@ final class TerrainScreen extends Screen {
     static void setSplitShader(ShaderProgram program) {splitShader=program;resourceVersion++;}
     static void setLayoutShader(ShaderProgram program) {layoutShader=program;resourceVersion++;}
     static void setLayoutDiagnosticShader(ShaderProgram program) {layoutDiagnosticShader=program;resourceVersion++;}
+    static void setRowShader(ShaderProgram program) {rowShader=program;resourceVersion++;}
+    static void setRowDiagnosticShader(ShaderProgram program) {rowDiagnosticShader=program;resourceVersion++;}
     @Override protected void init() {
         if(snapshot!=null || error!=null) return;
         if(!options.enabled()) {error="Terrain preview disabled in interstellar-terrain.json";return;}
@@ -173,9 +177,9 @@ final class TerrainScreen extends Screen {
         shader=currentShader();
         if(validate && meshMode) {
             validate=false;
-            var diagnosticShader=useLayoutShader()?layoutDiagnosticShader:useDefaultShader()?(useLongShader()?longMeshShader:compactMeshShader):shader;
+            var diagnosticShader=useRowShader()?rowDiagnosticShader:useLayoutShader()?layoutDiagnosticShader:useDefaultShader()?(useLongShader()?longMeshShader:compactMeshShader):shader;
             diagnosticShader.getUniformOrDefault("MeshStepLimit").set(meshStepLimit);
-            Interstellar.LOGGER.info("Mesh fixture program: {}; step cap={}",useLayoutShader()?"streamed-layout diagnostic variant":useDefaultShader()?"compact diagnostic variant (live defaults fix Diagnostic=0)":programName(),useLongShader()?meshStepLimit:4);
+            Interstellar.LOGGER.info("Mesh fixture program: {}; step cap={}",useRowShader()?"triangle-row diagnostic variant":useLayoutShader()?"streamed-layout diagnostic variant":useDefaultShader()?"compact diagnostic variant (live defaults fix Diagnostic=0)":programName(),useLongShader()?meshStepLimit:4);
             validationStatus=MeshValidation.run(diagnosticShader,()->drawQuad(1,1));
         }
         if(hybrid)nativeSky.update(!meshMode || !meshClouds);
@@ -327,6 +331,7 @@ final class TerrainScreen extends Screen {
     private boolean useSplitShader() {return splitSamples && useDefaultShader() && useLongShader() && splitShader!=null
             && TerrainSamples.supported(Math.max(1,Math.round(client.getWindow().getFramebufferWidth()*scale)));}
     private ShaderProgram currentShader() {
+        if(useRowShader())return rowShader;
         if(useLayoutShader())return layoutShader;
         if(useSplitShader())return splitShader;
         if(!useMeshShader())return generalShader;
@@ -335,6 +340,7 @@ final class TerrainScreen extends Screen {
         return meshShader;
     }
     private String programName() {
+        if(useRowShader())return "native-live-row-"+meshStepLimit;
         if(useLayoutShader())return "native-live-layout-"+meshStepLimit;
         if(useSplitShader())return "native-live-split-"+meshStepLimit;
         if(useDefaultShader())return useLongShader()?"native-live-steps-"+meshStepLimit:"native-live-defaults";
@@ -351,6 +357,12 @@ final class TerrainScreen extends Screen {
         finally {splitSamples=old;}
     }
     private boolean useLayoutShader() {return fixedLayout && mesh!=null && mesh.streamed() && useSplitShader() && layoutShader!=null && layoutDiagnosticShader!=null;}
+    private boolean useRowShader() {return triangleRows && useLayoutShader() && rowShader!=null && rowDiagnosticShader!=null;}
+    void renderRowComparison(boolean reference) {
+        boolean old=triangleRows;cancelBenchmark();
+        try {if(reference)triangleRows=false;renderTerrain();}
+        finally {triangleRows=old;}
+    }
     void renderLayoutComparison(boolean reference) {
         boolean old=fixedLayout;cancelBenchmark();
         try {if(reference)fixedLayout=false;renderTerrain();}
@@ -424,6 +436,7 @@ final class TerrainScreen extends Screen {
                 else {validate=true;curvedValidation=false;}
             }
             case GLFW.GLFW_KEY_C -> {validate=true;curvedValidation=true;}
+            case GLFW.GLFW_KEY_Z -> {if((modifiers&GLFW.GLFW_MOD_SHIFT)!=0)AppearanceCapture.request(this,13);else triangleRows=!triangleRows;validationStatus="Z: triangle row reuse "+(triangleRows?"ON":"OFF")+" | Shift+Z: compare separate addresses";}
             case GLFW.GLFW_KEY_Y -> {if((modifiers&GLFW.GLFW_MOD_SHIFT)!=0)AppearanceCapture.request(this,12);else fixedLayout=!fixedLayout;validationStatus="Y: fixed texture layouts "+(fixedLayout?"ON":"OFF")+" | Shift+Y: compare dynamic layout";}
             case GLFW.GLFW_KEY_X -> {if((modifiers&GLFW.GLFW_MOD_SHIFT)!=0)AppearanceCapture.request(this,11);else splitSamples=!splitSamples;validationStatus="X: split AA "+(splitSamples?"ON":"OFF")+" | Shift+X: compare serial AA";}
             case GLFW.GLFW_KEY_SPACE -> lensing=!lensing;
