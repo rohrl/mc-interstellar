@@ -165,12 +165,15 @@ float cloudFogDistance(vec3 position) {
 }
 // The live actor tree shares nearest-hit and cloud ordering with the retained terrain tree.
 #ifdef INTERSTELLAR_STREAMED_LAYOUT
-// Streamed terrain uses row-aligned 4095-wide arenas; moving meshes use 4096.
-vec4 sceneTriangle(int tree,int index) {
-    return tree==0?texelFetch(MeshTriangles,ivec2(index%4095,index/4095),0):texelFetch(DistantAppearance,ivec2(index%4096,index/4096),0);
+// Nine-texel terrain triangles stay in one 4095-wide row; share the base address.
+// Moving triangles use 4096-wide rows and may cross a row boundary.
+vec4 trianglePart(int tree,int base,int part) {
+    return tree==0?texelFetch(MeshTriangles,ivec2(base%4095+part,base/4095),0):
+        texelFetch(DistantAppearance,ivec2((base+part)%4096,(base+part)/4096),0);
 }
 #else
 vec4 sceneTriangle(int tree,int index) {return tree==0?meshData(MeshTriangles,index):meshData(DistantAppearance,index);}
+#define trianglePart(tree,base,part) sceneTriangle(tree,(base)+(part))
 #endif
 vec4 sceneNode(int tree,int index) {return tree==0?meshData(MeshNodes,index):meshData(DistantLight,index);}
 #ifdef INTERSTELLAR_COMPACT_NODES
@@ -250,12 +253,12 @@ int meshSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
         if(count>0)canCache=false;
         for(int i=0;i<count;i++) {
             int base=(int(upper.w)+i)*9;
-            vec4 vertexA=sceneTriangle(tree,base);
+            vec4 vertexA=trianglePart(tree,base,0);
             float entity=vertexA.w;
             bool cloud=entity>=5.0;
             if(cloud && (MeshClouds<.5 || cloudLayer.a>0.0))continue;
             if(!cloud && entity!=0.0 && MeshEntities<.5)continue;
-            vec3 a=vertexA.xyz,b=sceneTriangle(tree,base+3).xyz,c=sceneTriangle(tree,base+6).xyz;
+            vec3 a=vertexA.xyz,b=trianglePart(tree,base,3).xyz,c=trianglePart(tree,base,6).xyz;
             vec3 edge1=b-a,edge2=c-a,p=cross(delta,edge2);
             bool twoSided=abs(entity)==2.0 || entity==6.0;
             float det=dot(edge1,p);if(twoSided?abs(det)<1e-10:det<1e-10)continue;
@@ -266,7 +269,7 @@ int meshSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
             vec2 location=(start+delta*t).xz;
             if(entity==0.0 && MeshCoverage<.5 && (any(lessThan(location,OldMeshBounds.xy)) || any(greaterThanEqual(location,OldMeshBounds.zw))))continue;
             vec3 weights=vec3(1-u-v,u,v);
-            vec4 uvA=sceneTriangle(tree,base+1),uvB=sceneTriangle(tree,base+4),uvC=sceneTriangle(tree,base+7);
+            vec4 uvA=trianglePart(tree,base,1),uvB=trianglePart(tree,base,4),uvC=trianglePart(tree,base,7);
             if(entity==0.0) {
                 // K retains the old half-texel offset for controlled appearance comparisons.
                 vec2 offset=vec2(FaceLighting>.5?0.0:.5/16.0);
@@ -277,8 +280,8 @@ int meshSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
             vec2 uv=uvA.xy*weights.x+uvB.xy*weights.y+uvC.xy*weights.z;
             if(cloud) {
                 if(t>=cloudAt)continue;
-                vec4 colour=textureLod(CloudAtlas,uv,0)*(sceneTriangle(tree,base+2)*weights.x+
-                        sceneTriangle(tree,base+5)*weights.y+sceneTriangle(tree,base+8)*weights.z);
+                vec4 colour=textureLod(CloudAtlas,uv,0)*(trianglePart(tree,base,2)*weights.x+
+                        trianglePart(tree,base,5)*weights.y+trianglePart(tree,base,8)*weights.z);
                 if(colour.a<.1)continue;
                 float distance=dot(vec3(cloudFogDistance(a),cloudFogDistance(b),cloudFogDistance(c)),weights);
                 float fog=TerrainFogRange.y>TerrainFogRange.x?smoothstep(TerrainFogRange.x,TerrainFogRange.y,distance):step(TerrainFogRange.y,distance);
@@ -287,9 +290,9 @@ int meshSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
             }
             vec4 texel=Diagnostic>2.5?vec4(1):entity>0.0?textureLod(EntityAtlas,uv,0):textureLod(Atlas,uv,0);
             if(texel.a<.1)continue;
-            vec3 colA=sceneTriangle(tree,base+2).rgb*texture(Lightmap,uvA.zw).rgb;
-            vec3 colB=sceneTriangle(tree,base+5).rgb*texture(Lightmap,uvB.zw).rgb;
-            vec3 colC=sceneTriangle(tree,base+8).rgb*texture(Lightmap,uvC.zw).rgb;
+            vec3 colA=trianglePart(tree,base,2).rgb*texture(Lightmap,uvA.zw).rgb;
+            vec3 colB=trianglePart(tree,base,5).rgb*texture(Lightmap,uvB.zw).rgb;
+            vec3 colC=trianglePart(tree,base,8).rgb*texture(Lightmap,uvC.zw).rgb;
             meshColour=texel.rgb*(colA*weights.x+colB*weights.y+colC*weights.z);
             best=t;hit=start+t*delta;normal=normalize(cross(edge1,edge2));found=true;
         }

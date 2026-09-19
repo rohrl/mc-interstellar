@@ -1,5 +1,7 @@
 # Antialiasing and ray-step comparison
 
+**Latest checkpoint,2026-09-20:** the completed performance pass measures live1440p medians~53FPS wall/~34FPS terrain-heavy, with existing sharp2xAA and scene coverage. Heavy frame p95/p99=31.358/33.704ms; occasional dips remain and60FPS is not reached. See [split AA](split-aa.md), [fixed layouts](fixed-layout.md) and [final row reuse/results](triangle-row.md). Historical20FPS figures below describe superseded checkpoints. The last isolated gain is2%; larger changes are deferred under the owner's diminishing-returns limit.
+
 Owner priority (2026-09-19): demo packaging is paused; improve AA and FPS while preserving the accepted native-world appearance. Unverified packaging is isolated at2fe8674 on codex/demo-packaging-wip. The original unverified AA checkpoint8ad46eb remains on its separate branch; its two-ray idea is adapted to the current mesh/cloud renderer here.
 
 ## Controls and quality comparisons
