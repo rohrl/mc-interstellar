@@ -20,9 +20,10 @@ import java.util.Locale;
 /** Shared frozen/live scene-data preview. World geometry is never moved or destroyed. */
 final class TerrainScreen extends Screen {
     private static final int MESH_VIEW_RANGE=256,VOXEL_VIEW_RANGE=128;
-    private static ShaderProgram generalShader,meshShader;
+    private static ShaderProgram generalShader,meshShader,deferredMeshShader;
     private ShaderProgram shader;
     private boolean specialized=true;
+    private boolean finalShade=true;
     private static int resourceVersion;
     private final int capturedVersion=resourceVersion;
     private boolean validate;
@@ -63,6 +64,7 @@ final class TerrainScreen extends Screen {
     void adoptSource(SourcePayload next) {source=next;cancelBenchmark();}
     static void setShader(ShaderProgram program) {generalShader=program;resourceVersion++;}
     static void setMeshShader(ShaderProgram program) {meshShader=program;resourceVersion++;}
+    static void setDeferredMeshShader(ShaderProgram program) {deferredMeshShader=program;resourceVersion++;}
     @Override protected void init() {
         if(snapshot!=null || error!=null) return;
         if(!options.enabled()) {error="Terrain preview disabled in interstellar-terrain.json";return;}
@@ -153,7 +155,7 @@ final class TerrainScreen extends Screen {
         }
     }
     private void renderTerrain() {
-        shader=useMeshShader()?meshShader:generalShader;
+        shader=useMeshShader()?(finalShade && deferredMeshShader!=null?deferredMeshShader:meshShader):generalShader;
         if(validate && meshMode) {validate=false;Interstellar.LOGGER.info("Mesh fixture program: {}",programName());validationStatus=MeshValidation.run(shader,()->drawQuad(1,1));}
         if(hybrid)nativeSky.update(!meshMode || !meshClouds);
         int w=Math.max(1,Math.round(client.getWindow().getFramebufferWidth()*scale));
@@ -282,7 +284,12 @@ final class TerrainScreen extends Screen {
         finally {emptyReach=old;}
     }
     private boolean useMeshShader() {return meshMode && specialized && meshShader!=null;}
-    private String programName() {return useMeshShader()?"native-mesh":"general";}
+    private String programName() {return useMeshShader()?(finalShade && deferredMeshShader!=null?"native-final-shade":"native-mesh"):"general";}
+    void renderFinalShadeComparison(boolean reference) {
+        boolean old=finalShade;cancelBenchmark();
+        try {if(reference)finalShade=false;renderTerrain();}
+        finally {finalShade=old;}
+    }
     void renderShaderComparison(boolean reference) {
         boolean old=specialized;cancelBenchmark();
         try {if(reference)specialized=false;renderTerrain();}
@@ -326,6 +333,7 @@ final class TerrainScreen extends Screen {
             }
             case GLFW.GLFW_KEY_P -> {AppearanceCapture.request(this,(modifiers&(GLFW.GLFW_MOD_ALT|GLFW.GLFW_MOD_CONTROL))==(GLFW.GLFW_MOD_ALT|GLFW.GLFW_MOD_CONTROL)?6:(modifiers&(GLFW.GLFW_MOD_ALT|GLFW.GLFW_MOD_SHIFT))==(GLFW.GLFW_MOD_ALT|GLFW.GLFW_MOD_SHIFT)?5:(modifiers&GLFW.GLFW_MOD_ALT)!=0?4:(modifiers&(GLFW.GLFW_MOD_CONTROL|GLFW.GLFW_MOD_SHIFT))==(GLFW.GLFW_MOD_CONTROL|GLFW.GLFW_MOD_SHIFT)?3:(modifiers&GLFW.GLFW_MOD_CONTROL)!=0?2:(modifiers&GLFW.GLFW_MOD_SHIFT)!=0?1:0);validationStatus="Capturing same-frame comparison...";}
             case GLFW.GLFW_KEY_S -> {if((modifiers&GLFW.GLFW_MOD_SHIFT)!=0)AppearanceCapture.request(this,7);else specialized=!specialized;validationStatus="S: program "+programName()+" | Shift+S: compare programs";}
+            case GLFW.GLFW_KEY_F -> {if((modifiers&GLFW.GLFW_MOD_SHIFT)!=0)AppearanceCapture.request(this,8);else finalShade=!finalShade;validationStatus="F: program "+programName()+" | Shift+F: compare final shading";}
             case GLFW.GLFW_KEY_I -> {if((modifiers&GLFW.GLFW_MOD_SHIFT)!=0)emptyReach=emptyReach==16?1024:16;else emptyCells=!emptyCells;validationStatus="I: cache "+emptyCells+" | Shift+I reach "+emptyReach+" | Ctrl+Alt+P: compare reach";}
             case GLFW.GLFW_KEY_R -> {fastFetch=!fastFetch;validationStatus="R: fast mesh addressing "+(fastFetch?"ON":"OFF")+" | Alt+P: compare addressing";}
             case GLFW.GLFW_KEY_T -> {fastBounds=!fastBounds;validationStatus="T: fast bounds "+(fastBounds?"ON":"OFF")+" | Ctrl+Shift+P: compare bounds";}

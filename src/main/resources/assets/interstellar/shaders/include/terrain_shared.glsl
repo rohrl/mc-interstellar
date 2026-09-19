@@ -163,6 +163,10 @@ bool cellKnown[2];
 // Stackless preorder traversal: escape links skip whole subtrees. Each chord has one nearest hit.
 int meshSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
     vec3 delta=end-start;float best=1.000001;bool found=false;
+    #ifdef INTERSTELLAR_SHADE_FINAL
+    int bestTree=0,bestBase=0;bool bestTerrain=false;
+    vec3 bestWeights=vec3(0),bestAlbedo=vec3(0);
+    #endif
     // One reciprocal per chord, shared by both BVHs. Parallel axes use finite
     // placeholders and explicit containment, avoiding zero-times-infinity NaNs.
     bvec3 parallel=lessThan(abs(delta),vec3(1e-12));
@@ -233,6 +237,7 @@ int meshSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
             if(entity==0.0 && MeshCoverage<.5 && (any(lessThan(location,OldMeshBounds.xy)) || any(greaterThanEqual(location,OldMeshBounds.zw))))continue;
             vec3 weights=vec3(1-u-v,u,v);
             vec4 uvA=sceneTriangle(tree,base+1),uvB=sceneTriangle(tree,base+4),uvC=sceneTriangle(tree,base+7);
+            #ifndef INTERSTELLAR_SHADE_FINAL
             if(entity==0.0) {
                 // K retains the old half-texel offset for controlled appearance comparisons.
                 vec2 offset=vec2(FaceLighting>.5?0.0:.5/16.0);
@@ -240,6 +245,7 @@ int meshSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
                 uvB.zw=clamp(uvB.zw+offset,vec2(.5/16.0),vec2(15.5/16.0));
                 uvC.zw=clamp(uvC.zw+offset,vec2(.5/16.0),vec2(15.5/16.0));
             }
+            #endif
             vec2 uv=uvA.xy*weights.x+uvB.xy*weights.y+uvC.xy*weights.z;
             if(cloud) {
                 if(t>=cloudAt)continue;
@@ -253,10 +259,14 @@ int meshSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
             }
             vec4 texel=Diagnostic>2.5?vec4(1):entity>0.0?textureLod(EntityAtlas,uv,0):textureLod(Atlas,uv,0);
             if(texel.a<.1)continue;
+            #ifdef INTERSTELLAR_SHADE_FINAL
+            bestTree=tree;bestBase=base;bestTerrain=entity==0.0;bestWeights=weights;bestAlbedo=texel.rgb;
+            #else
             vec3 colA=sceneTriangle(tree,base+2).rgb*texture(Lightmap,uvA.zw).rgb;
             vec3 colB=sceneTriangle(tree,base+5).rgb*texture(Lightmap,uvB.zw).rgb;
             vec3 colC=sceneTriangle(tree,base+8).rgb*texture(Lightmap,uvC.zw).rgb;
             meshColour=texel.rgb*(colA*weights.x+colB*weights.y+colC*weights.z);
+            #endif
             best=t;hit=start+t*delta;normal=normalize(cross(edge1,edge2));found=true;
         }
         node=count>0?int(lower.w):node+1;
@@ -264,6 +274,24 @@ int meshSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
     if(EmptyCells>.5) {cellKnown[tree]=canCache && node==nodeCount;emptyLow[tree]=safeLow;emptyHigh[tree]=safeHigh;}
     if(node!=nodeCount) {diagnostic=vec4(0,0,0,-2);meshColour=vec3(1,0,1);hit=start;normal=vec3(0,1,0);return 3;}
     }
+    #ifdef INTERSTELLAR_SHADE_FINAL
+    if(found) {
+        // Alpha still participates in every nearest-hit test; shade only its final opaque winner.
+        vec2 lightA=sceneTriangle(bestTree,bestBase+1).zw;
+        vec2 lightB=sceneTriangle(bestTree,bestBase+4).zw;
+        vec2 lightC=sceneTriangle(bestTree,bestBase+7).zw;
+        if(bestTerrain) {
+            vec2 offset=vec2(FaceLighting>.5?0.0:.5/16.0);
+            lightA=clamp(lightA+offset,vec2(.5/16.0),vec2(15.5/16.0));
+            lightB=clamp(lightB+offset,vec2(.5/16.0),vec2(15.5/16.0));
+            lightC=clamp(lightC+offset,vec2(.5/16.0),vec2(15.5/16.0));
+        }
+        vec3 colA=sceneTriangle(bestTree,bestBase+2).rgb*texture(Lightmap,lightA).rgb;
+        vec3 colB=sceneTriangle(bestTree,bestBase+5).rgb*texture(Lightmap,lightB).rgb;
+        vec3 colC=sceneTriangle(bestTree,bestBase+8).rgb*texture(Lightmap,lightC).rgb;
+        meshColour=bestAlbedo*(colA*bestWeights.x+colB*bestWeights.y+colC*bestWeights.z);
+    }
+    #endif
     // Vanilla fancy clouds use a depth prepass: blend the nearest cloud surface once.
     if(cloudAt<best && cloudLayer.a==0.0)cloudLayer=nearestCloud;
     return found?3:-1;

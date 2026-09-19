@@ -35,6 +35,7 @@ public final class InterstellarClient implements ClientModInitializer {
         AppearanceCapture.register();
         CoreShaderRegistrationCallback.EVENT.register(context -> context.register(Identifier.of("interstellar", "terrain"), VertexFormats.POSITION, TerrainScreen::setShader));
         CoreShaderRegistrationCallback.EVENT.register(context -> context.register(Identifier.of("interstellar", "terrain_mesh"), VertexFormats.POSITION, TerrainScreen::setMeshShader));
+        CoreShaderRegistrationCallback.EVENT.register(context -> context.register(Identifier.of("interstellar", "terrain_mesh_deferred"), VertexFormats.POSITION, TerrainScreen::setDeferredMeshShader));
         CoreShaderRegistrationCallback.EVENT.register(context -> context.register(Identifier.of("interstellar", "terrain_resolve"), VertexFormats.POSITION, TerrainResolve::setShader));
         KeyBinding terrain = KeyBindingHelper.registerKeyBinding(new KeyBinding("key.interstellar.terrain", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_F9, "key.categories.interstellar"));
         CoreShaderRegistrationCallback.EVENT.register(context -> context.register(
