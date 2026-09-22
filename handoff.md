@@ -8,7 +8,7 @@ Repo C:\work\code\minecraft\interstellar\interstellar. Follow AGENTS.md. Edits/b
 
 Accepted branch codex/demo-visual-refinement; experiment history codex/material-coverage-experiment. Check git log/status for exact hashes. Preserve original AA WIP codex/terrain-antialiasing8ad46eb and old packaging WIP2fe8674. Earlier rejected experiments remain separate.
 
-The owner explicitly approved pushing ANY branches to https://github.com/rohrl/mc-interstellar.git. Both completed branches were successfully pushed through2843a50; no approval blocker remains. New authorized task: try shared quad vertices. Current branch codex/quad-vertices-experiment, uncommitted prototype. Reference and candidate retain separate GPU terrain storage from one capture; moving actors unchanged. New QuadVertices losslessly packs native pairs, generic MeshTree accepts4 vertices, QuadTerrain maintains chunk arenas. F9 backslash toggles; Shift+backslash captures mode15. Four separate quad shader variants retain both original triangle tests. Build/57 tests pass; GPU/image/FPS acceptance pending. Current client quad-runtime.log, exec89527; startup/fixture helper records original player state in run/quad-return-state.txt. Consume helper completion before other inputs. Prior client exited normally before launch. Do not call the quad trial accepted or claim a speedup yet.
+Owner approved all branch pushes. Both completed branches are pushed through2843a50. Storage experiment completed: eight-quad leaves do not improve FPS; four-quad leaves save4.3% GPU median in the heavy view, with roughly unchanged wall medians and slightly worse wall tails. Both variants pass57 tests,52480 optical comparisons,28 material cases and pixel-identical wall/down pairs. Evidence: docs/quad-vertices.md. Owner explicitly ACCEPTS improving the worst view at the cost of a small easier-view regression. Preserve this A/B branch, then remove parallel reference arenas, validate additional close/material views and actual F10, and promote the four-quad candidate. Do not reject it for the now-authorized tradeoff.
 
 ## Delivered and evidence
 
@@ -28,11 +28,11 @@ Post-step4 review complete: docs/performance-review-2026-09-22.md. Prefer native
 
 ## Runtime and continued work
 
-One client final-quality-runtime.log, long-lived exec70326. GUI helper67840 completed/consumed; no helper issuing inputs. Owner original overworld pose restored:
-(45.103214895634814,303.49506601944705,-9.682636277880926), yaw56.08086,pitch-.29997176, creative/flying.854x480,F10 active,N65/r_s8.125,anchor14 300 14. Benchmark camera16.5/302/-45.5 yaw.281 pitch.91/35.91 differs. No owner blocks/time/weather edited.
+One client quad-four-runtime.log, exec31698. All helpers finished. Original owner pose restored and verified at18:22:31: overworld(30.93042545529532,289.0,8.354789955795574), yaw57.731873,pitch-1.6500393, creative, flying=false.854x480, F9 exited, F10 off. No owner blocks/time/weather edited. Previous runtime/pose paragraph is superseded.
 
 JDK C:\Portable\jdks\temurin-21.0.12.1. Archive build/distributions/interstellar-demo-0.1.0-dev.zip; Launch Interstellar.cmd runs checkout. Gradle/GUI/git escalations already authorized. Cold shader startup1–3minutes on this driver; wait Loaded1399 advancements, then click Create Backup and Load at window-relative270,305 in854x480. Close normally before relaunch; never two clients on a save.
 
 Ignored helpers run/restart-client.ps1, control-short.ps1, send-safe-command.ps1, size-minecraft.ps1 (-Restore), measure-pass.ps1 (-Key123 for live; defaultB frozen). Teleport pose AFTER resizing and verify logged pose. Gate readiness/benchmarks by logs; no builds during timings. setup-live/setup-comparison use historical pause heuristics; do not blindly reuse on an active session.
 
 F9 Shift+M streamed capture, Space lensing after ready, C fixtures. [ max angular cap, ] tolerance, Shift+[ reference.02/1mm; Z full/selective, Shift+Z pair; Shift+P full-resolution4ray/fine reference. Rejected AA controls removed. Java tools CompareAppearance.java and CompareSecondaryImages.java operate on ignored run/interstellar-captures/pair-*; the latter needs source16.0076923077,302.0384615385,15.9923076923,radius8.125.
+

@@ -3,7 +3,7 @@ package io.github.rohrl.interstellar.scene;
 import java.util.Arrays;
 
 /** Preorder BVH. Each vertex is position/pad, UV/light UV, RGBA (12 floats).
- * Nodes are min/escape, max/first triangle, count/padding; leaves contain at most 8 triangles. */
+ * Nodes are min/escape, max/first primitive, count/padding; leaves contain at most 8 triangle tests. */
 public final class MeshTree {
     public static final int STRIDE=36;
     private final float[] triangles;
@@ -34,7 +34,7 @@ public final class MeshTree {
             nodes[base+4+a]=Math.max(nodes[base+4+a],value);
         }
         nodes[base+7]=first;
-        if(count<=8 || depth>=48)nodes[base+8]=count;
+        if(count<=(verticesPerPrimitive==4?4:8) || depth>=48)nodes[base+8]=count;
         else {
             int axis=0;
             for(int a=1;a<3;a++)if(nodes[base+4+a]-nodes[base+a]>nodes[base+4+axis]-nodes[base+axis])axis=a;

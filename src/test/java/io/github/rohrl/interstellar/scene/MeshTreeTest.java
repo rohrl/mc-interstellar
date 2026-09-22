@@ -45,6 +45,7 @@ class MeshTreeTest {
             int base=n*12,escape=(int)nodes[base+3],first=(int)nodes[base+7],size=(int)nodes[base+8];
             assertTrue(escape>n && escape<=nodes.length/12);
             if(size>0) {
+                assertTrue(size<=(vertices==4?4:8));
                 assertEquals(n+1,escape);
                 for(int i=first;i<first+size;i++) {
                     assertFalse(found[i]);found[i]=true;
