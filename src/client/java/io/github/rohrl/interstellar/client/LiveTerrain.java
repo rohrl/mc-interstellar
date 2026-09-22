@@ -22,7 +22,8 @@ public final class LiveTerrain {
         armedWorld=client.world;
         synchronize(client);
     }
-    static void benchmark() {if(renderer!=null)renderer.keyPressed(GLFW.GLFW_KEY_B,0,0);}
+    // Ctrl avoids the crouch/descent side effect of holding Shift in a live world.
+    static void benchmark() {if(renderer!=null)renderer.keyPressed(GLFW.GLFW_KEY_B,0,net.minecraft.client.gui.screen.Screen.hasControlDown()?GLFW.GLFW_MOD_SHIFT:0);}
     static void tick(MinecraftClient client) {synchronize(client);}
     private static void synchronize(MinecraftClient client) {
         if(!active())return;

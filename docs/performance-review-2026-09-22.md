@@ -1,5 +1,7 @@
 # Performance review after demo and material refinement
 
+**Profiling follow-up:** [2026-09-23 measurements and revised ranking](performance-profile-2026-09-23.md) supersede the proposal order below. Moving-scene/cloud/actor traversal is now the first target; terrain-only planar intersections move down the list. That report includes updated complexity, size, development time, net LoC, gain and quality estimates for every proposal, plus new opportunities. No new production optimization was adopted during profiling.
+
 ## Assessment
 
 Keep the present native-geometry approach. It now preserves Minecraft's model geometry, light, fluids and ordinary translucent layers while bending the same world consistently. Replacing distant scenery with an unbent camera image would reintroduce the duplication that the owner rejected.
@@ -20,7 +22,7 @@ An implicit triangle-pair primitive could remove exactly one third of that raw v
 
 Keep both original triangle tests/interpolation initially, sharing vertex loads. Pair faces before BVH sorting. Then separately test a planar-face intersection shortcut, with the original two-triangle fallback for nonplanar fluid surfaces and unusual models. Do not use bilinear lighting interpolation: it changes Minecraft's diagonal shading. Pair bounds may be less selective than separate triangle bounds, and changed ordering can expose coplanar tie differences; neither a halved tree nor a speedup is guaranteed.
 
-Acceptance: optical/material fixtures, full/selective image pairs, wall/down/close geometry including water and stairs, then matched live timings. This is the preferred next substantive prototype because it attacks work and data duplication while retaining the current image model.
+Acceptance: optical/material fixtures, full/selective image pairs, wall/down/close geometry including water and stairs, then matched live timings. Quad storage was the preferred next substantive prototype and is now adopted. The separate terrain planar-intersection follow-up is lower priority after profiling.
 
 ### 2. Reuse precomputed optical trajectories
 

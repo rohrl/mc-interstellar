@@ -6,6 +6,7 @@ A Minecraft Java mod for educational relativistic optics. Scientific assumptions
 
 ## Start here
 
+- [Performance profile and revised priorities](docs/performance-profile-2026-09-23.md): measured GPU stages, ray work counts, CPU/JFR findings and updated optimization estimates.
 - [Shared quad vertices](docs/quad-vertices.md): current terrain-storage optimization, matched images, timings and accepted performance tradeoff.
 - [Demo quickstart](docs/demo-quickstart.md): install, enter the separate exhibit, controls, viewpoints and return to your world. `gradlew packageDemo` builds the distributable archive.
 - [decision-log.md](decision-log.md): important decisions, rationale, and superseded proposals.

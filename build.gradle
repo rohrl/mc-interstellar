@@ -59,7 +59,10 @@ java {
 test { useJUnitPlatform() }
 
 // Keep the development player's saved demo return record valid across launches.
-tasks.named('runClient') { args '--username', 'InterstellarDev' }
+tasks.named('runClient') {
+    args '--username', 'InterstellarDev'
+    if(project.hasProperty('interstellarProfile'))jvmArgs '-Dinterstellar.profile=true'
+}
 
 tasks.withType(AbstractArchiveTask).configureEach {
     preserveFileTimestamps = false

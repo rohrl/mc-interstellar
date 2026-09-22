@@ -80,12 +80,17 @@ final class WorldMesh implements VertexConsumer,AutoCloseable {
         count=0;materials=false;
         var camera=BlockPos.ofFloored(MinecraftClient.getInstance().gameRenderer.getCamera().getPos());
         int radius=Math.max(2,Math.min(16,MinecraftClient.getInstance().options.getViewDistance().getValue()))+1;
-        entities.capture(origin,(camera.getX()>>4)-radius,(camera.getZ()>>4)-radius,2*radius+1);
-        clouds.capture(this,origin);
+        long profileStart=TerrainProfile.cpuStart();
+        if(profileMovingContents!=2)entities.capture(origin,(camera.getX()>>4)-radius,(camera.getZ()>>4)-radius,2*radius+1);
+        TerrainProfile.cpuEnd(0,profileStart);profileStart=TerrainProfile.cpuStart();
+        if(profileMovingContents!=1)clouds.capture(this,origin);
+        TerrainProfile.cpuEnd(1,profileStart);
         finishTree();
         if(++updates==1 || updates==300 || updates==600 || updates%3600==0)
             Interstellar.LOGGER.info("Live mesh update {}: {} triangles, {}; geometry fingerprint={}",updates,count,entities.status(),Arrays.hashCode(Arrays.copyOf(triangles,count*36)));
     }
+    // Developer-only scene ablation, never selected by normal rendering controls.
+    int profileMovingContents;
     boolean ready() {return streaming!=null?streaming.ready():singleChunk?prepared:nodeTexture!=0;}
     boolean streamed() {return streaming!=null;}
     boolean quadStorage() {return streaming!=null;}
@@ -139,6 +144,7 @@ final class WorldMesh implements VertexConsumer,AutoCloseable {
         }
     }
     private void finishTree() {
+        long profileStart=dynamic?TerrainProfile.cpuStart():0;
         var tree=new MeshTree(triangles,count);nodeCount=tree.size();
         var nodes=tree.nodes();
         if(nodes.length>0) {
@@ -147,7 +153,10 @@ final class WorldMesh implements VertexConsumer,AutoCloseable {
             for(int a=0;a<3;a++) {double distance=Math.max(Math.abs(nodes[a]-source[a]),Math.abs(nodes[a+4]-source[a]));radiusSquared+=distance*distance;}
             extent=(float)Math.sqrt(radiusSquared)+2; // Include fractional source-centre rounding.
         }
+        if(dynamic)TerrainProfile.cpuEnd(2,profileStart);
+        profileStart=dynamic?TerrainProfile.cpuStart():0;
         upload(nodes);
+        if(dynamic)TerrainProfile.cpuEnd(3,profileStart);
     }
     @Override public void quad(MatrixStack.Entry entry,BakedQuad quad,float[] brightness,float red,float green,float blue,float alpha,int[] light,int overlay,boolean useQuadColor) {
         int[] vertices=quad.getVertexData();int stride=vertices.length/4;

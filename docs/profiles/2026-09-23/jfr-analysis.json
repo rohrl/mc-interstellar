@@ -1,0 +1,100 @@
+{
+  "recordingSeconds": 35,
+  "scope": "Heavy view until 08:41:59 +10:00, then wall; JFR overlapped final live repeat/wall timings, exclude those from clean FPS comparisons",
+  "renderJavaSamples": 990,
+  "renderJavaSamplesWithMeshTree": 754,
+  "heavyRenderJavaSamples": 425,
+  "heavyRenderJavaSamplesWithMeshTree": 320,
+  "topHeavyJavaFrames": [
+    {
+      "Count": 220,
+      "Name": "io/github/rohrl/interstellar/scene/MeshTree.build"
+    },
+    {
+      "Count": 97,
+      "Name": "io/github/rohrl/interstellar/scene/MeshTree.swap"
+    },
+    {
+      "Count": 13,
+      "Name": "net/minecraft/client/render/VertexConsumer.vertex"
+    },
+    {
+      "Count": 10,
+      "Name": "net/minecraft/client/model/ModelPart$Cuboid.renderCuboid"
+    },
+    {
+      "Count": 9,
+      "Name": "net/minecraft/world/chunk/PalettedContainer.get"
+    },
+    {
+      "Count": 7,
+      "Name": "io/github/rohrl/interstellar/client/EntityMesh$Collector.vertex"
+    },
+    {
+      "Count": 6,
+      "Name": "io/github/rohrl/interstellar/client/EntityMesh$Collector.endVertex"
+    },
+    {
+      "Count": 5,
+      "Name": "net/minecraft/client/util/BufferAllocator.growIfNecessary"
+    }
+  ],
+  "gc": [
+    {
+      "startTime": "2026-09-23T08:41:46.424602+10:00",
+      "duration": "PT0.0050433S",
+      "name": "G1New",
+      "cause": "G1 Evacuation Pause",
+      "longestPause": "PT0.0050433S",
+      "sumOfPauses": "PT0.0050433S"
+    },
+    {
+      "startTime": "2026-09-23T08:41:55.054499100+10:00",
+      "duration": "PT0.0016821S",
+      "name": "G1New",
+      "cause": "G1 Evacuation Pause",
+      "longestPause": "PT0.0016821S",
+      "sumOfPauses": "PT0.0016821S"
+    },
+    {
+      "startTime": "2026-09-23T08:41:55.056192200+10:00",
+      "duration": "PT0.1659523S",
+      "name": "G1Old",
+      "cause": "G1 Evacuation Pause",
+      "longestPause": "PT0.0078206S",
+      "sumOfPauses": "PT0.0078956S"
+    },
+    {
+      "startTime": "2026-09-23T08:42:02.577268900+10:00",
+      "duration": "PT0.001295S",
+      "name": "G1New",
+      "cause": "G1 Evacuation Pause",
+      "longestPause": "PT0.001295S",
+      "sumOfPauses": "PT0.001295S"
+    },
+    {
+      "startTime": "2026-09-23T08:42:09.555796+10:00",
+      "duration": "PT0.0022127S",
+      "name": "G1New",
+      "cause": "G1 Evacuation Pause",
+      "longestPause": "PT0.0022127S",
+      "sumOfPauses": "PT0.0022127S"
+    },
+    {
+      "startTime": "2026-09-23T08:42:09.558023600+10:00",
+      "duration": "PT0.1841208S",
+      "name": "G1Old",
+      "cause": "G1 Evacuation Pause",
+      "longestPause": "PT0.0094158S",
+      "sumOfPauses": "PT0.009494S"
+    },
+    {
+      "startTime": "2026-09-23T08:42:16.224964+10:00",
+      "duration": "PT0.0013477S",
+      "name": "G1New",
+      "cause": "G1 Evacuation Pause",
+      "longestPause": "PT0.0013477S",
+      "sumOfPauses": "PT0.0013477S"
+    }
+  ]
+}

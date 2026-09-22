@@ -51,6 +51,10 @@ public final class InterstellarClient implements ClientModInitializer {
                 context.register(Identifier.of("interstellar", "terrain_quad_mask"), VertexFormats.POSITION, TerrainScreen::setQuadMaskedShader);
                 context.register(Identifier.of("interstellar", "terrain_quad_materials"), VertexFormats.POSITION, TerrainScreen::setQuadMaterialShader);
                 context.register(Identifier.of("interstellar", "terrain_quad_diagnostic"), VertexFormats.POSITION, TerrainScreen::setQuadDiagnosticShader);
+                if(TerrainProfile.ENABLED)for(int experiment=0;experiment<3;experiment++)for(int pass=0;pass<3;pass++) {
+                    final int e=experiment,p=pass;
+                    context.register(Identifier.of("interstellar", "terrain_profile_"+e+"_"+p),VertexFormats.POSITION,program->TerrainProfile.programs[e][p]=program);
+                }
                 context.register(Identifier.of("interstellar", "terrain_sample_fold"), VertexFormats.POSITION, TerrainSamples::setShader);
             }
         });

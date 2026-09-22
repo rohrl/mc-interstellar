@@ -74,6 +74,13 @@ vec2 surfaceLight=vec2(0,15);
 in vec2 screenUv;
 out vec4 fragColor;
 const int SIDE=96;
+#ifdef INTERSTELLAR_PROFILE_COUNTERS
+uniform float ProfileMetric;
+vec4 profileCounts[5]=vec4[5](vec4(0),vec4(0),vec4(0),vec4(0),vec4(0));
+#define COUNT_WORK(i) profileCounts[(i)/4][(i)%4]+=1.0
+#else
+#define COUNT_WORK(i)
+#endif
 
 vec3 nativeSky(vec3 d) {
     vec3 a=abs(d),forward,up;int face;
@@ -212,6 +219,7 @@ vec3 emptyLow[2],emptyHigh[2];
 bool cellKnown[2];
 // Stackless preorder traversal: escape links skip whole subtrees. Each chord has one nearest hit.
 int meshSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
+    COUNT_WORK(1);
     vec3 delta=end-start;float best=1.000001;bool found=false;
 #if defined(INTERSTELLAR_MATERIALS) || defined(INTERSTELLAR_MATERIAL_PROBE)
     meshAlpha=1.0;
@@ -224,15 +232,20 @@ int meshSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
     bvec3 parallel=lessThan(abs(delta),vec3(1e-12));
     vec3 inverseDelta=1.0/mix(delta,vec3(1),parallel);
     float cloudAt=2.0;vec4 nearestCloud=vec4(0);
+#ifdef INTERSTELLAR_PROFILE_NO_MOVING
+    for(int tree=0;tree<1;tree++) {
+#else
     for(int tree=0;tree<2;tree++) {
+#endif
     if(EmptyCells>.5 && cellKnown[tree] &&
-       all(greaterThan(min(start,end),emptyLow[tree])) && all(lessThan(max(start,end),emptyHigh[tree])))continue;
+       all(greaterThan(min(start,end),emptyLow[tree])) && all(lessThan(max(start,end),emptyHigh[tree]))) {COUNT_WORK(8+tree);continue;}
     vec3 safeLow=start-vec3(EmptyReach),safeHigh=start+vec3(EmptyReach);
     bool canCache=true;
     int node=0,nodeCount=int(tree==0?MeshNodeCount:MovingNodeCount),returnTo=0;
     for(int visited=0;visited<131072;visited++) {
         if(node<0)node=returnTo;
         if(node==nodeCount)break;
+        COUNT_WORK(2+tree);
         #ifdef INTERSTELLAR_COMPACT_NODES
         vec4 lower=compactNode(tree,node,0),upper=compactNode(tree,node,1);
         #else
@@ -281,6 +294,7 @@ int meshSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
         #endif
         if(count<0) {returnTo=int(lower.w);node=int(upper.w);continue;}
         if(count>0)canCache=false;
+        if(count>0) {COUNT_WORK(10+tree);}
 #ifdef INTERSTELLAR_QUAD_MESH
         int tests=tree==0?count*2:count;
         for(int i=0;i<tests;i++) {
@@ -290,11 +304,13 @@ int meshSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
         for(int i=0;i<count;i++) {
             int base=(int(upper.w)+i)*9;
 #endif
+            COUNT_WORK(4+tree);
             vec4 vertexA=trianglePart(tree,base,0);
             float entity=vertexA.w;
             bool cloud=entity==5.0 || entity==6.0;
 #if defined(INTERSTELLAR_MATERIALS) || defined(INTERSTELLAR_MATERIAL_PROBE)
             bool terrain=entity==0.0 || entity==-3.0;
+            if(cloud) {COUNT_WORK(16);} else if(!terrain) {COUNT_WORK(17);}
             bool translucent=entity==-3.0 || abs(entity)==7.0 || abs(entity)==8.0;
 #ifdef INTERSTELLAR_MATERIALS
             if(cloud && (MeshClouds<.5 || cloudSeen))continue;
@@ -321,6 +337,8 @@ int meshSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
             vec2 location=(start+delta*t).xz;
             if(terrain && MeshCoverage<.5 && (any(lessThan(location,OldMeshBounds.xy)) || any(greaterThanEqual(location,OldMeshBounds.zw))))continue;
             vec3 weights=vec3(1-u-v,u,v);
+            COUNT_WORK(6+tree);
+            if(cloud) {COUNT_WORK(18);} else if(!terrain) {COUNT_WORK(19);}
             vec4 uvA=trianglePart(tree,base,1),uvB=trianglePart(tree,base,4),uvC=trianglePart(tree,base,7);
             if(terrain) {
                 // K retains the old half-texel offset for controlled appearance comparisons.
@@ -347,9 +365,15 @@ int meshSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
             }
             vec4 texel=Diagnostic>2.5?vec4(1):entity>0.0?textureLod(EntityAtlas,uv,0):textureLod(Atlas,uv,0);
             if(texel.a<.1)continue;
+#ifdef INTERSTELLAR_PROFILE_NO_LIGHT
+            vec3 colA=trianglePart(tree,base,2).rgb;
+            vec3 colB=trianglePart(tree,base,5).rgb;
+            vec3 colC=trianglePart(tree,base,8).rgb;
+#else
             vec3 colA=trianglePart(tree,base,2).rgb*texture(Lightmap,uvA.zw).rgb;
             vec3 colB=trianglePart(tree,base,5).rgb*texture(Lightmap,uvB.zw).rgb;
             vec3 colC=trianglePart(tree,base,8).rgb*texture(Lightmap,uvC.zw).rgb;
+#endif
             meshColour=texel.rgb*(colA*weights.x+colB*weights.y+colC*weights.z);
 #if defined(INTERSTELLAR_MATERIALS) || defined(INTERSTELLAR_MATERIAL_PROBE)
             meshAlpha=translucent?texel.a*dot(vec3(trianglePart(tree,base,2).a,trianglePart(tree,base,5).a,trianglePart(tree,base,8).a),weights):1.0;
@@ -521,10 +545,12 @@ bool passMaterial(int value,vec3 hit,vec3 normal) {
     materialLayers+=vec4(colour,1.0)*((1.0-materialLayers.a)*clamp(meshAlpha,0.0,1.0));
     if(meshCloud)cloudSeen=true;
     if(materialLayers.a>=.999) {meshColour=vec3(0);return false;}
+    COUNT_WORK(12);
     return true;
 }
 #endif
 void trace(vec2 uv) {
+    COUNT_WORK(14);
     cellKnown[0]=false;cellKnown[1]=false;
 #ifdef INTERSTELLAR_MATERIALS
     materialLayers=vec4(0);cloudSeen=false;
@@ -604,6 +630,7 @@ void trace(vec2 uv) {
             stepSize=clamp(sqrt(8.0*tolerance/max(curvature,1e-12)),OrbitStep>.02?min(.05,PathStep):PathStep,MeshStepLimit);
         }
         float h=min(angularCap,stepSize/max(speed,.0001));
+        COUNT_WORK(0);
         vec2 a=derivative(q),b=derivative(q+h*a*.5),c=derivative(q+h*b*.5),d=derivative(q+h*c);
         next=q+h*(a+2.0*b+2.0*c+d)/6.0;
         captured=next.x>=1.0;
@@ -679,5 +706,10 @@ void main() {
         sum+=fragColor;
     }
     fragColor=Diagnostic>.5?diagnostic:sum/float(samples);
+#endif
+#ifdef INTERSTELLAR_PROFILE_COUNTERS
+    if(meshAlpha<.999) {COUNT_WORK(13);}
+    if(diagnostic.w==-2.0) {COUNT_WORK(15);}
+    fragColor=profileCounts[int(ProfileMetric)];
 #endif
 }

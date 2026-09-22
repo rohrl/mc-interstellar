@@ -56,6 +56,8 @@ final class TerrainScreen extends Screen {
     private int generation;
     private SimpleFramebuffer target;
     private LabBenchmark benchmark;
+    private boolean profileCounters;
+    private int profileExperiment;
     private Vec3d camera;
     private float yaw,pitch;
     private boolean lensing=true, fine=false;
@@ -216,15 +218,29 @@ final class TerrainScreen extends Screen {
             if(benchmark!=null)benchmark.begin();
             if(split) {
                 samples.begin(0);shader.getUniformOrDefault("SampleOffset").set(-.25f);drawQuad(w,h);
+                if(benchmark!=null)benchmark.mark(0);
                 samples.begin(1);shader.getUniformOrDefault("SampleOffset").set(.25f);drawQuad(w,h);
+                if(benchmark!=null)benchmark.mark(1);
+                int mask=0;
                 if(useSelectiveMaterials()) {
-                    int mask=samples.copyMask();shader=useQuads()?quadMaskedShader:materialMaskedShader;configureShader(w,h);
+                    mask=samples.copyMask();
+                    if(benchmark!=null)benchmark.mark(2);
+                    shader=useQuads()?profileProgram(quadMaskedShader,1):materialMaskedShader;configureShader(w,h);
                     shader.addSampler("PendingRays",mask);RenderSystem.setShader(()->shader);
                     samples.begin(0);shader.getUniformOrDefault("SampleOffset").set(-.25f);drawQuad(w,h);
+                    if(benchmark!=null)benchmark.mark(3);
                     samples.begin(1);shader.getUniformOrDefault("SampleOffset").set(.25f);drawQuad(w,h);
+                    if(benchmark!=null)benchmark.mark(4);
+                } else if(benchmark!=null) {benchmark.mark(2);benchmark.mark(3);benchmark.mark(4);}
+                if(profileCounters) {
+                    profileCounters=false;
+                    if(!useSelectiveMaterials())throw new IllegalStateException("Counters require the selective quad baseline");
+                    TerrainProfile.capture(w,h,mask,program->{shader=program;configureShader(w,h);},()->drawQuad(w,h),
+                        "camera="+camera+" yaw="+yaw+" pitch="+pitch+" logical="+w+"x"+h+" movingContents="+(moving==null?0:moving.profileMovingContents)+"; "+mesh.status());
                 }
                 samples.fold(target,()->drawQuad(w,h));
-            } else drawQuad(w,h);
+                if(benchmark!=null)benchmark.mark(5);
+            } else {drawQuad(w,h);if(benchmark!=null)for(int i=0;i<6;i++)benchmark.mark(i);}
         } finally {
             client.getFramebuffer().beginWrite(true);
             RenderSystem.depthMask(true);RenderSystem.enableDepthTest();RenderSystem.enableBlend();RenderSystem.defaultBlendFunc();
@@ -361,7 +377,7 @@ final class TerrainScreen extends Screen {
         if(useQuads()) {
             if(quadDiagnosticShader==null || quadProbeShader==null || quadMaterialShader==null || quadMaskedShader==null)
                 throw new IllegalStateException("Quad terrain programs are unavailable");
-            return useLayoutShader()?(useMaterials() && !useSelectiveMaterials()?quadMaterialShader:quadProbeShader):quadDiagnosticShader;
+            return useLayoutShader()?(useMaterials() && !useSelectiveMaterials()?profileProgram(quadMaterialShader,2):profileProgram(quadProbeShader,0)):quadDiagnosticShader;
         }
         if(useLayoutShader())return useMaterials()?(useSelectiveMaterials()?materialProbeShader:materialShader):orbitStep>.02f && materialProbeShader!=null?materialProbeShader:layoutShader;
         if(useSplitShader())return splitShader;
@@ -371,7 +387,7 @@ final class TerrainScreen extends Screen {
         return meshShader;
     }
     private String programName() {
-        if(useQuads())return "native-quads-"+(!useLayoutShader()?"general-":useSelectiveMaterials()?"selective-":"full-")+meshStepLimit;
+        if(useQuads())return "native-quads-"+(!useLayoutShader()?"general-":useSelectiveMaterials()?"selective-":"full-")+meshStepLimit+"; profileExperiment="+profileExperiment;
         if(useLayoutShader())return (useMaterials()?(useSelectiveMaterials()?"native-live-selective-materials-":"native-live-materials-"):orbitStep>.02f && materialProbeShader!=null?"native-live-curvature-probe-":"native-live-layout-")+meshStepLimit;
         if(useSplitShader())return "native-live-split-"+meshStepLimit;
         if(useDefaultShader())return useLongShader()?"native-live-steps-"+meshStepLimit:"native-live-defaults";
@@ -422,16 +438,28 @@ final class TerrainScreen extends Screen {
         finally {specialized=old;}
     }
     private void cancelBenchmark() {if(benchmark!=null) {benchmark.close();benchmark=null;}}
+    private ShaderProgram profileProgram(ShaderProgram normal,int pass) {return TerrainProfile.ENABLED && profileExperiment>0?TerrainProfile.programs[profileExperiment][pass]:normal;}
     void renderFetchComparison(boolean reference) {
         boolean old=fastFetch;cancelBenchmark();
         try {if(reference)fastFetch=false;renderTerrain();}
         finally {fastFetch=old;}
     }
     @Override public boolean keyPressed(int key,int scan,int modifiers) {
+        if(TerrainProfile.ENABLED && !live && key==GLFW.GLFW_KEY_BACKSLASH && (modifiers&GLFW.GLFW_MOD_SHIFT)!=0 && moving!=null) {
+            cancelBenchmark();profileExperiment=0;moving.profileMovingContents=(moving.profileMovingContents+1)%3;moving.updateMoving();
+            Interstellar.LOGGER.info("Profile moving contents: {} (0=normal, 1=actors only, 2=clouds only); {}",moving.profileMovingContents,moving.status());return true;
+        }
+        if(TerrainProfile.ENABLED && key==GLFW.GLFW_KEY_B && (modifiers&GLFW.GLFW_MOD_CONTROL)!=0 && useQuads() && useSelectiveMaterials()) {
+            cancelBenchmark();profileExperiment=0;profileCounters=true;return true;
+        }
+        if(TerrainProfile.ENABLED && key==GLFW.GLFW_KEY_BACKSLASH && useQuads()) {
+            cancelBenchmark();profileExperiment=(profileExperiment+1)%3;
+            Interstellar.LOGGER.info("Profile experiment selected: {} (0=normal, 1=no moving tree, 2=no lightmap reads)",profileExperiment);return true;
+        }
         if(key==GLFW.GLFW_KEY_B && snapshot!=null && snapshot.ready() && error==null && paused==null && target!=null) {
             if(benchmark!=null)cancelBenchmark();
             else benchmark=new LabBenchmark(String.format(Locale.ROOT,"TERRAIN %dx%d, scale=%.2f, r/rs=%.5f, lensing=%s, fine=%s, snapshot=%s, hybrid="+hybrid+", live="+live+", mesh="+meshMode+", entities="+meshEntities+", nativeLight="+faceLighting+", coverage="+meshCoverage+", clouds="+meshClouds,
-                    target.textureWidth,target.textureHeight,scale,camera.distanceTo(centre())/source.schwarzschildRadius(),lensing,fine,meshMode?mesh.status():snapshot.status())+"; yaw="+yaw+"; pitch="+pitch+"; AA="+aaName()+"; adaptive="+adaptivePath+"; fastBounds="+fastBounds+"; fastFetch="+fastFetch+"; emptyCells="+emptyCells+"; emptyReach="+emptyReach+"; program="+programName()+"; angularCap="+orbitStep+"; curveFactor="+curveFactor+"; includes resolve");
+                    target.textureWidth,target.textureHeight,scale,camera.distanceTo(centre())/source.schwarzschildRadius(),lensing,fine,meshMode?mesh.status():snapshot.status())+"; yaw="+yaw+"; pitch="+pitch+"; AA="+aaName()+"; adaptive="+adaptivePath+"; fastBounds="+fastBounds+"; fastFetch="+fastFetch+"; emptyCells="+emptyCells+"; emptyReach="+emptyReach+"; program="+programName()+"; movingContents="+(moving==null?0:moving.profileMovingContents)+"; angularCap="+orbitStep+"; curveFactor="+curveFactor+"; includes resolve",TerrainProfile.ENABLED && (modifiers&GLFW.GLFW_MOD_SHIFT)!=0);
             return true;
         }
         cancelBenchmark();
