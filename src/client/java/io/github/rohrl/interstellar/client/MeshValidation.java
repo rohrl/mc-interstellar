@@ -3,6 +3,7 @@ package io.github.rohrl.interstellar.client;
 import com.mojang.blaze3d.systems.RenderSystem;
 import io.github.rohrl.interstellar.Interstellar;
 import io.github.rohrl.interstellar.scene.MeshRayFixture;
+import io.github.rohrl.interstellar.scene.QuadVertices;
 import io.github.rohrl.interstellar.science.FiniteTerrainRay;
 import net.minecraft.client.gl.ShaderProgram;
 import org.lwjgl.BufferUtils;
@@ -11,7 +12,7 @@ import org.lwjgl.opengl.*;
 /** Opt-in synthetic opaque geometry check. Does not certify materials or arbitrary world meshes. */
 final class MeshValidation {
     private static final int W=9,H=5;
-    static String run(ShaderProgram shader,Runnable draw,float angularCap,float curveFactor) {
+    static String run(ShaderProgram shader,Runnable draw,float angularCap,float curveFactor,boolean quads) {
         long started=System.nanoTime();var fixture=new MeshRayFixture();
         int framebuffer=GL30.glGenFramebuffers(),colour=GL30.glGenRenderbuffers();
         int oldDraw=GL11.glGetInteger(GL30.GL_DRAW_FRAMEBUFFER_BINDING),oldRead=GL11.glGetInteger(GL30.GL_READ_FRAMEBUFFER_BINDING);
@@ -20,7 +21,7 @@ final class MeshValidation {
         int[] names={GL11.GL_PACK_ALIGNMENT,GL11.GL_PACK_ROW_LENGTH,GL11.GL_PACK_SKIP_ROWS,GL11.GL_PACK_SKIP_PIXELS},saved=new int[4];
         for(int i=0;i<4;i++)saved[i]=GL11.glGetInteger(names[i]);
         int total=0,mismatches=0,inconclusive=0,unresolved=0;double invariant=0;
-        try(var triangles=new MeshArena(1);var nodes=new MeshArena(2);var compactNodes=new MeshArena(2,true)) {
+        try(var triangles=new MeshArena(1,false,quads?QuadVertices.WIDTH:MeshArena.WIDTH);var nodes=new MeshArena(2);var compactNodes=new MeshArena(2,true)) {
             GL15.glBindBuffer(GL21.GL_PIXEL_PACK_BUFFER,0);
             for(int i=0;i<4;i++)GL11.glPixelStorei(names[i],i==0?1:0);
             GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER,framebuffer);GL30.glBindRenderbuffer(GL30.GL_RENDERBUFFER,colour);
@@ -70,7 +71,8 @@ final class MeshValidation {
                         leaf[3]=1;leaf[7]=0;leaf[8]=geometry.triangles().length/36;
                         geometry=new MeshRayFixture.Geometry(geometry.triangles(),leaf,1);
                     }
-                    triangles.write(0,geometry.triangles(),geometry.triangles().length);nodes.write(0,geometry.nodes(),geometry.nodes().length);compactNodes.write(0,geometry.nodes(),geometry.nodes().length);
+                    float[] vertices=quads?QuadVertices.fixture(geometry.triangles(),geometry.triangles().length):geometry.triangles();
+                    triangles.write(0,vertices,vertices.length);nodes.write(0,geometry.nodes(),geometry.nodes().length);compactNodes.write(0,geometry.nodes(),geometry.nodes().length);
                     set(shader,"MeshNodeCount",geometry.roots());
                     for(float step:new float[]{.45f,.225f}) {
                         set(shader,"PathStep",step);draw.run();pixels.clear();GL11.glReadPixels(0,0,W,H,GL11.GL_RGBA,GL11.GL_FLOAT,pixels);
@@ -93,7 +95,7 @@ final class MeshValidation {
             }
             int[] boundary=criticalBoundary(shader,draw,pixels,angularCap,curveFactor);
             total+=boundary[0];mismatches+=boundary[1];unresolved+=boundary[2];
-            int materials=MaterialValidation.run(shader,draw,triangles,nodes,compactNodes);
+            int materials=MaterialValidation.run(shader,draw,triangles,nodes,compactNodes,quads);
             if(materials!=0)throw new IllegalStateException("Material fixture failed: "+materials+" mismatches (see log)");
         } finally {
             set(shader,"Diagnostic",0);

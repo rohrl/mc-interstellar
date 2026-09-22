@@ -1,4 +1,4 @@
-# Handoff — demo/refinement completed, 2026-09-22
+# Handoff — quad-vertex experiment active, 2026-09-22
 
 ## Result and direction
 
@@ -8,7 +8,7 @@ Repo C:\work\code\minecraft\interstellar\interstellar. Follow AGENTS.md. Edits/b
 
 Accepted branch codex/demo-visual-refinement; experiment history codex/material-coverage-experiment. Check git log/status for exact hashes. Preserve original AA WIP codex/terrain-antialiasing8ad46eb and old packaging WIP2fe8674. Earlier rejected experiments remain separate.
 
-Implementation commit4a8c605 is local and verified. Push remains BLOCKED by automatic approval review: it requires explicit user confirmation of destination https://github.com/rohrl/mc-interstellar.git despite general push authorization. The exact-destination approval question is pending in this task for both branches. Do not retry or use another transport until that approval arrives. Origin currently has demo24958d8 and experimentfa69f0d; local experiment includes a445838/4a8c605. All implementation/package/runtime work is complete; pending work is the authorized upload once the review requirement is satisfied.
+The owner explicitly approved pushing ANY branches to https://github.com/rohrl/mc-interstellar.git. Both completed branches were successfully pushed through2843a50; no approval blocker remains. New authorized task: try shared quad vertices. Current branch codex/quad-vertices-experiment, uncommitted prototype. Reference and candidate retain separate GPU terrain storage from one capture; moving actors unchanged. New QuadVertices losslessly packs native pairs, generic MeshTree accepts4 vertices, QuadTerrain maintains chunk arenas. F9 backslash toggles; Shift+backslash captures mode15. Four separate quad shader variants retain both original triangle tests. Build/57 tests pass; GPU/image/FPS acceptance pending. Current client quad-runtime.log, exec89527; startup/fixture helper records original player state in run/quad-return-state.txt. Consume helper completion before other inputs. Prior client exited normally before launch. Do not call the quad trial accepted or claim a speedup yet.
 
 ## Delivered and evidence
 

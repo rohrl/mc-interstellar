@@ -3,6 +3,7 @@ package io.github.rohrl.interstellar.client;
 import com.mojang.blaze3d.systems.RenderSystem;
 import io.github.rohrl.interstellar.Interstellar;
 import io.github.rohrl.interstellar.scene.MeshTree;
+import io.github.rohrl.interstellar.scene.QuadVertices;
 import net.minecraft.client.gl.ShaderProgram;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.*;
@@ -10,7 +11,7 @@ import org.lwjgl.opengl.*;
 /** Analytic source-over fixtures in the actual GPU material path, using the caller's diagnostic FBO. */
 final class MaterialValidation {
     private MaterialValidation() {}
-    static int run(ShaderProgram shader,Runnable draw,MeshArena triangles,MeshArena nodes,MeshArena compact) {
+    static int run(ShaderProgram shader,Runnable draw,MeshArena triangles,MeshArena nodes,MeshArena compact,boolean quads) {
         int texture=GL11.glGenTextures(),oldTexture=GL11.glGetInteger(GL11.GL_TEXTURE_BINDING_2D);
         int pbo=GL11.glGetInteger(GL21.GL_PIXEL_UNPACK_BUFFER_BINDING);
         int[] names={GL11.GL_UNPACK_ALIGNMENT,GL11.GL_UNPACK_ROW_LENGTH,GL11.GL_UNPACK_SKIP_ROWS,GL11.GL_UNPACK_SKIP_PIXELS},saved=new int[4];
@@ -40,7 +41,8 @@ final class MaterialValidation {
                 plane(data,reverse==0?0:4,grazing?512.004f:kind==2?5:30,0,0,1,0);
                 plane(data,2,grazing?512.002f:20,kind==3 || kind==5?6:-3,0,0,1);
                 plane(data,reverse==0?4:0,grazing?512:10,kind==1?8:kind==4 || kind==5?6:-3,1,0,0);
-                var tree=new MeshTree(data,6);var nodeData=tree.nodes();
+                if(quads)data=QuadVertices.pack(data,6);
+                var tree=new MeshTree(data,quads?3:6,quads?4:3);var nodeData=tree.nodes();
                 triangles.write(0,data,data.length);nodes.write(0,nodeData,nodeData.length);compact.write(0,nodeData,nodeData.length);
                 set(shader,"MeshNodeCount",tree.size());set(shader,"EmptyCells",cache);
                 draw.run();pixels.clear();GL11.glReadPixels(0,0,1,1,GL11.GL_RGBA,GL11.GL_FLOAT,pixels);

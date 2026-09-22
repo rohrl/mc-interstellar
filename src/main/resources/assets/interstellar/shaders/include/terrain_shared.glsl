@@ -181,7 +181,14 @@ float cloudFogDistance(vec3 position) {
     return TerrainFogRange.z>.5?max(length(view.xz),abs(view.y)):length(view);
 }
 // The live actor tree shares nearest-hit and cloud ordering with the retained terrain tree.
-#ifdef INTERSTELLAR_STREAMED_LAYOUT
+#ifdef INTERSTELLAR_QUAD_MESH
+vec4 quadPart(int tree,int base,int part,int second) {
+    int corner=(part/3+second*2)%4;
+    return tree==0?texelFetch(MeshTriangles,ivec2(base%4092+corner*3+part%3,base/4092),0):
+        texelFetch(DistantAppearance,ivec2((base+part)%4096,(base+part)/4096),0);
+}
+#define trianglePart(tree,base,part) quadPart(tree,base,part,quadSecond)
+#elif defined(INTERSTELLAR_STREAMED_LAYOUT)
 // Nine-texel terrain triangles stay in one 4095-wide row; share the base address.
 // Moving triangles use 4096-wide rows and may cross a row boundary.
 vec4 trianglePart(int tree,int base,int part) {
@@ -274,8 +281,15 @@ int meshSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
         #endif
         if(count<0) {returnTo=int(lower.w);node=int(upper.w);continue;}
         if(count>0)canCache=false;
+#ifdef INTERSTELLAR_QUAD_MESH
+        int tests=tree==0?count*2:count;
+        for(int i=0;i<tests;i++) {
+            int quadSecond=tree==0?i%2:0;
+            int base=tree==0?(int(upper.w)+i/2)*12:(int(upper.w)+i)*9;
+#else
         for(int i=0;i<count;i++) {
             int base=(int(upper.w)+i)*9;
+#endif
             vec4 vertexA=trianglePart(tree,base,0);
             float entity=vertexA.w;
             bool cloud=entity==5.0 || entity==6.0;

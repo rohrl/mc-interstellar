@@ -7,10 +7,16 @@ import java.util.Arrays;
 public final class MeshTree {
     public static final int STRIDE=36;
     private final float[] triangles;
+    private final int verticesPerPrimitive,stride;
     private float[] nodes=new float[1200];
     private int size;
     public MeshTree(float[] triangles,int count) {
-        if(count<0 || count>triangles.length/STRIDE)throw new IllegalArgumentException("Invalid triangle count");
+        this(triangles,count,3);
+    }
+    public MeshTree(float[] triangles,int count,int verticesPerPrimitive) {
+        if(verticesPerPrimitive!=3 && verticesPerPrimitive!=4)throw new IllegalArgumentException("Expected triangles or quads");
+        this.verticesPerPrimitive=verticesPerPrimitive;stride=verticesPerPrimitive*12;
+        if(count<0 || count>triangles.length/stride)throw new IllegalArgumentException("Invalid primitive count");
         this.triangles=triangles;
         if(count>0)build(0,count,0);
     }
@@ -22,8 +28,8 @@ public final class MeshTree {
         int base=node*12;
         Arrays.fill(nodes,base,base+3,Float.POSITIVE_INFINITY);
         Arrays.fill(nodes,base+4,base+7,Float.NEGATIVE_INFINITY);
-        for(int i=first;i<first+count;i++)for(int v=0;v<3;v++)for(int a=0;a<3;a++) {
-            float value=triangles[i*STRIDE+v*12+a];
+        for(int i=first;i<first+count;i++)for(int v=0;v<verticesPerPrimitive;v++)for(int a=0;a<3;a++) {
+            float value=triangles[i*stride+v*12+a];
             nodes[base+a]=Math.min(nodes[base+a],value);
             nodes[base+4+a]=Math.max(nodes[base+4+a],value);
         }
@@ -45,11 +51,12 @@ public final class MeshTree {
         return node;
     }
     private float centroid(int triangle,int axis) {
-        int p=triangle*STRIDE+axis;
-        return (triangles[p]+triangles[p+12]+triangles[p+24])/3;
+        int p=triangle*stride+axis;
+        return verticesPerPrimitive==3?(triangles[p]+triangles[p+12]+triangles[p+24])/3:
+            (triangles[p]+triangles[p+12]+triangles[p+24]+triangles[p+36])/4;
     }
     private void swap(int a,int b) {
         if(a==b)return;
-        for(int i=0;i<STRIDE;i++) {float v=triangles[a*STRIDE+i];triangles[a*STRIDE+i]=triangles[b*STRIDE+i];triangles[b*STRIDE+i]=v;}
+        for(int i=0;i<stride;i++) {float v=triangles[a*stride+i];triangles[a*stride+i]=triangles[b*stride+i];triangles[b*stride+i]=v;}
     }
 }

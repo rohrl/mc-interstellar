@@ -25,6 +25,20 @@ class MeshTreeTest {
         for(boolean value:found)assertTrue(value);
     }
     private void verify(float[] nodes,float[] triangles,int count) {
+        verify(nodes,triangles,count,3);
+    }
+    @Test void quadTreeKeepsNonplanarFourthCornersAndEveryPayload() {
+        var random=new Random(721);int count=1200;var data=new float[count*48];
+        for(int q=0;q<count;q++) {
+            for(int v=0;v<4;v++)for(int axis=0;axis<3;axis++)data[q*48+v*12+axis]=random.nextFloat()*500-250;
+            data[q*48+3]=q;
+        }
+        var tree=new MeshTree(data,count,4);verify(tree.nodes(),data,count,4);
+        boolean[] seen=new boolean[count];
+        for(int q=0;q<count;q++){int id=(int)data[q*48+3];assertFalse(seen[id]);seen[id]=true;}
+        for(boolean value:seen)assertTrue(value);
+    }
+    private void verify(float[] nodes,float[] triangles,int count,int vertices) {
         assertEquals(nodes.length/12,(int)nodes[3]);
         boolean[] found=new boolean[count];
         for(int n=0;n<nodes.length/12;n++) {
@@ -34,8 +48,8 @@ class MeshTreeTest {
                 assertEquals(n+1,escape);
                 for(int i=first;i<first+size;i++) {
                     assertFalse(found[i]);found[i]=true;
-                    for(int v=0;v<3;v++)for(int a=0;a<3;a++) {
-                        float coordinate=triangles[i*36+v*12+a];
+                    for(int v=0;v<vertices;v++)for(int a=0;a<3;a++) {
+                        float coordinate=triangles[i*vertices*12+v*12+a];
                         assertTrue(coordinate>=nodes[base+a] && coordinate<=nodes[base+4+a]);
                     }
                 }

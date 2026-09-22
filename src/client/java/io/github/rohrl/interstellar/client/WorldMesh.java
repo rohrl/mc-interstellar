@@ -88,6 +88,7 @@ final class WorldMesh implements VertexConsumer,AutoCloseable {
     }
     boolean ready() {return streaming!=null?streaming.ready():singleChunk?prepared:nodeTexture!=0;}
     boolean streamed() {return streaming!=null;}
+    QuadTerrain quads() {return streaming==null?null:streaming.quads();}
     String viewStatus() {return ready()?"World view ready":streaming!=null?"Preparing world view: "+streaming.loadingPercent()+"%":"Preparing world view...";}
     String status() {return streaming!=null?streaming.status():ready()?"Native mesh: "+count+" triangles | "+missingSections+" missing sections"+(entities==null?"": " | "+entities.status()):
             "Capturing native mesh: "+(100L*cursor/total)+"%";}

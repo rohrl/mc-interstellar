@@ -25,6 +25,8 @@ final class TerrainScreen extends Screen {
     private static ShaderProgram splitShader;
     private static ShaderProgram layoutShader,layoutDiagnosticShader,materialShader;
     private static ShaderProgram materialProbeShader,materialMaskedShader;
+    private static ShaderProgram quadProbeShader,quadMaskedShader,quadMaterialShader,quadDiagnosticShader;
+    private boolean quadVertices;
     private boolean selectiveMaterials=true;
     private float orbitStep=.08f;
     private float curveFactor=4;
@@ -87,6 +89,10 @@ final class TerrainScreen extends Screen {
     static void setMaterialShader(ShaderProgram program) {materialShader=program;resourceVersion++;}
     static void setMaterialProbeShader(ShaderProgram program) {materialProbeShader=program;resourceVersion++;}
     static void setMaterialMaskedShader(ShaderProgram program) {materialMaskedShader=program;resourceVersion++;}
+    static void setQuadProbeShader(ShaderProgram program) {quadProbeShader=program;resourceVersion++;}
+    static void setQuadMaskedShader(ShaderProgram program) {quadMaskedShader=program;resourceVersion++;}
+    static void setQuadMaterialShader(ShaderProgram program) {quadMaterialShader=program;resourceVersion++;}
+    static void setQuadDiagnosticShader(ShaderProgram program) {quadDiagnosticShader=program;resourceVersion++;}
     @Override protected void init() {
         if(snapshot!=null || error!=null) return;
         if(!options.enabled()) {error="Terrain preview disabled in interstellar-terrain.json";return;}
@@ -180,10 +186,10 @@ final class TerrainScreen extends Screen {
         shader=currentShader();
         if(validate && meshMode) {
             validate=false;
-            var diagnosticShader=useLayoutShader()?layoutDiagnosticShader:useDefaultShader()?(useLongShader()?longMeshShader:compactMeshShader):shader;
+            var diagnosticShader=useQuads()?quadDiagnosticShader:useLayoutShader()?layoutDiagnosticShader:useDefaultShader()?(useLongShader()?longMeshShader:compactMeshShader):shader;
             diagnosticShader.getUniformOrDefault("MeshStepLimit").set(meshStepLimit);
             Interstellar.LOGGER.info("Mesh fixture program: {}; step cap={}; angular cap={}",useLayoutShader()?"streamed-layout diagnostic variant":useDefaultShader()?"compact diagnostic variant (live defaults fix Diagnostic=0)":programName(),useLongShader()?meshStepLimit:4,orbitStep);
-            validationStatus=MeshValidation.run(diagnosticShader,()->drawQuad(1,1),orbitStep,curveFactor);
+            validationStatus=MeshValidation.run(diagnosticShader,()->drawQuad(1,1),orbitStep,curveFactor,useQuads());
         }
         if(hybrid)nativeSky.update(!meshMode || !meshClouds);
         int w=Math.max(1,Math.round(client.getWindow().getFramebufferWidth()*scale));
@@ -213,7 +219,7 @@ final class TerrainScreen extends Screen {
                 samples.begin(0);shader.getUniformOrDefault("SampleOffset").set(-.25f);drawQuad(w,h);
                 samples.begin(1);shader.getUniformOrDefault("SampleOffset").set(.25f);drawQuad(w,h);
                 if(useSelectiveMaterials()) {
-                    int mask=samples.copyMask();shader=materialMaskedShader;configureShader(w,h);
+                    int mask=samples.copyMask();shader=useQuads()?quadMaskedShader:materialMaskedShader;configureShader(w,h);
                     shader.addSampler("PendingRays",mask);RenderSystem.setShader(()->shader);
                     samples.begin(0);shader.getUniformOrDefault("SampleOffset").set(-.25f);drawQuad(w,h);
                     samples.begin(1);shader.getUniformOrDefault("SampleOffset").set(.25f);drawQuad(w,h);
@@ -262,7 +268,7 @@ final class TerrainScreen extends Screen {
         shader.getUniformOrDefault("OldMeshBounds").set((float)oldX,(float)oldZ,(float)oldX+256,(float)oldZ+256);
         shader.getUniformOrDefault("MeshExtent").set(meshMode?Math.max(mesh.extent,moving==null?0:moving.extent)+mesh.sourceShift(centre()):512f);
         shader.getUniformOrDefault("MovingNodeCount").set(!meshMode || moving==null?0f:(float)moving.nodeCount);
-        shader.getUniformOrDefault("MeshNodeCount").set(meshMode?(float)mesh.nodeCount:0f);
+        shader.getUniformOrDefault("MeshNodeCount").set(meshMode?(float)(useQuads()?mesh.quads().nodeCount:mesh.nodeCount):0f);
         shader.getUniformOrDefault("DistantTop").set(snapshot.distant==null?-1024f:snapshot.distant.maxHeight);
         shader.getUniformOrDefault("FaceShades").set(client.world.getBrightness(net.minecraft.util.math.Direction.EAST,true),
                 client.world.getBrightness(net.minecraft.util.math.Direction.SOUTH,true),client.world.getBrightness(net.minecraft.util.math.Direction.DOWN,true),
@@ -276,7 +282,7 @@ final class TerrainScreen extends Screen {
         shader.getUniformOrDefault("FastFetch").set(fastFetch?1f:0f);
         shader.getUniformOrDefault("EmptyCells").set(emptyCells?1f:0f);
         shader.getUniformOrDefault("EmptyReach").set(emptyReach);
-        shader.addSampler("Voxels",meshMode?mesh.triangleTexture:snapshot.voxelTexture);
+        shader.addSampler("Voxels",meshMode?(useQuads()?mesh.quads().vertices.texture:mesh.triangleTexture):snapshot.voxelTexture);
         shader.addSampler("LocalLight",meshMode?(moving!=null?moving.entities.texture:mesh.entities.texture):snapshot.lightTexture);
         shader.addSampler("SmoothAtlas",snapshot.smoothLight.texture);
         shader.addSampler("LocalSmooth",snapshot.smoothTexture);
@@ -287,7 +293,7 @@ final class TerrainScreen extends Screen {
         shader.addSampler("SkyAtlas",hybrid?nativeSky.texture():snapshot.voxelTexture);
         shader.addSampler("Lightmap",((io.github.rohrl.interstellar.mixin.client.LightmapAccessor)client.gameRenderer.getLightmapTextureManager()).interstellar$texture().getGlId());
         shader.addSampler("Palette",meshMode?mesh.nodeTexture:snapshot.paletteTexture);
-        shader.addSampler("CompactNodes",meshMode?mesh.compactNodeTexture:snapshot.paletteTexture);
+        shader.addSampler("CompactNodes",meshMode?(useQuads()?mesh.quads().nodes.texture:mesh.compactNodeTexture):snapshot.paletteTexture);
         shader.addSampler("CompactMovingNodes",meshMode && moving!=null?moving.compactNodeTexture:snapshot.paletteTexture);
         shader.addSampler("Atlas",client.getTextureManager().getTexture(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE).getGlId());
     }
@@ -353,6 +359,7 @@ final class TerrainScreen extends Screen {
     private boolean useSplitShader() {return splitSamples && useDefaultShader() && useLongShader() && splitShader!=null
             && TerrainSamples.supported(Math.max(1,Math.round(client.getWindow().getFramebufferWidth()*scale)));}
     private ShaderProgram currentShader() {
+        if(useQuads())return useMaterials() && !useSelectiveMaterials()?quadMaterialShader:quadProbeShader;
         if(useLayoutShader())return useMaterials()?(useSelectiveMaterials()?materialProbeShader:materialShader):orbitStep>.02f && materialProbeShader!=null?materialProbeShader:layoutShader;
         if(useSplitShader())return splitShader;
         if(!useMeshShader())return generalShader;
@@ -361,6 +368,7 @@ final class TerrainScreen extends Screen {
         return meshShader;
     }
     private String programName() {
+        if(useQuads())return "native-quads-"+(useSelectiveMaterials()?"selective-":"full-")+meshStepLimit;
         if(useLayoutShader())return (useMaterials()?(useSelectiveMaterials()?"native-live-selective-materials-":"native-live-materials-"):orbitStep>.02f && materialProbeShader!=null?"native-live-curvature-probe-":"native-live-layout-")+meshStepLimit;
         if(useSplitShader())return "native-live-split-"+meshStepLimit;
         if(useDefaultShader())return useLongShader()?"native-live-steps-"+meshStepLimit:"native-live-defaults";
@@ -377,6 +385,11 @@ final class TerrainScreen extends Screen {
         finally {splitSamples=old;}
     }
     private boolean useLayoutShader() {return fixedLayout && mesh!=null && mesh.streamed() && useSplitShader() && layoutShader!=null && layoutDiagnosticShader!=null;}
+    private boolean useQuads() {return quadVertices && useLayoutShader() && mesh.quads()!=null && quadProbeShader!=null && quadMaskedShader!=null && quadMaterialShader!=null && quadDiagnosticShader!=null;}
+    void renderQuadComparison(boolean reference) {
+        boolean old=quadVertices;cancelBenchmark();
+        try {quadVertices=!reference;renderTerrain();}finally {quadVertices=old;}
+    }
     private boolean useMaterials() {return materialShader!=null && (mesh.hasMaterials() || moving!=null && moving.hasMaterials());}
     private boolean useSelectiveMaterials() {return selectiveMaterials && useLayoutShader() && useMaterials() && materialProbeShader!=null && materialMaskedShader!=null;}
     void renderMaterialComparison(boolean reference) {
@@ -458,6 +471,7 @@ final class TerrainScreen extends Screen {
             case GLFW.GLFW_KEY_Z -> {if((modifiers&GLFW.GLFW_MOD_SHIFT)!=0)AppearanceCapture.request(this,13);else selectiveMaterials=!selectiveMaterials;validationStatus="Z: selective materials "+(selectiveMaterials?"ON":"OFF")+" | Shift+Z: compare full material pass";}
             case GLFW.GLFW_KEY_LEFT_BRACKET -> {if((modifiers&GLFW.GLFW_MOD_SHIFT)!=0)AppearanceCapture.request(this,14);else orbitStep=orbitStep==.02f?.04f:orbitStep==.04f?.08f:.02f;validationStatus="[: angular cap "+orbitStep+" | Shift+[: compare .02";}
             case GLFW.GLFW_KEY_RIGHT_BRACKET -> {curveFactor=curveFactor==1?2:curveFactor==2?4:1;validationStatus="]: chord tolerance multiplier "+curveFactor;}
+            case GLFW.GLFW_KEY_BACKSLASH -> {if((modifiers&GLFW.GLFW_MOD_SHIFT)!=0)AppearanceCapture.request(this,15);else quadVertices=!quadVertices;validationStatus="Quad vertices "+(quadVertices?"ON":"OFF")+" | Shift+backslash: same-scene pair";}
             case GLFW.GLFW_KEY_V -> {
                 if(meshMode) {if((modifiers&GLFW.GLFW_MOD_SHIFT)!=0)AppearanceCapture.request(this,10);else meshStepLimit=meshStepLimit==4?16:4;validationStatus="V: step cap "+meshStepLimit+" | Shift+V: compare four-block cap";}
                 else {validate=true;curvedValidation=false;}
