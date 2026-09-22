@@ -27,6 +27,9 @@ final class TerrainScreen extends Screen {
     private static ShaderProgram materialProbeShader,materialMaskedShader;
     private boolean selectiveMaterials=true;
     private float orbitStep=.02f;
+    private float curveFactor=1;
+    private boolean ringAA;
+    private static ShaderProgram ringShader;
     private boolean fixedLayout=true;
     private boolean splitSamples=true;
     private TerrainSamples samples;
@@ -86,6 +89,7 @@ final class TerrainScreen extends Screen {
     static void setMaterialShader(ShaderProgram program) {materialShader=program;resourceVersion++;}
     static void setMaterialProbeShader(ShaderProgram program) {materialProbeShader=program;resourceVersion++;}
     static void setMaterialMaskedShader(ShaderProgram program) {materialMaskedShader=program;resourceVersion++;}
+    static void setRingShader(ShaderProgram program) {ringShader=program;resourceVersion++;}
     @Override protected void init() {
         if(snapshot!=null || error!=null) return;
         if(!options.enabled()) {error="Terrain preview disabled in interstellar-terrain.json";return;}
@@ -182,6 +186,7 @@ final class TerrainScreen extends Screen {
             var diagnosticShader=useLayoutShader()?layoutDiagnosticShader:useDefaultShader()?(useLongShader()?longMeshShader:compactMeshShader):shader;
             diagnosticShader.getUniformOrDefault("MeshStepLimit").set(meshStepLimit);
             diagnosticShader.getUniformOrDefault("OrbitStep").set(orbitStep);
+            diagnosticShader.getUniformOrDefault("CurveFactor").set(curveFactor);
             Interstellar.LOGGER.info("Mesh fixture program: {}; step cap={}; angular cap={}",useLayoutShader()?"streamed-layout diagnostic variant":useDefaultShader()?"compact diagnostic variant (live defaults fix Diagnostic=0)":programName(),useLongShader()?meshStepLimit:4,orbitStep);
             validationStatus=MeshValidation.run(diagnosticShader,()->drawQuad(1,1));
         }
@@ -192,10 +197,12 @@ final class TerrainScreen extends Screen {
             cancelBenchmark();if(target!=null)target.delete();target=new SimpleFramebuffer(w,h,false,false);
         }
         boolean split=useSplitShader();
-        if(split && (samples==null || samples.width!=w || samples.height!=h)) {
+        boolean ring=ringAA && antialiasing==2 && meshMode && lensing && hasCompactShader() && ringShader!=null && TerrainSamples.supported(w);
+        if((split || ring) && (samples==null || samples.width!=w || samples.height!=h)) {
             if(samples!=null)samples.close();samples=new TerrainSamples(w,h);
         }
-        target.beginWrite(true);
+        var output=ring?samples.merged():target;
+        output.beginWrite(true);
         try {
             configureShader(w,h);
             var projection=WorldProjection.current();
@@ -218,8 +225,15 @@ final class TerrainScreen extends Screen {
                     samples.begin(0);shader.getUniformOrDefault("SampleOffset").set(-.25f);drawQuad(w,h);
                     samples.begin(1);shader.getUniformOrDefault("SampleOffset").set(.25f);drawQuad(w,h);
                 }
-                samples.fold(target,()->drawQuad(w,h));
+                samples.fold(output,()->drawQuad(w,h));
             } else drawQuad(w,h);
+            if(ring) {
+                output.beginWrite(true);shader=ringShader;configureShader(w,h);RenderSystem.setShader(()->shader);
+                RenderSystem.enableBlend();RenderSystem.defaultBlendFunc();
+                shader.getUniformOrDefault("SampleOffset").set(-.25f);shader.getUniformOrDefault("RingWeight").set(1f/3f);drawQuad(w,h);
+                shader.getUniformOrDefault("SampleOffset").set(.25f);shader.getUniformOrDefault("RingWeight").set(.25f);drawQuad(w,h);
+                RenderSystem.disableBlend();samples.publishMerged(target);
+            }
         } finally {
             client.getFramebuffer().beginWrite(true);
             RenderSystem.depthMask(true);RenderSystem.enableDepthTest();RenderSystem.enableBlend();RenderSystem.defaultBlendFunc();
@@ -230,59 +244,60 @@ final class TerrainScreen extends Screen {
         RenderSystem.enableBlend();RenderSystem.defaultBlendFunc();
     }
     private void configureShader(int w,int h) {
-            var projection=WorldProjection.current();
-            shader.getUniformOrDefault("Viewport").set((float)w,(float)h);
-            shader.getUniformOrDefault("ViewSlopes").set(projection.x(),projection.y(),projection.offsetX(),projection.offsetY());
-            var fog=WorldFog.current();
-            shader.getUniformOrDefault("TerrainFogRange").set(fog.start(),fog.end(),fog.cylindrical());
-            shader.getUniformOrDefault("TerrainFogColour").set(fog.red(),fog.green(),fog.blue(),fog.alpha());
-            setVector("Camera",camera.subtract(Vec3d.of(snapshot.origin)));
-            setVector("Source",centre().subtract(Vec3d.of(snapshot.origin)));
-            Vec3d forward=Vec3d.fromPolar(pitch,yaw),right=Vec3d.fromPolar(0,yaw+90);
-            // Camera right follows increasing Minecraft yaw; right cross forward is up.
-            setVector("Forward",forward);setVector("Right",right);setVector("Up",right.crossProduct(forward));
-            shader.getUniformOrDefault("Radius").set((float)source.schwarzschildRadius());
-            shader.getUniformOrDefault("Lensing").set(lensing?1f:0f);
-            shader.getUniformOrDefault("Hybrid").set(hybrid?1f:0f);
-            shader.getUniformOrDefault("FaceLighting").set(faceLighting?1f:0f);
-            shader.getUniformOrDefault("SmoothLighting").set(smoothLighting?1f:0f);
-            shader.getUniformOrDefault("MeshMode").set(meshMode?1f:0f);
-            shader.getUniformOrDefault("MeshEntities").set(meshEntities?1f:0f);
-            shader.getUniformOrDefault("MeshClouds").set(meshClouds?1f:0f);
-            shader.getUniformOrDefault("MeshCoverage").set(meshCoverage?1f:0f);
-            int oldX=((net.minecraft.util.math.BlockPos.ofFloored(centre()).getX()>>4)-8)*16-snapshot.origin.getX();
-            int oldZ=((net.minecraft.util.math.BlockPos.ofFloored(centre()).getZ()>>4)-8)*16-snapshot.origin.getZ();
-            shader.getUniformOrDefault("OldMeshBounds").set((float)oldX,(float)oldZ,(float)oldX+256,(float)oldZ+256);
-            shader.getUniformOrDefault("MeshExtent").set(meshMode?Math.max(mesh.extent,moving==null?0:moving.extent)+mesh.sourceShift(centre()):512f);
-            shader.getUniformOrDefault("MovingNodeCount").set(!meshMode || moving==null?0f:(float)moving.nodeCount);
-            shader.getUniformOrDefault("MeshNodeCount").set(meshMode?(float)mesh.nodeCount:0f);
-            shader.getUniformOrDefault("DistantTop").set(snapshot.distant==null?-1024f:snapshot.distant.maxHeight);
-            shader.getUniformOrDefault("FaceShades").set(client.world.getBrightness(net.minecraft.util.math.Direction.EAST,true),
-                    client.world.getBrightness(net.minecraft.util.math.Direction.SOUTH,true),client.world.getBrightness(net.minecraft.util.math.Direction.DOWN,true),
-                    client.world.getBrightness(net.minecraft.util.math.Direction.UP,true));
-            shader.getUniformOrDefault("PathStep").set(fine?.225f:.45f);
-            shader.getUniformOrDefault("MeshStepLimit").set(meshStepLimit);
-            shader.getUniformOrDefault("OrbitStep").set(orbitStep);
-            shader.getUniformOrDefault("RaySamples").set(antialiasing==2?2f:antialiasing==4?4f:1f);
-            shader.getUniformOrDefault("AdaptivePath").set(adaptivePath?1f:0f);
-            shader.getUniformOrDefault("FastBounds").set(fastBounds?1f:0f);
-            shader.getUniformOrDefault("FastFetch").set(fastFetch?1f:0f);
-            shader.getUniformOrDefault("EmptyCells").set(emptyCells?1f:0f);
-            shader.getUniformOrDefault("EmptyReach").set(emptyReach);
-            shader.addSampler("Voxels",meshMode?mesh.triangleTexture:snapshot.voxelTexture);
-            shader.addSampler("LocalLight",meshMode?(moving!=null?moving.entities.texture:mesh.entities.texture):snapshot.lightTexture);
-            shader.addSampler("SmoothAtlas",snapshot.smoothLight.texture);
-            shader.addSampler("LocalSmooth",snapshot.smoothTexture);
-            shader.addSampler("DistantSmooth",snapshot.distant==null?snapshot.smoothTexture:snapshot.distant.smoothTexture);
-            shader.addSampler("DistantLight",meshMode && moving!=null?moving.nodeTexture:snapshot.distant==null?snapshot.lightTexture:snapshot.distant.lightTexture);
-            shader.addSampler("Distant",meshMode?(moving!=null?moving.clouds.texture:mesh.clouds.texture):snapshot.distant==null?snapshot.voxelTexture:snapshot.distant.texture);
-            shader.addSampler("DistantAppearance",meshMode && moving!=null?moving.triangleTexture:snapshot.distant==null?snapshot.voxelTexture:snapshot.distant.appearanceTexture);
-            shader.addSampler("SkyAtlas",hybrid?nativeSky.texture():snapshot.voxelTexture);
-            shader.addSampler("Lightmap",((io.github.rohrl.interstellar.mixin.client.LightmapAccessor)client.gameRenderer.getLightmapTextureManager()).interstellar$texture().getGlId());
-            shader.addSampler("Palette",meshMode?mesh.nodeTexture:snapshot.paletteTexture);
-            shader.addSampler("CompactNodes",meshMode?mesh.compactNodeTexture:snapshot.paletteTexture);
-            shader.addSampler("CompactMovingNodes",meshMode && moving!=null?moving.compactNodeTexture:snapshot.paletteTexture);
-            shader.addSampler("Atlas",client.getTextureManager().getTexture(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE).getGlId());
+        var projection=WorldProjection.current();
+        shader.getUniformOrDefault("Viewport").set((float)w,(float)h);
+        shader.getUniformOrDefault("ViewSlopes").set(projection.x(),projection.y(),projection.offsetX(),projection.offsetY());
+        var fog=WorldFog.current();
+        shader.getUniformOrDefault("TerrainFogRange").set(fog.start(),fog.end(),fog.cylindrical());
+        shader.getUniformOrDefault("TerrainFogColour").set(fog.red(),fog.green(),fog.blue(),fog.alpha());
+        setVector("Camera",camera.subtract(Vec3d.of(snapshot.origin)));
+        setVector("Source",centre().subtract(Vec3d.of(snapshot.origin)));
+        Vec3d forward=Vec3d.fromPolar(pitch,yaw),right=Vec3d.fromPolar(0,yaw+90);
+        // Camera right follows increasing Minecraft yaw; right cross forward is up.
+        setVector("Forward",forward);setVector("Right",right);setVector("Up",right.crossProduct(forward));
+        shader.getUniformOrDefault("Radius").set((float)source.schwarzschildRadius());
+        shader.getUniformOrDefault("Lensing").set(lensing?1f:0f);
+        shader.getUniformOrDefault("Hybrid").set(hybrid?1f:0f);
+        shader.getUniformOrDefault("FaceLighting").set(faceLighting?1f:0f);
+        shader.getUniformOrDefault("SmoothLighting").set(smoothLighting?1f:0f);
+        shader.getUniformOrDefault("MeshMode").set(meshMode?1f:0f);
+        shader.getUniformOrDefault("MeshEntities").set(meshEntities?1f:0f);
+        shader.getUniformOrDefault("MeshClouds").set(meshClouds?1f:0f);
+        shader.getUniformOrDefault("MeshCoverage").set(meshCoverage?1f:0f);
+        int oldX=((net.minecraft.util.math.BlockPos.ofFloored(centre()).getX()>>4)-8)*16-snapshot.origin.getX();
+        int oldZ=((net.minecraft.util.math.BlockPos.ofFloored(centre()).getZ()>>4)-8)*16-snapshot.origin.getZ();
+        shader.getUniformOrDefault("OldMeshBounds").set((float)oldX,(float)oldZ,(float)oldX+256,(float)oldZ+256);
+        shader.getUniformOrDefault("MeshExtent").set(meshMode?Math.max(mesh.extent,moving==null?0:moving.extent)+mesh.sourceShift(centre()):512f);
+        shader.getUniformOrDefault("MovingNodeCount").set(!meshMode || moving==null?0f:(float)moving.nodeCount);
+        shader.getUniformOrDefault("MeshNodeCount").set(meshMode?(float)mesh.nodeCount:0f);
+        shader.getUniformOrDefault("DistantTop").set(snapshot.distant==null?-1024f:snapshot.distant.maxHeight);
+        shader.getUniformOrDefault("FaceShades").set(client.world.getBrightness(net.minecraft.util.math.Direction.EAST,true),
+                client.world.getBrightness(net.minecraft.util.math.Direction.SOUTH,true),client.world.getBrightness(net.minecraft.util.math.Direction.DOWN,true),
+                client.world.getBrightness(net.minecraft.util.math.Direction.UP,true));
+        shader.getUniformOrDefault("PathStep").set(fine?.225f:.45f);
+        shader.getUniformOrDefault("MeshStepLimit").set(meshStepLimit);
+        shader.getUniformOrDefault("OrbitStep").set(orbitStep);
+        shader.getUniformOrDefault("CurveFactor").set(curveFactor);
+        shader.getUniformOrDefault("RaySamples").set(antialiasing==2?2f:antialiasing==4?4f:1f);
+        shader.getUniformOrDefault("AdaptivePath").set(adaptivePath?1f:0f);
+        shader.getUniformOrDefault("FastBounds").set(fastBounds?1f:0f);
+        shader.getUniformOrDefault("FastFetch").set(fastFetch?1f:0f);
+        shader.getUniformOrDefault("EmptyCells").set(emptyCells?1f:0f);
+        shader.getUniformOrDefault("EmptyReach").set(emptyReach);
+        shader.addSampler("Voxels",meshMode?mesh.triangleTexture:snapshot.voxelTexture);
+        shader.addSampler("LocalLight",meshMode?(moving!=null?moving.entities.texture:mesh.entities.texture):snapshot.lightTexture);
+        shader.addSampler("SmoothAtlas",snapshot.smoothLight.texture);
+        shader.addSampler("LocalSmooth",snapshot.smoothTexture);
+        shader.addSampler("DistantSmooth",snapshot.distant==null?snapshot.smoothTexture:snapshot.distant.smoothTexture);
+        shader.addSampler("DistantLight",meshMode && moving!=null?moving.nodeTexture:snapshot.distant==null?snapshot.lightTexture:snapshot.distant.lightTexture);
+        shader.addSampler("Distant",meshMode?(moving!=null?moving.clouds.texture:mesh.clouds.texture):snapshot.distant==null?snapshot.voxelTexture:snapshot.distant.texture);
+        shader.addSampler("DistantAppearance",meshMode && moving!=null?moving.triangleTexture:snapshot.distant==null?snapshot.voxelTexture:snapshot.distant.appearanceTexture);
+        shader.addSampler("SkyAtlas",hybrid?nativeSky.texture():snapshot.voxelTexture);
+        shader.addSampler("Lightmap",((io.github.rohrl.interstellar.mixin.client.LightmapAccessor)client.gameRenderer.getLightmapTextureManager()).interstellar$texture().getGlId());
+        shader.addSampler("Palette",meshMode?mesh.nodeTexture:snapshot.paletteTexture);
+        shader.addSampler("CompactNodes",meshMode?mesh.compactNodeTexture:snapshot.paletteTexture);
+        shader.addSampler("CompactMovingNodes",meshMode && moving!=null?moving.compactNodeTexture:snapshot.paletteTexture);
+        shader.addSampler("Atlas",client.getTextureManager().getTexture(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE).getGlId());
     }
     private static void drawQuad(int w,int h) {
         var buffer=Tessellator.getInstance().begin(VertexFormat.DrawMode.QUADS,VertexFormats.POSITION);
@@ -309,13 +324,13 @@ final class TerrainScreen extends Screen {
         try {lensing=false;scale=1;validate=false;antialiasing=0;renderTerrain();}
         finally {lensing=oldLensing;scale=oldScale;validate=oldValidate;antialiasing=oldAa;}
     }
-    String qualitySettings() {return "AA="+aaName()+", scale="+scale+", lensing="+lensing+", fine="+fine+", adaptive="+adaptivePath+", fastBounds="+fastBounds+", fastFetch="+fastFetch+", emptyCells="+emptyCells+", emptyReach="+emptyReach+", angularCap="+orbitStep+", program="+programName();}
+    String qualitySettings() {return "AA="+aaName()+", scale="+scale+", lensing="+lensing+", fine="+fine+", adaptive="+adaptivePath+", fastBounds="+fastBounds+", fastFetch="+fastFetch+", emptyCells="+emptyCells+", emptyReach="+emptyReach+", angularCap="+orbitStep+", curveFactor="+curveFactor+", ringAA="+ringAA+", program="+programName();}
     private String aaName() {return antialiasing==0?"OFF":antialiasing==1?"EDGE":antialiasing==2?"2x":"4x reference";}
     void renderQuality(boolean reference) {
-        int oldAa=antialiasing;float oldScale=scale;boolean oldValidate=validate;
+        int oldAa=antialiasing;float oldScale=scale,oldOrbit=orbitStep,oldCurve=curveFactor;boolean oldValidate=validate,oldFine=fine;
         cancelBenchmark();
-        try {validate=false;if(reference){antialiasing=4;scale=1;}renderTerrain();}
-        finally {antialiasing=oldAa;scale=oldScale;validate=oldValidate;}
+        try {validate=false;if(reference){antialiasing=4;scale=1;fine=true;orbitStep=.02f;curveFactor=1;}renderTerrain();}
+        finally {antialiasing=oldAa;scale=oldScale;validate=oldValidate;fine=oldFine;orbitStep=oldOrbit;curveFactor=oldCurve;}
     }
     void renderPathComparison(boolean reference) {
         boolean old=adaptivePath;cancelBenchmark();
@@ -410,7 +425,7 @@ final class TerrainScreen extends Screen {
         if(key==GLFW.GLFW_KEY_B && snapshot!=null && snapshot.ready() && error==null && paused==null && target!=null) {
             if(benchmark!=null)cancelBenchmark();
             else benchmark=new LabBenchmark(String.format(Locale.ROOT,"TERRAIN %dx%d, scale=%.2f, r/rs=%.5f, lensing=%s, fine=%s, snapshot=%s, hybrid="+hybrid+", live="+live+", mesh="+meshMode+", entities="+meshEntities+", nativeLight="+faceLighting+", coverage="+meshCoverage+", clouds="+meshClouds,
-                    target.textureWidth,target.textureHeight,scale,camera.distanceTo(centre())/source.schwarzschildRadius(),lensing,fine,meshMode?mesh.status():snapshot.status())+"; yaw="+yaw+"; pitch="+pitch+"; AA="+aaName()+"; adaptive="+adaptivePath+"; fastBounds="+fastBounds+"; fastFetch="+fastFetch+"; emptyCells="+emptyCells+"; emptyReach="+emptyReach+"; program="+programName()+"; angularCap="+orbitStep+"; includes resolve");
+                    target.textureWidth,target.textureHeight,scale,camera.distanceTo(centre())/source.schwarzschildRadius(),lensing,fine,meshMode?mesh.status():snapshot.status())+"; yaw="+yaw+"; pitch="+pitch+"; AA="+aaName()+"; adaptive="+adaptivePath+"; fastBounds="+fastBounds+"; fastFetch="+fastFetch+"; emptyCells="+emptyCells+"; emptyReach="+emptyReach+"; program="+programName()+"; angularCap="+orbitStep+"; curveFactor="+curveFactor+"; ringAA="+ringAA+"; includes resolve");
             return true;
         }
         cancelBenchmark();
@@ -450,6 +465,8 @@ final class TerrainScreen extends Screen {
             case GLFW.GLFW_KEY_O -> smoothLighting=!smoothLighting;
             case GLFW.GLFW_KEY_Z -> {if((modifiers&GLFW.GLFW_MOD_SHIFT)!=0)AppearanceCapture.request(this,13);else selectiveMaterials=!selectiveMaterials;validationStatus="Z: selective materials "+(selectiveMaterials?"ON":"OFF")+" | Shift+Z: compare full material pass";}
             case GLFW.GLFW_KEY_LEFT_BRACKET -> {if((modifiers&GLFW.GLFW_MOD_SHIFT)!=0)AppearanceCapture.request(this,14);else orbitStep=orbitStep==.02f?.04f:orbitStep==.04f?.08f:.02f;validationStatus="[: angular cap "+orbitStep+" | Shift+[: compare .02";}
+            case GLFW.GLFW_KEY_RIGHT_BRACKET -> {curveFactor=curveFactor==1?2:curveFactor==2?4:1;validationStatus="]: chord tolerance multiplier "+curveFactor;}
+            case GLFW.GLFW_KEY_BACKSLASH -> {ringAA=!ringAA;validationStatus="Photon-edge4x AA "+(ringAA?"ON":"OFF")+" | Shift+P: compare fine full-resolution4x reference";}
             case GLFW.GLFW_KEY_V -> {
                 if(meshMode) {if((modifiers&GLFW.GLFW_MOD_SHIFT)!=0)AppearanceCapture.request(this,10);else meshStepLimit=meshStepLimit==4?16:4;validationStatus="V: step cap "+meshStepLimit+" | Shift+V: compare four-block cap";}
                 else {validate=true;curvedValidation=false;}

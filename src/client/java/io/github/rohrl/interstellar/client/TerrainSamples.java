@@ -12,26 +12,31 @@ final class TerrainSamples implements AutoCloseable {
     private static int maxTextureWidth;
     private final SimpleFramebuffer target;
     private SimpleFramebuffer mask;
+    private SimpleFramebuffer merged;
     final int width,height;
     static void setShader(ShaderProgram program) {foldShader=program;maxTextureWidth=GL11.glGetInteger(GL11.GL_MAX_TEXTURE_SIZE);}
     static boolean supported(int width) {return foldShader!=null && width<=maxTextureWidth/2;}
     TerrainSamples(int width,int height) {
         this.width=width;this.height=height;
-        target=new SimpleFramebuffer(width*2,height,false,false);
+        target=floatTarget(width*2,height);
+    }
+    private static SimpleFramebuffer floatTarget(int width,int height) {
+        var result=new SimpleFramebuffer(width,height,false,false);
         int oldTexture=GL11.glGetInteger(GL11.GL_TEXTURE_BINDING_2D);
         int oldUnpack=GL11.glGetInteger(GL21.GL_PIXEL_UNPACK_BUFFER_BINDING);
         try {
             GL15.glBindBuffer(GL21.GL_PIXEL_UNPACK_BUFFER,0);
-            GL11.glBindTexture(GL11.GL_TEXTURE_2D,target.getColorAttachment());
-            GL11.glTexImage2D(GL11.GL_TEXTURE_2D,0,GL30.GL_RGBA32F,width*2,height,0,GL11.GL_RGBA,GL11.GL_FLOAT,(FloatBuffer)null);
+            GL11.glBindTexture(GL11.GL_TEXTURE_2D,result.getColorAttachment());
+            GL11.glTexImage2D(GL11.GL_TEXTURE_2D,0,GL30.GL_RGBA32F,width,height,0,GL11.GL_RGBA,GL11.GL_FLOAT,(FloatBuffer)null);
         } finally {
             GL11.glBindTexture(GL11.GL_TEXTURE_2D,oldTexture);
             GL15.glBindBuffer(GL21.GL_PIXEL_UNPACK_BUFFER,oldUnpack);
         }
-        target.beginWrite(false);
+        result.beginWrite(false);
         if(GL30.glCheckFramebufferStatus(GL30.GL_FRAMEBUFFER)!=GL30.GL_FRAMEBUFFER_COMPLETE) {
-            target.delete();throw new IllegalStateException("AA sample framebuffer incomplete");
+            result.delete();throw new IllegalStateException("AA sample framebuffer incomplete");
         }
+        return result;
     }
     void begin(int sample) {
         target.beginWrite(false);
@@ -51,5 +56,11 @@ final class TerrainSamples implements AutoCloseable {
         GL30.glBlitFramebuffer(0,0,width*2,height,0,0,width*2,height,GL11.GL_COLOR_BUFFER_BIT,GL11.GL_NEAREST);
         return mask.getColorAttachment();
     }
-    @Override public void close() {target.delete();if(mask!=null)mask.delete();}
+    SimpleFramebuffer merged() {if(merged==null)merged=floatTarget(width,height);return merged;}
+    void publishMerged(SimpleFramebuffer destination) {
+        GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER,merged.fbo);
+        GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER,destination.fbo);
+        GL30.glBlitFramebuffer(0,0,width,height,0,0,width,height,GL11.GL_COLOR_BUFFER_BIT,GL11.GL_NEAREST);
+    }
+    @Override public void close() {target.delete();if(mask!=null)mask.delete();if(merged!=null)merged.delete();}
 }

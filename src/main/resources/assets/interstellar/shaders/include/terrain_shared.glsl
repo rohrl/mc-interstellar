@@ -39,8 +39,13 @@ vec3 meshColour;
 #if defined(INTERSTELLAR_MATERIALS) || defined(INTERSTELLAR_MATERIAL_PROBE)
 float meshAlpha=1.0;
 uniform float OrbitStep;
+uniform float CurveFactor;
 #else
 const float OrbitStep=.02;
+const float CurveFactor=1.0;
+#endif
+#ifdef INTERSTELLAR_RING_SAMPLE
+uniform float RingWeight;
 #endif
 #ifdef INTERSTELLAR_MATERIAL_MASK
 uniform sampler2D PendingRays;
@@ -584,7 +589,7 @@ void trace(vec2 uv) {
             // kappa=1.5*u^5/(rs*(u*u+v*v)^(3/2)). Local chord sagitta is ~kappa*length^2/8.
             float normQ=length(q),u2=q.x*q.x;
             float curvature=1.5*u2*u2*q.x/max(Radius*normQ*normQ*normQ,1e-12);
-            float tolerance=.001*(PathStep/.45)*(PathStep/.45);
+            float tolerance=.001*(PathStep/.45)*(PathStep/.45)*(OrbitStep>.02?CurveFactor:1.0);
             stepSize=clamp(sqrt(8.0*tolerance/max(curvature,1e-12)),OrbitStep>.02?min(.05,PathStep):PathStep,MeshStepLimit);
         }
         float h=min(angularCap,stepSize/max(speed,.0001));
@@ -623,13 +628,24 @@ void trace(vec2 uv) {
     fragColor=vec4(.7,.05,.5,1);
 }
 void main() {
+#ifdef INTERSTELLAR_RING_SAMPLE
+    vec2 centreXY=(screenUv*2.0-1.0)*ViewSlopes.xy;
+    vec3 centreRay=normalize(Forward+(centreXY.x+ViewSlopes.z)*Right+(-centreXY.y+ViewSlopes.w)*Up);
+    float observerRadius=length(Camera-Source),mu=dot(centreRay,(Camera-Source)/observerRadius),u=Radius/observerRadius;
+    float impact=(1.0-mu*mu)/(u*u*(1.0-u));
+    if(mu>=0.0 || impact<6.70 || impact>6.85)discard;
+#endif
 #ifdef INTERSTELLAR_MATERIAL_MASK
     if(texelFetch(PendingRays,ivec2(gl_FragCoord.xy),0).a>.5)discard;
 #endif
 #ifdef INTERSTELLAR_SPLIT_AA
     // Identical two subpixel rays, scheduled in separate draws. Average in float
     // before the original RGBA8 target and bounded cubic reconstruction.
+#ifdef INTERSTELLAR_RING_SAMPLE
+    trace(screenUv+vec2(SampleOffset,-SampleOffset)/Viewport);
+#else
     trace(screenUv+vec2(SampleOffset)/Viewport);
+#endif
 #ifdef INTERSTELLAR_MATERIALS
     fragColor.rgb=materialLayers.rgb+(1.0-materialLayers.a)*fragColor.rgb;
 #else
@@ -637,6 +653,9 @@ void main() {
 #endif
 #ifdef INTERSTELLAR_MATERIAL_PROBE
     fragColor.a=meshAlpha<.999?0.0:1.0;
+#endif
+#ifdef INTERSTELLAR_RING_SAMPLE
+    fragColor.a=RingWeight;
 #endif
 #else
     if(MeshMode<.5 && Diagnostic>1.5 && Diagnostic<2.5) {
