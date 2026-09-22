@@ -26,6 +26,9 @@ final class TerrainScreen extends Screen {
     private static ShaderProgram layoutShader,layoutDiagnosticShader,materialShader;
     private static ShaderProgram materialProbeShader,materialMaskedShader;
     private static ShaderProgram quadProbeShader,quadMaskedShader,quadMaterialShader,quadDiagnosticShader;
+    private static final ShaderProgram[] movingShaders=new ShaderProgram[4];
+    private boolean separateMoving=true;
+    static void setMovingShader(int pass,ShaderProgram program) {movingShaders[pass]=program;resourceVersion++;}
     private boolean selectiveMaterials=true;
     private float orbitStep=.08f;
     private float curveFactor=4;
@@ -184,13 +187,14 @@ final class TerrainScreen extends Screen {
         }
     }
     private void renderTerrain() {
+        if(moving!=null)moving.movingLayout(useSeparateMoving());
         shader=currentShader();
         if(validate && meshMode) {
             validate=false;
-            var diagnosticShader=useQuads()?quadDiagnosticShader:useLayoutShader()?layoutDiagnosticShader:useDefaultShader()?(useLongShader()?longMeshShader:compactMeshShader):shader;
+            var diagnosticShader=useQuads()?(useSeparateMoving()?movingShaders[3]:quadDiagnosticShader):useLayoutShader()?layoutDiagnosticShader:useDefaultShader()?(useLongShader()?longMeshShader:compactMeshShader):shader;
             diagnosticShader.getUniformOrDefault("MeshStepLimit").set(meshStepLimit);
             Interstellar.LOGGER.info("Mesh fixture program: {}; step cap={}; angular cap={}",useQuads()?"quad diagnostic variant":useLayoutShader()?"streamed-layout diagnostic variant":useDefaultShader()?"compact diagnostic variant (live defaults fix Diagnostic=0)":programName(),useLongShader()?meshStepLimit:4,orbitStep);
-            validationStatus=MeshValidation.run(diagnosticShader,()->drawQuad(1,1),orbitStep,curveFactor,useQuads());
+            validationStatus=MeshValidation.run(diagnosticShader,()->drawQuad(1,1),orbitStep,curveFactor,useQuads(),useSeparateMoving());
         }
         if(hybrid)nativeSky.update(!meshMode || !meshClouds);
         int w=Math.max(1,Math.round(client.getWindow().getFramebufferWidth()*scale));
@@ -225,7 +229,7 @@ final class TerrainScreen extends Screen {
                 if(useSelectiveMaterials()) {
                     mask=samples.copyMask();
                     if(benchmark!=null)benchmark.mark(2);
-                    shader=useQuads()?profileProgram(quadMaskedShader,1):materialMaskedShader;configureShader(w,h);
+                    shader=useQuads()?(useSeparateMoving()?movingShaders[1]:profileProgram(quadMaskedShader,1)):materialMaskedShader;configureShader(w,h);
                     shader.addSampler("PendingRays",mask);RenderSystem.setShader(()->shader);
                     samples.begin(0);shader.getUniformOrDefault("SampleOffset").set(-.25f);drawQuad(w,h);
                     if(benchmark!=null)benchmark.mark(3);
@@ -235,8 +239,8 @@ final class TerrainScreen extends Screen {
                 if(profileCounters) {
                     profileCounters=false;
                     if(!useSelectiveMaterials())throw new IllegalStateException("Counters require the selective quad baseline");
-                    TerrainProfile.capture(w,h,mask,program->{shader=program;configureShader(w,h);},()->drawQuad(w,h),
-                        "camera="+camera+" yaw="+yaw+" pitch="+pitch+" logical="+w+"x"+h+" movingContents="+(moving==null?0:moving.profileMovingContents)+"; "+mesh.status());
+                    TerrainProfile.capture(w,h,mask,useSeparateMoving(),program->{shader=program;configureShader(w,h);},()->drawQuad(w,h),
+                        "separateMoving="+useSeparateMoving()+" camera="+camera+" yaw="+yaw+" pitch="+pitch+" logical="+w+"x"+h+" movingContents="+(moving==null?0:moving.profileMovingContents)+"; "+mesh.status());
                 }
                 samples.fold(target,()->drawQuad(w,h));
                 if(benchmark!=null)benchmark.mark(5);
@@ -282,7 +286,8 @@ final class TerrainScreen extends Screen {
         int oldZ=((net.minecraft.util.math.BlockPos.ofFloored(centre()).getZ()>>4)-8)*16-snapshot.origin.getZ();
         shader.getUniformOrDefault("OldMeshBounds").set((float)oldX,(float)oldZ,(float)oldX+256,(float)oldZ+256);
         shader.getUniformOrDefault("MeshExtent").set(meshMode?Math.max(mesh.extent,moving==null?0:moving.extent)+mesh.sourceShift(centre()):512f);
-        shader.getUniformOrDefault("MovingNodeCount").set(!meshMode || moving==null?0f:(float)moving.nodeCount);
+        shader.getUniformOrDefault("MovingNodeCount").set(!meshMode || moving==null?0f:(float)(useSeparateMoving()?moving.actorNodeCount:moving.nodeCount));
+        shader.getUniformOrDefault("CloudNodeCount").set(!meshMode || moving==null || !useSeparateMoving()?0f:(float)moving.cloudNodeCount);
         shader.getUniformOrDefault("MeshNodeCount").set(meshMode?(float)mesh.nodeCount:0f);
         shader.getUniformOrDefault("DistantTop").set(snapshot.distant==null?-1024f:snapshot.distant.maxHeight);
         shader.getUniformOrDefault("FaceShades").set(client.world.getBrightness(net.minecraft.util.math.Direction.EAST,true),
@@ -375,6 +380,7 @@ final class TerrainScreen extends Screen {
             && TerrainSamples.supported(Math.max(1,Math.round(client.getWindow().getFramebufferWidth()*scale)));}
     private ShaderProgram currentShader() {
         if(useQuads()) {
+            if(useSeparateMoving())return movingShaders[!useLayoutShader()?3:useMaterials() && !useSelectiveMaterials()?2:0];
             if(quadDiagnosticShader==null || quadProbeShader==null || quadMaterialShader==null || quadMaskedShader==null)
                 throw new IllegalStateException("Quad terrain programs are unavailable");
             return useLayoutShader()?(useMaterials() && !useSelectiveMaterials()?profileProgram(quadMaterialShader,2):profileProgram(quadProbeShader,0)):quadDiagnosticShader;
@@ -387,7 +393,7 @@ final class TerrainScreen extends Screen {
         return meshShader;
     }
     private String programName() {
-        if(useQuads())return "native-quads-"+(!useLayoutShader()?"general-":useSelectiveMaterials()?"selective-":"full-")+meshStepLimit+"; profileExperiment="+profileExperiment;
+        if(useQuads())return "native-quads-"+(!useLayoutShader()?"general-":useSelectiveMaterials()?"selective-":"full-")+meshStepLimit+"; separateMoving="+useSeparateMoving()+"; profileExperiment="+profileExperiment;
         if(useLayoutShader())return (useMaterials()?(useSelectiveMaterials()?"native-live-selective-materials-":"native-live-materials-"):orbitStep>.02f && materialProbeShader!=null?"native-live-curvature-probe-":"native-live-layout-")+meshStepLimit;
         if(useSplitShader())return "native-live-split-"+meshStepLimit;
         if(useDefaultShader())return useLongShader()?"native-live-steps-"+meshStepLimit:"native-live-defaults";
@@ -417,6 +423,11 @@ final class TerrainScreen extends Screen {
         float old=orbitStep,oldCurve=curveFactor;cancelBenchmark();
         try {if(reference){orbitStep=.02f;curveFactor=1;}renderTerrain();}finally {orbitStep=old;curveFactor=oldCurve;}
     }
+    private boolean useSeparateMoving() {return separateMoving && useQuads() && profileExperiment==0;}
+    void renderMovingComparison(boolean reference) {
+        boolean old=separateMoving;cancelBenchmark();
+        try {separateMoving=!reference;renderTerrain();}finally {separateMoving=old;}
+    }
     void renderLayoutComparison(boolean reference) {
         boolean old=fixedLayout;cancelBenchmark();
         try {if(reference)fixedLayout=false;renderTerrain();}
@@ -445,6 +456,11 @@ final class TerrainScreen extends Screen {
         finally {fastFetch=old;}
     }
     @Override public boolean keyPressed(int key,int scan,int modifiers) {
+        if(key==GLFW.GLFW_KEY_W && !live && useQuads()) {
+            cancelBenchmark();
+            if((modifiers&GLFW.GLFW_MOD_SHIFT)!=0)AppearanceCapture.request(this,15);else separateMoving=!separateMoving;
+            validationStatus="W: separate moving trees "+(separateMoving?"ON":"OFF")+" | Shift+W: compare trees";return true;
+        }
         if(TerrainProfile.ENABLED && !live && key==GLFW.GLFW_KEY_BACKSLASH && (modifiers&GLFW.GLFW_MOD_SHIFT)!=0 && moving!=null) {
             cancelBenchmark();profileExperiment=0;moving.profileMovingContents=(moving.profileMovingContents+1)%3;moving.updateMoving();
             Interstellar.LOGGER.info("Profile moving contents: {} (0=normal, 1=actors only, 2=clouds only); {}",moving.profileMovingContents,moving.status());return true;

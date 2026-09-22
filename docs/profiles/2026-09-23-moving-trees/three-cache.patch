@@ -1,0 +1,51 @@
+diff --git a/src/main/resources/assets/interstellar/shaders/include/terrain_shared.glsl b/src/main/resources/assets/interstellar/shaders/include/terrain_shared.glsl
+index 20b10cf..2dd1981 100644
+--- a/src/main/resources/assets/interstellar/shaders/include/terrain_shared.glsl
++++ b/src/main/resources/assets/interstellar/shaders/include/terrain_shared.glsl
+@@ -33,7 +33,7 @@ uniform float RaySamples,AdaptivePath,FastBounds,FastFetch,EmptyCells,EmptyReach
+ uniform float MeshExtent,MovingNodeCount;
+ #ifdef INTERSTELLAR_SPLIT_MOVING
+ uniform float CloudNodeCount;
+-#define SCENE_TREES 2
++#define SCENE_TREES 3
+ #else
+ #define SCENE_TREES 2
+ #endif
+@@ -242,6 +242,15 @@ int meshSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
+     for(int tree=0;tree<1;tree++) {
+ #else
+     for(int tree=0;tree<SCENE_TREES;tree++) {
++#endif
++#ifdef INTERSTELLAR_SPLIT_MOVING
++    // Native clouds contribute only the nearest cloud layer along the whole ray.
++    // Once consumed, the homogeneous cloud tree cannot contribute another hit.
++    #ifdef INTERSTELLAR_MATERIALS
++    if(tree==2 && (MeshClouds<.5 || cloudSeen))continue;
++    #else
++    if(tree==2 && (MeshClouds<.5 || cloudLayer.a>0.0))continue;
++    #endif
+ #endif
+     if(EmptyCells>.5 && cellKnown[tree] &&
+        all(greaterThan(min(start,end),emptyLow[tree])) && all(lessThan(max(start,end),emptyHigh[tree]))) {COUNT_WORK(8+min(tree,1));continue;}
+@@ -249,20 +258,11 @@ int meshSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
+     bool canCache=true;
+     int node=0,nodeCount=int(tree==0?MeshNodeCount:MovingNodeCount),returnTo=0;
+ #ifdef INTERSTELLAR_SPLIT_MOVING
+-    if(tree==1)nodeCount+=int(CloudNodeCount);
++    if(tree==2) {node=int(MovingNodeCount);nodeCount=node+int(CloudNodeCount);}
+ #endif
+     for(int visited=0;visited<131072;visited++) {
+         if(node<0)node=returnTo;
+         if(node==nodeCount)break;
+-#ifdef INTERSTELLAR_SPLIT_MOVING
+-        // The two moving roots share a conservative empty-region cache. A consumed
+-        // cloud layer cannot contribute again, so its entire remaining forest is empty.
+-        #ifdef INTERSTELLAR_MATERIALS
+-        if(tree==1 && node==int(MovingNodeCount) && (MeshClouds<.5 || cloudSeen)) {node=nodeCount;break;}
+-        #else
+-        if(tree==1 && node==int(MovingNodeCount) && (MeshClouds<.5 || cloudLayer.a>0.0)) {node=nodeCount;break;}
+-        #endif
+-#endif
+         COUNT_WORK(2+min(tree,1));
+         #ifdef INTERSTELLAR_COMPACT_NODES
+         vec4 lower=compactNode(tree,node,0),upper=compactNode(tree,node,1);

@@ -15,6 +15,7 @@ import java.util.function.Consumer;
 /** Explicit developer diagnostics. Counter readbacks block and must never be timed as production. */
 final class TerrainProfile {
     static final boolean ENABLED=Boolean.getBoolean("interstellar.profile");
+    static final ShaderProgram[] movingPrograms=new ShaderProgram[3];
     static final ShaderProgram[][] programs=new ShaderProgram[3][3];
     // Triangle counts are leaf entries BEFORE material/cloud rejection, not all full intersection tests.
     private static final String[] METRICS={"orbitSteps","chords","terrainNodes","movingNodes",
@@ -38,7 +39,7 @@ final class TerrainProfile {
         }
     }
 
-    static void capture(int w,int h,int mask,Consumer<ShaderProgram> configure,Runnable draw,String scene) {
+    static void capture(int w,int h,int mask,boolean splitMoving,Consumer<ShaderProgram> configure,Runnable draw,String scene) {
         SimpleFramebuffer target=new SimpleFramebuffer(w*2,h,false,false);
         FloatBuffer pixels=MemoryUtil.memAllocFloat(w*2*h*4);
         int oldPack=GL11.glGetInteger(GL21.GL_PIXEL_PACK_BUFFER_BINDING);
@@ -52,7 +53,7 @@ final class TerrainProfile {
             target.beginWrite(false);
             if(GL30.glCheckFramebufferStatus(GL30.GL_FRAMEBUFFER)!=GL30.GL_FRAMEBUFFER_COMPLETE)throw new IllegalStateException("Profile framebuffer incomplete");
             for(int pass=0;pass<3;pass++) {
-                ShaderProgram program=programs[0][pass];configure.accept(program);
+                ShaderProgram program=splitMoving?movingPrograms[pass]:programs[0][pass];configure.accept(program);
                 program.addSampler("PendingRays",mask);RenderSystem.setShader(()->program);
                 for(int group=0;group<5;group++) {
                     target.beginWrite(false);RenderSystem.viewport(0,0,w*2,h);

@@ -1,0 +1,4 @@
+[m[34m[09:35:32][m [32m[Render thread/INFO][m [36m(interstellar)[m [0mCPU profile stage=movingTree samples=600 mean=3.5822856666666665 p50=3.4713 p95=3.7221 p99=4.9423 ms (wall time, includes driver waits)
+[m[34m[09:35:32][m [32m[Render thread/INFO][m [36m(interstellar)[m [0mCPU profile stage=movingUpload samples=600 mean=0.17708949999999998 p50=0.1682 p95=0.1994 p99=0.2539 ms (wall time, includes driver waits)
+[m[34m[09:35:32][m [32m[Render thread/INFO][m [36m(interstellar)[m [0mCPU profile stage=actorCapture samples=600 mean=1.2042325 p50=0.8895 p95=1.5529 p99=3.2471 ms (wall time, includes driver waits)
+[m[34m[09:35:32][m [32m[Render thread/INFO][m [36m(interstellar)[m [0mCPU profile stage=cloudCapture samples=600 mean=0.2666386666666667 p50=0.188 p95=0.7808 p99=1.1762 ms (wall time, includes driver waits)

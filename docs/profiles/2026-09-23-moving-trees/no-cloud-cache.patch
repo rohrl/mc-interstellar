@@ -1,0 +1,81 @@
+diff --git a/src/main/resources/assets/interstellar/shaders/include/terrain_shared.glsl b/src/main/resources/assets/interstellar/shaders/include/terrain_shared.glsl
+index 20b10cf..ebef153 100644
+--- a/src/main/resources/assets/interstellar/shaders/include/terrain_shared.glsl
++++ b/src/main/resources/assets/interstellar/shaders/include/terrain_shared.glsl
+@@ -33,7 +33,7 @@ uniform float RaySamples,AdaptivePath,FastBounds,FastFetch,EmptyCells,EmptyReach
+ uniform float MeshExtent,MovingNodeCount;
+ #ifdef INTERSTELLAR_SPLIT_MOVING
+ uniform float CloudNodeCount;
+-#define SCENE_TREES 2
++#define SCENE_TREES 3
+ #else
+ #define SCENE_TREES 2
+ #endif
+@@ -221,8 +221,8 @@ vec4 compactNode(int tree,int node,int part) {
+     return tree==0?texelFetch(CompactNodes,address,0):texelFetch(CompactMovingNodes,address,0);
+ }
+ #endif
+-vec3 emptyLow[SCENE_TREES],emptyHigh[SCENE_TREES];
+-bool cellKnown[SCENE_TREES];
++vec3 emptyLow[2],emptyHigh[2];
++bool cellKnown[2];
+ // Stackless preorder traversal: escape links skip whole subtrees. Each chord has one nearest hit.
+ int meshSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
+     COUNT_WORK(1);
+@@ -243,26 +243,26 @@ int meshSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
+ #else
+     for(int tree=0;tree<SCENE_TREES;tree++) {
+ #endif
+-    if(EmptyCells>.5 && cellKnown[tree] &&
++#ifdef INTERSTELLAR_SPLIT_MOVING
++    // Native clouds contribute only the nearest cloud layer along the whole ray.
++    // Once consumed, the homogeneous cloud tree cannot contribute another hit.
++    #ifdef INTERSTELLAR_MATERIALS
++    if(tree==2 && (MeshClouds<.5 || cloudSeen))continue;
++    #else
++    if(tree==2 && (MeshClouds<.5 || cloudLayer.a>0.0))continue;
++    #endif
++#endif
++    if(tree<2 && EmptyCells>.5 && cellKnown[tree] &&
+        all(greaterThan(min(start,end),emptyLow[tree])) && all(lessThan(max(start,end),emptyHigh[tree]))) {COUNT_WORK(8+min(tree,1));continue;}
+     vec3 safeLow=start-vec3(EmptyReach),safeHigh=start+vec3(EmptyReach);
+-    bool canCache=true;
++    bool canCache=tree<2;
+     int node=0,nodeCount=int(tree==0?MeshNodeCount:MovingNodeCount),returnTo=0;
+ #ifdef INTERSTELLAR_SPLIT_MOVING
+-    if(tree==1)nodeCount+=int(CloudNodeCount);
++    if(tree==2) {node=int(MovingNodeCount);nodeCount=node+int(CloudNodeCount);}
+ #endif
+     for(int visited=0;visited<131072;visited++) {
+         if(node<0)node=returnTo;
+         if(node==nodeCount)break;
+-#ifdef INTERSTELLAR_SPLIT_MOVING
+-        // The two moving roots share a conservative empty-region cache. A consumed
+-        // cloud layer cannot contribute again, so its entire remaining forest is empty.
+-        #ifdef INTERSTELLAR_MATERIALS
+-        if(tree==1 && node==int(MovingNodeCount) && (MeshClouds<.5 || cloudSeen)) {node=nodeCount;break;}
+-        #else
+-        if(tree==1 && node==int(MovingNodeCount) && (MeshClouds<.5 || cloudLayer.a>0.0)) {node=nodeCount;break;}
+-        #endif
+-#endif
+         COUNT_WORK(2+min(tree,1));
+         #ifdef INTERSTELLAR_COMPACT_NODES
+         vec4 lower=compactNode(tree,node,0),upper=compactNode(tree,node,1);
+@@ -403,7 +403,7 @@ int meshSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
+         }
+         node=count>0?int(lower.w):node+1;
+     }
+-    if(EmptyCells>.5) {cellKnown[tree]=canCache && node==nodeCount;emptyLow[tree]=safeLow;emptyHigh[tree]=safeHigh;}
++    if(tree<2 && EmptyCells>.5) {cellKnown[tree]=canCache && node==nodeCount;emptyLow[tree]=safeLow;emptyHigh[tree]=safeHigh;}
+     if(node!=nodeCount) {diagnostic=vec4(0,0,0,-2);meshColour=vec3(1,0,1);hit=start;normal=vec3(0,1,0);return 3;}
+     }
+     // Vanilla fancy clouds use a depth prepass: blend the nearest cloud surface once.
+@@ -569,7 +569,7 @@ bool passMaterial(int value,vec3 hit,vec3 normal) {
+ #endif
+ void trace(vec2 uv) {
+     COUNT_WORK(14);
+-    for(int tree=0;tree<SCENE_TREES;tree++)cellKnown[tree]=false;
++    for(int tree=0;tree<2;tree++)cellKnown[tree]=false;
+ #ifdef INTERSTELLAR_MATERIALS
+     materialLayers=vec4(0);cloudSeen=false;
+ #endif

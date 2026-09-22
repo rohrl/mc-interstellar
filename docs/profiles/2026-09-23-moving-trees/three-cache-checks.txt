@@ -1,0 +1,6 @@
+[m[34m[09:20:30][m [33m[Render thread/WARN][m [36m(interstellar)[m [0mProfile exhausted pass=probe sample=1 x=509 y=554 (bottom-origin)
+[m[34m[09:20:31][m [33m[Render thread/WARN][m [36m(interstellar)[m [0mProfile exhausted pass=full sample=1 x=509 y=554 (bottom-origin)
+[m[34m[09:20:33][m [33m[Render thread/WARN][m [36m(interstellar)[m [0mProfile exhausted pass=probe sample=1 x=509 y=554 (bottom-origin)
+[m[34m[09:20:33][m [33m[Render thread/WARN][m [36m(interstellar)[m [0mProfile exhausted pass=full sample=1 x=509 y=554 (bottom-origin)
+[m[34m[09:20:42][m [32m[Render thread/INFO][m [36m(interstellar)[m [0mMaterial fixture complete: checks=84, failures=0, max channel error=0.0; ordered alpha, opaque occlusion, two-sided entity, cloud ordering/depth, reversed input and empty-cache variants
+[m[34m[09:20:42][m [32m[Render thread/INFO][m [36m(interstellar)[m [0mMesh fixture complete: compared=52480, mismatches=0, CPU inconclusive rays=0, GPU unresolved/invalid=0, max invariant=3.863576125695545E-14, wall=6838.5182 ms; opaque boxes plus empty-space capture boundary, not arbitrary mesh/material certification

@@ -3,6 +3,7 @@ package io.github.rohrl.interstellar.client;
 import com.mojang.blaze3d.systems.RenderSystem;
 import io.github.rohrl.interstellar.Interstellar;
 import io.github.rohrl.interstellar.scene.MeshTree;
+import io.github.rohrl.interstellar.scene.MovingMeshTrees;
 import net.minecraft.block.BlockRenderType;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.*;
@@ -35,6 +36,8 @@ final class WorldMesh implements VertexConsumer,AutoCloseable {
     private final FluidMesh fluids=new FluidMesh(this);
     private final long started=System.nanoTime();
     int triangleTexture,nodeTexture,nodeCount,compactNodeTexture;
+    int actorNodeCount,cloudNodeCount;
+    private boolean splitMoving;
     EntityMesh entities;
     final CloudMesh clouds=new CloudMesh();
     private final BlockPos centre;
@@ -145,18 +148,37 @@ final class WorldMesh implements VertexConsumer,AutoCloseable {
     }
     private void finishTree() {
         long profileStart=dynamic?TerrainProfile.cpuStart():0;
-        var tree=new MeshTree(triangles,count);nodeCount=tree.size();
-        var nodes=tree.nodes();
+        float[] nodes;
+        if(dynamic && splitMoving) {
+            var trees=MovingMeshTrees.build(triangles,count);
+            // Keep capture capacity: rebuilding a different layout must not grow the buffer.
+            System.arraycopy(trees.triangles(),0,triangles,0,count*36);
+            nodes=trees.nodes();actorNodeCount=trees.actorNodes();cloudNodeCount=trees.cloudNodes();
+            nodeCount=actorNodeCount+cloudNodeCount;
+        } else {
+            var tree=new MeshTree(triangles,count);nodeCount=tree.size();nodes=tree.nodes();
+            actorNodeCount=nodeCount;cloudNodeCount=0;
+        }
         if(nodes.length>0) {
             double radiusSquared=0;
             int[] source={centre.getX()-origin.getX(),centre.getY()-origin.getY(),centre.getZ()-origin.getZ()};
-            for(int a=0;a<3;a++) {double distance=Math.max(Math.abs(nodes[a]-source[a]),Math.abs(nodes[a+4]-source[a]));radiusSquared+=distance*distance;}
+            for(int a=0;a<3;a++) {
+                float low=nodes[a],high=nodes[a+4];
+                if(splitMoving && actorNodeCount>0 && cloudNodeCount>0) {
+                    low=Math.min(low,nodes[actorNodeCount*12+a]);high=Math.max(high,nodes[actorNodeCount*12+a+4]);
+                }
+                double distance=Math.max(Math.abs(low-source[a]),Math.abs(high-source[a]));radiusSquared+=distance*distance;
+            }
             extent=(float)Math.sqrt(radiusSquared)+2; // Include fractional source-centre rounding.
         }
         if(dynamic)TerrainProfile.cpuEnd(2,profileStart);
         profileStart=dynamic?TerrainProfile.cpuStart():0;
         upload(nodes);
         if(dynamic)TerrainProfile.cpuEnd(3,profileStart);
+    }
+    void movingLayout(boolean separate) {
+        if(!dynamic || splitMoving==separate)return;
+        splitMoving=separate;finishTree();
     }
     @Override public void quad(MatrixStack.Entry entry,BakedQuad quad,float[] brightness,float red,float green,float blue,float alpha,int[] light,int overlay,boolean useQuadColor) {
         int[] vertices=quad.getVertexData();int stride=vertices.length/4;

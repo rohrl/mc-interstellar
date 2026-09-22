@@ -95,7 +95,7 @@ Gain estimates below mean potential FPS gain in the current heavy view after a s
 
 | Priority / idea | Complexity | Size | Time | Net LoC | Heavy FPS gain | Visual impact / confidence |
 | --- | ---: | ---: | ---: | ---: | --- | --- |
-| **1. Separate cloud and actor traversal/cache regions — new** | 3 | 3 | 3 | +350–800 | **5–15%** | 1; strong hotspot evidence, medium confidence in opportunity, unmeasured gain |
+| **Adopted: separate cloud/actor roots, shared cache** | 3 | 3 | 3 | **+387 actual** | **~4.2% measured GPU throughput** | 1–2; heavy pairs exact, small coplanar horse-face differences in demo; see follow-up |
 | **2. Cloud-specific shared quads/rectangular intersections — new** | 3 | 3 | 3 | +250–650 | **3–10%** | 1–2; retain native faces, cutouts, colours and cloud depth rules |
 | **3. Tighter per-actor hierarchy / traversal — new** | 4 | 3 | 4 | +500–1,100 | **3–10%** | 1; retain every animated part; medium hotspot confidence |
 | **4. Conservative compressed BVH bounds** | 4 | 3 | 4 | +250–600 | **0–8%** | 1; node traffic is frequent, hardware bottleneck still unknown |
@@ -111,6 +111,14 @@ Gain estimates below mean potential FPS gain in the current heavy view after a s
 | **Already adopted: shared terrain quad vertices** | 3 | 3 | 3 | **+292 actual** | **~4–5% controlled frozen FPS** against its previous baseline | **1; matched images identical** |
 
 The priority-1 prototype is intentionally bounded: separate the spatial searches, retain original triangle tests, compare pixels and optical/material fixtures, then repeat wall/down timings in both orders. Use work counters to check that the intended node/entry reduction actually occurred. Combine neither cloud approximations nor another optical-step change into that experiment. An isolated shader/backend move is not justified by these results. Existing rejected AA/SAH/final-shading/facing experiments remain deferred.
+
+**Implemented follow-up:** [Separate moving trees](moving-trees.md) records the
+experiment and adoption. Three separate caches were slower despite fewer node
+visits; the winning forest shares the original cache and traversal loop. Heavy
+GPU time improves 4.0%, wall 3.46%; optical integration is unchanged. Native cloud
+primitives are now the next proposal. Actor triangle entries have largely been
+eliminated in the measured downward view, so the remaining actor-hierarchy estimate
+above is provisional and should not be carried forward as an additive gain.
 
 ## Correctness and final state
 

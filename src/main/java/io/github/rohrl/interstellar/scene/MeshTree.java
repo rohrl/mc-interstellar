@@ -14,11 +14,14 @@ public final class MeshTree {
         this(triangles,count,3);
     }
     public MeshTree(float[] triangles,int count,int verticesPerPrimitive) {
+        this(triangles,0,count,verticesPerPrimitive);
+    }
+    public MeshTree(float[] triangles,int first,int count,int verticesPerPrimitive) {
         if(verticesPerPrimitive!=3 && verticesPerPrimitive!=4)throw new IllegalArgumentException("Expected triangles or quads");
         this.verticesPerPrimitive=verticesPerPrimitive;stride=verticesPerPrimitive*12;
-        if(count<0 || count>triangles.length/stride)throw new IllegalArgumentException("Invalid primitive count");
+        if(first<0 || count<0 || first>triangles.length/stride || count>triangles.length/stride-first)throw new IllegalArgumentException("Invalid primitive range");
         this.triangles=triangles;
-        if(count>0)build(0,count,0);
+        if(count>0)build(first,count,0);
     }
     public float[] nodes() {return Arrays.copyOf(nodes,size*12);}
     public int size() {return size;}

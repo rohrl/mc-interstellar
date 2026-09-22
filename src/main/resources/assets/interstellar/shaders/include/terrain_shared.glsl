@@ -31,6 +31,12 @@ uniform float Hybrid,FaceLighting,Lensing,Diagnostic;
 uniform float RaySamples,AdaptivePath,FastBounds,FastFetch,EmptyCells,EmptyReach;
 #endif
 uniform float MeshExtent,MovingNodeCount;
+#ifdef INTERSTELLAR_SPLIT_MOVING
+uniform float CloudNodeCount;
+#define SCENE_TREES 2
+#else
+#define SCENE_TREES 2
+#endif
 uniform vec4 OldMeshBounds;
 #define EntityAtlas LocalLight
 #define CloudAtlas Distant
@@ -215,8 +221,8 @@ vec4 compactNode(int tree,int node,int part) {
     return tree==0?texelFetch(CompactNodes,address,0):texelFetch(CompactMovingNodes,address,0);
 }
 #endif
-vec3 emptyLow[2],emptyHigh[2];
-bool cellKnown[2];
+vec3 emptyLow[SCENE_TREES],emptyHigh[SCENE_TREES];
+bool cellKnown[SCENE_TREES];
 // Stackless preorder traversal: escape links skip whole subtrees. Each chord has one nearest hit.
 int meshSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
     COUNT_WORK(1);
@@ -235,17 +241,29 @@ int meshSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
 #ifdef INTERSTELLAR_PROFILE_NO_MOVING
     for(int tree=0;tree<1;tree++) {
 #else
-    for(int tree=0;tree<2;tree++) {
+    for(int tree=0;tree<SCENE_TREES;tree++) {
 #endif
     if(EmptyCells>.5 && cellKnown[tree] &&
-       all(greaterThan(min(start,end),emptyLow[tree])) && all(lessThan(max(start,end),emptyHigh[tree]))) {COUNT_WORK(8+tree);continue;}
+       all(greaterThan(min(start,end),emptyLow[tree])) && all(lessThan(max(start,end),emptyHigh[tree]))) {COUNT_WORK(8+min(tree,1));continue;}
     vec3 safeLow=start-vec3(EmptyReach),safeHigh=start+vec3(EmptyReach);
     bool canCache=true;
     int node=0,nodeCount=int(tree==0?MeshNodeCount:MovingNodeCount),returnTo=0;
+#ifdef INTERSTELLAR_SPLIT_MOVING
+    if(tree==1)nodeCount+=int(CloudNodeCount);
+#endif
     for(int visited=0;visited<131072;visited++) {
         if(node<0)node=returnTo;
         if(node==nodeCount)break;
-        COUNT_WORK(2+tree);
+#ifdef INTERSTELLAR_SPLIT_MOVING
+        // The two moving roots share a conservative empty-region cache. A consumed
+        // cloud layer cannot contribute again, so its entire remaining forest is empty.
+        #ifdef INTERSTELLAR_MATERIALS
+        if(tree==1 && node==int(MovingNodeCount) && (MeshClouds<.5 || cloudSeen)) {node=nodeCount;break;}
+        #else
+        if(tree==1 && node==int(MovingNodeCount) && (MeshClouds<.5 || cloudLayer.a>0.0)) {node=nodeCount;break;}
+        #endif
+#endif
+        COUNT_WORK(2+min(tree,1));
         #ifdef INTERSTELLAR_COMPACT_NODES
         vec4 lower=compactNode(tree,node,0),upper=compactNode(tree,node,1);
         #else
@@ -294,7 +312,7 @@ int meshSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
         #endif
         if(count<0) {returnTo=int(lower.w);node=int(upper.w);continue;}
         if(count>0)canCache=false;
-        if(count>0) {COUNT_WORK(10+tree);}
+        if(count>0) {COUNT_WORK(10+min(tree,1));}
 #ifdef INTERSTELLAR_QUAD_MESH
         int tests=tree==0?count*2:count;
         for(int i=0;i<tests;i++) {
@@ -304,7 +322,7 @@ int meshSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
         for(int i=0;i<count;i++) {
             int base=(int(upper.w)+i)*9;
 #endif
-            COUNT_WORK(4+tree);
+            COUNT_WORK(4+min(tree,1));
             vec4 vertexA=trianglePart(tree,base,0);
             float entity=vertexA.w;
             bool cloud=entity==5.0 || entity==6.0;
@@ -337,7 +355,7 @@ int meshSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
             vec2 location=(start+delta*t).xz;
             if(terrain && MeshCoverage<.5 && (any(lessThan(location,OldMeshBounds.xy)) || any(greaterThanEqual(location,OldMeshBounds.zw))))continue;
             vec3 weights=vec3(1-u-v,u,v);
-            COUNT_WORK(6+tree);
+            COUNT_WORK(6+min(tree,1));
             if(cloud) {COUNT_WORK(18);} else if(!terrain) {COUNT_WORK(19);}
             vec4 uvA=trianglePart(tree,base,1),uvB=trianglePart(tree,base,4),uvC=trianglePart(tree,base,7);
             if(terrain) {
@@ -551,7 +569,7 @@ bool passMaterial(int value,vec3 hit,vec3 normal) {
 #endif
 void trace(vec2 uv) {
     COUNT_WORK(14);
-    cellKnown[0]=false;cellKnown[1]=false;
+    for(int tree=0;tree<SCENE_TREES;tree++)cellKnown[tree]=false;
 #ifdef INTERSTELLAR_MATERIALS
     materialLayers=vec4(0);cloudSeen=false;
 #endif

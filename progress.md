@@ -306,3 +306,13 @@ Live moving BVH build~5.9ms CPU, actor capture~1.5ms; CPU/GPU overlap means no e
 Normal quad fixture52,480 comparisons and28 material cases pass. Work-count consistency checks pass for four captures. Instrumented down view reports one exhausted ray at sample1/x509/y554; wall none. Record for production reproduction, not established as a new regression. Original demo pose/dimension/flight restored and N64 F10 view inspected; saved return and blocks untouched. Step5 remains deferred.
 
 Final build57 tests pass. Ordinary launch profile-default-runtime.log verifies extra profiling shaders/CPU logging disabled, N64 demo ready at restored pose; client paused with F10 active for optional exploration. No input helpers remain active.
+
+## Separate moving-tree roots — accepted (2026-09-23)
+
+Implemented the first profiling proposal and measured three variants. Independent actor/cloud caches lose despite54% fewer moving node visits; removing the cloud cache also loses. Adopt separate roots traversed sequentially inside the original moving-tree loop, with the original shared conservative cache and whole-cloud skip after consumption. Native geometry, intersections, AA, materials and live capture frequency retained; no second steady-state representation. F9 W/Shift+W provide layout timing/image comparisons. +387 net source/test/resource lines.
+
+Controlled same-capture down GPU25.525/25.537→24.493/24.528ms (4.00% less time); wall15.105/15.193→14.583/14.667ms (3.46%). Tails improve. Live candidate heavy view~38.8–39.2FPS at1440p, with mobs updating; no matched live-baseline claim. Final frozen capture61 entities, versus~96 in older profiling; comparisons are within each capture. Actor leaf entries now much smaller: native cloud primitive work is next, while tighter actor-bound estimates need rechecking.
+
+59 tests/build, runtime shader compilation,52,480 optical comparisons and84 GPU material cases pass. Heavy wall/down pairs exact; restored-demo pair MAE.00001755, .0125% pixels >8/255 different at overlapping horse-face surfaces. Crop inspected; existing coplanar draw-order limitation remains, not universal pixel equality. Existing instrumented exhausted ray unchanged in both layouts. Detailed decisions, rejected patches and compact evidence: docs/moving-trees.md and docs/profiles/2026-09-23-moving-trees.
+
+Normal non-profile launch split-default-runtime.log verified N64/F10 without errors/instrumentation. Current user demo pose44.2374620427497/65/-7.074375242855579,81.7522/-31.349997,walking restored;854x480,paused,F10 ready. Saved return record and blocks untouched. Earlier AA work remains separately preserved; step5 stays deferred.
