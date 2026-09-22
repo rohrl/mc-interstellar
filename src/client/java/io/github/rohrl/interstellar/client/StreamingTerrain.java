@@ -52,6 +52,7 @@ public final class StreamingTerrain implements AutoCloseable {
         active=this;
     }
     boolean ready() {return ready;}
+    int loadingPercent() {return wanted.isEmpty()?0:Math.min(100,entries.size()*100/wanted.size());}
     int triangleTexture() {return triangles.texture;}
     int nodeTexture() {return nodes.texture;}
     int compactNodeTexture() {return compactNodes==null?0:compactNodes.texture;}

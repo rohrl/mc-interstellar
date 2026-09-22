@@ -1,5 +1,9 @@
 # Progress
 
+## Current checkpoint — 2026-09-22, codex/demo-visual-refinement
+
+Owner resumed demo packaging and visual refinement under the79aa1d0 FPS floor, followed by another algorithm/performance review; deeper relativity awaits discussion. Demo packaging now builds and runs: separate persistent exhibit, safe return, automatic source selection, four viewpoints and clear F10 status.53 tests/build/package passed. Visual inspection and return/source checks passed; no new FPS claim. [Evidence](docs/demo-packaging.md). Step4 and the subsequent performance review are still in progress. Historical entries follow.
+
 Last updated: 2026-09-15. Current branch: codex/terrain-prototype.
 
 Current: F9 textured terrain-snapshot lensing, F8 sky/horizon lab, bounded source inspection and independent PG reference. 31 tests pass. See docs/terrain-prototype.md and the latest checkpoint below; early sections record historical results.

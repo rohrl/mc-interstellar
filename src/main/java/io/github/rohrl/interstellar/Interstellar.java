@@ -11,6 +11,7 @@ public final class Interstellar implements ModInitializer {
     @Override
     public void onInitialize() {
         io.github.rohrl.interstellar.source.SourceBlocks.register();
+        io.github.rohrl.interstellar.demo.DemoCommands.register();
         LOGGER.info("Interstellar loaded. F8 opens the optical lab in a development world.");
     }
 }

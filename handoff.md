@@ -1,4 +1,12 @@
-# Current handoff — 2026-09-20
+# Current handoff — 2026-09-22
+
+## Active task override
+
+Current branch **codex/demo-visual-refinement**, based on79aa1d0. Owner requests completion through step4 WITHOUT reducing current FPS, then a fresh code/algorithm performance review with small barely noticeable approximations allowed for worthwhile gains. Step5 needs later discussion. Weather/general teleport remain deferred. This task is NOT complete when packaging finishes.
+
+Packaging checkpoint: [docs/demo-packaging.md](docs/demo-packaging.md);53 tests, build/package and runtime source/return/visual checks passed. Renderer shaders unchanged so far. Archive under build/distributions, `gradlew packageDemo`; [quickstart](docs/demo-quickstart.md). Current client log demo-packaging-final-runtime.log, exec47293, Player493, F10 off, returned outside demo. Owner position `(45.103214895634814,303.49506601944705,-9.682636277880926)`, yaw56.08086/pitch-.29997176, creative. Preserve this at final return; old benchmark pose below is for testing only. Custom dimension triggers vanilla experimental notice: built-in Create Backup and Load used on both launches (window-relative270,305).
+
+Next implement step4 coverage/secondary-image improvements, measure against the same natural-world wall/down scene and quality settings, then review algorithms. Do not use the simpler demo scene to claim FPS parity. EntityMesh currently skips non-living/block entities and translucent/special layers; WorldMesh skips fluids/translucent blocks. New flags must preserve cloud5/6 and signed entity1/2 semantics. Do not merge old WIP branches wholesale. Previous performance evidence/workflow below remains applicable except stale live-state/paused-packaging statements.
 
 Repo C:\work\code\minecraft\interstellar\interstellar; branch codex/world-mesh-reference; origin https://github.com/rohrl/mc-interstellar.git. JDK C:\Portable\jdks\temurin-21.0.12.1; Minecraft1.21.1/Fabric. Read AGENTS.md. Normal edits/branches/commits/pushes/runtime controls authorized. No force push or subagents. Preserve worlds/.idea/secrets/owner edits. Owner handles movement/flicker feedback; use fixed-pose numerical pairs and occasional milestone screenshots. Keep commentary concise/frequent and batch predictable controls.
 

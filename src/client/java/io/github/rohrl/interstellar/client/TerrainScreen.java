@@ -135,10 +135,10 @@ final class TerrainScreen extends Screen {
         if(live) {
             context.fill(6,6,Math.min(width-6,410),46,0xCD101824);
             context.drawTextWithShadow(textRenderer,"INTERSTELLAR | Live camera | F10: off | F12: timing",12,12,0xFF88D8FF);
-            String age=meshMode?mesh.status():publishedAt==0?snapshot.status():String.format(Locale.ROOT,"Published %.1fs ago | %s | generation %d",
-                    (System.nanoTime()-publishedAt)/1e9,pending==null?"waiting to refresh":"refreshing",generation);
+            String age=meshMode?mesh.viewStatus()+" | Mass blocks: "+source.count():"Preparing world view...";
             context.drawTextWithShadow(textRenderer,age,12,24,0xFFFFFFFF);
-            context.drawTextWithShadow(textRenderer,benchmark==null?(meshMode?String.format(Locale.ROOT,"Camera %.0f / %d blocks | AA %s",camera.distanceTo(centre()),MESH_VIEW_RANGE,aaName()):hybrid?"Native sky/light | Distant terrain approximate":"Bounded terrain | Straight aim | Outside data omitted"):benchmark.status().replace("B cancels","F12 cancels"),12,36,0xFFFFD59A);
+            String details=benchmark==null?String.format(Locale.ROOT,"Range %.0f / %d blocks | Horizon radius %.2f | AA %s",camera.distanceTo(centre()),MESH_VIEW_RANGE,source.schwarzschildRadius(),aaName()):benchmark.status().replace("B cancels","F12 cancels");
+            context.drawTextWithShadow(textRenderer,textRenderer.trimToWidth(details,Math.max(1,width-24)),12,36,0xFFFFD59A);
             return;
         }
         if(error!=null) context.fill(0,0,width,height,0xFF201018);

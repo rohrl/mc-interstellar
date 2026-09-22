@@ -6,6 +6,7 @@ A Minecraft Java mod for educational relativistic optics. Scientific assumptions
 
 ## Start here
 
+- [Demo quickstart](docs/demo-quickstart.md): install, enter the separate exhibit, controls, viewpoints and return to your world. `gradlew packageDemo` builds the distributable archive.
 - [decision-log.md](decision-log.md): important decisions, rationale, and superseded proposals.
 - [plan.md](plan.md): scope, milestones, and acceptance criteria.
 - [progress.md](progress.md): current implementation and verification status.

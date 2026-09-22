@@ -62,3 +62,13 @@ tasks.withType(AbstractArchiveTask).configureEach {
     preserveFileTimestamps = false
     reproducibleFileOrder = true
 }
+
+tasks.register('packageDemo', Zip) {
+    dependsOn 'remapJar'
+    archiveBaseName = 'interstellar-demo'
+    destinationDirectory = layout.buildDirectory.dir('distributions')
+    from(tasks.named('remapJar').flatMap { it.archiveFile }) { into 'mods' }
+    from('docs/demo-quickstart.md') { rename { 'README.md' } }
+    from(['docs/triangle-row.md', 'docs/science.md']) { into 'docs' }
+    from('THIRD-PARTY.md')
+}

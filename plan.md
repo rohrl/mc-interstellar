@@ -95,6 +95,8 @@ F10 integrates moving-camera terrain with bounded periodic recapture and the van
 
 ## Current delivery order — owner reaffirmed 2026-09-15
 
+**Current owner instruction (2026-09-22):** resume and complete through step4, preserving the current FPS baseline79aa1d0. Finish demo packaging, then visual/model coverage and secondary-image refinement. Keep step5 for a later discussion. After step4, review code and algorithms again and measure faster alternatives; minor barely noticeable visual approximations are allowed for worthwhile FPS gains. Existing weather/teleport deferrals remain. Compare the same scene/pose/resolution and frame-time percentiles; a simpler demo scene cannot establish performance parity with the existing wall/terrain benchmark.
+
 **Owner update (2026-09-18):** current FPS is acceptable for the demo. Demo packaging is now explicitly paused in favour of AA and low-hanging performance improvements. Preserve appearance; do not turn this into a broad FPS rewrite. Unverified packaging work is isolated on codex/demo-packaging-wip (2fe8674), excluded from the running build. Return to packaging after this AA/performance checkpoint unless the owner redirects.
 
 **Latest owner update (2026-09-19):** visuals are accepted, but FPS is now the priority. Continue measured performance improvements with minimal quality/fidelity loss; packaging stays paused. Keep identical-scene image and numerical checks alongside timings. This supersedes the earlier decision to defer FPS work.
@@ -105,9 +107,9 @@ This order takes precedence over older checkpoint suggestions above. Diagnostics
 | --- | --- |
 | 1. Stable exploration | Implemented: unrelated-chunk stability, viewing-limit recovery and bounded automatic metadata refresh. Splits follow the inspected anchor; removed/unloaded/extended states pause and recover. See docs/source-refresh.md. |
 | 2. Wider useful viewing range | **Core implemented:** native streamed terrain, live mobs/clouds, and camera access up to256 blocks with automatic recovery. Independent synthetic curved-mesh checks now pass; arbitrary geometry/material limits remain explicit. Ordinary-screen background compositing remains rejected. |
-| 3. Demo packaging | HUD, controls, launcher, saved scene and measured defaults exist. After coherent viewing: finish a repeatable self-contained scene/setup and coherent source/range state presentation. Preserve the owner's existing world. |
-| 4. Visual refinement | Snow layers supported. Separate AA WIP remains unverified; measure it, improve secondary images and broaden block-model coverage after packaging. |
-| 5. Deeper relativity | Terrain horizon crossing, actual player-body images, then independent observer-speed feature. Sky-lab crossing does not complete terrain crossing. |
+| 3. Demo packaging | Resumed2026-09-22: finish isolated repeatable exhibit/setup, return flow, controls and source/range/loading presentation; package the mod and instructions. Preserve the owner's world. |
+| 4. Visual refinement | Sharp2xAA is implemented/verified. Improve difficult secondary images and broaden block/entity coverage, including fluids/transparency/special layers and block entities, with a performance gate against79aa1d0. |
+| 5. Deeper relativity | Deferred for owner discussion: terrain horizon crossing, actual player-body images, then independent observer-speed feature. Sky-lab crossing does not complete terrain crossing. |
 
 ### Coherent world rendering — next implementation proposal (2026-09-16)
 
