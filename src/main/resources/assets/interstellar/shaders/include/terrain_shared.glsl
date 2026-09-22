@@ -44,9 +44,6 @@ uniform float CurveFactor;
 const float OrbitStep=.02;
 const float CurveFactor=1.0;
 #endif
-#ifdef INTERSTELLAR_RING_SAMPLE
-uniform float RingWeight;
-#endif
 #ifdef INTERSTELLAR_MATERIAL_MASK
 uniform sampler2D PendingRays;
 #endif
@@ -628,24 +625,13 @@ void trace(vec2 uv) {
     fragColor=vec4(.7,.05,.5,1);
 }
 void main() {
-#ifdef INTERSTELLAR_RING_SAMPLE
-    vec2 centreXY=(screenUv*2.0-1.0)*ViewSlopes.xy;
-    vec3 centreRay=normalize(Forward+(centreXY.x+ViewSlopes.z)*Right+(-centreXY.y+ViewSlopes.w)*Up);
-    float observerRadius=length(Camera-Source),mu=dot(centreRay,(Camera-Source)/observerRadius),u=Radius/observerRadius;
-    float impact=(1.0-mu*mu)/(u*u*(1.0-u));
-    if(mu>=0.0 || impact<6.70 || impact>6.85)discard;
-#endif
 #ifdef INTERSTELLAR_MATERIAL_MASK
     if(texelFetch(PendingRays,ivec2(gl_FragCoord.xy),0).a>.5)discard;
 #endif
 #ifdef INTERSTELLAR_SPLIT_AA
     // Identical two subpixel rays, scheduled in separate draws. Average in float
     // before the original RGBA8 target and bounded cubic reconstruction.
-#ifdef INTERSTELLAR_RING_SAMPLE
-    trace(screenUv+vec2(SampleOffset,-SampleOffset)/Viewport);
-#else
     trace(screenUv+vec2(SampleOffset)/Viewport);
-#endif
 #ifdef INTERSTELLAR_MATERIALS
     fragColor.rgb=materialLayers.rgb+(1.0-materialLayers.a)*fragColor.rgb;
 #else
@@ -653,9 +639,6 @@ void main() {
 #endif
 #ifdef INTERSTELLAR_MATERIAL_PROBE
     fragColor.a=meshAlpha<.999?0.0:1.0;
-#endif
-#ifdef INTERSTELLAR_RING_SAMPLE
-    fragColor.a=RingWeight;
 #endif
 #else
     if(MeshMode<.5 && Diagnostic>1.5 && Diagnostic<2.5) {

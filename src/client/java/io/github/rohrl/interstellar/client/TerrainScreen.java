@@ -26,10 +26,8 @@ final class TerrainScreen extends Screen {
     private static ShaderProgram layoutShader,layoutDiagnosticShader,materialShader;
     private static ShaderProgram materialProbeShader,materialMaskedShader;
     private boolean selectiveMaterials=true;
-    private float orbitStep=.02f;
-    private float curveFactor=1;
-    private boolean ringAA;
-    private static ShaderProgram ringShader;
+    private float orbitStep=.08f;
+    private float curveFactor=4;
     private boolean fixedLayout=true;
     private boolean splitSamples=true;
     private TerrainSamples samples;
@@ -89,7 +87,6 @@ final class TerrainScreen extends Screen {
     static void setMaterialShader(ShaderProgram program) {materialShader=program;resourceVersion++;}
     static void setMaterialProbeShader(ShaderProgram program) {materialProbeShader=program;resourceVersion++;}
     static void setMaterialMaskedShader(ShaderProgram program) {materialMaskedShader=program;resourceVersion++;}
-    static void setRingShader(ShaderProgram program) {ringShader=program;resourceVersion++;}
     @Override protected void init() {
         if(snapshot!=null || error!=null) return;
         if(!options.enabled()) {error="Terrain preview disabled in interstellar-terrain.json";return;}
@@ -197,12 +194,10 @@ final class TerrainScreen extends Screen {
             cancelBenchmark();if(target!=null)target.delete();target=new SimpleFramebuffer(w,h,false,false);
         }
         boolean split=useSplitShader();
-        boolean ring=ringAA && antialiasing==2 && meshMode && lensing && hasCompactShader() && ringShader!=null && TerrainSamples.supported(w);
-        if((split || ring) && (samples==null || samples.width!=w || samples.height!=h)) {
+        if(split && (samples==null || samples.width!=w || samples.height!=h)) {
             if(samples!=null)samples.close();samples=new TerrainSamples(w,h);
         }
-        var output=ring?samples.merged():target;
-        output.beginWrite(true);
+        target.beginWrite(true);
         try {
             configureShader(w,h);
             var projection=WorldProjection.current();
@@ -225,15 +220,8 @@ final class TerrainScreen extends Screen {
                     samples.begin(0);shader.getUniformOrDefault("SampleOffset").set(-.25f);drawQuad(w,h);
                     samples.begin(1);shader.getUniformOrDefault("SampleOffset").set(.25f);drawQuad(w,h);
                 }
-                samples.fold(output,()->drawQuad(w,h));
+                samples.fold(target,()->drawQuad(w,h));
             } else drawQuad(w,h);
-            if(ring) {
-                output.beginWrite(true);shader=ringShader;configureShader(w,h);RenderSystem.setShader(()->shader);
-                RenderSystem.enableBlend();RenderSystem.defaultBlendFunc();
-                shader.getUniformOrDefault("SampleOffset").set(-.25f);shader.getUniformOrDefault("RingWeight").set(1f/3f);drawQuad(w,h);
-                shader.getUniformOrDefault("SampleOffset").set(.25f);shader.getUniformOrDefault("RingWeight").set(.25f);drawQuad(w,h);
-                RenderSystem.disableBlend();samples.publishMerged(target);
-            }
         } finally {
             client.getFramebuffer().beginWrite(true);
             RenderSystem.depthMask(true);RenderSystem.enableDepthTest();RenderSystem.enableBlend();RenderSystem.defaultBlendFunc();
@@ -324,7 +312,7 @@ final class TerrainScreen extends Screen {
         try {lensing=false;scale=1;validate=false;antialiasing=0;renderTerrain();}
         finally {lensing=oldLensing;scale=oldScale;validate=oldValidate;antialiasing=oldAa;}
     }
-    String qualitySettings() {return "AA="+aaName()+", scale="+scale+", lensing="+lensing+", fine="+fine+", adaptive="+adaptivePath+", fastBounds="+fastBounds+", fastFetch="+fastFetch+", emptyCells="+emptyCells+", emptyReach="+emptyReach+", angularCap="+orbitStep+", curveFactor="+curveFactor+", ringAA="+ringAA+", program="+programName();}
+    String qualitySettings() {return "AA="+aaName()+", scale="+scale+", lensing="+lensing+", fine="+fine+", adaptive="+adaptivePath+", fastBounds="+fastBounds+", fastFetch="+fastFetch+", emptyCells="+emptyCells+", emptyReach="+emptyReach+", angularCap="+orbitStep+", curveFactor="+curveFactor+", program="+programName();}
     private String aaName() {return antialiasing==0?"OFF":antialiasing==1?"EDGE":antialiasing==2?"2x":"4x reference";}
     void renderQuality(boolean reference) {
         int oldAa=antialiasing;float oldScale=scale,oldOrbit=orbitStep,oldCurve=curveFactor;boolean oldValidate=validate,oldFine=fine;
@@ -361,7 +349,7 @@ final class TerrainScreen extends Screen {
     private boolean useSplitShader() {return splitSamples && useDefaultShader() && useLongShader() && splitShader!=null
             && TerrainSamples.supported(Math.max(1,Math.round(client.getWindow().getFramebufferWidth()*scale)));}
     private ShaderProgram currentShader() {
-        if(useLayoutShader())return useMaterials()?(useSelectiveMaterials()?materialProbeShader:materialShader):layoutShader;
+        if(useLayoutShader())return useMaterials()?(useSelectiveMaterials()?materialProbeShader:materialShader):orbitStep>.02f && materialProbeShader!=null?materialProbeShader:layoutShader;
         if(useSplitShader())return splitShader;
         if(!useMeshShader())return generalShader;
         if(useDefaultShader())return useLongShader()?longDefaultShader:defaultMeshShader;
@@ -369,7 +357,7 @@ final class TerrainScreen extends Screen {
         return meshShader;
     }
     private String programName() {
-        if(useLayoutShader())return (useMaterials()?(useSelectiveMaterials()?"native-live-selective-materials-":"native-live-materials-"):"native-live-layout-")+meshStepLimit;
+        if(useLayoutShader())return (useMaterials()?(useSelectiveMaterials()?"native-live-selective-materials-":"native-live-materials-"):orbitStep>.02f && materialProbeShader!=null?"native-live-curvature-probe-":"native-live-layout-")+meshStepLimit;
         if(useSplitShader())return "native-live-split-"+meshStepLimit;
         if(useDefaultShader())return useLongShader()?"native-live-steps-"+meshStepLimit:"native-live-defaults";
         return useMeshShader()?(compactNodes && compactMeshShader!=null?(useLongShader()?"native-compact-steps-"+meshStepLimit:"native-compact-nodes"):"native-mesh"):"general";
@@ -392,8 +380,8 @@ final class TerrainScreen extends Screen {
         try {if(reference)selectiveMaterials=false;renderTerrain();}finally {selectiveMaterials=old;}
     }
     void renderOrbitComparison(boolean reference) {
-        float old=orbitStep;cancelBenchmark();
-        try {if(reference)orbitStep=.02f;renderTerrain();}finally {orbitStep=old;}
+        float old=orbitStep,oldCurve=curveFactor;cancelBenchmark();
+        try {if(reference){orbitStep=.02f;curveFactor=1;}renderTerrain();}finally {orbitStep=old;curveFactor=oldCurve;}
     }
     void renderLayoutComparison(boolean reference) {
         boolean old=fixedLayout;cancelBenchmark();
@@ -425,7 +413,7 @@ final class TerrainScreen extends Screen {
         if(key==GLFW.GLFW_KEY_B && snapshot!=null && snapshot.ready() && error==null && paused==null && target!=null) {
             if(benchmark!=null)cancelBenchmark();
             else benchmark=new LabBenchmark(String.format(Locale.ROOT,"TERRAIN %dx%d, scale=%.2f, r/rs=%.5f, lensing=%s, fine=%s, snapshot=%s, hybrid="+hybrid+", live="+live+", mesh="+meshMode+", entities="+meshEntities+", nativeLight="+faceLighting+", coverage="+meshCoverage+", clouds="+meshClouds,
-                    target.textureWidth,target.textureHeight,scale,camera.distanceTo(centre())/source.schwarzschildRadius(),lensing,fine,meshMode?mesh.status():snapshot.status())+"; yaw="+yaw+"; pitch="+pitch+"; AA="+aaName()+"; adaptive="+adaptivePath+"; fastBounds="+fastBounds+"; fastFetch="+fastFetch+"; emptyCells="+emptyCells+"; emptyReach="+emptyReach+"; program="+programName()+"; angularCap="+orbitStep+"; curveFactor="+curveFactor+"; ringAA="+ringAA+"; includes resolve");
+                    target.textureWidth,target.textureHeight,scale,camera.distanceTo(centre())/source.schwarzschildRadius(),lensing,fine,meshMode?mesh.status():snapshot.status())+"; yaw="+yaw+"; pitch="+pitch+"; AA="+aaName()+"; adaptive="+adaptivePath+"; fastBounds="+fastBounds+"; fastFetch="+fastFetch+"; emptyCells="+emptyCells+"; emptyReach="+emptyReach+"; program="+programName()+"; angularCap="+orbitStep+"; curveFactor="+curveFactor+"; includes resolve");
             return true;
         }
         cancelBenchmark();
@@ -466,7 +454,6 @@ final class TerrainScreen extends Screen {
             case GLFW.GLFW_KEY_Z -> {if((modifiers&GLFW.GLFW_MOD_SHIFT)!=0)AppearanceCapture.request(this,13);else selectiveMaterials=!selectiveMaterials;validationStatus="Z: selective materials "+(selectiveMaterials?"ON":"OFF")+" | Shift+Z: compare full material pass";}
             case GLFW.GLFW_KEY_LEFT_BRACKET -> {if((modifiers&GLFW.GLFW_MOD_SHIFT)!=0)AppearanceCapture.request(this,14);else orbitStep=orbitStep==.02f?.04f:orbitStep==.04f?.08f:.02f;validationStatus="[: angular cap "+orbitStep+" | Shift+[: compare .02";}
             case GLFW.GLFW_KEY_RIGHT_BRACKET -> {curveFactor=curveFactor==1?2:curveFactor==2?4:1;validationStatus="]: chord tolerance multiplier "+curveFactor;}
-            case GLFW.GLFW_KEY_BACKSLASH -> {ringAA=!ringAA;validationStatus="Photon-edge4x AA "+(ringAA?"ON":"OFF")+" | Shift+P: compare fine full-resolution4x reference";}
             case GLFW.GLFW_KEY_V -> {
                 if(meshMode) {if((modifiers&GLFW.GLFW_MOD_SHIFT)!=0)AppearanceCapture.request(this,10);else meshStepLimit=meshStepLimit==4?16:4;validationStatus="V: step cap "+meshStepLimit+" | Shift+V: compare four-block cap";}
                 else {validate=true;curvedValidation=false;}

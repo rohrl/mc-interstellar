@@ -58,6 +58,9 @@ java {
 
 test { useJUnitPlatform() }
 
+// Keep the development player's saved demo return record valid across launches.
+tasks.named('runClient') { args '--username', 'InterstellarDev' }
+
 tasks.withType(AbstractArchiveTask).configureEach {
     preserveFileTimestamps = false
     reproducibleFileOrder = true

@@ -4,6 +4,8 @@
 
 For this checkout, install a full JDK21 and run **Launch Interstellar.cmd**. It launches the current development build; do not open the same save in two clients.
 
+Development launches use the stable offline name `InterstellarDev`, so the saved return record remains associated with the same player across restarts. A normal Minecraft installation uses your normal account.
+
 For an existing Minecraft installation, use Minecraft1.21.1 with Fabric Loader0.16.14 and Fabric API0.102.1+1.21.1 (the versions used for this build). Put the packaged Interstellar jar and Fabric API in that instance's `mods` directory. The package contains Interstellar and these instructions, not Minecraft, Java, Fabric Loader or Fabric API. No modpack or other shader mod is needed for the demonstration.
 
 Open a world with cheats enabled, or use an account with command permission level2. A render distance of12 is the measured default; the current renderer supports at most16. The existing preset uses half linear rendering scale with sharp2xAA. Keep this preset for the recorded performance; full-resolution rendering costs more.
@@ -18,6 +20,8 @@ Minecraft may show an experimental-settings notice because the mod registers a c
 4. Run `/interstellar demo leave` to return to your saved dimension, position, view direction, game mode and flight state. This also cancels a queued entry. Your inventory is retained. Inspect your original mass source before re-enabling F10 there.
 
 The exhibit is built once and retained in the save. Re-entering does not reset later edits or duplicate its sheep. The return record is saved with the world. The demo changes to creative flight while inside; it does not apply destructive gravitational physics.
+
+New exhibits also contain a bed/chest, two stained-glass layers and a contained pool with a glass front. Older saved exhibits retain their existing layout.
 
 ## Repeatable viewpoints
 

@@ -26,6 +26,20 @@ final class DemoScene {
         for(int x=23;x<31;x++)blocks.put(new BlockPos(x,65,-24),Blocks.OAK_STAIRS.getDefaultState());
         fill(blocks,-28,65,-28,-28,71,-28,Blocks.OAK_LOG.getDefaultState());
         fill(blocks,-30,72,-30,-26,74,-26,Blocks.OAK_LEAVES.getDefaultState().with(net.minecraft.state.property.Properties.PERSISTENT,true));
+        // Native block entities and ordered translucent layers, outside the source horizon.
+        blocks.put(new BlockPos(9,66,-54),Blocks.CHEST.getDefaultState());
+        blocks.put(new BlockPos(7,66,-54),Blocks.RED_BED.getDefaultState());
+        blocks.put(new BlockPos(7,66,-55),Blocks.RED_BED.getDefaultState().with(net.minecraft.block.BedBlock.PART,net.minecraft.block.enums.BedPart.HEAD));
+        fill(blocks,-18,72,8,-10,89,8,Blocks.RED_STAINED_GLASS.getDefaultState());
+        fill(blocks,-18,72,12,-10,89,12,Blocks.BLUE_STAINED_GLASS.getDefaultState());
+        fill(blocks,-18,72,16,-10,89,16,Blocks.QUARTZ_BLOCK.getDefaultState());
+        fill(blocks,22,65,-6,32,65,4,Blocks.QUARTZ_BLOCK.getDefaultState());
+        fill(blocks,22,66,-6,32,68,-6,Blocks.GLASS.getDefaultState());
+        fill(blocks,22,66,4,32,68,4,Blocks.QUARTZ_BLOCK.getDefaultState());
+        fill(blocks,22,66,-5,22,68,3,Blocks.QUARTZ_BLOCK.getDefaultState());
+        fill(blocks,32,66,-5,32,68,3,Blocks.QUARTZ_BLOCK.getDefaultState());
+        // Insert fluid last: the complete container must exist before fluid ticks run.
+        fill(blocks,23,66,-5,31,67,3,Blocks.WATER.getDefaultState());
         return blocks;
     }
     private static void fill(Map<BlockPos,BlockState> blocks,int x0,int y0,int z0,int x1,int y1,int z1,BlockState block) {

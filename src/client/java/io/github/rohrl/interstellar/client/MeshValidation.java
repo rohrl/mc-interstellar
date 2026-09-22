@@ -39,7 +39,7 @@ final class MeshValidation {
             set(shader,"MeshExtent",555);vector(shader,"Source",320.25f,320.375f,320);
             vector(shader,"Forward",0,0,1);vector(shader,"Right",1,0,0);vector(shader,"Up",0,1,0);
             var pixels=BufferUtils.createFloatBuffer(W*H*4);
-            for(int distance:new int[]{32,96,148,252}) {
+            for(int distance:new int[]{24,32,96,148,252}) {
                 float sx=32f/distance,sy=18f/distance;
                 var camera=new FiniteTerrainRay.Point(320.25,320.375,320-distance);
                 var reference=new FiniteTerrainRay.Result[W*H];
@@ -110,7 +110,7 @@ final class MeshValidation {
         int total=0,wrong=0,failed=0;
         set(shader,"MeshNodeCount",0);set(shader,"MovingNodeCount",0);
         set(shader,"EmptyCells",1);set(shader,"EmptyReach",1024);set(shader,"AdaptivePath",1);
-        for(int distance:new int[]{32,96,148,252}) {
+        for(int distance:new int[]{24,32,96,148,252}) {
             double u=8.0/distance,sinCritical=Math.sqrt(27.0/4)*u*Math.sqrt(1-u);
             float centre=(float)(sinCritical/Math.sqrt(1-sinCritical*sinCritical)),spread=centre*.0001f;
             vector(shader,"Camera",320.25f,320.375f,320-distance);
