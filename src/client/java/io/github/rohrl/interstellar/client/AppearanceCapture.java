@@ -33,7 +33,7 @@ final class AppearanceCapture {
                 var camera=requested.appearanceCamera();
                 metadata=new LinkedHashMap<>();
                 metadata.put("schema",1);
-                metadata.put("reference",comparison==12?"same-scene-dynamic-texture-layout":comparison==11?"same-scene-serial-two-ray-AA":comparison==10?"same-scene-original-four-block-step-cap":comparison==9?"same-scene-compact-dynamic-settings":comparison==8?"same-scene-original-native-nodes":comparison==7?"same-scene-general-program":comparison==6?"same-scene-cache-reach-16":comparison==5?"same-scene-no-empty-cell-cache":comparison==4?"same-scene-original-addressing-same-bounds-path-AA-and-scale":comparison==3?"same-scene-original-bounds-same-path-AA-and-scale":comparison==2?"same-scene-original-path-same-AA-and-scale":comparison==1?"same-scene-four-rays-full-resolution":"vanilla-world-END-before-hand-and-HUD");
+                metadata.put("reference",comparison==14?"same-scene-angular-cap-0.02":comparison==13?"same-scene-full-material-pass":comparison==12?"same-scene-dynamic-texture-layout":comparison==11?"same-scene-serial-two-ray-AA":comparison==10?"same-scene-original-four-block-step-cap":comparison==9?"same-scene-compact-dynamic-settings":comparison==8?"same-scene-original-native-nodes":comparison==7?"same-scene-general-program":comparison==6?"same-scene-cache-reach-16":comparison==5?"same-scene-no-empty-cell-cache":comparison==4?"same-scene-original-addressing-same-bounds-path-AA-and-scale":comparison==3?"same-scene-original-bounds-same-path-AA-and-scale":comparison==2?"same-scene-original-path-same-AA-and-scale":comparison==1?"same-scene-four-rays-full-resolution":"vanilla-world-END-before-hand-and-HUD");
                 metadata.put("candidate",comparison!=0?"same-scene-selected-AA-scale-and-path":"terrain-backend-zero-bending-full-resolution");
                 metadata.put("qualitySettings",requested.qualitySettings());
                 metadata.put("sameFrame",true);
@@ -60,7 +60,11 @@ final class AppearanceCapture {
         try {
             screen.checkAppearancePose(comparison==0);
             metadata.put("candidateScene",screen.appearanceScene());
-            if(comparison==12) {
+            if(comparison==14) {
+                screen.renderOrbitComparison(true);reference=readFramebuffer();screen.renderOrbitComparison(false);
+            } else if(comparison==13) {
+                screen.renderMaterialComparison(true);reference=readFramebuffer();screen.renderMaterialComparison(false);
+            } else if(comparison==12) {
                 screen.renderLayoutComparison(true);reference=readFramebuffer();screen.renderLayoutComparison(false);
             } else if(comparison==11) {
                 screen.renderSplitComparison(true);reference=readFramebuffer();screen.renderSplitComparison(false);

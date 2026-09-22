@@ -5,4 +5,5 @@
 #define INTERSTELLAR_LIVE_DEFAULTS
 #define INTERSTELLAR_VARIABLE_CHORD
 #define INTERSTELLAR_SPLIT_AA
+#define INTERSTELLAR_MATERIALS
 #moj_import <interstellar:terrain_shared.glsl>

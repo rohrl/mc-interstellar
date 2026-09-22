@@ -1,7 +1,7 @@
 {
-  "vertex":"interstellar:optical_lab", "fragment":"interstellar:terrain_live_split",
+  "vertex":"interstellar:optical_lab", "fragment":"interstellar:terrain_live_material_mask",
   "attributes":["Position"],
-  "samplers":[{"name":"Voxels"},{"name":"CompactNodes"},{"name":"Atlas"},{"name":"Distant"},{"name":"DistantAppearance"},{"name":"SkyAtlas"},{"name":"Lightmap"},{"name":"LocalLight"},{"name":"CompactMovingNodes"}],
+  "samplers":[{"name":"PendingRays"},{"name":"Voxels"},{"name":"CompactNodes"},{"name":"Atlas"},{"name":"Distant"},{"name":"DistantAppearance"},{"name":"SkyAtlas"},{"name":"Lightmap"},{"name":"LocalLight"},{"name":"CompactMovingNodes"}],
   "uniforms":[
     {"name":"OrbitStep","type":"float","count":1,"values":[0.02]},
     {"name":"MaterialLimit","type":"float","count":1,"values":[32]},

@@ -30,6 +30,9 @@ final class WorldMesh implements VertexConsumer,AutoCloseable {
     private final Vector3f position=new Vector3f();
     private float[] triangles=new float[36*8192];
     private int cursor,count,missingSections,omittedBlocks;
+    private boolean materials;
+    private float terrainMaterial;
+    private final FluidMesh fluids=new FluidMesh(this);
     private final long started=System.nanoTime();
     int triangleTexture,nodeTexture,nodeCount,compactNodeTexture;
     EntityMesh entities;
@@ -71,9 +74,10 @@ final class WorldMesh implements VertexConsumer,AutoCloseable {
         moving.entities=new EntityMesh(moving);return moving;
     }
     boolean dynamic() {return dynamic;}
+    boolean hasMaterials() {return streaming!=null?streaming.hasMaterials():materials;}
     void updateMoving() {
         if(!dynamic)throw new IllegalStateException("Not a moving scene");
-        count=0;
+        count=0;materials=false;
         var camera=BlockPos.ofFloored(MinecraftClient.getInstance().gameRenderer.getCamera().getPos());
         int radius=Math.max(2,Math.min(16,MinecraftClient.getInstance().options.getViewDistance().getValue()))+1;
         entities.capture(origin,(camera.getX()>>4)-radius,(camera.getZ()>>4)-radius,2*radius+1);
@@ -109,9 +113,13 @@ final class WorldMesh implements VertexConsumer,AutoCloseable {
                 cursor++;
                 var state=world.getBlockState(pos);
                 if(state.isAir())continue;
-                if(!state.getFluidState().isEmpty())omittedBlocks++;
+                if(!state.getFluidState().isEmpty()) {
+                    fluids.begin(pos,origin,state.getFluidState().isIn(net.minecraft.registry.tag.FluidTags.WATER));
+                    manager.renderFluid(pos,world,fluids,state,state.getFluidState());fluids.finish();
+                }
                 if(state.getRenderType()!=BlockRenderType.MODEL)continue;
-                if(RenderLayers.getBlockLayer(state)==RenderLayer.getTranslucent()) {omittedBlocks++;continue;}
+                terrainMaterial=RenderLayers.getBlockLayer(state)==RenderLayer.getTranslucent()?-3:0;
+                if(terrainMaterial!=0)materials=true;
                 matrices.push();
                 try {
                     matrices.translate(pos.getX()-origin.getX(),pos.getY()-origin.getY(),pos.getZ()-origin.getZ());
@@ -147,6 +155,7 @@ final class WorldMesh implements VertexConsumer,AutoCloseable {
             position.set(Float.intBitsToFloat(vertices[src]),Float.intBitsToFloat(vertices[src+1]),Float.intBitsToFloat(vertices[src+2]));
             entry.getPositionMatrix().transformPosition(position);
             quadData[dst]=position.x;quadData[dst+1]=position.y;quadData[dst+2]=position.z;
+            quadData[dst+3]=terrainMaterial;
             quadData[dst+4]=Float.intBitsToFloat(vertices[src+4]);quadData[dst+5]=Float.intBitsToFloat(vertices[src+5]);
             // Terrain's native shader filters UV2/256; entity shaders use discrete texel centres.
             quadData[dst+6]=(light[i]&65535)/256f;quadData[dst+7]=(light[i]>>>16)/256f;
@@ -167,7 +176,8 @@ final class WorldMesh implements VertexConsumer,AutoCloseable {
     }
     void entityQuad(float[] data,boolean twoSided) {
         System.arraycopy(data,0,quadData,0,48);
-        if(twoSided)for(int v=0;v<4;v++)quadData[v*12+3]*=2;
+        if(twoSided)for(int v=0;v<4;v++){int p=v*12+3;quadData[p]+=Math.signum(quadData[p]);}
+        if(data[3]==-3 || Math.abs(data[3])>=7)materials=true;
         add(0,1,2);add(2,3,0);
     }
     private void upload(float[] nodes) {

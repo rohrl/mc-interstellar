@@ -34,6 +34,8 @@
     }
   ],
   "uniforms": [
+    {"name":"OrbitStep","type":"float","count":1,"values":[0.02]},
+    {"name":"MaterialLimit","type":"float","count":1,"values":[32]},
     {
       "name": "MovingNodeCount",
       "type": "float",

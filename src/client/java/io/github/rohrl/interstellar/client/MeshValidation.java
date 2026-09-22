@@ -92,6 +92,8 @@ final class MeshValidation {
             }
             int[] boundary=criticalBoundary(shader,draw,pixels);
             total+=boundary[0];mismatches+=boundary[1];unresolved+=boundary[2];
+            int materials=MaterialValidation.run(shader,draw,triangles,nodes,compactNodes);
+            if(materials!=0)throw new IllegalStateException("Material fixture failed: "+materials+" mismatches (see log)");
         } finally {
             set(shader,"Diagnostic",0);
             for(int i=0;i<4;i++)GL11.glPixelStorei(names[i],saved[i]);GL15.glBindBuffer(GL21.GL_PIXEL_PACK_BUFFER,pbo);

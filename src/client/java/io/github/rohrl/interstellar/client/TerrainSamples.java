@@ -11,6 +11,7 @@ final class TerrainSamples implements AutoCloseable {
     private static ShaderProgram foldShader;
     private static int maxTextureWidth;
     private final SimpleFramebuffer target;
+    private SimpleFramebuffer mask;
     final int width,height;
     static void setShader(ShaderProgram program) {foldShader=program;maxTextureWidth=GL11.glGetInteger(GL11.GL_MAX_TEXTURE_SIZE);}
     static boolean supported(int width) {return foldShader!=null && width<=maxTextureWidth/2;}
@@ -43,5 +44,12 @@ final class TerrainSamples implements AutoCloseable {
         foldShader.getUniformOrDefault("Viewport").set((float)width,(float)height);
         draw.run();
     }
-    @Override public void close() {target.delete();}
+    int copyMask() {
+        if(mask==null)mask=new SimpleFramebuffer(width*2,height,false,false);
+        GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER,target.fbo);
+        GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER,mask.fbo);
+        GL30.glBlitFramebuffer(0,0,width*2,height,0,0,width*2,height,GL11.GL_COLOR_BUFFER_BIT,GL11.GL_NEAREST);
+        return mask.getColorAttachment();
+    }
+    @Override public void close() {target.delete();if(mask!=null)mask.delete();}
 }

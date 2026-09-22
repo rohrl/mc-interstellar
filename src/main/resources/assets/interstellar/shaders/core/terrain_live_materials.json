@@ -1,5 +1,5 @@
 {
-  "vertex":"interstellar:optical_lab", "fragment":"interstellar:terrain_live_split",
+  "vertex":"interstellar:optical_lab", "fragment":"interstellar:terrain_live_materials",
   "attributes":["Position"],
   "samplers":[{"name":"Voxels"},{"name":"CompactNodes"},{"name":"Atlas"},{"name":"Distant"},{"name":"DistantAppearance"},{"name":"SkyAtlas"},{"name":"Lightmap"},{"name":"LocalLight"},{"name":"CompactMovingNodes"}],
   "uniforms":[

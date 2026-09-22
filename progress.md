@@ -2,6 +2,8 @@
 
 ## Current checkpoint — 2026-09-22, codex/demo-visual-refinement
 
+Later step4 experiment: [material coverage](docs/material-coverage.md) captures native fluids, transparent models, nonliving entities and block entities.24 analytic GPU composition cases and26240 optical checks pass; full/selective images match exactly. Full material rendering fails the FPS floor; selective traversal is insufficient in the heavy view. Work is isolated on `codex/material-coverage-experiment` while wider angular steps are investigated with strict accuracy/performance gates. Step4 and the later review are not complete.
+
 Owner resumed demo packaging and visual refinement under the79aa1d0 FPS floor, followed by another algorithm/performance review; deeper relativity awaits discussion. Demo packaging now builds and runs: separate persistent exhibit, safe return, automatic source selection, four viewpoints and clear F10 status.53 tests/build/package passed. Visual inspection and return/source checks passed; no new FPS claim. [Evidence](docs/demo-packaging.md). Step4 and the subsequent performance review are still in progress. Historical entries follow.
 
 Last updated: 2026-09-15. Current branch: codex/terrain-prototype.

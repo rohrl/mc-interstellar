@@ -3,6 +3,8 @@
   "attributes":["Position"],
   "samplers":[{"name":"Voxels"},{"name":"CompactNodes"},{"name":"Atlas"},{"name":"Distant"},{"name":"DistantAppearance"},{"name":"SkyAtlas"},{"name":"Lightmap"},{"name":"LocalLight"},{"name":"CompactMovingNodes"}],
   "uniforms":[
+    {"name":"OrbitStep","type":"float","count":1,"values":[0.02]},
+    {"name":"MaterialLimit","type":"float","count":1,"values":[32]},
     {"name":"MeshEntities","type":"float","count":1,"values":[1]},
     {"name":"MeshClouds","type":"float","count":1,"values":[1]},
     {"name":"MovingNodeCount","type":"float","count":1,"values":[0]},
