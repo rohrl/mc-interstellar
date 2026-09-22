@@ -15,10 +15,9 @@ public final class StreamingTerrain implements AutoCloseable {
     private static volatile StreamingTerrain active;
     private final ClientWorld world;
     private final BlockPos origin,centre;
-    private final MeshArena triangles,nodes,compactNodes;
-    private final QuadTerrain quads;
-    private final RowArena triangleRows=new RowArena(0,16384),nodeRows=new RowArena(4,4092);
-    private record Entry(int triangleRow,int triangleRows,int nodeRow,int nodeRows,int triangles,SceneTree.Part part,boolean materials) {}
+    private final MeshArena vertices,nodes;
+    private final RowArena vertexRows=new RowArena(0,10924),nodeRows=new RowArena(4,4092);
+    private record Entry(int vertexRow,int vertexRowCount,int nodeRow,int nodeRows,int triangles,SceneTree.Part part,boolean materials) {}
     private final Map<Long,Entry> entries=new HashMap<>();
     private final Map<Long,Long> versions=new HashMap<>();
     private final Set<Long> incoming=ConcurrentHashMap.newKeySet();
@@ -47,19 +46,16 @@ public final class StreamingTerrain implements AutoCloseable {
     }
     StreamingTerrain(ClientWorld world,BlockPos origin,BlockPos centre) {
         this.world=world;this.origin=origin;this.centre=centre;
-        triangles=new MeshArena(16384);
-        try {nodes=new MeshArena(4096);}catch(RuntimeException e){triangles.close();throw e;}
-        try {compactNodes=TerrainScreen.hasCompactShader()?new MeshArena(4096,true):null;}catch(RuntimeException e){nodes.close();triangles.close();throw e;}
-        try {quads=new QuadTerrain();}catch(RuntimeException e){if(compactNodes!=null)compactNodes.close();nodes.close();triangles.close();throw e;}
+        vertices=new MeshArena(10924,false,QuadVertices.WIDTH);
+        try {nodes=new MeshArena(4096,true);}catch(RuntimeException e){vertices.close();throw e;}
         active=this;
     }
     boolean ready() {return ready;}
     boolean hasMaterials() {return materialChunks>0;}
     int loadingPercent() {return wanted.isEmpty()?0:Math.min(100,entries.size()*100/wanted.size());}
-    int triangleTexture() {return triangles.texture;}
+    int triangleTexture() {return vertices.texture;}
     int nodeTexture() {return nodes.texture;}
-    int compactNodeTexture() {return compactNodes==null?0:compactNodes.texture;}
-    QuadTerrain quads() {return quads;}
+    int compactNodeTexture() {return nodes.texture;}
     String status() {return ready?"Streaming terrain | "+triangleCount+" triangles | "+queue.size()+" queued chunks":"Loading terrain: "+entries.size()+"/"+wanted.size()+" chunks";}
     void advance() {
         var client=MinecraftClient.getInstance();
@@ -75,7 +71,7 @@ public final class StreamingTerrain implements AutoCloseable {
         boolean indexChanged=false;
         // Unloaded geometry disappears promptly, even if other chunks are waiting to rebuild.
         for(long key:List.copyOf(queue))if(!loaded(key)) {
-            var old=entries.put(key,new Entry(0,0,0,0,0,null,false));if(old!=null){release(old);indexChanged|=old.part!=null;}quads.remove(key);
+            var old=entries.put(key,new Entry(0,0,0,0,0,null,false));if(old!=null){release(old);indexChanged|=old.part!=null;}
             queue.remove(key);
             if(capture!=null && capturing==key){capture.close();capture=null;}
         }
@@ -96,7 +92,7 @@ public final class StreamingTerrain implements AutoCloseable {
         if(!ready && entries.keySet().containsAll(wanted)) {
             ready=true;
             Interstellar.LOGGER.info("Streaming terrain ready: {}; initial capture={} ms",status(),(System.nanoTime()-started)/1e6);
-            Interstellar.LOGGER.info("Quad terrain ready: {}",quads.status());
+            Interstellar.LOGGER.info("Quad terrain ready: {} quads; vertex payload={} bytes; single retained vertex/node arenas",triangleCount/2,triangleCount/2*192L);
         }
     }
     private boolean loaded(long key) {return world.getChunkManager().isChunkLoaded(ChunkPos.getPackedX(key),ChunkPos.getPackedZ(key));}
@@ -107,7 +103,7 @@ public final class StreamingTerrain implements AutoCloseable {
         for(int dx=-radius;dx<=radius;dx++)for(int dz=-radius;dz<=radius;dz++)wanted.add(ChunkPos.toLong(x+dx,z+dz));
         boolean changed=false;
         for(var iterator=entries.entrySet().iterator();iterator.hasNext();) {
-            var entry=iterator.next();if(!wanted.contains(entry.getKey())){release(entry.getValue());quads.remove(entry.getKey());iterator.remove();changed=true;}
+            var entry=iterator.next();if(!wanted.contains(entry.getKey())){release(entry.getValue());iterator.remove();changed=true;}
         }
         versions.keySet().retainAll(wanted);queue.retainAll(wanted);
         if(capture!=null && !wanted.contains(capturing)){capture.close();capture=null;}
@@ -119,18 +115,17 @@ public final class StreamingTerrain implements AutoCloseable {
     private void publish(long key,WorldMesh mesh) {
         int count=mesh.triangleCount();var old=entries.get(key);
         if(triangleCount-(old==null?0:old.triangles)+count>7_000_000)throw new IllegalStateException("Streaming terrain exceeds seven million triangles");
-        quads.publish(key,mesh.triangleData(),count); // Before the reference tree reorders triangles.
         Entry next=new Entry(0,0,0,0,0,null,false);
         if(count>0) {
-            var data=mesh.triangleData();var tree=new MeshTree(data,count);var treeNodes=tree.nodes();
-            int tr=(count+MeshArena.TRIANGLES-1)/MeshArena.TRIANGLES,nr=(tree.size()+MeshArena.NODES-1)/MeshArena.NODES;
-            int t=triangleRows.allocate(tr),n;
-            try {n=nodeRows.allocate(nr);}catch(RuntimeException e){triangleRows.release(t,tr);throw e;}
-            int base=n*MeshArena.NODES,first=t*MeshArena.TRIANGLES;
+            var data=QuadVertices.pack(mesh.triangleData(),count);var tree=new MeshTree(data,count/2,4);var treeNodes=tree.nodes();
+            int tr=(count/2+QuadVertices.PER_ROW-1)/QuadVertices.PER_ROW,nr=(tree.size()+MeshArena.NODES-1)/MeshArena.NODES;
+            int t=vertexRows.allocate(tr),n;
+            try {n=nodeRows.allocate(nr);}catch(RuntimeException e){vertexRows.release(t,tr);throw e;}
+            int base=n*MeshArena.NODES,first=t*QuadVertices.PER_ROW;
             var part=new SceneTree.Part(treeNodes[0],treeNodes[1],treeNodes[2],treeNodes[4],treeNodes[5],treeNodes[6],base);
             for(int i=0;i<tree.size();i++) {int p=i*12;treeNodes[p+3]=treeNodes[p+3]==tree.size()?-1:treeNodes[p+3]+base;treeNodes[p+7]+=first;}
-            try {triangles.write(t,data,count*36);nodes.write(n,treeNodes,treeNodes.length);if(compactNodes!=null)compactNodes.write(n,treeNodes,treeNodes.length);}
-            catch(RuntimeException e){triangleRows.release(t,tr);nodeRows.release(n,nr);throw e;}
+            try {vertices.write(t,data,data.length);nodes.write(n,treeNodes,treeNodes.length);}
+            catch(RuntimeException e){vertexRows.release(t,tr);nodeRows.release(n,nr);throw e;}
             next=new Entry(t,tr,n,nr,count,part,mesh.hasMaterials());
         }
         entries.put(key,next);if(old!=null)release(old);triangleCount+=count;if(next.materials)materialChunks++;index();
@@ -138,21 +133,19 @@ public final class StreamingTerrain implements AutoCloseable {
             Interstellar.LOGGER.info("Streaming chunk published: ({}, {}), triangles={}, replacement={}, pending={}",ChunkPos.getPackedX(key),ChunkPos.getPackedZ(key),count,old!=null,queue.size());
     }
     private void index() {
-        quads.refresh(); // Batch removals from a changed camera window or chunk unloads.
         var parts=new ArrayList<SceneTree.Part>();for(var entry:entries.values())if(entry.part!=null)parts.add(entry.part);
         float[] data=new SceneTree(parts).nodes();nodeCount=data.length/12;
         if(data.length>4*MeshArena.FLOATS)throw new IllegalStateException("Streaming index capacity exceeded");
         nodes.write(0,data,data.length);
-        if(compactNodes!=null)compactNodes.write(0,data,data.length);
         if(nodeCount>0) {
             double r=0;int[] source={centre.getX()-origin.getX(),centre.getY()-origin.getY(),centre.getZ()-origin.getZ()};
             for(int a=0;a<3;a++){double d=Math.max(Math.abs(data[a]-source[a]),Math.abs(data[a+4]-source[a]));r+=d*d;}extent=(float)Math.sqrt(r)+2;
         }
     }
     private void release(Entry entry) {
-        if(entry.part==null)return;triangleRows.release(entry.triangleRow,entry.triangleRows);nodeRows.release(entry.nodeRow,entry.nodeRows);triangleCount-=entry.triangles;if(entry.materials)materialChunks--;
+        if(entry.part==null)return;vertexRows.release(entry.vertexRow,entry.vertexRowCount);nodeRows.release(entry.nodeRow,entry.nodeRows);triangleCount-=entry.triangles;if(entry.materials)materialChunks--;
     }
     @Override public void close() {
-        if(active==this)active=null;if(capture!=null)capture.close();quads.close();triangles.close();nodes.close();if(compactNodes!=null)compactNodes.close();entries.clear();incoming.clear();queue.clear();
+        if(active==this)active=null;if(capture!=null)capture.close();vertices.close();nodes.close();entries.clear();incoming.clear();queue.clear();
     }
 }

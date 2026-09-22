@@ -1,14 +1,12 @@
 # Progress
 
-## Current checkpoint — 2026-09-22, codex/demo-visual-refinement
+## Current checkpoint — 2026-09-22, quad vertices adopted
 
-Later step4 experiment: [material coverage](docs/material-coverage.md) captures native fluids, transparent models, nonliving entities and block entities.24 analytic GPU composition cases and26240 optical checks pass; full/selective images match exactly. Full material rendering fails the FPS floor; selective traversal is insufficient in the heavy view. Work is isolated on `codex/material-coverage-experiment` while wider angular steps are investigated with strict accuracy/performance gates. Step4 and the later review are not complete.
+Requested demo/refinement steps3–4 and subsequent algorithm review are complete for the documented subset. The owner then authorized quad vertices and explicitly accepts a small easier-view regression for a gain in the slowest view. Production uses four-quad leaves, one retained vertex arena and one compact node arena; both native triangles and full-precision appearance remain intact.
 
-Owner resumed demo packaging and visual refinement under the79aa1d0 FPS floor, followed by another algorithm/performance review; deeper relativity awaits discussion. Demo packaging now builds and runs: separate persistent exhibit, safe return, automatic source selection, four viewpoints and clear F10 status.53 tests/build/package passed. Visual inspection and return/source checks passed; no new FPS claim. [Evidence](docs/demo-packaging.md). Step4 and the subsequent performance review are still in progress. Historical entries follow.
+Controlled frozen heavy-view GPU median improves4.3%; wall medians stay close with some worse tails. Wall/down/close original/quad image pairs match exactly. Final live medians are about57–60FPS wall and34–35FPS down, with evolving actors and mixed tail results.57 tests/build/package,52,480 optical comparisons and28 material cases pass. General/optimized and full/selective pairs match. Native appearance and final demo inspected; guarded source64→65→64 refresh passes without reload and the temporary block is removed. See docs/quad-vertices.md for complete evidence and limits.
 
-Last updated: 2026-09-15. Current branch: codex/terrain-prototype.
-
-Current: F9 textured terrain-snapshot lensing, F8 sky/horizon lab, bounded source inspection and independent PG reference. 31 tests pass. See docs/terrain-prototype.md and the latest checkpoint below; early sections record historical results.
+Accepted branches: codex/quad-vertices and codex/demo-visual-refinement. A/B experiment49738ba is preserved and pushed separately. Original AA and older experiments remain untouched. The next bounded performance proposal is sharing planar-face intersection work; it is not implemented. Step5, weather, general teleport and automated movement/flicker testing remain deferred. Historical checkpoints follow.
 
 ## Verified environment
 

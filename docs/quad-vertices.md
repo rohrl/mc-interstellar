@@ -1,6 +1,6 @@
 # Shared native quad vertices — experiment, 2026-09-22
 
-Owner approved this experiment and pushes to the existing repository. Baseline2843a50 is preserved on codex/demo-visual-refinement. The bounded storage experiment is complete and remains separate; it does not yet satisfy the no-regression gate.
+Owner approved this experiment and pushes to the existing repository. Baseline2843a50 is preserved in history. The original storage comparison is preserved on codex/quad-vertices-experiment at49738ba. After seeing the results, the owner explicitly accepted a gain in the heaviest view with a small regression in the easier view. The consolidated four-quad implementation is accepted on codex/quad-vertices and codex/demo-visual-refinement. The earlier strict no-regression conclusion below is superseded by that clarification.
 
 ## Isolated implementation
 
@@ -54,8 +54,43 @@ No FPS improvement; the downward view is about1% slower. Smaller storage alone i
 | Wall quad repeat |15.791|18.130|18.648|16.346|19.190|19.604|
 | Wall original repeat |15.622|17.735|17.914|16.368|18.374|18.840|
 
-All times are milliseconds, with the same frozen-scene protocol as above. Four-quad leaves reduce downward GPU median by4.3% and p95 by4.0–4.1%. Wall medians are roughly unchanged and wall GPU/tail timings are slightly worse. This is not a demonstrated across-view improvement or a new live-FPS result. It does not justify promoting the extra renderer complexity under the owner's no-regression constraint.
+All times are milliseconds, with the same frozen-scene protocol as above. Four-quad leaves reduce downward GPU median by4.3% and p95 by4.0–4.1%. Wall medians are roughly unchanged and wall GPU/tail timings are slightly worse. This is not a demonstrated across-view improvement or a new live-FPS result. Initial decision was to keep the experiment separate under the strict no-regression constraint; the owner then explicitly accepted this tradeoff.
 
-Keep the tested code on codex/quad-vertices-experiment and return the demo to its established renderer. A later, separately bounded follow-up could share the actual plane/intersection work for rectangular planar faces, falling back to both original triangles for other faces and retaining native diagonal shading. Merely sharing stored vertices still performs both original intersections and adds addressing work. This remains a proposal; it was not implemented or measured here.
+Keep the original A/B code on codex/quad-vertices-experiment. A later, separately bounded follow-up could share the actual plane/intersection work for rectangular planar faces, falling back to both original triangles for other faces and retaining native diagonal shading. Merely sharing stored vertices still performs both original intersections and adds addressing work. This remains a proposal; it was not implemented or measured here.
 
-Before any future promotion: eliminate parallel reference arenas, verify chunk/source update behavior, extend same-frame pairs to close/water/stairs views and full/selective composition, and measure actual F10 live timings. Current fixtures and two natural-world poses are sampled evidence, not arbitrary-model certification. No current production correctness bug was identified in this bounded storage experiment.
+## Production consolidation
+
+StreamingTerrain now retains one4092-wide quad vertex arena and one compact node arena. The parallel original representation and redundant expanded-node arena are removed; existing chunk queues, allocation replacement/release and source tracking remain. Moving actors/clouds retain their original triangle layout. Both native triangles and all attributes retain full precision.
+
+Shader selection follows the actual storage format independently of AA, bending and diagnostic switches. The optimized split/selective shaders serve the normal preset; the general quad shader handles other settings. This prevents a fallback from decoding quad offsets as triangles. F9 general/optimized comparisons label the actual program comparison; the historical storage A/B control stays on the experiment branch.
+
+Additional close natural-world pair4908299161076398200 (camera16.5,303.62,-24.5, yaw.281,pitch.91) is byte-identical original/quad. Pair8788163427737826186 is byte-identical full/selective quad composition. An earlier attempt was rejected because the physical camera had not settled; it supplies no acceptance evidence. Build/package57 tests pass. These are sampled checks, not arbitrary-model certification.
+
+The retained terrain-arena allocation arithmetic changes from1,610,219,520 to983,586,048 bytes (597.6MiB less), including removal of the expanded node copy. Raw captured vertex payload alone shrinks by one third. These are requested texture-storage sizes, not a measurement of total process/driver VRAM.
+
+## Final live measurements
+
+Fresh reference `quad-live-reference-runtime.log`, final `quad-production-runtime.log`; same natural-world source,6,260,826 triangles, camera16.5/302/-45.5,yaw.281,pitch.91 or35.91,1440p/half-scale/2xAA,120 warmup/300 samples. Each sequence is wall/down/down/wall. Actors, clouds and time continue to evolve; the final capture initially contains94 actors versus83 in the reference. These live runs do not isolate the storage speedup as precisely as the frozen same-scene comparison.
+
+| View/run | GPU p50/p95/p99 ms | Frame p50/p95/p99 ms |
+| --- | --- | --- |
+| Reference wall1 |15.757/17.372/18.011|16.659/19.001/20.255|
+| Reference down1 |28.060/29.021/29.523|29.144/30.720/31.176|
+| Reference down2 |27.889/28.826/29.241|28.863/30.423/30.975|
+| Reference wall2 |15.903/17.429/17.798|16.649/19.034/19.936|
+| Quad wall1 |16.488/18.326/18.897|17.490/20.343/20.849|
+| Quad down1 |28.046/28.931/29.521|29.156/30.994/32.015|
+| Quad down2 |27.578/28.566/28.952|28.770/30.348/31.007|
+| Quad wall2 |15.464/17.532/18.111|16.641/18.936/19.672|
+
+Final live medians are about57–60FPS wall and34–35FPS down. The first final wall run and some tail values are worse; retain them in the comparison. Acceptance uses the repeatable4.3% frozen heavy-view gain and the owner's explicit tradeoff clarification, not a claim that every live metric improved.
+
+Initial large-world capture was37.691s in the parallel reference executable and36.264s in the final build. Earlier accepted builds measured34.686–35.173s; differences in run state and chunk scheduling prevent an isolated loading-time claim. No additional run was performed solely for loading time, per the owner. The small exhibit previously captured in4.933s and is not a substitute for the heavy-world benchmark.
+
+## Final correctness and demo checks
+
+Final compiled quad diagnostic:52,480 optical comparisons, zero mismatches/inconclusive/unresolved;28 material cases, zero failures/channel error. General/optimized quad pair3754333847832677599 and full/selective pair4351572167902373288 are pixel-identical at the close camera. Zero-bending versus vanilla pair15362894805045391712 has RGB MAE0.00090319,0.8355% pixels over8 levels; its contact sheet was inspected. It checks native appearance and the no-AA/no-bending fallback, not equality with Minecraft's complete renderer. Remaining ordinary appearance differences and unsupported special layers are unchanged in scope.
+
+The retained exhibit loads in5.081s in the final run, with53,488 triangles. Screenshot2026-09-22_18.51.24.png was visually inspected: curved coloured wall, terrain, slab/stair area, tree, glass/water exhibit, and live mobs. A guarded temporary mass block was placed only into air at4,80,0; F10 automatically refreshed64→65→64 without a terrain reload. The block was removed in the helper's finally section. The owner saved demo return record was preserved by entering from within the exhibit. Subsequent owner exploration also logged chunk-window retention/replacement without a rendering error; this is not an automated movement/flicker test.
+
+No further confirmed production correctness defect was found. The storage-format fallback issue was prevented during consolidation; existing shader feature/hardware requirements and material limitations remain. The actual new program was verified in F10; no reliance on an F9-only switch. Step5 remains deferred.

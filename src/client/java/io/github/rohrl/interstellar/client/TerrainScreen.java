@@ -26,7 +26,6 @@ final class TerrainScreen extends Screen {
     private static ShaderProgram layoutShader,layoutDiagnosticShader,materialShader;
     private static ShaderProgram materialProbeShader,materialMaskedShader;
     private static ShaderProgram quadProbeShader,quadMaskedShader,quadMaterialShader,quadDiagnosticShader;
-    private boolean quadVertices;
     private boolean selectiveMaterials=true;
     private float orbitStep=.08f;
     private float curveFactor=4;
@@ -188,7 +187,7 @@ final class TerrainScreen extends Screen {
             validate=false;
             var diagnosticShader=useQuads()?quadDiagnosticShader:useLayoutShader()?layoutDiagnosticShader:useDefaultShader()?(useLongShader()?longMeshShader:compactMeshShader):shader;
             diagnosticShader.getUniformOrDefault("MeshStepLimit").set(meshStepLimit);
-            Interstellar.LOGGER.info("Mesh fixture program: {}; step cap={}; angular cap={}",useLayoutShader()?"streamed-layout diagnostic variant":useDefaultShader()?"compact diagnostic variant (live defaults fix Diagnostic=0)":programName(),useLongShader()?meshStepLimit:4,orbitStep);
+            Interstellar.LOGGER.info("Mesh fixture program: {}; step cap={}; angular cap={}",useQuads()?"quad diagnostic variant":useLayoutShader()?"streamed-layout diagnostic variant":useDefaultShader()?"compact diagnostic variant (live defaults fix Diagnostic=0)":programName(),useLongShader()?meshStepLimit:4,orbitStep);
             validationStatus=MeshValidation.run(diagnosticShader,()->drawQuad(1,1),orbitStep,curveFactor,useQuads());
         }
         if(hybrid)nativeSky.update(!meshMode || !meshClouds);
@@ -268,7 +267,7 @@ final class TerrainScreen extends Screen {
         shader.getUniformOrDefault("OldMeshBounds").set((float)oldX,(float)oldZ,(float)oldX+256,(float)oldZ+256);
         shader.getUniformOrDefault("MeshExtent").set(meshMode?Math.max(mesh.extent,moving==null?0:moving.extent)+mesh.sourceShift(centre()):512f);
         shader.getUniformOrDefault("MovingNodeCount").set(!meshMode || moving==null?0f:(float)moving.nodeCount);
-        shader.getUniformOrDefault("MeshNodeCount").set(meshMode?(float)(useQuads()?mesh.quads().nodeCount:mesh.nodeCount):0f);
+        shader.getUniformOrDefault("MeshNodeCount").set(meshMode?(float)mesh.nodeCount:0f);
         shader.getUniformOrDefault("DistantTop").set(snapshot.distant==null?-1024f:snapshot.distant.maxHeight);
         shader.getUniformOrDefault("FaceShades").set(client.world.getBrightness(net.minecraft.util.math.Direction.EAST,true),
                 client.world.getBrightness(net.minecraft.util.math.Direction.SOUTH,true),client.world.getBrightness(net.minecraft.util.math.Direction.DOWN,true),
@@ -282,7 +281,7 @@ final class TerrainScreen extends Screen {
         shader.getUniformOrDefault("FastFetch").set(fastFetch?1f:0f);
         shader.getUniformOrDefault("EmptyCells").set(emptyCells?1f:0f);
         shader.getUniformOrDefault("EmptyReach").set(emptyReach);
-        shader.addSampler("Voxels",meshMode?(useQuads()?mesh.quads().vertices.texture:mesh.triangleTexture):snapshot.voxelTexture);
+        shader.addSampler("Voxels",meshMode?mesh.triangleTexture:snapshot.voxelTexture);
         shader.addSampler("LocalLight",meshMode?(moving!=null?moving.entities.texture:mesh.entities.texture):snapshot.lightTexture);
         shader.addSampler("SmoothAtlas",snapshot.smoothLight.texture);
         shader.addSampler("LocalSmooth",snapshot.smoothTexture);
@@ -293,7 +292,7 @@ final class TerrainScreen extends Screen {
         shader.addSampler("SkyAtlas",hybrid?nativeSky.texture():snapshot.voxelTexture);
         shader.addSampler("Lightmap",((io.github.rohrl.interstellar.mixin.client.LightmapAccessor)client.gameRenderer.getLightmapTextureManager()).interstellar$texture().getGlId());
         shader.addSampler("Palette",meshMode?mesh.nodeTexture:snapshot.paletteTexture);
-        shader.addSampler("CompactNodes",meshMode?(useQuads()?mesh.quads().nodes.texture:mesh.compactNodeTexture):snapshot.paletteTexture);
+        shader.addSampler("CompactNodes",meshMode?mesh.compactNodeTexture:snapshot.paletteTexture);
         shader.addSampler("CompactMovingNodes",meshMode && moving!=null?moving.compactNodeTexture:snapshot.paletteTexture);
         shader.addSampler("Atlas",client.getTextureManager().getTexture(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE).getGlId());
     }
@@ -356,10 +355,14 @@ final class TerrainScreen extends Screen {
                 && faceLighting && meshEntities && meshClouds && meshCoverage && adaptivePath && fastBounds && fastFetch && emptyCells && emptyReach==1024;
     }
     private boolean useLongShader() {return useMeshShader() && compactNodes && adaptivePath && meshStepLimit!=4 && longMeshShader!=null && longDefaultShader!=null;}
-    private boolean useSplitShader() {return splitSamples && useDefaultShader() && useLongShader() && splitShader!=null
+    private boolean useSplitShader() {return splitSamples && (!useQuads() || fixedLayout) && useDefaultShader() && useLongShader() && splitShader!=null
             && TerrainSamples.supported(Math.max(1,Math.round(client.getWindow().getFramebufferWidth()*scale)));}
     private ShaderProgram currentShader() {
-        if(useQuads())return useMaterials() && !useSelectiveMaterials()?quadMaterialShader:quadProbeShader;
+        if(useQuads()) {
+            if(quadDiagnosticShader==null || quadProbeShader==null || quadMaterialShader==null || quadMaskedShader==null)
+                throw new IllegalStateException("Quad terrain programs are unavailable");
+            return useLayoutShader()?(useMaterials() && !useSelectiveMaterials()?quadMaterialShader:quadProbeShader):quadDiagnosticShader;
+        }
         if(useLayoutShader())return useMaterials()?(useSelectiveMaterials()?materialProbeShader:materialShader):orbitStep>.02f && materialProbeShader!=null?materialProbeShader:layoutShader;
         if(useSplitShader())return splitShader;
         if(!useMeshShader())return generalShader;
@@ -368,7 +371,7 @@ final class TerrainScreen extends Screen {
         return meshShader;
     }
     private String programName() {
-        if(useQuads())return "native-quads-"+(useSelectiveMaterials()?"selective-":"full-")+meshStepLimit;
+        if(useQuads())return "native-quads-"+(!useLayoutShader()?"general-":useSelectiveMaterials()?"selective-":"full-")+meshStepLimit;
         if(useLayoutShader())return (useMaterials()?(useSelectiveMaterials()?"native-live-selective-materials-":"native-live-materials-"):orbitStep>.02f && materialProbeShader!=null?"native-live-curvature-probe-":"native-live-layout-")+meshStepLimit;
         if(useSplitShader())return "native-live-split-"+meshStepLimit;
         if(useDefaultShader())return useLongShader()?"native-live-steps-"+meshStepLimit:"native-live-defaults";
@@ -385,11 +388,9 @@ final class TerrainScreen extends Screen {
         finally {splitSamples=old;}
     }
     private boolean useLayoutShader() {return fixedLayout && mesh!=null && mesh.streamed() && useSplitShader() && layoutShader!=null && layoutDiagnosticShader!=null;}
-    private boolean useQuads() {return quadVertices && useLayoutShader() && mesh.quads()!=null && quadProbeShader!=null && quadMaskedShader!=null && quadMaterialShader!=null && quadDiagnosticShader!=null;}
-    void renderQuadComparison(boolean reference) {
-        boolean old=quadVertices;cancelBenchmark();
-        try {quadVertices=!reference;renderTerrain();}finally {quadVertices=old;}
-    }
+    // Storage format is independent of AA, lensing and diagnostic quality switches.
+    // Falling back to a triangle decoder would interpret quad offsets as triangle offsets.
+    boolean useQuads() {return meshMode && mesh!=null && mesh.quadStorage();}
     private boolean useMaterials() {return materialShader!=null && (mesh.hasMaterials() || moving!=null && moving.hasMaterials());}
     private boolean useSelectiveMaterials() {return selectiveMaterials && useLayoutShader() && useMaterials() && materialProbeShader!=null && materialMaskedShader!=null;}
     void renderMaterialComparison(boolean reference) {
@@ -458,7 +459,7 @@ final class TerrainScreen extends Screen {
             }
             case GLFW.GLFW_KEY_P -> {AppearanceCapture.request(this,(modifiers&(GLFW.GLFW_MOD_ALT|GLFW.GLFW_MOD_CONTROL))==(GLFW.GLFW_MOD_ALT|GLFW.GLFW_MOD_CONTROL)?6:(modifiers&(GLFW.GLFW_MOD_ALT|GLFW.GLFW_MOD_SHIFT))==(GLFW.GLFW_MOD_ALT|GLFW.GLFW_MOD_SHIFT)?5:(modifiers&GLFW.GLFW_MOD_ALT)!=0?4:(modifiers&(GLFW.GLFW_MOD_CONTROL|GLFW.GLFW_MOD_SHIFT))==(GLFW.GLFW_MOD_CONTROL|GLFW.GLFW_MOD_SHIFT)?3:(modifiers&GLFW.GLFW_MOD_CONTROL)!=0?2:(modifiers&GLFW.GLFW_MOD_SHIFT)!=0?1:0);validationStatus="Capturing same-frame comparison...";}
             case GLFW.GLFW_KEY_S -> {if((modifiers&GLFW.GLFW_MOD_SHIFT)!=0)AppearanceCapture.request(this,7);else specialized=!specialized;validationStatus="S: program "+programName()+" | Shift+S: compare programs";}
-            case GLFW.GLFW_KEY_F -> {if((modifiers&GLFW.GLFW_MOD_SHIFT)!=0)AppearanceCapture.request(this,8);else compactNodes=!compactNodes;validationStatus="F: program "+programName()+" | Shift+F: compare node layouts";}
+            case GLFW.GLFW_KEY_F -> {if((modifiers&GLFW.GLFW_MOD_SHIFT)!=0)AppearanceCapture.request(this,8);else compactNodes=!compactNodes;validationStatus="F: program "+programName()+(useQuads()?" | Shift+F: compare general quad program":" | Shift+F: compare node layouts");}
             case GLFW.GLFW_KEY_D -> {if((modifiers&GLFW.GLFW_MOD_SHIFT)!=0)AppearanceCapture.request(this,9);else liveDefaults=!liveDefaults;validationStatus="D: program "+programName()+" | Shift+D: compare default settings";}
             case GLFW.GLFW_KEY_I -> {if((modifiers&GLFW.GLFW_MOD_SHIFT)!=0)emptyReach=emptyReach==16?1024:16;else emptyCells=!emptyCells;validationStatus="I: cache "+emptyCells+" | Shift+I reach "+emptyReach+" | Ctrl+Alt+P: compare reach";}
             case GLFW.GLFW_KEY_R -> {fastFetch=!fastFetch;validationStatus="R: fast mesh addressing "+(fastFetch?"ON":"OFF")+" | Alt+P: compare addressing";}
@@ -471,13 +472,12 @@ final class TerrainScreen extends Screen {
             case GLFW.GLFW_KEY_Z -> {if((modifiers&GLFW.GLFW_MOD_SHIFT)!=0)AppearanceCapture.request(this,13);else selectiveMaterials=!selectiveMaterials;validationStatus="Z: selective materials "+(selectiveMaterials?"ON":"OFF")+" | Shift+Z: compare full material pass";}
             case GLFW.GLFW_KEY_LEFT_BRACKET -> {if((modifiers&GLFW.GLFW_MOD_SHIFT)!=0)AppearanceCapture.request(this,14);else orbitStep=orbitStep==.02f?.04f:orbitStep==.04f?.08f:.02f;validationStatus="[: angular cap "+orbitStep+" | Shift+[: compare .02";}
             case GLFW.GLFW_KEY_RIGHT_BRACKET -> {curveFactor=curveFactor==1?2:curveFactor==2?4:1;validationStatus="]: chord tolerance multiplier "+curveFactor;}
-            case GLFW.GLFW_KEY_BACKSLASH -> {if((modifiers&GLFW.GLFW_MOD_SHIFT)!=0)AppearanceCapture.request(this,15);else quadVertices=!quadVertices;validationStatus="Quad vertices "+(quadVertices?"ON":"OFF")+" | Shift+backslash: same-scene pair";}
             case GLFW.GLFW_KEY_V -> {
                 if(meshMode) {if((modifiers&GLFW.GLFW_MOD_SHIFT)!=0)AppearanceCapture.request(this,10);else meshStepLimit=meshStepLimit==4?16:4;validationStatus="V: step cap "+meshStepLimit+" | Shift+V: compare four-block cap";}
                 else {validate=true;curvedValidation=false;}
             }
             case GLFW.GLFW_KEY_C -> {validate=true;curvedValidation=true;}
-            case GLFW.GLFW_KEY_Y -> {if((modifiers&GLFW.GLFW_MOD_SHIFT)!=0)AppearanceCapture.request(this,12);else fixedLayout=!fixedLayout;validationStatus="Y: fixed texture layouts "+(fixedLayout?"ON":"OFF")+" | Shift+Y: compare dynamic layout";}
+            case GLFW.GLFW_KEY_Y -> {if((modifiers&GLFW.GLFW_MOD_SHIFT)!=0)AppearanceCapture.request(this,12);else fixedLayout=!fixedLayout;validationStatus=useQuads()?"Y: optimized quad program "+(fixedLayout?"ON":"OFF")+" | Shift+Y: compare general quad program":"Y: fixed texture layouts "+(fixedLayout?"ON":"OFF")+" | Shift+Y: compare dynamic layout";}
             case GLFW.GLFW_KEY_X -> {if((modifiers&GLFW.GLFW_MOD_SHIFT)!=0)AppearanceCapture.request(this,11);else splitSamples=!splitSamples;validationStatus="X: split AA "+(splitSamples?"ON":"OFF")+" | Shift+X: compare serial AA";}
             case GLFW.GLFW_KEY_SPACE -> lensing=!lensing;
             case GLFW.GLFW_KEY_Q -> scale=scale==.5f?1f:.5f;

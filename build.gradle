@@ -72,6 +72,6 @@ tasks.register('packageDemo', Zip) {
     destinationDirectory = layout.buildDirectory.dir('distributions')
     from(tasks.named('remapJar').flatMap { it.archiveFile }) { into 'mods' }
     from('docs/demo-quickstart.md') { rename { 'README.md' } }
-    from(['docs/triangle-row.md', 'docs/science.md', 'docs/material-coverage.md', 'docs/performance-review-2026-09-22.md']) { into 'docs' }
+    from(['docs/triangle-row.md', 'docs/science.md', 'docs/material-coverage.md', 'docs/performance-review-2026-09-22.md', 'docs/quad-vertices.md']) { into 'docs' }
     from('THIRD-PARTY.md')
 }

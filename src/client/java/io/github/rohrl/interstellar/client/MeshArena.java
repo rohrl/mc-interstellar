@@ -6,7 +6,7 @@ import org.lwjgl.system.MemoryUtil;
 import java.nio.FloatBuffer;
 import io.github.rohrl.interstellar.scene.CompactMeshNodes;
 
-/** Rows align both 36-float triangles and 12-float nodes, allowing independent chunk replacement. */
+/** Aligned rows allow independent chunk replacement:4095-wide triangles/nodes,4092-wide quads. */
 final class MeshArena implements AutoCloseable {
     static final int WIDTH=4095,FLOATS=WIDTH*4,TRIANGLES=FLOATS/36,NODES=FLOATS/12;
     final int texture;

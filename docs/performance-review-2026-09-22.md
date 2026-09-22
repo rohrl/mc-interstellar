@@ -8,9 +8,11 @@ Reviewed `WorldMesh`, `MeshTree`, `StreamingTerrain`, `MeshArena`, `EntityMesh`,
 
 The optical GPU pass still occupies most of the measured frame interval. That observation does **not** distinguish arithmetic, memory traffic, register pressure or traversal divergence; stage timings alone cannot prove one of those is the hardware bottleneck. See [material coverage](material-coverage.md) for the matched live results and their limits.
 
-## Next experiments, in order
+## Review and follow-up
 
-### 1. Preserve native quads instead of duplicating their vertices
+### 1. Shared native quad vertices — implemented
+
+Follow-up completed: four-quad leaves reduce the controlled heavy-view GPU median by4.3%, with a small easier-view tradeoff explicitly accepted by the owner. Original/quad wall, down and close image pairs match exactly; final live medians remain about57–60FPS wall and34–35FPS down. Production retains one quad vertex arena and one compact node arena. [Full experiment, final timings and limitations](quad-vertices.md). The planar-intersection shortcut below remains a separate proposal.
 
 `WorldMesh.quad` and `entityQuad` expand each four-vertex face into two independent triangles; `MeshTree.STRIDE` stores36 floats per triangle. Thus each original face stores72 floats (288bytes), although its four original vertices need48 floats (192bytes).
 

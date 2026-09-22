@@ -19,4 +19,4 @@ Native material coverage, AA evaluation, matched FPS acceptance and the [algorit
 
 Development launches now use the stable offline usernameInterstellarDev. Runtime `guarded-material-runtime.log` confirms a normal restart inside interstellar:demo, then `/interstellar demo leave` restores the exact original position/rotation and creative flight recorded above. No saved return records were deleted. Normal installed clients use their account identity.
 
-Final source builds with53 passing unit tests; `packageDemo` includes current material/performance notes. Rain/snow, general teleport support and step5 remain deferred. See [quickstart](demo-quickstart.md) for controls and current limits.
+Final source, including [shared quad vertices](quad-vertices.md), builds with57 passing unit tests; `packageDemo` includes current material/performance notes. Quad adoption preserves native attributes/triangles, saves work in the heavier view and removes duplicate retained vertex storage. Rain/snow, general teleport support and step5 remain deferred. See [quickstart](demo-quickstart.md) for controls and current limits.
