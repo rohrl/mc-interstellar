@@ -6,6 +6,8 @@ For this checkout, install a full JDK21 and run **Launch Interstellar.cmd**. It 
 
 Development launches use the stable offline name `InterstellarDev`, so the saved return record remains associated with the same player across restarts. A normal Minecraft installation uses your normal account.
 
+The first shader compilation can leave the window unresponsive for roughly1–3minutes on the tested driver. Wait for startup to finish; initial terrain capture begins after entering the world and enabling F10.
+
 For an existing Minecraft installation, use Minecraft1.21.1 with Fabric Loader0.16.14 and Fabric API0.102.1+1.21.1 (the versions used for this build). Put the packaged Interstellar jar and Fabric API in that instance's `mods` directory. The package contains Interstellar and these instructions, not Minecraft, Java, Fabric Loader or Fabric API. No modpack or other shader mod is needed for the demonstration.
 
 Open a world with cheats enabled, or use an account with command permission level2. A render distance of12 is the measured default; the current renderer supports at most16. The existing preset uses half linear rendering scale with sharp2xAA. Keep this preset for the recorded performance; full-resolution rendering costs more.
@@ -49,6 +51,6 @@ Selected-source edits refresh automatically. Leaving the supported exterior/rang
 
 ## Performance and coverage
 
-The previous calibrated natural-world build measured about53FPS facing the wall and34FPS looking down at terrain, at2560x1440 on an RTX5070Ti. These are representative medians, not an absolute floor. This exhibit is simpler and cannot be used to claim the same improvement on natural terrain. See `docs/triangle-row.md` for the original timing conditions.
+The final calibrated natural-world build measured about59FPS facing the wall and34FPS looking down at terrain, at2560x1440 on an RTX5070Ti. The fresh pre-refinement comparison measured53/33FPS; measured slow-frame percentiles also improved. These are representative medians, not an absolute floor. This exhibit is simpler and cannot establish natural-terrain performance. See `docs/material-coverage.md` for both runs, conditions and limitations.
 
-Visual refinement is in progress. Fluids/transparency, special entity layers and block entities are not yet fully supported. Rain/snow is deferred. The two sampled ray paths preserve the accepted AA quality; higher-order images remain a refinement target. Do not infer complete Minecraft rendering coverage from the demonstration scene.
+Native water/lava, stained glass, ordinary entity/item layers and block entities such as beds/chests are supported in the curved scene. Additive/glint effects, sign text, particles, coplanar overlays and boat water masks remain incomplete; rain/snow is deferred. Water uses native surface blending rather than physical refraction. Current sharp2xAA is retained: tested replacements either cost too much FPS or worsened fine-ring metrics. Very fine secondary-image detail remains limited by the sample count.

@@ -158,7 +158,7 @@ final class TerrainScreen extends Screen {
         context.drawTextWithShadow(textRenderer,validationStatus,12,72,0xFF88D8FF);
         context.drawTextWithShadow(textRenderer,meshMode?"E: mobs "+(meshEntities?"ON":"OFF")+" | K: native light "+(faceLighting?"ON":"OFF")+" | P: pair":
                 "H: distant "+(hybrid?"ON":"OFF")+" | K: face "+(faceLighting?"ON":"OFF")+" | O: smooth "+(smoothLighting?"ON":"OFF")+" | P: pair",12,84,0xFFFFD59A);
-        context.drawTextWithShadow(textRenderer,meshMode?"N: clouds "+(meshClouds?"ON":"OFF")+" | U: coverage "+(meshCoverage?"CAMERA":"OLD BOUNDS")+" | Fluids incomplete":"M: native mesh experiment | "+(hybrid?"Distant columns approximate":"Frozen cubes"),12,height-16,0xFFFFD59A);
+        context.drawTextWithShadow(textRenderer,meshMode?"N: clouds "+(meshClouds?"ON":"OFF")+" | U: coverage "+(meshCoverage?"CAMERA":"OLD BOUNDS")+" | Native materials":"M: native mesh experiment | "+(hybrid?"Distant columns approximate":"Frozen cubes"),12,height-16,0xFFFFD59A);
     }
     private void renderPaused(DrawContext context) {
         context.fill(6,6,Math.min(width-6,440),46,0xCD101824);
@@ -182,10 +182,8 @@ final class TerrainScreen extends Screen {
             validate=false;
             var diagnosticShader=useLayoutShader()?layoutDiagnosticShader:useDefaultShader()?(useLongShader()?longMeshShader:compactMeshShader):shader;
             diagnosticShader.getUniformOrDefault("MeshStepLimit").set(meshStepLimit);
-            diagnosticShader.getUniformOrDefault("OrbitStep").set(orbitStep);
-            diagnosticShader.getUniformOrDefault("CurveFactor").set(curveFactor);
             Interstellar.LOGGER.info("Mesh fixture program: {}; step cap={}; angular cap={}",useLayoutShader()?"streamed-layout diagnostic variant":useDefaultShader()?"compact diagnostic variant (live defaults fix Diagnostic=0)":programName(),useLongShader()?meshStepLimit:4,orbitStep);
-            validationStatus=MeshValidation.run(diagnosticShader,()->drawQuad(1,1));
+            validationStatus=MeshValidation.run(diagnosticShader,()->drawQuad(1,1),orbitStep,curveFactor);
         }
         if(hybrid)nativeSky.update(!meshMode || !meshClouds);
         int w=Math.max(1,Math.round(client.getWindow().getFramebufferWidth()*scale));
@@ -231,6 +229,13 @@ final class TerrainScreen extends Screen {
         if(benchmark!=null)benchmark.end();
         RenderSystem.enableBlend();RenderSystem.defaultBlendFunc();
     }
+    /** Near observers magnify trajectory errors; this setting is constant for the whole image. */
+    static void setPathQuality(ShaderProgram program,float angularCap,float curveFactor,double radiusRatio) {
+        float t=(float)Math.clamp((radiusRatio-4)/2,0,1);
+        t=t*t*(3-2*t);
+        program.getUniformOrDefault("OrbitStep").set(.02f+(angularCap-.02f)*t);
+        program.getUniformOrDefault("CurveFactor").set(1+(curveFactor-1)*t);
+    }
     private void configureShader(int w,int h) {
         var projection=WorldProjection.current();
         shader.getUniformOrDefault("Viewport").set((float)w,(float)h);
@@ -264,8 +269,7 @@ final class TerrainScreen extends Screen {
                 client.world.getBrightness(net.minecraft.util.math.Direction.UP,true));
         shader.getUniformOrDefault("PathStep").set(fine?.225f:.45f);
         shader.getUniformOrDefault("MeshStepLimit").set(meshStepLimit);
-        shader.getUniformOrDefault("OrbitStep").set(orbitStep);
-        shader.getUniformOrDefault("CurveFactor").set(curveFactor);
+        setPathQuality(shader,orbitStep,curveFactor,camera.distanceTo(centre())/source.schwarzschildRadius());
         shader.getUniformOrDefault("RaySamples").set(antialiasing==2?2f:antialiasing==4?4f:1f);
         shader.getUniformOrDefault("AdaptivePath").set(adaptivePath?1f:0f);
         shader.getUniformOrDefault("FastBounds").set(fastBounds?1f:0f);

@@ -11,7 +11,7 @@ import org.lwjgl.opengl.*;
 /** Opt-in synthetic opaque geometry check. Does not certify materials or arbitrary world meshes. */
 final class MeshValidation {
     private static final int W=9,H=5;
-    static String run(ShaderProgram shader,Runnable draw) {
+    static String run(ShaderProgram shader,Runnable draw,float angularCap,float curveFactor) {
         long started=System.nanoTime();var fixture=new MeshRayFixture();
         int framebuffer=GL30.glGenFramebuffers(),colour=GL30.glGenRenderbuffers();
         int oldDraw=GL11.glGetInteger(GL30.GL_DRAW_FRAMEBUFFER_BINDING),oldRead=GL11.glGetInteger(GL30.GL_READ_FRAMEBUFFER_BINDING);
@@ -39,7 +39,8 @@ final class MeshValidation {
             set(shader,"MeshExtent",555);vector(shader,"Source",320.25f,320.375f,320);
             vector(shader,"Forward",0,0,1);vector(shader,"Right",1,0,0);vector(shader,"Up",0,1,0);
             var pixels=BufferUtils.createFloatBuffer(W*H*4);
-            for(int distance:new int[]{24,32,96,148,252}) {
+            for(int distance:new int[]{16,24,32,40,48,96,148,252}) {
+                TerrainScreen.setPathQuality(shader,angularCap,curveFactor,distance/8.0);
                 float sx=32f/distance,sy=18f/distance;
                 var camera=new FiniteTerrainRay.Point(320.25,320.375,320-distance);
                 var reference=new FiniteTerrainRay.Result[W*H];
@@ -90,7 +91,7 @@ final class MeshValidation {
                     }
                 }
             }
-            int[] boundary=criticalBoundary(shader,draw,pixels);
+            int[] boundary=criticalBoundary(shader,draw,pixels,angularCap,curveFactor);
             total+=boundary[0];mismatches+=boundary[1];unresolved+=boundary[2];
             int materials=MaterialValidation.run(shader,draw,triangles,nodes,compactNodes);
             if(materials!=0)throw new IllegalStateException("Material fixture failed: "+materials+" mismatches (see log)");
@@ -106,11 +107,12 @@ final class MeshValidation {
         return "Mesh fixture: "+mismatches+"/"+total+" mismatch | inconclusive "+inconclusive;
     }
     /** Independent static-observer shadow boundary; exact critical rays have no finite escape time. */
-    private static int[] criticalBoundary(ShaderProgram shader,Runnable draw,java.nio.FloatBuffer pixels) {
+    private static int[] criticalBoundary(ShaderProgram shader,Runnable draw,java.nio.FloatBuffer pixels,float angularCap,float curveFactor) {
         int total=0,wrong=0,failed=0;
         set(shader,"MeshNodeCount",0);set(shader,"MovingNodeCount",0);
         set(shader,"EmptyCells",1);set(shader,"EmptyReach",1024);set(shader,"AdaptivePath",1);
-        for(int distance:new int[]{24,32,96,148,252}) {
+        for(int distance:new int[]{16,24,32,40,48,96,148,252}) {
+            TerrainScreen.setPathQuality(shader,angularCap,curveFactor,distance/8.0);
             double u=8.0/distance,sinCritical=Math.sqrt(27.0/4)*u*Math.sqrt(1-u);
             float centre=(float)(sinCritical/Math.sqrt(1-sinCritical*sinCritical)),spread=centre*.0001f;
             vector(shader,"Camera",320.25f,320.375f,320-distance);

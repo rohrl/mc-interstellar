@@ -13,4 +13,10 @@ Runtime on the existing calibration save:
 - Found/fixed source inspection racing the new dimension's player chunk tickets. Entry now waits up to200 ticks for the source chunk. Fresh corrected launch automatically selectedN64,r_s8 at15:22:14; no manual inspection was required. Persistent exhibit reused without rebuilding.
 - Leave/re-enter/leave preserved the original-world position `(45.103214895634814,303.49506601944705,-9.682636277880926)` and creative mode. Final return rotation was `(56.08086,-0.29997176)`. Current runtime log `demo-packaging-final-runtime.log`. Do not replace this owner position with the older benchmark camera when finishing work.
 
-Next: visual coverage and secondary images, matched performance gates, then the requested further algorithm review. Rain/snow, general teleport support and step5 remain deferred. See [quickstart](demo-quickstart.md) for current coverage limits.
+## Final refinement follow-up
+
+Native material coverage, AA evaluation, matched FPS acceptance and the [algorithm review](performance-review-2026-09-22.md) are complete for the demonstrated subset. [Detailed checks and limits](material-coverage.md). New exhibits include a bed/chest, stained-glass layers and a contained pool; old saved layouts remain unchanged. Equivalent manually placed material fixtures were checked in the retained test exhibit; the added layout is build-verified, not a newly rebuilt copy of that save.
+
+Development launches now use the stable offline usernameInterstellarDev. Runtime `guarded-material-runtime.log` confirms a normal restart inside interstellar:demo, then `/interstellar demo leave` restores the exact original position/rotation and creative flight recorded above. No saved return records were deleted. Normal installed clients use their account identity.
+
+Final source builds with53 passing unit tests; `packageDemo` includes current material/performance notes. Rain/snow, general teleport support and step5 remain deferred. See [quickstart](demo-quickstart.md) for controls and current limits.

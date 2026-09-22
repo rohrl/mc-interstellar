@@ -2,7 +2,7 @@
 
 A Minecraft Java mod for educational relativistic optics. Scientific assumptions and numerical limits must be visible and testable.
 
-**Current iteration:** Fabric diagnostics and an F8 optical lab with Schwarzschild sky lensing and a guided free-fall horizon crossing. Mass blocks now support bounded cluster inspection. Completed inspections can supply the optical lab with source scale and starting distance. F9 now previews lensing of a bounded, frozen region of textured opaque Minecraft blocks. F10 uses native terrain with a live camera, animated mobs and incremental chunk updates. Full scene coverage and the potion remain unfinished. See [progress.md](progress.md) for verified results rather than assuming planned features exist.
+**Current iteration:** F10 bends native Minecraft terrain, live mobs, ordinary block entities, fluids and translucent materials around an inspected mass-block source. Chunk and source edits update automatically. A separate persistent demo exhibit provides repeatable viewpoints and a saved return to your world. F9 supplies frozen comparisons; F8 remains the separate optical/free-fall lab. Special render layers and deeper terrain/player relativity remain unfinished. See [material coverage and validation](docs/material-coverage.md) and [the performance review](docs/performance-review-2026-09-22.md).
 
 ## Start here
 
@@ -55,15 +55,15 @@ Edit **run/config/interstellar-optics.json** for persistent effect defaults, obs
 
 ## Mass blocks
 
-Use **/give @s interstellar:mass_block**, place connected blocks, then right-click with both hands empty to inspect mass and compactness. Holding a block uses normal RMB placement. Operator command: **/interstellar inspect x y z**. Blocks do not yet activate world lensing. [Model, budgets and verified behavior](docs/mass-blocks.md).
+Use **/give @s interstellar:mass_block**, place connected blocks, then right-click with both hands empty to inspect mass and compactness. Holding a block uses normal RMB placement. Operator command: **/interstellar inspect x y z**. Press **F10** to enable world lensing around the selected black-hole proxy. [Model, budgets and verified behavior](docs/mass-blocks.md).
 
-After inspecting a black-hole proxy, open **F8** and press **S** to use its scale and camera distance in the sky lab. Extended sources are metadata-only. Relevant source changes now refresh automatically from the inspected block; unrelated chunk activity preserves the selection. F10 waits through removal, unloading or extended-source states and resumes when usable metadata returns. See [automatic source refresh](docs/source-refresh.md). **R** restores the configured reference view. This does not yet bend terrain.
+After inspecting a black-hole proxy, open **F8** and press **S** to use its scale and camera distance in the sky lab. Extended sources are metadata-only. Relevant source changes now refresh automatically from the inspected block; unrelated chunk activity preserves the selection. F10 waits through removal, unloading or extended-source states and resumes when usable metadata returns. See [automatic source refresh](docs/source-refresh.md). **R** restores the configured F8 reference view.
 
 Press **C** in the lab for the near-critical ray stress test (brief blocking pause). **V** now also logs unwrapped-angle comparisons. [Measured accuracy limits](docs/critical-rays.md).
 
 ## Terrain preview
 
-**Quality-first integration experiment:** in F9, press **M** to capture native terrain, frozen mob models and clouds (about 40 seconds at render distance12 in the test scene), then **Space** to enable lensing. **U** compares camera-centred terrain coverage with the old bounds; **E** toggles mobs; **N** compares foreground clouds with the previous background-only clouds; **P** compares the unbent mesh with vanilla. F10 now uses the same native terrain representation with live mobs; fluids, special entity effects and full visible-world coverage remain incomplete. [Terrain evidence](docs/native-mesh.md) · [Mobs and lighting correction](docs/mesh-entities.md) · [Cloud composition and measurements](docs/mesh-clouds.md) · [Expanded terrain coverage](docs/mesh-coverage.md).
+In F9, **Shift+M** captures the streamed native scene for frozen comparisons (about40 seconds at render distance12 in the test scene), then **Space** enables lensing. **E** toggles entities; **N** toggles clouds; **U** compares camera coverage with the old footprint. Fluids and ordinary translucent/block-entity layers share the curved scene. Special additive effects, glint, text and particles remain incomplete. [Coverage, AA trials and current limits](docs/material-coverage.md).
 
 Inspect a black-hole proxy, move outside 1.05 r_s, and press **F9**. **Space** compares lensing; arrows look around; **L** aims at the source; **Q** changes resolution; **J** changes path sampling; **V** checks flat geometry; **C** compares curved hits against an independent CPU reference; **B** measures GPU cost. Esc returns to Minecraft. Reopen to capture a new view. This is a frozen opaque-block preview with explicit missing-data boundaries. [Controls, performance, limits and saved test scene](docs/terrain-prototype.md).
 
