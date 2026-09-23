@@ -2,9 +2,9 @@
 
 ## Decision
 
-Prioritize **moving-scene GPU traversal**, particularly the shared cloud/actor tree. Profile evidence now supports this ahead of another terrain-only intersection change. Keep native geometry, live animation, current optics and sharp 2x AA. No performance optimization or visual approximation is adopted by this profiling branch.
+Prioritize **GPU tree traversal and node storage**. The subsequent separate actor/cloud roots optimization was accepted; two cloud-face intersection variants were then tested and rejected for lack of speedup. Keep native geometry, live animation, current optics and sharp 2x AA. The measurements below describe the original profiling checkpoint; follow-ups and ranking include later experiments.
 
-The next bounded experiment should separate cloud and actor acceleration structures, retaining their original geometry, visibility and ordered composition. Measure against the normal shader in the heavy scene before extending the redesign. Cloud-specific quad/rectangular traversal and tighter per-actor bounds are subsequent candidates, not a commitment to a backend rewrite.
+The next bounded proposal is conservative tree-node compression, with outward bounds and unchanged geometry/intersections. Measure against the accepted renderer before extending it. This remains a low-confidence hypothesis: counters show frequent node visits, not a proven bandwidth bottleneck. No backend rewrite is authorized by this proposal.
 
 ## Method and reproducibility
 
@@ -96,16 +96,16 @@ Gain estimates below mean potential FPS gain in the current heavy view after a s
 | Priority / idea | Complexity | Size | Time | Net LoC | Heavy FPS gain | Visual impact / confidence |
 | --- | ---: | ---: | ---: | ---: | --- | --- |
 | **Adopted: separate cloud/actor roots, shared cache** | 3 | 3 | 3 | **+387 actual** | **~4.2% measured GPU throughput** | 1–2; heavy pairs exact, small coplanar horse-face differences in demo; see follow-up |
-| **2. Cloud-specific shared quads/rectangular intersections — new** | 3 | 3 | 3 | +250–650 | **3–10%** | 1–2; retain native faces, cutouts, colours and cloud depth rules |
-| **3. Tighter per-actor hierarchy / traversal — new** | 4 | 3 | 4 | +500–1,100 | **3–10%** | 1; retain every animated part; medium hotspot confidence |
-| **4. Conservative compressed BVH bounds** | 4 | 3 | 4 | +250–600 | **0–8%** | 1; node traffic is frequent, hardware bottleneck still unknown |
-| **5. Table-assisted optical integration** | 5 | 4 | 5 | +800–2,000 | **5–20%, still low confidence** | 2; absolute integration cost not isolated; critical-ray fallback essential |
-| **6. Moving-tree refit/reuse** | 4 | 3 | 4 | +350–800 | **0–3% now** | 1; strong CPU evidence, mostly headroom rather than current FPS |
-| 7. Planar intersections for terrain quads | 3 | 3 | 3 | +200–500 | **0–4%**, reduced from 3–12% | 1–2; terrain primitive work is relatively small |
-| 8. Packed colour/light attributes | 3 | 3 | 3 | +200–450 | **0–4%** | 2; shading fetches are a smaller target than node/geometry work |
-| 9. Sparse transparency scheduling — new, conditional | 4 | 3 | 4 | +500–1,200 | **0–8%** | 1; low confidence; requires scheduling support and avoids changing composition |
-| 10. Adaptive full/selective compositor | 3 | 2 | 3 | +150–350 | **0–2%** | 1; current capture tied, previous small gain scene-dependent |
-| 11. Static block-entity geometry cache | 3 | 2 | 3 | +200–400 | **0–1% here** | 1; two block entities, CPU mostly overlaps GPU |
+| **Rejected: cloud shared quads/rectangular intersections** | 3 | 3 | 3 | 0 retained; prototype separate | **~0% measured**, supersedes 3–10% estimate | 1–2; first version exact pairs, plane version tiny downward difference; neither faster |
+| **2. Conservative compressed BVH bounds** | 4 | 3 | 4 | +250–600 | **0–8%, low confidence** | 1; node traffic is frequent, hardware bottleneck still unknown |
+| **3. Table-assisted optical integration** | 5 | 4 | 5 | +800–2,000 | **5–20%, still low confidence** | 2; absolute integration cost not isolated; critical-ray fallback essential |
+| **4. Moving-tree refit/reuse** | 4 | 3 | 4 | +350–800 | **0–3% now** | 1; strong CPU evidence, mostly headroom rather than current FPS |
+| **5. Tighter per-actor hierarchy / traversal** | 4 | 3 | 4 | +500–1,100 | **0–3%, lowered confidence** | 1; actor primitive work largely removed by accepted forest; actor node cost not isolated |
+| 6. Planar intersections for terrain quads | 3 | 3 | 3 | +200–500 | **0–4%**, reduced from 3–12% | 1–2; terrain primitive work is relatively small; cloud result discourages arithmetic-only priority |
+| 7. Packed colour/light attributes | 3 | 3 | 3 | +200–450 | **0–4%** | 2; shading fetches are a smaller target than node/geometry work |
+| 8. Sparse transparency scheduling — conditional | 4 | 3 | 4 | +500–1,200 | **0–8%** | 1; low confidence; requires scheduling support and avoids changing composition |
+| 9. Adaptive full/selective compositor | 3 | 2 | 3 | +150–350 | **0–2%** | 1; current capture tied, previous small gain scene-dependent |
+| 10. Static block-entity geometry cache | 3 | 2 | 3 | +200–400 | **0–1% here** | 1; two block entities, CPU mostly overlaps GPU |
 | Deferred: whole compute backend | 4 | 4 | 4 | +800–2,500 | 0–15%, very low confidence | 1 if math preserved; prefer targeted changes first |
 | Deferred: hardware ray-tracing backend | 5 | 5 | 5 | +4,000–12,000 | Not credibly bounded | 1–2; segmented curved rays and interop remain |
 | **Already adopted: shared terrain quad vertices** | 3 | 3 | 3 | **+292 actual** | **~4–5% controlled frozen FPS** against its previous baseline | **1; matched images identical** |
@@ -116,11 +116,28 @@ The priority-1 prototype is intentionally bounded: separate the spatial searches
 experiment and adoption. Three separate caches were slower despite fewer node
 visits; the winning forest shares the original cache and traversal loop. Heavy
 GPU time improves 4.0%, wall 3.46%; optical integration is unchanged. Native cloud
-primitives are now the next proposal. Actor triangle entries have largely been
-eliminated in the measured downward view, so the remaining actor-hierarchy estimate
-above is provisional and should not be carried forward as an additive gain.
+primitives were tested next; see the subsequent result below. Actor triangle
+entries have largely been eliminated in the measured downward view, so the
+actor-hierarchy estimate is reduced and remains provisional.
 
-## Correctness and final state
+## Follow-up: cloud faces rejected
+
+[Native cloud face intersections](cloud-quads.md) records both attempts and raw
+evidence. Sharing the original plane test and precomputing an axis-aligned plane
+solve both produced effectively tied heavy-view timings. The latter reduced
+cloud primitive entries by 60%, but moving-node visits only fell 0.8%; counters
+include cheap rejects and are not complete intersection counts. Specialized
+downward GPU medians averaged 24.432ms baseline versus 24.455ms candidate. The
+wall difference was also below a useful gain. Two heavy pairs were exact for the
+first version; the specialized wall/demo pairs were exact and downward MAE was
+0.00000018. No production change was retained; experiment `9815c42` is preserved
+on `codex/cloud-quad-intersections`. Normal source remains `e324e84`.
+
+This removes the previous 3–10% cloud prediction from the active estimates.
+Node compression becomes the next bounded proposal, not an assumed improvement;
+outward rounding, all geometry, image checks and paired timings remain required.
+
+## Correctness and final state of the original profiling checkpoint
 
 The instrumented downward shader flags one budget-exhausted subpixel (sample 1, x=509, bottom-origin y=554) out of 1,843,200, repeated in both counter captures; wall has none. Maximum optical count is 800, consistent with the retained near-critical angular/winding guard. This warrants a focused production-shader reproduction; instrumentation can change compilation, and it is not established as a new regression. Do not raise numerical limits silently during profiling.
 
