@@ -28,6 +28,7 @@ final class EntityMesh implements VertexConsumerProvider,AutoCloseable {
     private final Set<String> unsupported=new TreeSet<>();
     private final ByteBuffer pixels=MemoryUtil.memCalloc(SIZE*SIZE*4);
     private int x,y,rowHeight,vertices,entities,blockEntities,omittedEntities;
+    private int actorId;
     private final List<BlockEntity> blockEntityList=new ArrayList<>();
     private long blockEntityTick=Long.MIN_VALUE;
     private int blockEntityX,blockEntityZ,blockEntityChunks;
@@ -41,7 +42,7 @@ final class EntityMesh implements VertexConsumerProvider,AutoCloseable {
         });
     }
     void capture(BlockPos origin,int minChunkX,int minChunkZ,int chunks) {
-        collectors.clear();unsupported.clear();vertices=entities=blockEntities=omittedEntities=0;
+        collectors.clear();unsupported.clear();vertices=entities=blockEntities=omittedEntities=0;actorId=0;
         int oldTextures=tiles.size();
         var client=MinecraftClient.getInstance();var dispatcher=client.getEntityRenderDispatcher();
         float delta=client.getRenderTickCounter().getTickDelta(false);
@@ -54,6 +55,7 @@ final class EntityMesh implements VertexConsumerProvider,AutoCloseable {
             double py=MathHelper.lerp(delta,entity.lastRenderY,entity.getY())-origin.getY();
             double pz=MathHelper.lerp(delta,entity.lastRenderZ,entity.getZ())-origin.getZ();
             int before=vertices;
+            actorId++;
             dispatcher.render(entity,px,py,pz,entity.getYaw(delta),delta,new MatrixStack(),this,dispatcher.getLight(entity,delta));
             if(vertices>before)entities++;else omittedEntities++;
         }
@@ -72,7 +74,7 @@ final class EntityMesh implements VertexConsumerProvider,AutoCloseable {
             var pos=entity.getPos();matrices.push();
             try {
                 matrices.translate(pos.getX()-origin.getX(),pos.getY()-origin.getY(),pos.getZ()-origin.getZ());
-                int before=vertices;blockDispatcher.render(entity,delta,matrices,this);
+                int before=vertices;actorId++;blockDispatcher.render(entity,delta,matrices,this);
                 if(vertices>before)blockEntities++;
             } finally {matrices.pop();}
         }
@@ -149,7 +151,7 @@ final class EntityMesh implements VertexConsumerProvider,AutoCloseable {
     }
     private final class Collector implements VertexConsumer {
         final Tile tile;final boolean twoSided,translucent;final float[] quad=new float[48];
-        int count=-1;float red=1,green=1,blue=1,alpha=1,u,v,shade=1;int blockLight=240,skyLight=240;
+        int count=-1,owner;float red=1,green=1,blue=1,alpha=1,u,v,shade=1;int blockLight=240,skyLight=240;
         Collector(Tile tile,boolean twoSided,boolean translucent) {this.tile=tile;this.twoSided=twoSided;this.translucent=translucent;}
         private void endVertex() {
             if(tile==null || count<0)return;
@@ -163,13 +165,14 @@ final class EntityMesh implements VertexConsumerProvider,AutoCloseable {
                 // A material flag belongs to the entire quad, even when vertex opacity varies.
                 boolean blend=translucent && (tile.fractionalAlpha || quad[11]<.999f || quad[23]<.999f || quad[35]<.999f || quad[47]<.999f);
                 for(int vertex=0;vertex<4;vertex++)quad[vertex*12+3]=(tile.blockAtlas?-1:1)*(blend?7:1);
-                mesh.entityQuad(quad,twoSided);count=-1;
+                mesh.entityQuad(quad,twoSided,owner);count=-1;
             }
         }
         void finish() {endVertex();if(tile!=null && count!=-1)throw new IllegalStateException("Incomplete entity quad");}
         @Override public VertexConsumer vertex(float a,float b,float c) {
             if(tile==null)return this;
             endVertex();if(++vertices>MAX_VERTICES)throw new IllegalStateException("Entity mesh vertex cap exceeded");
+            if(count==-1)owner=actorId;
             count++;int p=count*12;quad[p]=a;quad[p+1]=b;quad[p+2]=c;return this;
         }
         @Override public VertexConsumer color(int r,int g,int b,int a) {red=r/255f;green=g/255f;blue=b/255f;alpha=a/255f;return this;}

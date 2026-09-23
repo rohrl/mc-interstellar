@@ -28,6 +28,7 @@ final class TerrainScreen extends Screen {
     private static ShaderProgram quadProbeShader,quadMaskedShader,quadMaterialShader,quadDiagnosticShader;
     private static final ShaderProgram[] movingShaders=new ShaderProgram[4];
     private boolean separateMoving=true;
+    private boolean actorHierarchy=true;
     static void setMovingShader(int pass,ShaderProgram program) {movingShaders[pass]=program;resourceVersion++;}
     private boolean selectiveMaterials=true;
     private float orbitStep=.08f;
@@ -187,7 +188,7 @@ final class TerrainScreen extends Screen {
         }
     }
     private void renderTerrain() {
-        if(moving!=null)moving.movingLayout(useSeparateMoving());
+        if(moving!=null)moving.movingLayout(useSeparateMoving(),useActorHierarchy());
         shader=currentShader();
         if(validate && meshMode) {
             validate=false;
@@ -240,7 +241,7 @@ final class TerrainScreen extends Screen {
                     profileCounters=false;
                     if(!useSelectiveMaterials())throw new IllegalStateException("Counters require the selective quad baseline");
                     TerrainProfile.capture(w,h,mask,useSeparateMoving(),program->{shader=program;configureShader(w,h);},()->drawQuad(w,h),
-                        "separateMoving="+useSeparateMoving()+" camera="+camera+" yaw="+yaw+" pitch="+pitch+" logical="+w+"x"+h+" movingContents="+(moving==null?0:moving.profileMovingContents)+"; "+mesh.status());
+                        "separateMoving="+useSeparateMoving()+" actorHierarchy="+useActorHierarchy()+" camera="+camera+" yaw="+yaw+" pitch="+pitch+" logical="+w+"x"+h+" movingContents="+(moving==null?0:moving.profileMovingContents)+"; "+mesh.status());
                 }
                 samples.fold(target,()->drawQuad(w,h));
                 if(benchmark!=null)benchmark.mark(5);
@@ -393,7 +394,7 @@ final class TerrainScreen extends Screen {
         return meshShader;
     }
     private String programName() {
-        if(useQuads())return "native-quads-"+(!useLayoutShader()?"general-":useSelectiveMaterials()?"selective-":"full-")+meshStepLimit+"; separateMoving="+useSeparateMoving()+"; profileExperiment="+profileExperiment;
+        if(useQuads())return "native-quads-"+(!useLayoutShader()?"general-":useSelectiveMaterials()?"selective-":"full-")+meshStepLimit+"; separateMoving="+useSeparateMoving()+"; actorHierarchy="+useActorHierarchy()+"; profileExperiment="+profileExperiment;
         if(useLayoutShader())return (useMaterials()?(useSelectiveMaterials()?"native-live-selective-materials-":"native-live-materials-"):orbitStep>.02f && materialProbeShader!=null?"native-live-curvature-probe-":"native-live-layout-")+meshStepLimit;
         if(useSplitShader())return "native-live-split-"+meshStepLimit;
         if(useDefaultShader())return useLongShader()?"native-live-steps-"+meshStepLimit:"native-live-defaults";
@@ -424,6 +425,12 @@ final class TerrainScreen extends Screen {
         try {if(reference){orbitStep=.02f;curveFactor=1;}renderTerrain();}finally {orbitStep=old;curveFactor=oldCurve;}
     }
     private boolean useSeparateMoving() {return separateMoving && useQuads() && profileExperiment==0;}
+    private boolean useActorHierarchy() {return actorHierarchy && useSeparateMoving();}
+    void renderActorComparison(boolean reference) {
+        boolean old=actorHierarchy,split=separateMoving;cancelBenchmark();
+        try {separateMoving=true;actorHierarchy=!reference;renderTerrain();}
+        finally {actorHierarchy=old;separateMoving=split;}
+    }
     void renderMovingComparison(boolean reference) {
         boolean old=separateMoving;cancelBenchmark();
         try {separateMoving=!reference;renderTerrain();}finally {separateMoving=old;}
@@ -456,6 +463,11 @@ final class TerrainScreen extends Screen {
         finally {fastFetch=old;}
     }
     @Override public boolean keyPressed(int key,int scan,int modifiers) {
+        if(key==GLFW.GLFW_KEY_SEMICOLON && !live && useQuads()) {
+            cancelBenchmark();separateMoving=true;
+            if((modifiers&GLFW.GLFW_MOD_SHIFT)!=0)AppearanceCapture.request(this,16);else actorHierarchy=!actorHierarchy;
+            validationStatus=";: per-actor hierarchy "+(actorHierarchy?"ON":"OFF")+" | Shift+;: compare actors";return true;
+        }
         if(key==GLFW.GLFW_KEY_W && !live && useQuads()) {
             cancelBenchmark();
             if((modifiers&GLFW.GLFW_MOD_SHIFT)!=0)AppearanceCapture.request(this,15);else separateMoving=!separateMoving;

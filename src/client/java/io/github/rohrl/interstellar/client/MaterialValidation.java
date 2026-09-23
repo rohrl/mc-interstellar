@@ -35,7 +35,7 @@ final class MaterialValidation {
             shader.getUniformOrDefault("ViewSlopes").set(0f,0f,0f,0f);
             shader.getUniformOrDefault("TerrainFogRange").set(10000f,20000f,0f);shader.getUniformOrDefault("TerrainFogColour").set(0f,0f,0f,0f);
             var pixels=BufferUtils.createFloatBuffer(4);
-            for(int layout=0;layout<3;layout++)for(int kind=0;kind<7;kind++)for(int reverse=0;reverse<2;reverse++)for(int cache=0;cache<2;cache++) {
+            for(int layout=0;layout<(splitMoving?4:3);layout++)for(int kind=0;kind<7;kind++)for(int reverse=0;reverse<2;reverse++)for(int cache=0;cache<2;cache++) {
                 // Red at10, blue at20, opaque green at30. Cases exercise glass,
                 // entity alpha, opaque occlusion and native nearest-cloud semantics.
                 float[] data=new float[6*36];
@@ -49,7 +49,7 @@ final class MaterialValidation {
                 // actor or cloud forests and nearest hits shared with static terrain.
                 float[] staticData=new float[data.length],movingData=new float[data.length];int statics=0,movers=0;
                 for(int t=0;t<6;t++) {
-                    boolean dynamic=layout==1 || layout==2 && data[t*36+3]!=0;
+                    boolean dynamic=layout==1 || layout==3 || layout==2 && data[t*36+3]!=0;
                     System.arraycopy(data,t*36,dynamic?movingData:staticData,(dynamic?movers++:statics++)*36,36);
                 }
                 data=quads?QuadVertices.pack(staticData,statics):staticData;
@@ -57,7 +57,9 @@ final class MaterialValidation {
                 triangles.write(0,data,data.length);nodes.write(0,nodeData,nodeData.length);compact.write(0,nodeData,nodeData.length);
                 float[] movingNodeData;
                 if(splitMoving) {
-                    var forests=MovingMeshTrees.build(movingData,movers);movingData=forests.triangles();movingNodeData=forests.nodes();
+                    int[] owners=null;
+                    if(layout==3) {owners=new int[movers];for(int t=0;t<movers;t++)owners[t]=t/2;}
+                    var forests=MovingMeshTrees.build(movingData,movers,owners);movingData=forests.triangles();movingNodeData=forests.nodes();
                     set(shader,"MovingNodeCount",forests.actorNodes());set(shader,"CloudNodeCount",forests.cloudNodes());
                 } else {
                     var movingTree=new MeshTree(movingData,movers);movingNodeData=movingTree.nodes();

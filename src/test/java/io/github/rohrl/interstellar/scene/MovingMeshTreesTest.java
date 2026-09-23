@@ -6,6 +6,45 @@ import java.util.Random;
 import static org.junit.jupiter.api.Assertions.*;
 
 class MovingMeshTreesTest {
+    @Test void actorHierarchyKeepsCompletePayloadAndConservativeBoundsForInterleavedActorsAndClouds() {
+        var random=new Random(318);
+        for(int count:new int[]{0,1,2,1300})for(boolean coincident:new boolean[]{false,true}) {
+            float[] data=new float[count*36];int[] owners=new int[count];
+            for(int i=0;i<count;i++) {
+                // Noncontiguous IDs and delayed/interleaved faces must not splice objects.
+                owners[i]=(i%19)*100003;
+                for(int v=0;v<3;v++) {
+                    int p=i*36+v*12;
+                    for(int a=0;a<12;a++)data[p+a]=random.nextFloat();
+                    for(int a=0;a<3;a++)data[p+a]=coincident?v-1:(i%19)*11+random.nextFloat()*3;
+                    data[p+3]=i%7==0?6:8;data[p+4]=i;
+                }
+            }
+            float[] original=data.clone();int[] originalOwners=owners.clone();
+            var result=MovingMeshTrees.build(data,count,owners);
+            assertArrayEquals(original,data);assertArrayEquals(originalOwners,owners);
+            boolean[] seen=new boolean[count];
+            walk(result,0,result.actorNodes(),false,original,seen);
+            walk(result,result.actorNodes(),result.actorNodes()+result.cloudNodes(),true,original,seen);
+            for(boolean found:seen)assertTrue(found);
+            for(int n=0;n<result.actorNodes();n++) {
+                int p=n*12,first=(int)result.nodes()[p+7],length=(int)result.nodes()[p+8];
+                if(length==0)continue;
+                int owner=owners[(int)result.triangles()[first*36+4]];
+                for(int i=first;i<first+length;i++)assertEquals(owner,owners[(int)result.triangles()[i*36+4]]);
+            }
+        }
+    }
+    @Test void hierarchyHandlesSingleActorAndRejectsMissingOwnership() {
+        float[] data=new float[36*20];int[] owners=new int[20];Arrays.fill(owners,-1);
+        for(int i=0;i<20;i++)for(int v=0;v<3;v++) {
+            int p=i*36+v*12;data[p]=i+v;data[p+3]=2;data[p+4]=i;
+        }
+        var grouped=MovingMeshTrees.build(data,20,owners);
+        var baseline=MovingMeshTrees.build(data,20);
+        assertArrayEquals(baseline.triangles(),grouped.triangles());assertArrayEquals(baseline.nodes(),grouped.nodes());
+        assertThrows(IllegalArgumentException.class,()->MovingMeshTrees.build(data,20,new int[19]));
+    }
     @Test void forestsPreservePayloadBoundsAndVisitEveryTriangleExactlyOnce() {
         var random=new Random(731);
         for(int mode=0;mode<4;mode++) {
