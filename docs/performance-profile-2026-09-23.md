@@ -2,9 +2,17 @@
 
 ## Decision
 
-Prioritize **GPU tree traversal and node storage**. The subsequent separate actor/cloud roots optimization was accepted; two cloud-face intersection variants were then tested and rejected for lack of speedup. Keep native geometry, live animation, current optics and sharp 2x AA. The measurements below describe the original profiling checkpoint; follow-ups and ranking include later experiments.
+The [original first four proposals have been tried](performance-experiments-1-4.md).
+Separate actor/cloud roots were accepted. Cloud faces and per-actor trees were
+effectively tied; the tested compressed-bounds layout was slower. Those three
+experiments remain isolated. Keep native geometry, live animation, current optics
+and sharp2x AA. Measurements below describe the original profiling checkpoint;
+follow-ups and ranking include subsequent experiments.
 
-The next bounded proposal is conservative tree-node compression, with outward bounds and unchanged geometry/intersections. Measure against the accepted renderer before extending it. This remains a low-confidence hypothesis: counters show frequent node visits, not a proven bandwidth bottleneck. No backend rewrite is authorized by this proposal.
+Further work should revisit the remaining hypotheses using these results. Table-assisted
+optics is still untested and requires critical-ray/error controls; CPU refitting
+addresses measured rebuilding cost but does not promise equivalent FPS savings.
+No additional optimization is started as part of the completed four-item scope.
 
 ## Method and reproducibility
 
@@ -97,10 +105,10 @@ Gain estimates below mean potential FPS gain in the current heavy view after a s
 | --- | ---: | ---: | ---: | ---: | --- | --- |
 | **Adopted: separate cloud/actor roots, shared cache** | 3 | 3 | 3 | **+387 actual** | **~4.2% measured GPU throughput** | 1–2; heavy pairs exact, small coplanar horse-face differences in demo; see follow-up |
 | **Rejected: cloud shared quads/rectangular intersections** | 3 | 3 | 3 | 0 retained; prototype separate | **~0% measured**, supersedes 3–10% estimate | 1–2; first version exact pairs, plane version tiny downward difference; neither faster |
-| **2. Conservative compressed BVH bounds** | 4 | 3 | 4 | +250–600 | **0–8%, low confidence** | 1; node traffic is frequent, hardware bottleneck still unknown |
+| **Rejected trial: conservative compressed BVH bounds** | 4 | 3 | 4 | 0 retained; prototype separate | **−16.7% measured GPU throughput** for tested layout | 1; exact heavy images,20.03% more GPU time; other representations remain untested |
 | **3. Table-assisted optical integration** | 5 | 4 | 5 | +800–2,000 | **5–20%, still low confidence** | 2; absolute integration cost not isolated; critical-ray fallback essential |
 | **4. Moving-tree refit/reuse** | 4 | 3 | 4 | +350–800 | **0–3% now** | 1; strong CPU evidence, mostly headroom rather than current FPS |
-| **5. Tighter per-actor hierarchy / traversal** | 4 | 3 | 4 | +500–1,100 | **0–3%, lowered confidence** | 1; actor primitive work largely removed by accepted forest; actor node cost not isolated |
+| **Rejected: tighter per-actor hierarchy / traversal** | 4 | 3 | 4 | 0 retained; prototype separate | **~0% measured** | 1; exact heavy images; accepted forest already removed most actor leaf work |
 | 6. Planar intersections for terrain quads | 3 | 3 | 3 | +200–500 | **0–4%**, reduced from 3–12% | 1–2; terrain primitive work is relatively small; cloud result discourages arithmetic-only priority |
 | 7. Packed colour/light attributes | 3 | 3 | 3 | +200–450 | **0–4%** | 2; shading fetches are a smaller target than node/geometry work |
 | 8. Sparse transparency scheduling — conditional | 4 | 3 | 4 | +500–1,200 | **0–8%** | 1; low confidence; requires scheduling support and avoids changing composition |
@@ -110,7 +118,11 @@ Gain estimates below mean potential FPS gain in the current heavy view after a s
 | Deferred: hardware ray-tracing backend | 5 | 5 | 5 | +4,000–12,000 | Not credibly bounded | 1–2; segmented curved rays and interop remain |
 | **Already adopted: shared terrain quad vertices** | 3 | 3 | 3 | **+292 actual** | **~4–5% controlled frozen FPS** against its previous baseline | **1; matched images identical** |
 
-The priority-1 prototype is intentionally bounded: separate the spatial searches, retain original triangle tests, compare pixels and optical/material fixtures, then repeat wall/down timings in both orders. Use work counters to check that the intended node/entry reduction actually occurred. Combine neither cloud approximations nor another optical-step change into that experiment. An isolated shader/backend move is not justified by these results. Existing rejected AA/SAH/final-shading/facing experiments remain deferred.
+The original priority1 trial separated spatial searches while retaining triangle
+tests and optical policy. Each experiment used paired images, relevant fixtures,
+repeated wall/down timings and separate work counters. An isolated shader/backend
+move is not justified by these results. Existing rejected AA/SAH/final-shading/facing
+experiments remain deferred.
 
 **Implemented follow-up:** [Separate moving trees](moving-trees.md) records the
 experiment and adoption. Three separate caches were slower despite fewer node
@@ -118,7 +130,7 @@ visits; the winning forest shares the original cache and traversal loop. Heavy
 GPU time improves 4.0%, wall 3.46%; optical integration is unchanged. Native cloud
 primitives were tested next; see the subsequent result below. Actor triangle
 entries have largely been eliminated in the measured downward view, so the
-actor-hierarchy estimate is reduced and remains provisional.
+actor-hierarchy proposal was subsequently measured and rejected, as recorded below.
 
 ## Follow-up: cloud faces rejected
 
@@ -134,8 +146,32 @@ first version; the specialized wall/demo pairs were exact and downward MAE was
 on `codex/cloud-quad-intersections`. Normal source remains `e324e84`.
 
 This removes the previous 3–10% cloud prediction from the active estimates.
-Node compression becomes the next bounded proposal, not an assumed improvement;
-outward rounding, all geometry, image checks and paired timings remain required.
+Node compression was then tested after completing the original per-actor trial;
+see below. Outward rounding, full geometry, image checks and paired timings remain
+requirements for any later representation.
+
+## Follow-ups: original items3 and4 completed
+
+[Per-actor hierarchy](actor-hierarchy.md), experiment `7a168fb`: native actor
+geometry grouped into individual trees beneath a tree of their exact bounds.
+Heavy GPU means of repeated medians24.446ms global/24.438ms grouped are a tie.
+Moving-node visits fall only0.18%; actor primitive entries slightly rise. Both
+heavy image pairs are identical;61 tests,52,480 optical and112 material checks
+pass. No runtime change retained or CPU/live-FPS gain claimed.
+
+[Conservative compressed bounds](quantized-node-bounds.md), experiment `e62a71c`:
+six outward-rounded signed16-bit coordinates and an escape link in one integer
+texel, with original float fallback and deferred leaf descriptors. Heavy GPU
+means24.514ms float/29.423ms packed regress20.03%. Node visits rise under0.5%,
+so those counts do not explain the slowdown or isolate a hardware bottleneck.
+Both heavy images are identical;62 tests,52,480 optical and168 material checks
+pass, including overflow fallback. This representation is rejected. It retained
+the original arena for comparisons/fallback, so it did not save total VRAM.
+
+Only item1 remains in production. Compare gains within each frozen capture;
+changing live populations prevent adding or comparing absolute timings across
+these separate experiments. The original numbered scope is fixed in the linked
+four-item report; later ranking changes did not substitute different work.
 
 ## Correctness and final state of the original profiling checkpoint
 

@@ -1,0 +1,8 @@
+Accepted renderer source tree: 52bfba08bf66aa548f9562038a2d66f61a071ad8
+Final checkout source tree: 52bfba08bf66aa548f9562038a2d66f61a071ad8
+Clean build/packageDemo: tests=59 failures=0
+[m[34m[11:20:21][m [32m[Render thread/INFO][m [36m(interstellar)[m [0mStreaming terrain ready: Streaming terrain | 53486 triangles | 0 queued chunks; initial capture=5128.775 ms
+[m[34m[11:20:24][m [32m[Render thread/INFO][m [36m(Minecraft)[m [0m[System] [CHAT] InterstellarDev has the following entity data: [40.43597468465466d, 65.0d, -3.0021334600889626d]
+[m[34m[11:20:25][m [32m[Render thread/INFO][m [36m(Minecraft)[m [0m[System] [CHAT] InterstellarDev has the following entity data: [60.452244f, -9.900009f]
+[m[34m[11:20:26][m [32m[Render thread/INFO][m [36m(Minecraft)[m [0m[System] [CHAT] InterstellarDev has the following entity data: "interstellar:demo"
+[m[34m[11:20:27][m [32m[Render thread/INFO][m [36m(Minecraft)[m [0m[System] [CHAT] InterstellarDev has the following entity data: {invulnerable: 1b, mayfly: 1b, instabuild: 1b, walkSpeed: 0.1f, mayBuild: 1b, flying: 0b, flySpeed: 0.05f}
