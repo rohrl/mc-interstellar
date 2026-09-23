@@ -10,6 +10,8 @@ import io.github.rohrl.interstellar.scene.CompactMeshNodes;
 final class MeshArena implements AutoCloseable {
     static final int WIDTH=4095,FLOATS=WIDTH*4,TRIANGLES=FLOATS/36,NODES=FLOATS/12;
     final int texture;
+    private final QuantizedBoundsTexture quantized;
+    int quantizedTexture() {return quantized==null?0:quantized.id;}
     private final boolean compact;
     private final int width,floats;
     MeshArena(int height) {this(height,false);}
@@ -22,17 +24,22 @@ final class MeshArena implements AutoCloseable {
         if(compact && width!=WIDTH)throw new IllegalArgumentException("Compact nodes need their original row layout");
         if(height>GL11.glGetInteger(GL11.GL_MAX_TEXTURE_SIZE))throw new IllegalStateException("Native mesh atlas exceeds device limits");
         texture=GL11.glGenTextures();
+        quantized=compact && TerrainScreen.hasQuantizedShader()?new QuantizedBoundsTexture():null;
         try {withUnpack(()-> {
             GL11.glTexParameteri(GL11.GL_TEXTURE_2D,GL11.GL_TEXTURE_MIN_FILTER,GL11.GL_NEAREST);
             GL11.glTexParameteri(GL11.GL_TEXTURE_2D,GL11.GL_TEXTURE_MAG_FILTER,GL11.GL_NEAREST);
             GL11.glTexImage2D(GL11.GL_TEXTURE_2D,0,GL30.GL_RGBA32F,width,height,0,GL11.GL_RGBA,GL11.GL_FLOAT,(FloatBuffer)null);
             if(GL11.glGetTexLevelParameteri(GL11.GL_TEXTURE_2D,0,GL11.GL_TEXTURE_WIDTH)!=width)throw new IllegalStateException("Native mesh atlas allocation failed");
-        });} catch(RuntimeException e) {RenderSystem.deleteTexture(texture);throw e;}
+            if(quantized!=null)quantized.allocate(height);
+        });} catch(RuntimeException e) {RenderSystem.deleteTexture(texture);if(quantized!=null)quantized.close();throw e;}
     }
     void write(int row,float[] data,int length) {
         int rows=(length+floats-1)/floats;if(rows==0)return;
         var staging=MemoryUtil.memCallocFloat(rows*floats);
-        try {if(compact)CompactMeshNodes.write(data,length,row,staging);else staging.put(data,0,length);staging.position(0);withUnpack(()->GL11.glTexSubImage2D(GL11.GL_TEXTURE_2D,0,0,row,width,rows,GL11.GL_RGBA,GL11.GL_FLOAT,staging));}
+        try {if(compact)CompactMeshNodes.write(data,length,row,staging);else staging.put(data,0,length);staging.position(0);withUnpack(()-> {
+            GL11.glTexSubImage2D(GL11.GL_TEXTURE_2D,0,0,row,width,rows,GL11.GL_RGBA,GL11.GL_FLOAT,staging);
+            if(quantized!=null)quantized.write(row,data,length);
+        });}
         finally {MemoryUtil.memFree(staging);}
     }
     private void withUnpack(Runnable action) {
@@ -45,5 +52,5 @@ final class MeshArena implements AutoCloseable {
             GL15.glBindBuffer(GL21.GL_PIXEL_UNPACK_BUFFER,pbo);RenderSystem.bindTexture(previous);
         }
     }
-    @Override public void close() {RenderSystem.deleteTexture(texture);}
+    @Override public void close() {RenderSystem.deleteTexture(texture);if(quantized!=null)quantized.close();}
 }

@@ -34,6 +34,7 @@ final class MeshValidation {
             for(String name:new String[]{"Voxels","Palette","Atlas","Distant","DistantAppearance","SkyAtlas","Lightmap","LocalLight","DistantLight","SmoothAtlas","LocalSmooth","DistantSmooth"})shader.addSampler(name,triangles.texture);
             shader.addSampler("Palette",nodes.texture);
             shader.addSampler("CompactNodes",compactNodes.texture);shader.addSampler("CompactMovingNodes",compactNodes.texture);
+            shader.addSampler("QuantizedNodes",compactNodes.quantizedTexture());shader.addSampler("QuantizedMovingNodes",compactNodes.quantizedTexture());
             shader.getUniformOrDefault("Viewport").set(1f,1f);
             set(shader,"MeshMode",1);set(shader,"MeshCoverage",1);set(shader,"MeshClouds",0);set(shader,"MovingNodeCount",0);set(shader,"CloudNodeCount",0);
             set(shader,"Lensing",1);set(shader,"Hybrid",1);set(shader,"Diagnostic",3);set(shader,"Radius",8);

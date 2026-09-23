@@ -29,22 +29,25 @@ final class MaterialValidation {
             shader.addSampler("DistantAppearance",movingVertices.texture);
             shader.addSampler("DistantLight",movingNodes.texture);
             shader.addSampler("CompactMovingNodes",movingCompact.texture);
+            shader.addSampler("QuantizedMovingNodes",movingCompact.quantizedTexture());
             set(shader,"Diagnostic",0);set(shader,"Lensing",0);set(shader,"RaySamples",1);set(shader,"MeshEntities",1);set(shader,"MeshClouds",1);
             set(shader,"MaterialLimit",32);set(shader,"FastBounds",1);set(shader,"FastFetch",1);set(shader,"MovingNodeCount",0);
             shader.getUniformOrDefault("Camera").set(.25f,.375f,0f);shader.getUniformOrDefault("Source").set(0f,0f,-100f);
             shader.getUniformOrDefault("ViewSlopes").set(0f,0f,0f,0f);
             shader.getUniformOrDefault("TerrainFogRange").set(10000f,20000f,0f);shader.getUniformOrDefault("TerrainFogColour").set(0f,0f,0f,0f);
             var pixels=BufferUtils.createFloatBuffer(4);
-            for(int layout=0;layout<3;layout++)for(int kind=0;kind<7;kind++)for(int reverse=0;reverse<2;reverse++)for(int cache=0;cache<2;cache++) {
+            for(int offset:new int[]{0,4096})for(int layout=0;layout<3;layout++)for(int kind=0;kind<7;kind++)for(int reverse=0;reverse<2;reverse++)for(int cache=0;cache<2;cache++) {
                 // Red at10, blue at20, opaque green at30. Cases exercise glass,
                 // entity alpha, opaque occlusion and native nearest-cloud semantics.
                 float[] data=new float[6*36];
                 boolean grazing=kind==6;
-                shader.getUniformOrDefault("Camera").set(.25f,.375f,grazing?511.9999f:0f);
+                shader.getUniformOrDefault("Camera").set(offset+.25f,.375f,grazing?511.9999f:0f);
+                shader.getUniformOrDefault("Source").set((float)offset,0f,-100f);
                 shader.getUniformOrDefault("Forward").set(grazing?1f:0f,0f,grazing?.0001f:1f);
                 plane(data,reverse==0?0:4,grazing?512.004f:kind==2?5:30,0,0,1,0);
                 plane(data,2,grazing?512.002f:20,kind==3 || kind==5?6:-3,0,0,1);
                 plane(data,reverse==0?4:0,grazing?512:10,kind==1?8:kind==4 || kind==5?6:-3,1,0,0);
+                for(int v=0;v<18;v++)data[v*12]+=offset;
                 // Exercise actual actor/cloud samplers and offsets, including empty
                 // actor or cloud forests and nearest hits shared with static terrain.
                 float[] staticData=new float[data.length],movingData=new float[data.length];int statics=0,movers=0;

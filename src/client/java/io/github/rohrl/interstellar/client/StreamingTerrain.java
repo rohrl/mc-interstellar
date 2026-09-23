@@ -56,6 +56,7 @@ public final class StreamingTerrain implements AutoCloseable {
     int triangleTexture() {return vertices.texture;}
     int nodeTexture() {return nodes.texture;}
     int compactNodeTexture() {return nodes.texture;}
+    int quantizedNodeTexture() {return nodes.quantizedTexture();}
     String status() {return ready?"Streaming terrain | "+triangleCount+" triangles | "+queue.size()+" queued chunks":"Loading terrain: "+entries.size()+"/"+wanted.size()+" chunks";}
     void advance() {
         var client=MinecraftClient.getInstance();

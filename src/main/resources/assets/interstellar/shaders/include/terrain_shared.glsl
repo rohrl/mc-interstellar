@@ -221,6 +221,16 @@ vec4 compactNode(int tree,int node,int part) {
     return tree==0?texelFetch(CompactNodes,address,0):texelFetch(CompactMovingNodes,address,0);
 }
 #endif
+#ifdef INTERSTELLAR_QUANTIZED_BOUNDS
+uniform usampler2D QuantizedNodes,QuantizedMovingNodes;
+void quantizedBounds(int tree,int node,out vec4 lower,out vec4 upper) {
+    ivec2 address=ivec2(node%1365,node/1365);
+    uvec4 data=tree==0?texelFetch(QuantizedNodes,address,0):texelFetch(QuantizedMovingNodes,address,0);
+    if((data.w&0x80000000u)!=0u) {lower=compactNode(tree,node,0);upper=compactNode(tree,node,1);return;}
+    lower=vec4(vec3(ivec3(data.xyz<<16u)>>16)*.0625,float(int(data.w<<8u)>>8));
+    upper=vec4(vec3(ivec3(data.xyz)>>16)*.0625,0);
+}
+#endif
 vec3 emptyLow[SCENE_TREES],emptyHigh[SCENE_TREES];
 bool cellKnown[SCENE_TREES];
 // Stackless preorder traversal: escape links skip whole subtrees. Each chord has one nearest hit.
@@ -264,7 +274,9 @@ int meshSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
         #endif
 #endif
         COUNT_WORK(2+min(tree,1));
-        #ifdef INTERSTELLAR_COMPACT_NODES
+        #ifdef INTERSTELLAR_QUANTIZED_BOUNDS
+        vec4 lower,upper;quantizedBounds(tree,node,lower,upper);
+        #elif defined(INTERSTELLAR_COMPACT_NODES)
         vec4 lower=compactNode(tree,node,0),upper=compactNode(tree,node,1);
         #else
         vec4 lower=sceneNode(tree,node*3),upper=sceneNode(tree,node*3+1);
@@ -303,6 +315,9 @@ int meshSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
             node=int(lower.w);continue;
         }
         #ifdef INTERSTELLAR_COMPACT_NODES
+        #ifdef INTERSTELLAR_QUANTIZED_BOUNDS
+        upper.w=compactNode(tree,node,1).w;
+        #endif
         uint header=floatBitsToUint(upper.w)&0x07ffffffu;
         int count=int(header&15u);upper.w=float(header>>4u);
         if(count==9)count=-1;

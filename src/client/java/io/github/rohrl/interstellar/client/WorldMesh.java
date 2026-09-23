@@ -70,6 +70,7 @@ final class WorldMesh implements VertexConsumer,AutoCloseable {
         if(terrainOnly && !singleChunk){streaming=new StreamingTerrain(world,origin,centre);triangles=null;}
     }
     float[] triangleData() {return triangles;}
+    int quantizedNodeTexture() {return streaming!=null?streaming.quantizedNodeTexture():compactNodes==null?0:compactNodes.quantizedTexture();}
     int triangleCount() {return count;}
     float sourceShift(net.minecraft.util.math.Vec3d source) {return (float)source.distanceTo(net.minecraft.util.math.Vec3d.of(centre));}
     WorldMesh movingScene() {

@@ -33,7 +33,7 @@ final class AppearanceCapture {
                 var camera=requested.appearanceCamera();
                 metadata=new LinkedHashMap<>();
                 metadata.put("schema",1);
-                metadata.put("reference",comparison==15?"same-scene-combined-moving-tree":comparison==14?"same-scene-angular-cap-0.02":comparison==13?"same-scene-full-material-pass":comparison==12?(requested.useQuads()?"same-scene-general-quad-program":"same-scene-dynamic-texture-layout"):comparison==11?"same-scene-serial-two-ray-AA":comparison==10?"same-scene-original-four-block-step-cap":comparison==9?"same-scene-compact-dynamic-settings":comparison==8?(requested.useQuads()?"same-scene-general-quad-program":"same-scene-original-native-nodes"):comparison==7?"same-scene-general-program":comparison==6?"same-scene-cache-reach-16":comparison==5?"same-scene-no-empty-cell-cache":comparison==4?"same-scene-original-addressing-same-bounds-path-AA-and-scale":comparison==3?"same-scene-original-bounds-same-path-AA-and-scale":comparison==2?"same-scene-original-path-same-AA-and-scale":comparison==1?"same-scene-four-rays-full-resolution-fine-path":"vanilla-world-END-before-hand-and-HUD");
+                metadata.put("reference",comparison==16?"same-scene-float-node-bounds":comparison==15?"same-scene-combined-moving-tree":comparison==14?"same-scene-angular-cap-0.02":comparison==13?"same-scene-full-material-pass":comparison==12?(requested.useQuads()?"same-scene-general-quad-program":"same-scene-dynamic-texture-layout"):comparison==11?"same-scene-serial-two-ray-AA":comparison==10?"same-scene-original-four-block-step-cap":comparison==9?"same-scene-compact-dynamic-settings":comparison==8?(requested.useQuads()?"same-scene-general-quad-program":"same-scene-original-native-nodes"):comparison==7?"same-scene-general-program":comparison==6?"same-scene-cache-reach-16":comparison==5?"same-scene-no-empty-cell-cache":comparison==4?"same-scene-original-addressing-same-bounds-path-AA-and-scale":comparison==3?"same-scene-original-bounds-same-path-AA-and-scale":comparison==2?"same-scene-original-path-same-AA-and-scale":comparison==1?"same-scene-four-rays-full-resolution-fine-path":"vanilla-world-END-before-hand-and-HUD");
                 metadata.put("candidate",comparison!=0?"same-scene-selected-AA-scale-and-path":"terrain-backend-zero-bending-full-resolution");
                 metadata.put("qualitySettings",requested.qualitySettings());
                 metadata.put("sameFrame",true);
@@ -60,7 +60,9 @@ final class AppearanceCapture {
         try {
             screen.checkAppearancePose(comparison==0);
             metadata.put("candidateScene",screen.appearanceScene());
-            if(comparison==15) {
+            if(comparison==16) {
+                screen.renderQuantizedComparison(true);reference=readFramebuffer();screen.renderQuantizedComparison(false);
+            } else if(comparison==15) {
                 screen.renderMovingComparison(true);reference=readFramebuffer();screen.renderMovingComparison(false);
             } else if(comparison==14) {
                 screen.renderOrbitComparison(true);reference=readFramebuffer();screen.renderOrbitComparison(false);

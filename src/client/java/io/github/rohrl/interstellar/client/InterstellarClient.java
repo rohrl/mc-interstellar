@@ -55,6 +55,10 @@ public final class InterstellarClient implements ClientModInitializer {
                 context.register(Identifier.of("interstellar", "terrain_moving_mask"), VertexFormats.POSITION, program->TerrainScreen.setMovingShader(1,program));
                 context.register(Identifier.of("interstellar", "terrain_moving_materials"), VertexFormats.POSITION, program->TerrainScreen.setMovingShader(2,program));
                 context.register(Identifier.of("interstellar", "terrain_moving_diagnostic"), VertexFormats.POSITION, program->TerrainScreen.setMovingShader(3,program));
+                context.register(Identifier.of("interstellar", "terrain_bounds_probe"), VertexFormats.POSITION, program->TerrainScreen.setQuantizedShader(0,program));
+                context.register(Identifier.of("interstellar", "terrain_bounds_mask"), VertexFormats.POSITION, program->TerrainScreen.setQuantizedShader(1,program));
+                context.register(Identifier.of("interstellar", "terrain_bounds_materials"), VertexFormats.POSITION, program->TerrainScreen.setQuantizedShader(2,program));
+                context.register(Identifier.of("interstellar", "terrain_bounds_diagnostic"), VertexFormats.POSITION, program->TerrainScreen.setQuantizedShader(3,program));
                 if(TerrainProfile.ENABLED)for(int experiment=0;experiment<3;experiment++)for(int pass=0;pass<3;pass++) {
                     final int e=experiment,p=pass;
                     context.register(Identifier.of("interstellar", "terrain_profile_"+e+"_"+p),VertexFormats.POSITION,program->TerrainProfile.programs[e][p]=program);
@@ -62,6 +66,7 @@ public final class InterstellarClient implements ClientModInitializer {
                 if(TerrainProfile.ENABLED)for(int pass=0;pass<3;pass++) {
                     final int p=pass;
                     context.register(Identifier.of("interstellar", "terrain_moving_profile_"+p),VertexFormats.POSITION,program->TerrainProfile.movingPrograms[p]=program);
+                    context.register(Identifier.of("interstellar", "terrain_bounds_profile_"+p),VertexFormats.POSITION,program->TerrainProfile.quantizedPrograms[p]=program);
                 }
                 context.register(Identifier.of("interstellar", "terrain_sample_fold"), VertexFormats.POSITION, TerrainSamples::setShader);
             }

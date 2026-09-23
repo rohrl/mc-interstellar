@@ -27,6 +27,11 @@ final class TerrainScreen extends Screen {
     private static ShaderProgram materialProbeShader,materialMaskedShader;
     private static ShaderProgram quadProbeShader,quadMaskedShader,quadMaterialShader,quadDiagnosticShader;
     private static final ShaderProgram[] movingShaders=new ShaderProgram[4];
+    private static final ShaderProgram[] quantizedShaders=new ShaderProgram[4];
+    private boolean quantizedBounds=true;
+    static void setQuantizedShader(int pass,ShaderProgram program) {quantizedShaders[pass]=program;resourceVersion++;}
+    static boolean hasQuantizedShader() {return quantizedShaders[0]!=null;}
+    private ShaderProgram movingProgram(int pass) {return useQuantizedBounds()?quantizedShaders[pass]:movingShaders[pass];}
     private boolean separateMoving=true;
     static void setMovingShader(int pass,ShaderProgram program) {movingShaders[pass]=program;resourceVersion++;}
     private boolean selectiveMaterials=true;
@@ -191,7 +196,7 @@ final class TerrainScreen extends Screen {
         shader=currentShader();
         if(validate && meshMode) {
             validate=false;
-            var diagnosticShader=useQuads()?(useSeparateMoving()?movingShaders[3]:quadDiagnosticShader):useLayoutShader()?layoutDiagnosticShader:useDefaultShader()?(useLongShader()?longMeshShader:compactMeshShader):shader;
+            var diagnosticShader=useQuads()?(useSeparateMoving()?movingProgram(3):quadDiagnosticShader):useLayoutShader()?layoutDiagnosticShader:useDefaultShader()?(useLongShader()?longMeshShader:compactMeshShader):shader;
             diagnosticShader.getUniformOrDefault("MeshStepLimit").set(meshStepLimit);
             Interstellar.LOGGER.info("Mesh fixture program: {}; step cap={}; angular cap={}",useQuads()?"quad diagnostic variant":useLayoutShader()?"streamed-layout diagnostic variant":useDefaultShader()?"compact diagnostic variant (live defaults fix Diagnostic=0)":programName(),useLongShader()?meshStepLimit:4,orbitStep);
             validationStatus=MeshValidation.run(diagnosticShader,()->drawQuad(1,1),orbitStep,curveFactor,useQuads(),useSeparateMoving());
@@ -229,7 +234,7 @@ final class TerrainScreen extends Screen {
                 if(useSelectiveMaterials()) {
                     mask=samples.copyMask();
                     if(benchmark!=null)benchmark.mark(2);
-                    shader=useQuads()?(useSeparateMoving()?movingShaders[1]:profileProgram(quadMaskedShader,1)):materialMaskedShader;configureShader(w,h);
+                    shader=useQuads()?(useSeparateMoving()?movingProgram(1):profileProgram(quadMaskedShader,1)):materialMaskedShader;configureShader(w,h);
                     shader.addSampler("PendingRays",mask);RenderSystem.setShader(()->shader);
                     samples.begin(0);shader.getUniformOrDefault("SampleOffset").set(-.25f);drawQuad(w,h);
                     if(benchmark!=null)benchmark.mark(3);
@@ -239,8 +244,8 @@ final class TerrainScreen extends Screen {
                 if(profileCounters) {
                     profileCounters=false;
                     if(!useSelectiveMaterials())throw new IllegalStateException("Counters require the selective quad baseline");
-                    TerrainProfile.capture(w,h,mask,useSeparateMoving(),program->{shader=program;configureShader(w,h);},()->drawQuad(w,h),
-                        "separateMoving="+useSeparateMoving()+" camera="+camera+" yaw="+yaw+" pitch="+pitch+" logical="+w+"x"+h+" movingContents="+(moving==null?0:moving.profileMovingContents)+"; "+mesh.status());
+                    TerrainProfile.capture(w,h,mask,useSeparateMoving(),useQuantizedBounds(),program->{shader=program;configureShader(w,h);},()->drawQuad(w,h),
+                        "separateMoving="+useSeparateMoving()+" quantizedBounds="+useQuantizedBounds()+" camera="+camera+" yaw="+yaw+" pitch="+pitch+" logical="+w+"x"+h+" movingContents="+(moving==null?0:moving.profileMovingContents)+"; "+mesh.status());
                 }
                 samples.fold(target,()->drawQuad(w,h));
                 if(benchmark!=null)benchmark.mark(5);
@@ -315,6 +320,10 @@ final class TerrainScreen extends Screen {
         shader.addSampler("Palette",meshMode?mesh.nodeTexture:snapshot.paletteTexture);
         shader.addSampler("CompactNodes",meshMode?mesh.compactNodeTexture:snapshot.paletteTexture);
         shader.addSampler("CompactMovingNodes",meshMode && moving!=null?moving.compactNodeTexture:snapshot.paletteTexture);
+        if(useQuantizedBounds()) {
+            shader.addSampler("QuantizedNodes",mesh.quantizedNodeTexture());
+            shader.addSampler("QuantizedMovingNodes",moving.quantizedNodeTexture());
+        }
         shader.addSampler("Atlas",client.getTextureManager().getTexture(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE).getGlId());
     }
     private static void drawQuad(int w,int h) {
@@ -380,7 +389,7 @@ final class TerrainScreen extends Screen {
             && TerrainSamples.supported(Math.max(1,Math.round(client.getWindow().getFramebufferWidth()*scale)));}
     private ShaderProgram currentShader() {
         if(useQuads()) {
-            if(useSeparateMoving())return movingShaders[!useLayoutShader()?3:useMaterials() && !useSelectiveMaterials()?2:0];
+            if(useSeparateMoving())return movingProgram(!useLayoutShader()?3:useMaterials() && !useSelectiveMaterials()?2:0);
             if(quadDiagnosticShader==null || quadProbeShader==null || quadMaterialShader==null || quadMaskedShader==null)
                 throw new IllegalStateException("Quad terrain programs are unavailable");
             return useLayoutShader()?(useMaterials() && !useSelectiveMaterials()?profileProgram(quadMaterialShader,2):profileProgram(quadProbeShader,0)):quadDiagnosticShader;
@@ -393,7 +402,7 @@ final class TerrainScreen extends Screen {
         return meshShader;
     }
     private String programName() {
-        if(useQuads())return "native-quads-"+(!useLayoutShader()?"general-":useSelectiveMaterials()?"selective-":"full-")+meshStepLimit+"; separateMoving="+useSeparateMoving()+"; profileExperiment="+profileExperiment;
+        if(useQuads())return "native-quads-"+(!useLayoutShader()?"general-":useSelectiveMaterials()?"selective-":"full-")+meshStepLimit+"; separateMoving="+useSeparateMoving()+"; quantizedBounds="+useQuantizedBounds()+"; profileExperiment="+profileExperiment;
         if(useLayoutShader())return (useMaterials()?(useSelectiveMaterials()?"native-live-selective-materials-":"native-live-materials-"):orbitStep>.02f && materialProbeShader!=null?"native-live-curvature-probe-":"native-live-layout-")+meshStepLimit;
         if(useSplitShader())return "native-live-split-"+meshStepLimit;
         if(useDefaultShader())return useLongShader()?"native-live-steps-"+meshStepLimit:"native-live-defaults";
@@ -424,6 +433,12 @@ final class TerrainScreen extends Screen {
         try {if(reference){orbitStep=.02f;curveFactor=1;}renderTerrain();}finally {orbitStep=old;curveFactor=oldCurve;}
     }
     private boolean useSeparateMoving() {return separateMoving && useQuads() && profileExperiment==0;}
+    private boolean useQuantizedBounds() {return quantizedBounds && hasQuantizedShader() && useSeparateMoving() && moving!=null && mesh.quantizedNodeTexture()!=0 && moving.quantizedNodeTexture()!=0;}
+    void renderQuantizedComparison(boolean reference) {
+        boolean old=quantizedBounds,split=separateMoving;cancelBenchmark();
+        try {separateMoving=true;quantizedBounds=!reference;renderTerrain();}
+        finally {quantizedBounds=old;separateMoving=split;}
+    }
     void renderMovingComparison(boolean reference) {
         boolean old=separateMoving;cancelBenchmark();
         try {separateMoving=!reference;renderTerrain();}finally {separateMoving=old;}
@@ -456,6 +471,11 @@ final class TerrainScreen extends Screen {
         finally {fastFetch=old;}
     }
     @Override public boolean keyPressed(int key,int scan,int modifiers) {
+        if(key==GLFW.GLFW_KEY_SEMICOLON && !live && useQuads()) {
+            cancelBenchmark();separateMoving=true;
+            if((modifiers&GLFW.GLFW_MOD_SHIFT)!=0)AppearanceCapture.request(this,16);else quantizedBounds=!quantizedBounds;
+            validationStatus=";: quantized bounds "+(quantizedBounds?"ON":"OFF")+" | Shift+;: compare bounds";return true;
+        }
         if(key==GLFW.GLFW_KEY_W && !live && useQuads()) {
             cancelBenchmark();
             if((modifiers&GLFW.GLFW_MOD_SHIFT)!=0)AppearanceCapture.request(this,15);else separateMoving=!separateMoving;

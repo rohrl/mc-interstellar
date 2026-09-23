@@ -13,8 +13,10 @@ final class ReusableMeshTexture implements AutoCloseable {
     private FloatBuffer staging;
     int allocations;
     private final boolean compact;
+    private final QuantizedBoundsTexture quantized;
+    int quantizedTexture() {return quantized==null?0:quantized.id;}
     ReusableMeshTexture() {this(false);}
-    ReusableMeshTexture(boolean compact) {this.compact=compact;}
+    ReusableMeshTexture(boolean compact) {this.compact=compact;quantized=compact && TerrainScreen.hasQuantizedShader()?new QuantizedBoundsTexture():null;}
     void upload(float[] data,int length) {
         int width=compact?4095:4096,stride=width*4;
         int needed=compact?CompactMeshNodes.rows(length):Math.max(1,(length+stride-1)/stride);
@@ -31,6 +33,7 @@ final class ReusableMeshTexture implements AutoCloseable {
         }
         staging.clear();if(compact)CompactMeshNodes.write(data,length,0,staging);else staging.put(data,0,length);staging.position(0).limit(needed*stride);
         GL11.glTexSubImage2D(GL11.GL_TEXTURE_2D,0,0,0,width,needed,GL11.GL_RGBA,GL11.GL_FLOAT,staging);
+        if(quantized!=null)quantized.write(0,data,length);
     }
-    @Override public void close() {RenderSystem.deleteTexture(id);if(staging!=null){MemoryUtil.memFree(staging);staging=null;}}
+    @Override public void close() {RenderSystem.deleteTexture(id);if(staging!=null){MemoryUtil.memFree(staging);staging=null;}if(quantized!=null)quantized.close();}
 }
