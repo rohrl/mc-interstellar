@@ -6,6 +6,7 @@ A Minecraft Java mod for educational relativistic optics. Scientific assumptions
 
 ## Start here
 
+- [Gameplay gravity proposal](docs/gameplay-gravity-plan.md): next milestone, gradual mass-block effects, automatic discovery, local mobs/projectiles and explicit physics compromises; not implemented yet.
 - [Performance profile and revised priorities](docs/performance-profile-2026-09-23.md): measured GPU stages, ray work counts, CPU/JFR findings and updated optimization estimates.
 - [First four performance experiments](docs/performance-experiments-1-4.md): completed trials, measured keep/reject decisions and preserved implementations.
 - [Separate moving trees](docs/moving-trees.md): accepted actor/cloud forest, rejected cache variants, image checks and measured performance.

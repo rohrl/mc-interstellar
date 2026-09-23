@@ -57,7 +57,9 @@ The earlier exterior-only description is superseded for the falling-frame lab by
 
 ## Mass-block source proxy
 
-[Mass-block model](mass-blocks.md) defines equal weights, corner-inclusive enclosing radius and the explicitly approximate compactness classification. It does not solve nonspherical collapse or generate a dynamical spacetime; current blocks only expose inspection data.
+[Mass-block model](mass-blocks.md) defines equal weights, corner-inclusive enclosing radius and the explicitly approximate compactness classification. It does not solve nonspherical collapse or generate a dynamical spacetime. Selected-source metadata now drives the live renderer and refreshes after relevant edits; automatic discovery and entity gravity are not implemented.
+
+The [2026-09-23 gameplay proposal](gameplay-gravity-plan.md) derives `r_s/block = sqrt(3)/32` to put a complete 4-cube at the proxy threshold, and distinguishes Schwarzschild exterior optics, an unresolved finite interior approximation, and scaled Newtonian entity dynamics. Neither the new calibration nor entity motion is implemented. Finite force reach and independent gameplay strength are explicit departures from a single physical metric. [Einstein Online's radius definition](https://www.einstein-online.info/en/explandict/schwarzschild-radius/) supplies the spherical criterion; [its free-fall/geodesic account](https://www.einstein-online.info/en/spotlight/geometry_force/) explains why freely falling projectiles and constrained walking mobs need different treatment. Our cube threshold, force range and gameplay choices are design inferences, not claims made by those sources.
 
 ## Critical-angle validation
 

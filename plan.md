@@ -1,5 +1,9 @@
 # Project plan
 
+## Current priority — gameplay and automatic gravity (2026-09-23)
+
+The first four performance experiments are complete. The owner now requests progressive mass-block lensing, automatic source discovery/updates, local mob attraction and curved projectile paths before further performance experiments. See [the proposed gameplay milestone](docs/gameplay-gravity-plan.md) for calibration, scientific compromises, delivery order and acceptance. Its tuning values and capture policy are proposals, not implemented defaults. Existing FPS protection remains; deeper relativity outside this explicit scope stays deferred.
+
 ## Product requirements
 
 - Accumulated fixed-mass blocks control an effective gravitational source; compactness governs an explicit approximate collapse rule.

@@ -1,10 +1,12 @@
-# Handoff — original performance proposals1–4 tested, 2026-09-23
+# Handoff — gameplay proposal after completed performance trials, 2026-09-23
 
 ## Current checkout and scope
 
-Repo C:\work\code\minecraft\interstellar\interstellar, branch codex/performance-four-results. Production source is exactly accepted e324e84. Follow AGENTS.md and the token-efficient workflow. Edits, branches, commits, pushes and autonomous runtime tests authorized; no force push, subagents, unrelated resets or world edits.
+Repo C:\work\code\minecraft\interstellar\interstellar, branch codex/gameplay-gravity-plan. Production source is exactly accepted e324e84. Follow AGENTS.md and the token-efficient workflow. Edits, branches, commits, pushes and autonomous runtime tests authorized; no force push, subagents, unrelated resets or world edits.
 
-The user goal is the ORIGINAL first four proposals from the revised priorities before later reranking: separate actor/cloud roots; cloud shared quads; per-actor hierarchy; conservative compressed bounds. All four have been implemented/tested and have keep/reject decisions; final normal-launch/state-restoration audit passes. See docs/performance-experiments-1-4.md; later numbering does not substitute optical tables/refits for original items3/4. No required experiment remains; no further optimization started.
+Latest request is a gameplay/UX proposal: mild 2-cube lensing, a 4-cube horizon threshold, automatic source discovery/updates, nearby mob attraction and bent projectile paths. docs/gameplay-gravity-plan.md records proposed calibration/ranges, exact-COM event-driven updates, finite interior optical work and explicit scaled-Newtonian-versus-timelike-geodesic tradeoffs. New scope/order is requested; tuning, capture policy and implementation are still proposals. No runtime source, config or saved world changed; no client launch for this docs-only checkpoint. Keep legacy demo calibration when implementing. Existing selected clusters already auto-refresh, but discovery and subcritical rendering do not exist. Resume performance measurement/tables/refit work after this milestone; player pull and other deeper-relativity work stay deferred.
+
+The prior goal covered the ORIGINAL first four proposals from the revised priorities: separate actor/cloud roots; cloud shared quads; per-actor hierarchy; conservative compressed bounds. All four have been implemented/tested and have keep/reject decisions; final normal-launch/state-restoration audit passes. See docs/performance-experiments-1-4.md. No required experiment remains; no further optimization started.
 
 ## Decisions and preserved branches
 
