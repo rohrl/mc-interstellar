@@ -38,6 +38,9 @@ final class WorldMesh implements VertexConsumer,AutoCloseable {
     int triangleTexture,nodeTexture,nodeCount,compactNodeTexture;
     int actorNodeCount,cloudNodeCount;
     private boolean splitMoving;
+    private boolean packedClouds;
+    boolean cloudRectangles=true;
+    int cloudVertexBase;
     EntityMesh entities;
     final CloudMesh clouds=new CloudMesh();
     private final BlockPos centre;
@@ -80,7 +83,7 @@ final class WorldMesh implements VertexConsumer,AutoCloseable {
     boolean hasMaterials() {return streaming!=null?streaming.hasMaterials():materials;}
     void updateMoving() {
         if(!dynamic)throw new IllegalStateException("Not a moving scene");
-        count=0;materials=false;
+        count=0;materials=false;cloudRectangles=true;
         var camera=BlockPos.ofFloored(MinecraftClient.getInstance().gameRenderer.getCamera().getPos());
         int radius=Math.max(2,Math.min(16,MinecraftClient.getInstance().options.getViewDistance().getValue()))+1;
         long profileStart=TerrainProfile.cpuStart();
@@ -148,15 +151,17 @@ final class WorldMesh implements VertexConsumer,AutoCloseable {
     }
     private void finishTree() {
         long profileStart=dynamic?TerrainProfile.cpuStart():0;
-        float[] nodes;
+        float[] nodes,vertices=triangles;
         if(dynamic && splitMoving) {
-            var trees=MovingMeshTrees.build(triangles,count);
-            // Keep capture capacity: rebuilding a different layout must not grow the buffer.
-            System.arraycopy(trees.triangles(),0,triangles,0,count*36);
+            var trees=MovingMeshTrees.build(triangles,count,packedClouds && cloudRectangles);
+            vertices=trees.triangles();cloudVertexBase=trees.cloudVertexBase();
             nodes=trees.nodes();actorNodeCount=trees.actorNodes();cloudNodeCount=trees.cloudNodes();
             nodeCount=actorNodeCount+cloudNodeCount;
         } else {
-            var tree=new MeshTree(triangles,count);nodeCount=tree.size();nodes=tree.nodes();
+            // Preserve native pairs in capture order so frozen layout changes never
+            // recapture animations or try to reconstruct pairs after BVH sorting.
+            if(dynamic)vertices=Arrays.copyOf(triangles,count*36);
+            var tree=new MeshTree(vertices,count);nodeCount=tree.size();nodes=tree.nodes();cloudVertexBase=0;
             actorNodeCount=nodeCount;cloudNodeCount=0;
         }
         if(nodes.length>0) {
@@ -173,12 +178,12 @@ final class WorldMesh implements VertexConsumer,AutoCloseable {
         }
         if(dynamic)TerrainProfile.cpuEnd(2,profileStart);
         profileStart=dynamic?TerrainProfile.cpuStart():0;
-        upload(nodes);
+        upload(vertices,dynamic?vertices.length:count*36,nodes);
         if(dynamic)TerrainProfile.cpuEnd(3,profileStart);
     }
-    void movingLayout(boolean separate) {
-        if(!dynamic || splitMoving==separate)return;
-        splitMoving=separate;finishTree();
+    void movingLayout(boolean separate,boolean cloudQuads) {
+        if(!dynamic || splitMoving==separate && packedClouds==cloudQuads)return;
+        splitMoving=separate;packedClouds=cloudQuads;finishTree();
     }
     @Override public void quad(MatrixStack.Entry entry,BakedQuad quad,float[] brightness,float red,float green,float blue,float alpha,int[] light,int overlay,boolean useQuadColor) {
         int[] vertices=quad.getVertexData();int stride=vertices.length/4;
@@ -212,7 +217,7 @@ final class WorldMesh implements VertexConsumer,AutoCloseable {
         if(data[3]==-3 || Math.abs(data[3])>=7)materials=true;
         add(0,1,2);add(2,3,0);
     }
-    private void upload(float[] nodes) {
+    private void upload(float[] vertices,int length,float[] nodes) {
         int previous=GL11.glGetInteger(GL11.GL_TEXTURE_BINDING_2D),pbo=GL11.glGetInteger(GL21.GL_PIXEL_UNPACK_BUFFER_BINDING);
         int[] names={GL11.GL_UNPACK_ALIGNMENT,GL11.GL_UNPACK_ROW_LENGTH,GL11.GL_UNPACK_SKIP_ROWS,GL11.GL_UNPACK_SKIP_PIXELS};
         int[] saved=new int[names.length];
@@ -227,12 +232,12 @@ final class WorldMesh implements VertexConsumer,AutoCloseable {
             if(dynamic) {
                 if(movingTriangles==null)movingTriangles=new ReusableMeshTexture();
                 if(movingNodes==null)movingNodes=new ReusableMeshTexture();
-                movingTriangles.upload(triangles,count*36);movingNodes.upload(nodes,nodes.length);
+                movingTriangles.upload(vertices,length);movingNodes.upload(nodes,nodes.length);
                 triangleTexture=movingTriangles.id;nodeTexture=movingNodes.id;
                 if(updates==0 || updates==599)Interstellar.LOGGER.info("Moving mesh texture reuse: updates={}, triangle allocations={}, node allocations={}",updates,movingTriangles.allocations,movingNodes.allocations);
                 return;
             }
-            newTriangles=texture(triangles,count*36);newNodes=texture(nodes,nodes.length);
+            newTriangles=texture(vertices,length);newNodes=texture(nodes,nodes.length);
             if(triangleTexture!=0)RenderSystem.deleteTexture(triangleTexture);
             if(nodeTexture!=0)RenderSystem.deleteTexture(nodeTexture);
             triangleTexture=newTriangles;nodeTexture=newNodes;newTriangles=newNodes=0;

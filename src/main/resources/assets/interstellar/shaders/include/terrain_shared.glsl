@@ -31,6 +31,9 @@ uniform float Hybrid,FaceLighting,Lensing,Diagnostic;
 uniform float RaySamples,AdaptivePath,FastBounds,FastFetch,EmptyCells,EmptyReach;
 #endif
 uniform float MeshExtent,MovingNodeCount;
+#ifdef INTERSTELLAR_CLOUD_QUADS
+uniform float CloudVertexBase;
+#endif
 #ifdef INTERSTELLAR_SPLIT_MOVING
 uniform float CloudNodeCount;
 #define SCENE_TREES 2
@@ -195,12 +198,22 @@ float cloudFogDistance(vec3 position) {
 }
 // The live actor tree shares nearest-hit and cloud ordering with the retained terrain tree.
 #ifdef INTERSTELLAR_QUAD_MESH
+#ifdef INTERSTELLAR_CLOUD_QUADS
+vec4 quadPart(int tree,int base,int part,int second,bool cloudFace) {
+    int corner=(part/3+second*2)%4;
+    int moving=base+(cloudFace?corner*3+part%3:part);
+    return tree==0?texelFetch(MeshTriangles,ivec2(base%4092+corner*3+part%3,base/4092),0):
+        texelFetch(DistantAppearance,ivec2(moving%4096,moving/4096),0);
+}
+#define trianglePart(tree,base,part) quadPart(tree,base,part,quadSecond,cloudFace)
+#else
 vec4 quadPart(int tree,int base,int part,int second) {
     int corner=(part/3+second*2)%4;
     return tree==0?texelFetch(MeshTriangles,ivec2(base%4092+corner*3+part%3,base/4092),0):
         texelFetch(DistantAppearance,ivec2((base+part)%4096,(base+part)/4096),0);
 }
 #define trianglePart(tree,base,part) quadPart(tree,base,part,quadSecond)
+#endif
 #elif defined(INTERSTELLAR_STREAMED_LAYOUT)
 // Nine-texel terrain triangles stay in one 4095-wide row; share the base address.
 // Moving triangles use 4096-wide rows and may cross a row boundary.
@@ -314,10 +327,16 @@ int meshSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
         if(count>0)canCache=false;
         if(count>0) {COUNT_WORK(10+min(tree,1));}
 #ifdef INTERSTELLAR_QUAD_MESH
+    #ifdef INTERSTELLAR_CLOUD_QUADS
+        bool cloudFace=tree==1 && node>=int(MovingNodeCount);
+    #endif
         int tests=tree==0?count*2:count;
         for(int i=0;i<tests;i++) {
             int quadSecond=tree==0?i%2:0;
             int base=tree==0?(int(upper.w)+i/2)*12:(int(upper.w)+i)*9;
+    #ifdef INTERSTELLAR_CLOUD_QUADS
+            if(cloudFace)base=int(CloudVertexBase)+(int(upper.w)+i)*12;
+    #endif
 #else
         for(int i=0;i<count;i++) {
             int base=(int(upper.w)+i)*9;
@@ -341,20 +360,46 @@ int meshSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
             if(cloud && (MeshClouds<.5 || cloudLayer.a>0.0))continue;
             if(!cloud && entity!=0.0 && MeshEntities<.5)continue;
 #endif
-            vec3 a=vertexA.xyz,b=trianglePart(tree,base,3).xyz,c=trianglePart(tree,base,6).xyz;
-            vec3 edge1=b-a,edge2=c-a,p=cross(delta,edge2);
+            vec3 a=vertexA.xyz,b,c,edge1,edge2;float u,v,t;
             bool twoSided=abs(entity)==2.0 || entity==6.0;
 #if defined(INTERSTELLAR_MATERIALS) || defined(INTERSTELLAR_MATERIAL_PROBE)
             twoSided=twoSided || abs(entity)==8.0;
 #endif
-            float det=dot(edge1,p);if(twoSided?abs(det)<1e-10:det<1e-10)continue;
-            vec3 s=start-a;float u=dot(s,p)/det;if(u<0 || u>1)continue;
-            vec3 q=cross(s,edge1);float v=dot(delta,q)/det;if(v<0 || u+v>1)continue;
-            float t=dot(edge2,q)/det;if(t<0 || t>1 || t>=best)continue;
+#ifdef INTERSTELLAR_CLOUD_QUADS
+            if(cloudFace) {
+                // Native cloud lightmap coordinates are unused. Their descriptor
+                // gives the fixed plane axis, winding/area and inverse edge lengths.
+                vec4 plane=trianglePart(tree,base,1),inverse=trianglePart(tree,base,4);
+                int axis=int(plane.z)%3,first=int(plane.z)/3,second=3-axis-first;
+                float det=-delta[axis]*plane.w;if(twoSided?abs(det)<1e-10:det<1e-10)continue;
+                t=(a[axis]-start[axis])/delta[axis];if(t<0 || t>1 || t>=best)continue;
+                float along=(start[first]-a[first]+delta[first]*t)*inverse.z;
+                v=(start[second]-a[second]+delta[second]*t)*inverse.w;
+                if(along<0 || along>1 || v<0 || v>1)continue;
+                u=along-v;
+                b=trianglePart(tree,base,3).xyz;c=trianglePart(tree,base,6).xyz;edge1=b-a;edge2=c-a;
+            } else
+#endif
+            {
+                b=trianglePart(tree,base,3).xyz;c=trianglePart(tree,base,6).xyz;edge1=b-a;edge2=c-a;
+                vec3 p=cross(delta,edge2);float det=dot(edge1,p);if(twoSided?abs(det)<1e-10:det<1e-10)continue;
+                vec3 s=start-a;u=dot(s,p)/det;if(u<0 || u>1)continue;
+                vec3 q=cross(s,edge1);v=dot(delta,q)/det;if(v<0 || u+v>1)continue;
+                t=dot(edge2,q)/det;if(t<0 || t>1 || t>=best)continue;
+            }
             // U isolates terrain missing beyond the previous source-centred footprint.
             vec2 location=(start+delta*t).xz;
             if(terrain && MeshCoverage<.5 && (any(lessThan(location,OldMeshBounds.xy)) || any(greaterThanEqual(location,OldMeshBounds.zw))))continue;
             vec3 weights=vec3(1-u-v,u,v);
+#ifdef INTERSTELLAR_CLOUD_QUADS
+            // The same plane test covers both halves of an axis-aligned rectangle.
+            // Select native (2,3,0) on the other side of its diagonal. Fog remains
+            // interpolated from the original three vertices, not from the hit point.
+            if(cloudFace && u<0) {
+                quadSecond=1;weights=vec3(u+v,-u,1-v);
+                vec3 originalA=a;a=c;b=trianglePart(tree,base,3).xyz;c=originalA;
+            }
+#endif
             COUNT_WORK(6+min(tree,1));
             if(cloud) {COUNT_WORK(18);} else if(!terrain) {COUNT_WORK(19);}
             vec4 uvA=trianglePart(tree,base,1),uvB=trianglePart(tree,base,4),uvC=trianglePart(tree,base,7);

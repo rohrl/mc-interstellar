@@ -1,0 +1,50 @@
+diff --git a/src/main/resources/assets/interstellar/shaders/include/terrain_shared.glsl b/src/main/resources/assets/interstellar/shaders/include/terrain_shared.glsl
+index d062fbf..be1c3e4 100644
+--- a/src/main/resources/assets/interstellar/shaders/include/terrain_shared.glsl
++++ b/src/main/resources/assets/interstellar/shaders/include/terrain_shared.glsl
+@@ -360,33 +360,23 @@ int meshSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
+             if(cloud && (MeshClouds<.5 || cloudLayer.a>0.0))continue;
+             if(!cloud && entity!=0.0 && MeshEntities<.5)continue;
+ #endif
+-            vec3 a=vertexA.xyz,b,c,edge1,edge2;float u,v,t;
++            vec3 a=vertexA.xyz,b=trianglePart(tree,base,3).xyz,c=trianglePart(tree,base,6).xyz;
++            vec3 edge1=b-a,edge2=c-a,p=cross(delta,edge2);
+             bool twoSided=abs(entity)==2.0 || entity==6.0;
+ #if defined(INTERSTELLAR_MATERIALS) || defined(INTERSTELLAR_MATERIAL_PROBE)
+             twoSided=twoSided || abs(entity)==8.0;
+ #endif
++            float det=dot(edge1,p);if(twoSided?abs(det)<1e-10:det<1e-10)continue;
++            vec3 s=start-a;float u=dot(s,p)/det;
+ #ifdef INTERSTELLAR_CLOUD_QUADS
+-            if(cloudFace) {
+-                // Native cloud lightmap coordinates are unused. Their descriptor
+-                // gives the fixed plane axis, winding/area and inverse edge lengths.
+-                vec4 plane=trianglePart(tree,base,1),inverse=trianglePart(tree,base,4);
+-                int axis=int(plane.z)%3,first=int(plane.z)/3,second=3-axis-first;
+-                float det=-delta[axis]*plane.w;if(twoSided?abs(det)<1e-10:det<1e-10)continue;
+-                t=(a[axis]-start[axis])/delta[axis];if(t<0 || t>1 || t>=best)continue;
+-                float along=(start[first]-a[first]+delta[first]*t)*inverse.z;
+-                v=(start[second]-a[second]+delta[second]*t)*inverse.w;
+-                if(along<0 || along>1 || v<0 || v>1)continue;
+-                u=along-v;
+-                b=trianglePart(tree,base,3).xyz;c=trianglePart(tree,base,6).xyz;edge1=b-a;edge2=c-a;
+-            } else
+-#endif
+-            {
+-                b=trianglePart(tree,base,3).xyz;c=trianglePart(tree,base,6).xyz;edge1=b-a;edge2=c-a;
+-                vec3 p=cross(delta,edge2);float det=dot(edge1,p);if(twoSided?abs(det)<1e-10:det<1e-10)continue;
+-                vec3 s=start-a;u=dot(s,p)/det;if(u<0 || u>1)continue;
+-                vec3 q=cross(s,edge1);v=dot(delta,q)/det;if(v<0 || u+v>1)continue;
+-                t=dot(edge2,q)/det;if(t<0 || t>1 || t>=best)continue;
+-            }
++            if(!cloudFace && (u<0 || u>1))continue;
++            vec3 q=cross(s,edge1);float v=dot(delta,q)/det;
++            if(cloudFace?(v<0 || v>1 || u+v<0 || u+v>1):(v<0 || u+v>1))continue;
++#else
++            if(u<0 || u>1)continue;
++            vec3 q=cross(s,edge1);float v=dot(delta,q)/det;if(v<0 || u+v>1)continue;
++#endif
++            float t=dot(edge2,q)/det;if(t<0 || t>1 || t>=best)continue;
+             // U isolates terrain missing beyond the previous source-centred footprint.
+             vec2 location=(start+delta*t).xz;
+             if(terrain && MeshCoverage<.5 && (any(lessThan(location,OldMeshBounds.xy)) || any(greaterThanEqual(location,OldMeshBounds.zw))))continue;

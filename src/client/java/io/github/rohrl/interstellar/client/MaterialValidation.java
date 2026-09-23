@@ -12,7 +12,7 @@ import org.lwjgl.opengl.*;
 /** Analytic source-over fixtures in the actual GPU material path, using the caller's diagnostic FBO. */
 final class MaterialValidation {
     private MaterialValidation() {}
-    static int run(ShaderProgram shader,Runnable draw,MeshArena triangles,MeshArena nodes,MeshArena compact,boolean quads,boolean splitMoving) {
+    static int run(ShaderProgram shader,Runnable draw,MeshArena triangles,MeshArena nodes,MeshArena compact,boolean quads,boolean splitMoving,boolean cloudQuads) {
         int texture=GL11.glGenTextures(),oldTexture=GL11.glGetInteger(GL11.GL_TEXTURE_BINDING_2D);
         int pbo=GL11.glGetInteger(GL21.GL_PIXEL_UNPACK_BUFFER_BINDING);
         int[] names={GL11.GL_UNPACK_ALIGNMENT,GL11.GL_UNPACK_ROW_LENGTH,GL11.GL_UNPACK_SKIP_ROWS,GL11.GL_UNPACK_SKIP_PIXELS},saved=new int[4];
@@ -57,13 +57,13 @@ final class MaterialValidation {
                 triangles.write(0,data,data.length);nodes.write(0,nodeData,nodeData.length);compact.write(0,nodeData,nodeData.length);
                 float[] movingNodeData;
                 if(splitMoving) {
-                    var forests=MovingMeshTrees.build(movingData,movers);movingData=forests.triangles();movingNodeData=forests.nodes();
-                    set(shader,"MovingNodeCount",forests.actorNodes());set(shader,"CloudNodeCount",forests.cloudNodes());
+                    var forests=MovingMeshTrees.build(movingData,movers,cloudQuads);movingData=forests.triangles();movingNodeData=forests.nodes();
+                    set(shader,"MovingNodeCount",forests.actorNodes());set(shader,"CloudNodeCount",forests.cloudNodes());set(shader,"CloudVertexBase",forests.cloudVertexBase());
                 } else {
                     var movingTree=new MeshTree(movingData,movers);movingNodeData=movingTree.nodes();
                     set(shader,"MovingNodeCount",movingTree.size());set(shader,"CloudNodeCount",0);
                 }
-                movingVertices.write(0,movingData,movers*36);movingNodes.write(0,movingNodeData,movingNodeData.length);movingCompact.write(0,movingNodeData,movingNodeData.length);
+                movingVertices.write(0,movingData,splitMoving?movingData.length:movers*36);movingNodes.write(0,movingNodeData,movingNodeData.length);movingCompact.write(0,movingNodeData,movingNodeData.length);
                 set(shader,"MeshNodeCount",tree.size());set(shader,"EmptyCells",cache);
                 draw.run();pixels.clear();GL11.glReadPixels(0,0,1,1,GL11.GL_RGBA,GL11.GL_FLOAT,pixels);
                 float[] expected=kind==2?new float[]{0,1,0}:kind==5?new float[]{.5f,.5f,0}:new float[]{.5f,.25f,.25f};
@@ -71,6 +71,7 @@ final class MaterialValidation {
                 checks++;worst=Math.max(worst,error);
                 if(!Float.isFinite(error) || error>2e-5f) {failures++;Interstellar.LOGGER.error("Material fixture mismatch: layout={}, case={}, reverse={}, cache={}, actual=({},{},{}), error={}",layout,kind,reverse,cache,pixels.get(0),pixels.get(1),pixels.get(2),error);}
             }
+            if(splitMoving)failures+=CloudValidation.run(shader,draw,triangles,nodes,compact,movingVertices,movingNodes,movingCompact,quads,cloudQuads);
         } finally {
             for(int i=0;i<4;i++)GL11.glPixelStorei(names[i],saved[i]);GL15.glBindBuffer(GL21.GL_PIXEL_UNPACK_BUFFER,pbo);
             RenderSystem.bindTexture(oldTexture);RenderSystem.deleteTexture(texture);

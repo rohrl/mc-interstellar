@@ -1,6 +1,7 @@
 package io.github.rohrl.interstellar.client;
 
 import io.github.rohrl.interstellar.Interstellar;
+import io.github.rohrl.interstellar.scene.CloudQuads;
 import io.github.rohrl.interstellar.mixin.client.CloudRendererAccessor;
 import io.github.rohrl.interstellar.mixin.client.RenderLayerAccessor;
 import io.github.rohrl.interstellar.mixin.client.RenderPhasesAccessor;
@@ -49,6 +50,7 @@ final class CloudMesh {
                     quad[dst+4]=data.getFloat(src+uv);quad[dst+5]=data.getFloat(src+uv+4);
                     for(int c=0;c<4;c++)quad[dst+8+c]=(data.get(src+colour+c)&255)/255f;
                 }
+                mesh.cloudRectangles &= CloudQuads.rectangle(quad,0);
                 mesh.entityQuad(quad,false);triangles+=2;
             }
         }

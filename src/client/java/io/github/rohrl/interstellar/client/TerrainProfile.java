@@ -15,14 +15,15 @@ import java.util.function.Consumer;
 /** Explicit developer diagnostics. Counter readbacks block and must never be timed as production. */
 final class TerrainProfile {
     static final boolean ENABLED=Boolean.getBoolean("interstellar.profile");
+    static final ShaderProgram[] cloudPrograms=new ShaderProgram[3];
     static final ShaderProgram[] movingPrograms=new ShaderProgram[3];
     static final ShaderProgram[][] programs=new ShaderProgram[3][3];
     // Triangle counts are leaf entries BEFORE material/cloud rejection, not all full intersection tests.
     private static final String[] METRICS={"orbitSteps","chords","terrainNodes","movingNodes",
-            "terrainTriangles","movingTriangles","terrainCandidates","movingCandidates",
+            "terrainTriangles","movingPrimitives","terrainCandidates","movingCandidates",
             "terrainReuse","movingReuse","terrainLeaves","movingLeaves",
             "transparentContinuations","probePending","rays","exhausted",
-            "cloudTriangles","actorTriangles","cloudCandidates","actorCandidates"};
+            "cloudPrimitives","actorTriangles","cloudCandidates","actorCandidates"};
     private static final String[] PASSES={"probe","mask","full"};
     private static final double[][] cpuTimes=new double[4][600];
     private static final int[] cpuCounts=new int[4];
@@ -39,7 +40,7 @@ final class TerrainProfile {
         }
     }
 
-    static void capture(int w,int h,int mask,boolean splitMoving,Consumer<ShaderProgram> configure,Runnable draw,String scene) {
+    static void capture(int w,int h,int mask,boolean splitMoving,boolean cloudQuads,Consumer<ShaderProgram> configure,Runnable draw,String scene) {
         SimpleFramebuffer target=new SimpleFramebuffer(w*2,h,false,false);
         FloatBuffer pixels=MemoryUtil.memAllocFloat(w*2*h*4);
         int oldPack=GL11.glGetInteger(GL21.GL_PIXEL_PACK_BUFFER_BINDING);
@@ -53,7 +54,7 @@ final class TerrainProfile {
             target.beginWrite(false);
             if(GL30.glCheckFramebufferStatus(GL30.GL_FRAMEBUFFER)!=GL30.GL_FRAMEBUFFER_COMPLETE)throw new IllegalStateException("Profile framebuffer incomplete");
             for(int pass=0;pass<3;pass++) {
-                ShaderProgram program=splitMoving?movingPrograms[pass]:programs[0][pass];configure.accept(program);
+                ShaderProgram program=cloudQuads?cloudPrograms[pass]:splitMoving?movingPrograms[pass]:programs[0][pass];configure.accept(program);
                 program.addSampler("PendingRays",mask);RenderSystem.setShader(()->program);
                 for(int group=0;group<5;group++) {
                     target.beginWrite(false);RenderSystem.viewport(0,0,w*2,h);
@@ -80,7 +81,7 @@ final class TerrainProfile {
             }
             Path directory=Path.of("profiles");Files.createDirectories(directory);
             Path file=directory.resolve("work-"+System.currentTimeMillis()+".csv");Files.writeString(file,csv);
-            Files.writeString(Path.of(file+".txt"),scene+"\nFull-resolution counters, both AA rays; mask discarded pixels are zero; counts are not timings. Triangle counts include entries rejected before intersection.\n");
+            Files.writeString(Path.of(file+".txt"),scene+"\nFull-resolution counters, both AA rays; mask discarded pixels are zero; counts are not timings. Primitive counts include entries rejected before intersection; cloudQuads=true counts native cloud faces instead of triangles.\n");
             Interstellar.LOGGER.info("Shader work profile completed: {}; {}",file.toAbsolutePath(),scene);
         } catch(java.io.IOException failure) {throw new IllegalStateException("Cannot write profile",failure);}
         finally {
