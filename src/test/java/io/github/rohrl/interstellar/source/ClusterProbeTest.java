@@ -18,19 +18,27 @@ class ClusterProbeTest {
         var r=inspect(Set.of(seed),seed);
         assertEquals(1,r.count()); assertEquals(-9.5,r.x()); assertEquals(300.5,r.y()); assertEquals(22.5,r.z());
         assertEquals(Math.sqrt(3)/2,r.enclosingRadius(),1e-12);
-        assertEquals(.125,r.schwarzschildRadius()); assertFalse(r.blackHoleProxy());
+        assertEquals(RADIUS_PER_BLOCK,r.schwarzschildRadius()); assertFalse(r.blackHoleProxy());
     }
     @Test void cubeHasExpectedMassGeometryAndCompactness() {
         var cells=new HashSet<Cell>();
         for(int x=0;x<4;x++) for(int y=0;y<4;y++) for(int z=0;z<4;z++) cells.add(new Cell(x,y,z));
         var r=inspect(cells,new Cell(0,0,0));
-        assertEquals(64,r.count()); assertEquals(8,r.schwarzschildRadius());
+        assertEquals(64,r.count()); assertEquals(Math.sqrt(12),r.schwarzschildRadius(),1e-12);
         assertEquals(2,r.x()); assertEquals(Math.sqrt(12),r.enclosingRadius(),1e-12); assertTrue(r.blackHoleProxy());
     }
     @Test void elongatedClusterOfSameMassIsNotClassifiedAsCompact() {
         var cells=new HashSet<Cell>(); for(int x=0;x<64;x++) cells.add(new Cell(x,0,0));
         var r=inspect(cells,new Cell(0,0,0));
         assertEquals(64,r.count()); assertFalse(r.blackHoleProxy()); assertTrue(r.enclosingRadius()>32);
+    }
+    @Test void referenceCubesProgressWithoutAnEarlyHorizon() {
+        for(int side=1;side<=4;side++) {
+            var cells=new HashSet<Cell>();
+            for(int x=0;x<side;x++)for(int y=0;y<side;y++)for(int z=0;z<side;z++)cells.add(new Cell(x,y,z));
+            var result=inspect(cells,new Cell(0,0,0));
+            assertEquals(side*side/16.0,result.compactness(),1e-12);assertEquals(side==4,result.blackHoleProxy());
+        }
     }
     @Test void onlyFaceNeighboursConnectAndBridgeEditsSplitAndMerge() {
         var cells=new HashSet<>(Set.of(new Cell(0,0,0),new Cell(2,0,0),new Cell(0,1,1)));

@@ -1,5 +1,11 @@
 # Progress
 
+## Current checkpoint — 2026-09-23, gameplay gravity implemented
+
+The accepted gameplay milestone adds automatic shared source discovery/refresh, gradual compact-cube lensing through a finite optical interior, local mob lift/capture, curved arrows/thrown projectiles and a cheap approach colour cue. `/interstellar demo gameplay` supplies the new exhibit; the original exhibit keeps its calibration and passive entities. The owner permits a small performance cost for this work.
+
+Build/package passes72 tests, including30 independently integrated extended-ray comparisons. Runtime checks cover discovery on reload, cube progression without recapture, mob lift/capture, projectile deflection/damage/horizon ordering and stable wall embedding. Preserved black-hole optics pass52,480 sampled comparisons and84 material checks. Small-scene CPU/GPU measurements and their limits are recorded in [gameplay gravity](docs/gameplay-gravity.md); no new worst-case FPS guarantee. Original player pose/flying state and normal ticking are restored; fixtures cleaned. Next return to the queued performance work.
+
 ## Current checkpoint — 2026-09-22, quad vertices adopted
 
 Requested demo/refinement steps3–4 and subsequent algorithm review are complete for the documented subset. The owner then authorized quad vertices and explicitly accepts a small easier-view regression for a gain in the slowest view. Production uses four-quad leaves, one retained vertex arena and one compact node arena; both native triangles and full-precision appearance remain intact.

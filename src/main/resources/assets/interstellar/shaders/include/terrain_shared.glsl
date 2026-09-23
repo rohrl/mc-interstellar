@@ -67,6 +67,11 @@ uniform vec3 TerrainFogRange;
 uniform vec4 TerrainFogColour;
 uniform vec3 Camera,Source,Forward,Right,Up;
 uniform float Radius,PathStep;
+#ifdef INTERSTELLAR_EXTENDED_SOURCE
+#moj_import <interstellar:extended_source.glsl>
+#else
+const float BodyRadius=0.0;
+#endif
 uniform vec2 Viewport;
 #ifdef INTERSTELLAR_SPLIT_AA
 uniform float SampleOffset;
@@ -548,7 +553,12 @@ int sceneSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
     if(farValue!=0) {distantHit=true;hit=farHit;normal=farNormal;return farValue;}
     materialCell=savedCell;return local;
 }
-vec2 derivative(vec2 q) {return vec2(q.y,1.5*q.x*q.x-q.x);}
+vec2 derivative(vec2 q) {
+#ifdef INTERSTELLAR_EXTENDED_SOURCE
+    if(BodyRadius>0.0)return bodyDerivative(q);
+#endif
+    return vec2(q.y,1.5*q.x*q.x-q.x);
+}
 #ifdef INTERSTELLAR_MATERIALS
 vec3 pastSurface(vec3 hit,vec3 normal,vec3 direction) {
     // A ray-direction-only nudge can round back onto a grazing surface. Cross
@@ -558,7 +568,7 @@ vec3 pastSurface(vec3 hit,vec3 normal,vec3 direction) {
 }
 bool passMaterial(int value,vec3 hit,vec3 normal) {
     if(MeshMode<.5 || value<0 || meshAlpha>=.999 && !meshCloud || diagnostic.w==-2.0)return false;
-    if(length(hit-Source)<Radius && Lensing>.5)return false;
+    if(BodyRadius==0.0 && length(hit-Source)<Radius && Lensing>.5)return false;
     vec3 colour=meshCloud?meshColour:surface(value,hit,normal);
     materialLayers+=vec4(colour,1.0)*((1.0-materialLayers.a)*clamp(meshAlpha,0.0,1.0));
     if(meshCloud)cloudSeen=true;
@@ -580,9 +590,9 @@ void trace(vec2 uv) {
     float r=length(Camera-Source),mu=dot(direction,radialAxis);
     vec3 tangentVector=direction-mu*radialAxis;
     float tangent=length(tangentVector);
-    if(Lensing<.5 || tangent<1e-5) {
+    if(Lensing<.5 || tangent<1e-5 || r<.0001) {
         float distance=Hybrid>.5 && (Diagnostic<.5 || Diagnostic>2.5)?1024.0:400.0;
-        bool horizon=Lensing>.5 && mu<0.0;
+        bool horizon=BodyRadius==0.0 && Lensing>.5 && mu<0.0;
         if(horizon) distance=r-Radius;
         vec3 start=Camera,end=Camera+direction*distance;
 #ifdef INTERSTELLAR_MATERIALS
@@ -605,8 +615,18 @@ void trace(vec2 uv) {
     vec3 tangentAxis=tangentVector/tangent;
     float u=Radius/r;
     vec2 q=vec2(u,-mu*u*sqrt(1.0-u)/tangent);
+#ifdef INTERSTELLAR_EXTENDED_SOURCE
+    if(BodyRadius>0.0) {
+        vec2 metric=bodyMetric(u);
+        q.y=-mu*u*sqrt(metric.y)/tangent;
+        rayEnergySquared=u*u*metric.x/(tangent*tangent);
+    }
+#endif
     // Keep delicate near-critical trajectories on the established angular cap.
     float impactSquared=tangent*tangent/(u*u*(1.0-u));
+#ifdef INTERSTELLAR_EXTENDED_SOURCE
+    if(BodyRadius>0.0)impactSquared=1.0/rayEnergySquared;
+#endif
     float angularCap=abs(impactSquared-6.75)<.005?min(.02,OrbitStep):OrbitStep;
     vec3 p=Camera,end=Camera;float phi=0.0,angle=0.0;vec2 next=q;bool captured=false;
 #ifdef INTERSTELLAR_MATERIALS
@@ -644,6 +664,9 @@ void trace(vec2 uv) {
             // kappa=1.5*u^5/(rs*(u*u+v*v)^(3/2)). Local chord sagitta is ~kappa*length^2/8.
             float normQ=length(q),u2=q.x*q.x;
             float curvature=1.5*u2*u2*q.x/max(Radius*normQ*normQ*normQ,1e-12);
+#ifdef INTERSTELLAR_EXTENDED_SOURCE
+            if(BodyRadius>0.0)curvature=q.x*u2*abs(q.x+derivative(q).y)/max(Radius*normQ*normQ*normQ,1e-12);
+#endif
             float tolerance=.001*(PathStep/.45)*(PathStep/.45)*(OrbitStep>.02?CurveFactor:1.0);
             stepSize=clamp(sqrt(8.0*tolerance/max(curvature,1e-12)),OrbitStep>.02?min(.05,PathStep):PathStep,MeshStepLimit);
         }
@@ -651,7 +674,7 @@ void trace(vec2 uv) {
         COUNT_WORK(0);
         vec2 a=derivative(q),b=derivative(q+h*a*.5),c=derivative(q+h*b*.5),d=derivative(q+h*c);
         next=q+h*(a+2.0*b+2.0*c+d)/6.0;
-        captured=next.x>=1.0;
+        captured=BodyRadius==0.0 && next.x>=1.0;
         angle=phi+h;
         if(captured) {angle=phi+h*(1.0-q.x)/(next.x-q.x);next.x=1.0;}
         if(next.x<=0.0) {fragColor=vec4(missing(direction),1);return;}
@@ -671,7 +694,7 @@ void trace(vec2 uv) {
             value=-1;
         }
 #endif
-        if(value>0 || distantHit) {fragColor=vec4(length(hit-Source)<Radius?dark():surface(value,hit,normal),1);return;}
+        if(value>0 || distantHit) {fragColor=vec4(BodyRadius==0.0 && length(hit-Source)<Radius?dark():surface(value,hit,normal),1);return;}
         if(value==0 && (Hybrid<.5 || Diagnostic>.5)) {fragColor=vec4(missing(normalize(end-p)),1);return;}
         if(captured) {fragColor=vec4(dark(),1);return;}
         phi=angle;q=next;p=end;

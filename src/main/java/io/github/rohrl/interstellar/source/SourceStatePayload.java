@@ -5,7 +5,7 @@ import net.minecraft.network.codec.PacketCodec;
 import net.minecraft.network.packet.CustomPayload;
 import net.minecraft.util.Identifier;
 
-/** State transitions clear stale metadata while preserving the client's armed live-view intent. */
+/** Preserves armed live-view intent; REFRESHING may retain the previous optical snapshot briefly. */
 public record SourceStatePayload(Identifier dimension,SourceState state) implements CustomPayload {
     public static final Id<SourceStatePayload> ID=new Id<>(Identifier.of("interstellar","source_state"));
     public static final PacketCodec<RegistryByteBuf,SourceStatePayload> CODEC=new PacketCodec<>() {

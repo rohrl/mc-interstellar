@@ -14,14 +14,19 @@ Open a world with cheats enabled, or use an account with command permission leve
 
 Minecraft may show an experimental-settings notice because the mod registers a custom dimension. On an existing save, use **Create Backup and Load**. This is a Minecraft world-loading step, before the demo command is available.
 
-## Enter the exhibit
+## Choose an exhibit
 
-1. Run `/interstellar demo enter`. The first entry builds a separate exhibit in the `interstellar:demo` dimension. Existing dimensions are not rebuilt or cleared. Occupied cells that differ from the exhibit stop construction instead of being overwritten.
-2. Wait for the ready/source messages, then press **F10**. The first world capture takes a moment. The HUD shows progress, source mass and viewing range.
+- **New gameplay:** `/interstellar demo gameplay` builds a separate exhibit with gradual mass progression, automatic discovery and local mob/projectile gravity. A complete 4×4×4 source is at the black-hole threshold; removing blocks reduces the field, and compact 2×2×2/3×3×3 builds keep visible material with lensing. Close mobs can lift and be captured; ordinary/spectral arrows and thrown projectiles bend. Players and terrain are unaffected. Model, settings and limits: `docs/gameplay-gravity.md` in the repository or demo archive.
+- **Preserved optics reference:** `/interstellar demo enter` keeps the previous stronger mass calibration and passive mobs. Use this for comparison with earlier screenshots.
+
+## Explore and return
+
+1. Run either entry command above. The first entry builds its exhibit in a separate dimension. Occupied cells that differ from the exhibit stop construction instead of being overwritten.
+2. Press **F10** to arm lensing. Nearby sources are found automatically; initial discovery/capture takes a moment. The HUD shows progress, source mass, compactness and viewing range.
 3. Fly with **WASD**, **Space** up and **Shift** down; look with the mouse. The coloured wall, foreground pillar, terrain steps, stairs/slabs, leaves and sheep demonstrate curved images and occlusion.
-4. Run `/interstellar demo leave` to return to your saved dimension, position, view direction, game mode and flight state. This also cancels a queued entry. Your inventory is retained. Inspect your original mass source before re-enabling F10 there.
+4. Run `/interstellar demo leave` to return to your saved dimension, position, view direction, game mode and flight state. This also cancels a queued entry. Your inventory is retained. Nearby sources in your original world are discovered automatically too.
 
-The exhibit is built once and retained in the save. Re-entering does not reset later edits or duplicate its sheep. The return record is saved with the world. The demo changes to creative flight while inside; it does not apply destructive gravitational physics.
+Each exhibit is built once and retained in the save. Re-entering does not reset later edits or duplicate its sheep. The return record is saved with the world and survives switching exhibits. Entry enables creative flight. Gameplay gravity can remove captured mobs/projectiles; it does not destroy terrain or affect the player. Use spawn eggs/bows to experiment, or build your own mass-block assembly in a normal world.
 
 New exhibits also contain a bed/chest, two stained-glass layers and a contained pool with a glass front. Older saved exhibits retain their existing layout.
 
@@ -45,9 +50,13 @@ These commands work inside the exhibit. They are static demonstration viewpoints
 | F1 | Minecraft HUD visibility |
 | F9 | Frozen inspection view for comparisons; Escape returns |
 | F8 | Separate optical sky lab |
-| `/interstellar inspect x y z` | Select a connected mass-block source in a loaded nearby chunk |
+| `/interstellar inspect x y z` | Optionally pin a connected source for inspection |
+| `/interstellar source auto` | Resume automatic source selection |
+| `/interstellar source status` | Report discovered sources and pending work |
+| `/interstellar gravity enabled true/false` | Enable/disable entity gravity for this server session |
+| `/interstellar gravity capture true/false` | Enable/disable horizon absorption for this session |
 
-Selected-source edits refresh automatically. Leaving the supported exterior/range pauses lensing and restores normal viewing; returning resumes it. Terrain horizon crossing is a later feature.
+Source edits, splits, merges and chunk reloads refresh automatically. Leaving the supported exterior/range pauses lensing and restores normal viewing; returning resumes it. F10 controls optics independently of entity gravity. Persistent physics settings are in `config/interstellar-gravity.json`. Entity dynamics currently support enclosing radius up to16 blocks and horizon radius up to12; larger sources retain optics and show the physics size limit. Terrain horizon crossing is a later feature.
 
 ## Performance and coverage
 

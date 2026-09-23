@@ -13,6 +13,7 @@ final class SelectedSource {
     private static SourcePayload source;
     private static ClientWorld world;
     private static SourceState state=SourceState.NONE;
+    private static long refreshingSince;
     static void register() {
         ClientPlayConnectionEvents.DISCONNECT.register((handler,client)->clear());
         ClientPlayNetworking.registerGlobalReceiver(SourcePayload.ID,(payload,context)-> {
@@ -25,13 +26,16 @@ final class SelectedSource {
             var client=context.client();
             if(client.world==null||!client.world.getRegistryKey().getValue().equals(payload.dimension()))return;
             if(payload.state()==SourceState.NONE) {clear();return;}
-            source=null;world=client.world;state=payload.state();
+            if(payload.state()!=SourceState.REFRESHING)source=null;
+            else if(state!=SourceState.REFRESHING)refreshingSince=client.world.getTime();
+            world=client.world;state=payload.state();
         });
     }
     private static void clear() { source=null; world=null;state=SourceState.NONE; }
     static SourceState state() {current();return state;}
     static SourcePayload current() {
         if (MinecraftClient.getInstance().world!=world) clear();
+        if(world!=null&&state==SourceState.REFRESHING&&world.getTime()-refreshingSince>=20)source=null;
         return source;
     }
 }

@@ -18,7 +18,6 @@ public final class LiveTerrain {
     static void toggle(MinecraftClient client) {
         if(active()) {stop();return;}
         if(client.world==null || client.currentScreen!=null)return;
-        if(SelectedSource.state()==SourceState.NONE) {message(client,"Inspect a source before F10.");return;}
         armedWorld=client.world;
         synchronize(client);
     }
@@ -27,10 +26,10 @@ public final class LiveTerrain {
     static void tick(MinecraftClient client) {synchronize(client);}
     private static void synchronize(MinecraftClient client) {
         if(!active())return;
-        if(client.world!=armedWorld||SelectedSource.state()==SourceState.NONE) {stop();return;}
+        if(client.world!=armedWorld) {stop();return;}
         var source=SelectedSource.current();
         if(renderer!=null&&renderer.selectedSource()==source)return;
-        if(source!=null&&source.blackHoleProxy()) {
+        if(source!=null&&source.count()>0) {
             if(renderer!=null) {
                 renderer.adoptSource(source);
                 Interstellar.LOGGER.info("Live source refreshed without terrain reload: N={}, r_s={}",source.count(),source.schwarzschildRadius());
@@ -58,10 +57,10 @@ public final class LiveTerrain {
         try {
             synchronize(client);
             if(!active())return;
-            if(renderer==null || SelectedSource.current()==null || !SelectedSource.current().blackHoleProxy()) {
+            if(renderer==null || SelectedSource.current()==null) {
                 context.fill(6,6,Math.min(client.getWindow().getScaledWidth()-6,440),46,0xCD101824);
                 context.drawTextWithShadow(client.textRenderer,"INTERSTELLAR | PAUSED - normal view | F10: off",12,12,0xFFFFD59A);
-                String reason=SelectedSource.current()!=null?"Extended source: waiting for black-hole compactness":SelectedSource.state().message();
+                String reason=SelectedSource.state().message();
                 context.drawTextWithShadow(client.textRenderer,reason,12,24,0xFFFFFFFF);
                 context.drawTextWithShadow(client.textRenderer,"Source tracking active | Resumes automatically",12,36,0xFF88D8FF);
                 return;

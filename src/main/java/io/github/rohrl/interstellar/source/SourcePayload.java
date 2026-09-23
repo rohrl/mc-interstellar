@@ -22,6 +22,6 @@ public record SourcePayload(Identifier dimension, int count, double x, double y,
     };
     @Override public Id<? extends CustomPayload> getId() { return ID; }
     public boolean blackHoleProxy() {
-        return count > 0 && enclosingRadius > 0 && schwarzschildRadius >= enclosingRadius;
+        return count > 0 && enclosingRadius > 0 && schwarzschildRadius >= enclosingRadius*(1-1e-12);
     }
 }

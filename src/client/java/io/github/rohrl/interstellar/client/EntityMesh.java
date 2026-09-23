@@ -54,9 +54,18 @@ final class EntityMesh implements VertexConsumerProvider,AutoCloseable {
             double py=MathHelper.lerp(delta,entity.lastRenderY,entity.getY())-origin.getY();
             double pz=MathHelper.lerp(delta,entity.lastRenderZ,entity.getZ())-origin.getZ();
             int before=vertices;
+            captureCue=0;
+            var source=SelectedSource.current();
+            if(entity instanceof net.minecraft.entity.mob.MobEntity && source!=null && source.blackHoleProxy()
+                    && !client.world.getRegistryKey().getValue().toString().equals("interstellar:demo")) {
+                double ratio=entity.getPos().add(0,entity.getHeight()*.5,0).distanceTo(new net.minecraft.util.math.Vec3d(source.x(),source.y(),source.z()))/source.schwarzschildRadius();
+                float t=(float)Math.clamp((1.8-ratio)/.8,0,1);
+                captureCue=t*t*(3-2*t);
+            }
             dispatcher.render(entity,px,py,pz,entity.getYaw(delta),delta,new MatrixStack(),this,dispatcher.getLight(entity,delta));
             if(vertices>before)entities++;else omittedEntities++;
         }
+        captureCue=0;
         // Snapshot loaded chunks' small block-entity maps at most once per game tick.
         // This never generates chunks or scans their block arrays. Keep animated output live.
         long tick=client.world.getTime();
@@ -147,6 +156,9 @@ final class EntityMesh implements VertexConsumerProvider,AutoCloseable {
             GL15.glBindBuffer(GL21.GL_PIXEL_UNPACK_BUFFER,pbo);RenderSystem.bindTexture(previous);
         }
     }
+    // A cheap approach/capture cue, not spectral transport. Stored with each vertex's colour
+    // so delayed quad completion cannot inherit the next entity's tint. No new draw or blend pass.
+    private float captureCue;
     private final class Collector implements VertexConsumer {
         final Tile tile;final boolean twoSided,translucent;final float[] quad=new float[48];
         int count=-1;float red=1,green=1,blue=1,alpha=1,u,v,shade=1;int blockLight=240,skyLight=240;
@@ -172,7 +184,10 @@ final class EntityMesh implements VertexConsumerProvider,AutoCloseable {
             endVertex();if(++vertices>MAX_VERTICES)throw new IllegalStateException("Entity mesh vertex cap exceeded");
             count++;int p=count*12;quad[p]=a;quad[p+1]=b;quad[p+2]=c;return this;
         }
-        @Override public VertexConsumer color(int r,int g,int b,int a) {red=r/255f;green=g/255f;blue=b/255f;alpha=a/255f;return this;}
+        @Override public VertexConsumer color(int r,int g,int b,int a) {
+            float dim=1-.35f*captureCue;
+            red=r/255f*dim;green=g/255f*dim*(1-.3f*captureCue);blue=b/255f*dim*(1-.5f*captureCue);alpha=a/255f;return this;
+        }
         @Override public VertexConsumer texture(float a,float b) {u=a;v=b;return this;}
         @Override public VertexConsumer overlay(int a,int b) {return this;} // Hurt/flash overlay is explicitly not captured yet.
         @Override public VertexConsumer light(int a,int b) {blockLight=a;skyLight=b;return this;}

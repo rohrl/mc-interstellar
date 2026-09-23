@@ -2,11 +2,11 @@
 
 A Minecraft Java mod for educational relativistic optics. Scientific assumptions and numerical limits must be visible and testable.
 
-**Current iteration:** F10 bends native Minecraft terrain, live mobs, ordinary block entities, fluids and translucent materials around an inspected mass-block source. Chunk and source edits update automatically. A separate persistent demo exhibit provides repeatable viewpoints and a saved return to your world. F9 supplies frozen comparisons; F8 remains the separate optical/free-fall lab. Special render layers and deeper terrain/player relativity remain unfinished. See [material coverage and validation](docs/material-coverage.md) and [the performance review](docs/performance-review-2026-09-22.md).
+**Current iteration:** F10 bends native Minecraft terrain, live mobs, ordinary block entities, fluids and translucent materials around automatically discovered mass-block sources. Compact builds progress from extended-body lensing to a black-hole proxy at the reference 4×4×4 cube. Nearby mobs can lift and fall inward; arrows and thrown projectiles bend and can be captured. The new gameplay exhibit is separate from the preserved legacy demo. F9 supplies frozen comparisons; F8 remains the optical/free-fall lab. Special render layers and deeper terrain/player relativity remain unfinished. See [gameplay gravity and its current verification status](docs/gameplay-gravity.md), [material coverage](docs/material-coverage.md) and [the performance review](docs/performance-review-2026-09-22.md).
 
 ## Start here
 
-- [Gameplay gravity proposal](docs/gameplay-gravity-plan.md): next milestone, gradual mass-block effects, automatic discovery, local mobs/projectiles and explicit physics compromises; not implemented yet.
+- [Gameplay gravity](docs/gameplay-gravity.md): implementation, controls, numerical assumptions, limits and verification; [original proposal](docs/gameplay-gravity-plan.md).
 - [Performance profile and revised priorities](docs/performance-profile-2026-09-23.md): measured GPU stages, ray work counts, CPU/JFR findings and updated optimization estimates.
 - [First four performance experiments](docs/performance-experiments-1-4.md): completed trials, measured keep/reject decisions and preserved implementations.
 - [Separate moving trees](docs/moving-trees.md): accepted actor/cloud forest, rejected cache variants, image checks and measured performance.
@@ -61,9 +61,9 @@ Edit **run/config/interstellar-optics.json** for persistent effect defaults, obs
 
 ## Mass blocks
 
-Use **/give @s interstellar:mass_block**, place connected blocks, then right-click with both hands empty to inspect mass and compactness. Holding a block uses normal RMB placement. Operator command: **/interstellar inspect x y z**. Press **F10** to enable world lensing around the selected black-hole proxy. [Model, budgets and verified behavior](docs/mass-blocks.md).
+Use **/give @s interstellar:mass_block** and place connected blocks. Nearby sources are selected and updated automatically; **F10** enables world lensing. A compact 2×2×2 build bends light, a 3×3×3 build bends it more, and a 4×4×4 cube reaches the black-hole proxy threshold. Right-click with empty hands or use **/interstellar inspect x y z** to pin a source; **/interstellar source auto** resumes automatic selection. Holding a block uses normal RMB placement. [Gameplay model, controls and checks](docs/gameplay-gravity.md).
 
-After inspecting a black-hole proxy, open **F8** and press **S** to use its scale and camera distance in the sky lab. Extended sources are metadata-only. Relevant source changes now refresh automatically from the inspected block; unrelated chunk activity preserves the selection. F10 waits through removal, unloading or extended-source states and resumes when usable metadata returns. See [automatic source refresh](docs/source-refresh.md). **R** restores the configured F8 reference view.
+For a selected black-hole proxy, open **F8** and press **S** to use its scale and camera distance in the sky lab. F8 remains a black-hole lab; extended sources render in F9/F10. F10 recovers automatically through source edits, removal and chunk loading. **R** restores the configured F8 reference view.
 
 Press **C** in the lab for the near-critical ray stress test (brief blocking pause). **V** now also logs unwrapped-angle comparisons. [Measured accuracy limits](docs/critical-rays.md).
 

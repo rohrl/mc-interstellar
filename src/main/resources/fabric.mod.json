@@ -9,7 +9,7 @@
     "main": ["io.github.rohrl.interstellar.Interstellar"],
     "client": ["io.github.rohrl.interstellar.client.InterstellarClient"]
   },
-  "mixins": [{"config":"interstellar.client.mixins.json","environment":"client"}],
+  "mixins": ["interstellar.mixins.json",{"config":"interstellar.client.mixins.json","environment":"client"}],
   "contact": {
     "sources": "https://github.com/rohrl/mc-interstellar",
     "issues": "https://github.com/rohrl/mc-interstellar/issues"

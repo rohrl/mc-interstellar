@@ -4,7 +4,7 @@
 
 The owner requests gradual mass-block effects, automatic updates, nearby mob attraction and curved projectile paths. Plan this milestone before further GPU profiling, optical-table experiments and moving-tree refit/reuse. The original four performance experiments are complete; retain their accepted renderer.
 
-This is a design proposal, not implemented behaviour or a validated physics/performance claim. The requested experience is accepted scope; the calibration, ranges, capture policy and implementation choices below are proposed defaults. Player gravity, terrain destruction, accretion, general emission histories and other deeper-relativity features are not added to this milestone.
+The owner subsequently accepted this proposal, permitted a small performance cost, and requested close mob lift/capture with an inexpensive visual cue. This document preserves the original design discussion; [gameplay-gravity.md](gameplay-gravity.md) records the implemented behaviour, final choices and measured checks. Player gravity, terrain destruction, accretion, general emission histories and other deeper-relativity features are not added to this milestone.
 
 ## 1. Mass and progression
 

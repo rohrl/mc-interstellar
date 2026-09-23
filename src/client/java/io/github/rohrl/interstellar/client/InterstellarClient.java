@@ -55,6 +55,10 @@ public final class InterstellarClient implements ClientModInitializer {
                 context.register(Identifier.of("interstellar", "terrain_moving_mask"), VertexFormats.POSITION, program->TerrainScreen.setMovingShader(1,program));
                 context.register(Identifier.of("interstellar", "terrain_moving_materials"), VertexFormats.POSITION, program->TerrainScreen.setMovingShader(2,program));
                 context.register(Identifier.of("interstellar", "terrain_moving_diagnostic"), VertexFormats.POSITION, program->TerrainScreen.setMovingShader(3,program));
+                context.register(Identifier.of("interstellar", "terrain_body_probe"), VertexFormats.POSITION, program->TerrainScreen.setBodyShader(0,program));
+                context.register(Identifier.of("interstellar", "terrain_body_mask"), VertexFormats.POSITION, program->TerrainScreen.setBodyShader(1,program));
+                context.register(Identifier.of("interstellar", "terrain_body_materials"), VertexFormats.POSITION, program->TerrainScreen.setBodyShader(2,program));
+                context.register(Identifier.of("interstellar", "terrain_body_diagnostic"), VertexFormats.POSITION, program->TerrainScreen.setBodyShader(3,program));
                 if(TerrainProfile.ENABLED)for(int experiment=0;experiment<3;experiment++)for(int pass=0;pass<3;pass++) {
                     final int e=experiment,p=pass;
                     context.register(Identifier.of("interstellar", "terrain_profile_"+e+"_"+p),VertexFormats.POSITION,program->TerrainProfile.programs[e][p]=program);
