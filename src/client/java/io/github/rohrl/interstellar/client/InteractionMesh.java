@@ -21,6 +21,7 @@ final class InteractionMesh {
         if(!client.options.hudHidden && client.crosshairTarget instanceof BlockHitResult hit && hit.getType()==HitResult.Type.BLOCK) {
             var pos=hit.getBlockPos();var state=world.getBlockState(pos);
             if(!state.isAir() && world.getWorldBorder().contains(pos)) {
+                target.massOverlay=state.getBlock() instanceof io.github.rohrl.interstellar.source.MassBlock;
                 var out=target.solidColour();
                 float radius=(float)Math.max(.002,Math.min(.015,camera.distanceTo(Vec3d.ofCenter(pos))*.0009));
                 state.getOutlineShape(world,pos,ShapeContext.of(client.player)).forEachEdge((ax,ay,az,bx,by,bz)->
@@ -33,6 +34,7 @@ final class InteractionMesh {
             var pos=BlockPos.fromLong(entry.getLongKey());var stages=entry.getValue();
             if(stages.isEmpty() || camera.squaredDistanceTo(Vec3d.of(pos))>1024)continue;
             int stage=stages.last().getStage();if(stage<0 || stage>=10)continue;
+            target.massOverlay=world.getBlockState(pos).getBlock() instanceof io.github.rohrl.interstellar.source.MassBlock;
             matrices.push();
             try {
                 matrices.translate(pos.getX()-origin.getX(),pos.getY()-origin.getY(),pos.getZ()-origin.getZ());

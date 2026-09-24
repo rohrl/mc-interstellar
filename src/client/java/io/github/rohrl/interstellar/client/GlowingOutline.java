@@ -7,7 +7,7 @@ import net.minecraft.client.gl.SimpleFramebuffer;
 
 /** Curved model mask followed by a small screen-space edge filter, only while needed. */
 final class GlowingOutline implements AutoCloseable {
-    static final ShaderProgram[] rays=new ShaderProgram[2];
+    static final ShaderProgram[] rays=new ShaderProgram[3];
     static ShaderProgram edge;
     private SimpleFramebuffer target;
     void render(int w,int h,Runnable trace) {

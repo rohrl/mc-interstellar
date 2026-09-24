@@ -1,5 +1,23 @@
 # Progress
-## Current checkpoint — 2026-09-24, native world features and tether gravity
+
+## Current checkpoint — 2026-09-24, horizon access and body study
+
+F10 stays active through the horizon using a regular falling optical frame near it.
+Interior mass blocks, selection and damage layers use straight aim for editing;
+surroundings stay curved. Explicit dark-background core cutoff0.1 r_s retains editing.
+Full-resolution comparisons,8x larger horizon and isolated spyglass views produced
+strips rather than recognisable player images: body capture now defaults off, with
+the opt-in command retained. Actual hands/other entities remain enabled.
+
+Build/package,78 tests; final52,480 optical/156 material/945 horizon GPU checks pass.
+Actual mining/placement and automatic512→511→512 source updates verified. Fixed an
+over-broad cloud editing overlay and a diagnostic deleted-texture binding before release.
+1440p ordinary demo~52FPS; enormous close source~18FPS. Removed temporary512+64 blocks,
+restored seven player fields exactly, normal quality/window/ticking/arrows, client paused.
+See docs/horizon-body-study.md and D076 for full evidence and limitations. Next planned
+performance work remains targeted GPU measurement, optical tables and moving-tree reuse.
+
+## Previous checkpoint — 2026-09-24, native world features and tether gravity
 
 Implemented emissive/glint materials, native nearby shadows, ordinary sign/name text,
 selection/mining overlays, curved team-coloured Glowing silhouettes, a cheap local

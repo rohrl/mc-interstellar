@@ -28,6 +28,9 @@ final class TerrainScreen extends Screen {
     private static ShaderProgram quadProbeShader,quadMaskedShader,quadMaterialShader,quadDiagnosticShader;
     private static final ShaderProgram[] movingShaders=new ShaderProgram[4];
     private static final ShaderProgram[] bodyShaders=new ShaderProgram[4];
+    private static final ShaderProgram[] horizonShaders=new ShaderProgram[4];
+    static void setHorizonShader(int pass,ShaderProgram program) {horizonShaders[pass]=program;resourceVersion++;}
+    private boolean horizonView() {return !extendedSource() && camera.distanceTo(centre())<1.25*source.schwarzschildRadius();}
     static void setBodyShader(int pass,ShaderProgram program) {bodyShaders[pass]=program;resourceVersion++;}
     private boolean separateMoving=true;
     static void setMovingShader(int pass,ShaderProgram program) {movingShaders[pass]=program;resourceVersion++;}
@@ -106,12 +109,12 @@ final class TerrainScreen extends Screen {
         if(source==null || source.count()<=0) {error="Wait for a nearby mass-block source, then reopen the terrain preview.";return;}
         camera=client.gameRenderer.getCamera().getPos();
         yaw=client.gameRenderer.getCamera().getYaw();pitch=client.gameRenderer.getCamera().getPitch();
-        if(!live && source.blackHoleProxy() && camera.distanceTo(centre())/source.schwarzschildRadius()<1.05) {error="Terrain prototype needs an exterior camera: move beyond 1.05 r_s.";return;}
         snapshot=new TerrainSnapshot(client.world,centre(),!live || hybrid);
         if(live) {
             meshMode=true;hybrid=true;
         }
         if(extendedSource()) {meshMode=true;hybrid=true;streamedReference=!live;}
+        if(horizonView()) {meshMode=true;hybrid=true;streamedReference=!live;}
         if(!live && camera.distanceTo(centre())>MESH_VIEW_RANGE) {error="Move within "+MESH_VIEW_RANGE+" blocks of the source, then reopen the terrain preview.";}
         else if(!live && camera.distanceTo(centre())>VOXEL_VIEW_RANGE) {
             // Distant inspection must not fall back to the old bounded voxel/column representation.
@@ -136,8 +139,7 @@ final class TerrainScreen extends Screen {
                     camera=client.gameRenderer.getCamera().getPos();
                     yaw=client.gameRenderer.getCamera().getYaw();pitch=client.gameRenderer.getCamera().getPitch();
 
-                    String reason=camera.distanceTo(centre())>MESH_VIEW_RANGE?"Beyond "+MESH_VIEW_RANGE+"-block viewing range: move closer":
-                            source.blackHoleProxy() && camera.distanceTo(centre())/source.schwarzschildRadius()<1.05?"Exterior limit: move beyond 1.05 r_s":null;
+                    String reason=camera.distanceTo(centre())>MESH_VIEW_RANGE?"Beyond "+MESH_VIEW_RANGE+"-block viewing range: move closer":null;
                     if(!java.util.Objects.equals(paused,reason)) {
                         paused=reason;cancelBenchmark();
                         if(pending!=null) {pending.close();pending=null;}
@@ -169,6 +171,7 @@ final class TerrainScreen extends Screen {
             String details=benchmark==null?String.format(Locale.ROOT,"%s | C %.2f | Range %.0f / %d | AA %s",source.blackHoleProxy()?"BH r="+String.format(Locale.ROOT,"%.2f",source.schwarzschildRadius()):"Extended mass",
                     source.schwarzschildRadius()/source.enclosingRadius(),camera.distanceTo(centre()),MESH_VIEW_RANGE,aaName()):benchmark.status().replace("B cancels","F12 cancels");
             if(source.enclosingRadius()>16 || source.blackHoleProxy()&&source.schwarzschildRadius()>12)details="Large source: optics only; entity gravity size limit";
+            if(horizonView())details=camera.distanceTo(centre())<=source.schwarzschildRadius()?"Inside horizon | Blocks at normal positions for editing":"Near horizon | Transition to falling camera frame";
             context.drawTextWithShadow(textRenderer,textRenderer.trimToWidth(details,Math.max(1,width-24)),12,36,0xFFFFD59A);
             return;
         }
@@ -206,10 +209,10 @@ final class TerrainScreen extends Screen {
         shader=currentShader();
         if(validate && meshMode) {
             validate=false;
-            var diagnosticShader=useQuads()?(useSeparateMoving()?movingShaders[3]:quadDiagnosticShader):useLayoutShader()?layoutDiagnosticShader:useDefaultShader()?(useLongShader()?longMeshShader:compactMeshShader):shader;
+            var diagnosticShader=useQuads()?(horizonView()?horizonShaders[3]:useSeparateMoving()?movingShaders[3]:quadDiagnosticShader):useLayoutShader()?layoutDiagnosticShader:useDefaultShader()?(useLongShader()?longMeshShader:compactMeshShader):shader;
             diagnosticShader.getUniformOrDefault("MeshStepLimit").set(meshStepLimit);
             Interstellar.LOGGER.info("Mesh fixture program: {}; step cap={}; angular cap={}",useQuads()?"quad diagnostic variant":useLayoutShader()?"streamed-layout diagnostic variant":useDefaultShader()?"compact diagnostic variant (live defaults fix Diagnostic=0)":programName(),useLongShader()?meshStepLimit:4,orbitStep);
-            validationStatus=MeshValidation.run(diagnosticShader,()->drawQuad(1,1),orbitStep,curveFactor,useQuads(),useSeparateMoving());
+            validationStatus=MeshValidation.run(diagnosticShader,()->drawQuad(1,1),orbitStep,curveFactor,useQuads(),useSeparateMoving(),horizonView());
         }
         if(hybrid)nativeSky.update(!meshMode || !meshClouds);
         int w=Math.max(1,Math.round(client.getWindow().getFramebufferWidth()*scale));
@@ -244,7 +247,7 @@ final class TerrainScreen extends Screen {
                 if(useSelectiveMaterials()) {
                     mask=samples.copyMask();
                     if(benchmark!=null)benchmark.mark(2);
-                    shader=useQuads()?(extendedSource()?bodyShaders[1]:useSeparateMoving()?movingShaders[1]:profileProgram(quadMaskedShader,1)):materialMaskedShader;configureShader(w,h);
+                    shader=useQuads()?(horizonView()?horizonShaders[1]:extendedSource()?bodyShaders[1]:useSeparateMoving()?movingShaders[1]:profileProgram(quadMaskedShader,1)):materialMaskedShader;configureShader(w,h);
                     shader.addSampler("PendingRays",mask);RenderSystem.setShader(()->shader);
                     samples.begin(0);shader.getUniformOrDefault("SampleOffset").set(-.25f);drawQuad(w,h);
                     if(benchmark!=null)benchmark.mark(3);
@@ -267,7 +270,7 @@ final class TerrainScreen extends Screen {
         if(antialiasing==0)target.draw(client.getWindow().getFramebufferWidth(),client.getWindow().getFramebufferHeight());
         else TerrainResolve.draw(target,client.getWindow().getFramebufferWidth(),client.getWindow().getFramebufferHeight(),antialiasing==1);
         var glow=meshMode?(moving!=null?moving.entities.glowing:mesh.entities==null?null:mesh.entities.glowing):null;
-        var glowShader=GlowingOutline.rays[extendedSource()?1:0];
+        var glowShader=GlowingOutline.rays[horizonView()?2:extendedSource()?1:0];
         if(glow!=null && glow.nodes>0 && meshEntities && glowShader!=null && GlowingOutline.edge!=null) {
             var previousShader=shader;
             try {
@@ -415,6 +418,7 @@ final class TerrainScreen extends Screen {
             && TerrainSamples.supported(Math.max(1,Math.round(client.getWindow().getFramebufferWidth()*scale)));}
     private ShaderProgram currentShader() {
         if(useQuads()) {
+            if(horizonView())return horizonShaders[!useLayoutShader()?3:useMaterials() && !useSelectiveMaterials()?2:0];
             if(extendedSource())return bodyShaders[!useLayoutShader()?3:useMaterials() && !useSelectiveMaterials()?2:0];
             if(useSeparateMoving())return movingShaders[!useLayoutShader()?3:useMaterials() && !useSelectiveMaterials()?2:0];
             if(quadDiagnosticShader==null || quadProbeShader==null || quadMaterialShader==null || quadMaskedShader==null)
@@ -429,6 +433,7 @@ final class TerrainScreen extends Screen {
         return meshShader;
     }
     private String programName() {
+        if(horizonView())return "native-horizon-quads";
         if(useQuads())return (extendedSource()?"native-body-quads-":"native-quads-")+(!useLayoutShader()?"general-":useSelectiveMaterials()?"selective-":"full-")+meshStepLimit+"; separateMoving="+useSeparateMoving()+"; profileExperiment="+profileExperiment;
         if(useLayoutShader())return (useMaterials()?(useSelectiveMaterials()?"native-live-selective-materials-":"native-live-materials-"):orbitStep>.02f && materialProbeShader!=null?"native-live-curvature-probe-":"native-live-layout-")+meshStepLimit;
         if(useSplitShader())return "native-live-split-"+meshStepLimit;
@@ -521,6 +526,7 @@ final class TerrainScreen extends Screen {
             case GLFW.GLFW_KEY_U -> {if(meshMode)meshCoverage=!meshCoverage;}
             case GLFW.GLFW_KEY_E -> {if(meshMode)meshEntities=!meshEntities;}
             case GLFW.GLFW_KEY_M -> {
+                if(horizonView()) {validationStatus="Near-horizon view requires the native streamed mesh";return true;}
                 if(!live && snapshot!=null && error==null) {
                     boolean nextStream=(modifiers&GLFW.GLFW_MOD_SHIFT)!=0;
                     boolean replace=mesh!=null && nextStream!=streamedReference;

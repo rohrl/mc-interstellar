@@ -9,7 +9,9 @@ import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.*;
 
 /** Session controls for optional visuals and the server's current local gravity strength. */
 final class WorldFeatures {
-    static boolean body=true,weather=true,gravityEnabled;
+    // Returning images remain an opt-in experiment: full-resolution/zoom trials
+    // resolve stretched slivers, without enough recognisable detail for the cost.
+    static boolean body=false,weather=true,gravityEnabled;
     static double gravityStrength;
     private WorldFeatures() {}
     static void register() {

@@ -38,6 +38,7 @@ final class EntityMesh implements VertexConsumerProvider,AutoCloseable {
     private record Tile(int x,int y,int width,int height,boolean blockAtlas,boolean fractionalAlpha) {}
     private final Tile white=new Tile(0,0,1,1,false,false);
     private boolean cameraBody;
+    boolean massOverlay;
     final GlowingMesh glowing=new GlowingMesh();
     private int glowColour=-1;
     EntityMesh(WorldMesh mesh) {this.mesh=mesh;pixels.putInt(0,-1);x=1;rowHeight=1;}
@@ -94,7 +95,7 @@ final class EntityMesh implements VertexConsumerProvider,AutoCloseable {
                 if(vertices>before)blockEntities++;
             } finally {matrices.pop();}
         }
-        InteractionMesh.capture(this,origin);
+        try {InteractionMesh.capture(this,origin);} finally {massOverlay=false;}
         for(var strip:strips)strip.finish();
         for(var collector:collectors.values())collector.finish();
         glowing.upload();
@@ -289,7 +290,7 @@ final class EntityMesh implements VertexConsumerProvider,AutoCloseable {
         @Override public VertexConsumer vertex(float a,float b,float c) {
             if(tile==null)return this;
             endVertex();if(++vertices>MAX_VERTICES)throw new IllegalStateException("Entity mesh vertex cap exceeded");
-            count++;if(count==0)quadGlow=glowColour;int p=count*12;quad[p]=a;quad[p+1]=b;quad[p+2]=c;quad[p+3]=cameraBody?32:0;return this;
+            count++;if(count==0)quadGlow=glowColour;int p=count*12;quad[p]=a;quad[p+1]=b;quad[p+2]=c;quad[p+3]=(cameraBody?32:0)+(massOverlay?64:0);return this;
         }
         @Override public VertexConsumer color(int r,int g,int b,int a) {
             float dim=1-.7f*captureCue;

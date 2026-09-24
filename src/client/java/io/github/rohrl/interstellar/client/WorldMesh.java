@@ -127,8 +127,8 @@ final class WorldMesh implements VertexConsumer,AutoCloseable {
                     manager.renderFluid(pos,world,fluids,state,state.getFluidState());fluids.finish();
                 }
                 if(state.getRenderType()!=BlockRenderType.MODEL)continue;
-                terrainMaterial=RenderLayers.getBlockLayer(state)==RenderLayer.getTranslucent()?-3:0;
-                if(terrainMaterial!=0)materials=true;
+                terrainMaterial=state.getBlock() instanceof io.github.rohrl.interstellar.source.MassBlock?-4:RenderLayers.getBlockLayer(state)==RenderLayer.getTranslucent()?-3:0;
+                if(terrainMaterial==-3)materials=true;
                 matrices.push();
                 try {
                     matrices.translate(pos.getX()-origin.getX(),pos.getY()-origin.getY(),pos.getZ()-origin.getZ());

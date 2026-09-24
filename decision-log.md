@@ -365,3 +365,27 @@ The actual camera-player skin/model is eligible after a ray has bent past pi aro
 For inexpensive weather, redraw native precipitation only in a small local foreground area after the lensed composite and before hands. Keep biome/roof checks and straight-world depth; accept unbent local rain/snow as the requested approximation. Its cost is measured separately from lensing, and particle effects remain absent.
 
 Tridents share existing server projectile substeps while loyalty remains once per native tick. Free bobbers get bounded local acceleration and swept capture; native hooking/reeling rules remain. Bend native fishing/leash geometry with capped, endpoint-pinned quasi-static sag. This is visual rope response, not massive-particle geodesics or a tension solver. Send gravity configuration to clients on join/change instead of reading integrated-server state. Player gravity, terrain destruction and delayed history remain deferred. Detailed evidence and timings: docs/world-features.md.
+
+## D076 — Keep close optics active; mass editing inside; body images opt-in (2026-09-24)
+
+Accepted owner request. Replace the exterior pause with a dedicated near-horizon
+native shader using the lab's regular falling-frame initialization. Smoothly change
+the optical frame between1.25 and1.05 r_s; this does not move the player or implement
+the deferred observer-speed feature. Inside the horizon, mass blocks and their
+interaction layers form a straight-aim editing overlay; other geometry stays curved.
+An initial overlay included clouds and was corrected. Below0.1 r_s retain editable
+mass with a dark background, explicitly bounding the singularity rather than claiming
+physical central optics. Existing source/range limits remain.
+
+Full-resolution body-on/off comparisons include an eight-times-larger horizon,
+calculated one-orbit return directions, an isolated source and native spyglass zoom.
+Only thin/distorted strips resolve; no recognisable head/body in these samples.
+Per the owner's criterion, disable body capture by default; preserve its experimental
+session toggle. Native hands, mobs and other players remain. Current-pose geometry
+still has no delayed emission history; no universal impossibility claim is made.
+
+78 tests; final GPU52,480 optical/156 material/945 horizon checks pass, with actual
+interior LMB/RMB and source updates verified. A diagnostic-only deleted-texture
+binding was fixed. Normal1440p demo about52FPS; the huge close view about18FPS, so no
+universal performance claim. Temporary sources removed and seven player fields
+restored exactly. Evidence, presentation limits and timings: docs/horizon-body-study.md.

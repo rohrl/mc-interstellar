@@ -79,6 +79,13 @@ The additional [native-mesh capture-boundary fixture](mesh-ray-validation.md) us
 
 ## Current native-scene approximation and further performance work
 
+The [horizon access update](horizon-body-study.md) adds a smooth static-to-falling
+optical frame, regular horizon crossing, a straight-aim interior editing layer,
+and an explicit central background cutoff. Interior matter and the frame transition
+are presentation choices, not a stationary physical source or player-motion model.
+The existing [free-fall derivation and primary references](free-fall.md) supply the
+PG initialization; the independent PG-time solver checks sampled outgoing directions.
+
 The material-refinement default retains the existing inverse-radius equation and triangle intersections. It uses the established0.02-radian angular cap/nominal1mm chord target through observer radius4r_s, smoothly transitioning to maxima0.08/4mm at6r_s. Near-critical impact-squared within0.005 of27/4 retains the0.02 angular cap. The16-block spatial cap and two AA rays remain. These are numerical heuristics, not global error bounds. [Material evidence](material-coverage.md) records sampled independent checks, image errors and limits; transparent composition approximates native surface blending, without water refraction, spectral transport or emission histories.
 
 [Bruneton, Real-time High-Quality Rendering of Non-Rotating Black Holes (2020)](https://arxiv.org/abs/2010.08735) demonstrates precomputed optical tables for disc/background-star rendering. The [post-refinement review](performance-review-2026-09-22.md) proposes investigating table-assisted orbit integration with retained terrain intersections. This is an unimplemented adaptation, not a claim that the paper provides constant-time arbitrary-terrain rendering or that its FPS transfers to Minecraft.

@@ -2,6 +2,11 @@
 
 Implementation branch: `codex/world-feature-coverage`, based on `ecf1b09`.
 
+Later [horizon/body study](horizon-body-study.md): returning images now default off
+after full-resolution and zoom comparisons failed to produce recognisable detail.
+The session toggle remains available. Historical measurements below retain their
+original explicit body-on/off settings.
+
 ## Design
 
 Extend the native entity/block-entity capture with material modes for unlit alpha,

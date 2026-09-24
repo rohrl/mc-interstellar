@@ -12,7 +12,7 @@ import org.lwjgl.opengl.*;
 /** Opt-in synthetic opaque geometry check. Does not certify materials or arbitrary world meshes. */
 final class MeshValidation {
     private static final int W=9,H=5;
-    static String run(ShaderProgram shader,Runnable draw,float angularCap,float curveFactor,boolean quads,boolean splitMoving) {
+    static String run(ShaderProgram shader,Runnable draw,float angularCap,float curveFactor,boolean quads,boolean splitMoving,boolean horizon) {
         long started=System.nanoTime();var fixture=new MeshRayFixture();
         int framebuffer=GL30.glGenFramebuffers(),colour=GL30.glGenRenderbuffers();
         int oldDraw=GL11.glGetInteger(GL30.GL_DRAW_FRAMEBUFFER_BINDING),oldRead=GL11.glGetInteger(GL30.GL_READ_FRAMEBUFFER_BINDING);
@@ -97,6 +97,12 @@ final class MeshValidation {
             total+=boundary[0];mismatches+=boundary[1];unresolved+=boundary[2];
             int materials=MaterialValidation.run(shader,draw,triangles,nodes,compactNodes,quads,splitMoving);
             if(materials!=0)throw new IllegalStateException("Material fixture failed: "+materials+" mismatches (see log)");
+            if(horizon) {
+                // Material fixtures own temporary textures and delete them on return.
+                // Replace every binding before the next draw, even for unused samplers.
+                for(String name:new String[]{"Voxels","Palette","Atlas","Distant","DistantAppearance","SkyAtlas","Lightmap","LocalLight","DistantLight","SmoothAtlas","LocalSmooth","DistantSmooth","CompactNodes","CompactMovingNodes"})shader.addSampler(name,triangles.texture);
+                horizon(shader,draw,pixels);
+            }
         } finally {
             set(shader,"Diagnostic",0);
             for(int i=0;i<4;i++)GL11.glPixelStorei(names[i],saved[i]);GL15.glBindBuffer(GL21.GL_PIXEL_PACK_BUFFER,pbo);
@@ -139,6 +145,41 @@ final class MeshValidation {
         }
         Interstellar.LOGGER.info("Empty-space capture boundary: compared={}, mismatches={}, unresolved/invalid={}; analytic bCriticalSquared=27/4, view-slope offsets approximately 0.0022–0.0089 percent",total,wrong,failed);
         return new int[]{total,wrong,failed};
+    }
+    private static void horizon(ShaderProgram shader,Runnable draw,java.nio.FloatBuffer pixels) {
+        set(shader,"MeshNodeCount",0);set(shader,"MovingNodeCount",0);set(shader,"CloudNodeCount",0);
+        set(shader,"MeshClouds",0);set(shader,"Diagnostic",4);set(shader,"Lensing",1);set(shader,"Hybrid",1);
+        set(shader,"Radius",8);set(shader,"MeshExtent",4096);set(shader,"PathStep",.225f);
+        set(shader,"OrbitStep",.02f);set(shader,"CurveFactor",1);set(shader,"AdaptivePath",1);
+        vector(shader,"Source",0,0,0);vector(shader,"Forward",0,0,1);vector(shader,"Right",1,0,0);vector(shader,"Up",0,1,0);
+        shader.getUniformOrDefault("ViewSlopes").set(3f,2f,0f,0f);
+        int total=0,wrong=0;double maximum=0;
+        for(int facing:new int[]{1,-1})for(double radius:new double[]{.11,.35,.9,.9999,1,1.0001,1.05,1.15,1.25}) {
+            vector(shader,"Forward",0,0,facing);
+            vector(shader,"Camera",0,0,(float)(-8*radius));draw.run();pixels.clear();GL11.glReadPixels(0,0,W,H,GL11.GL_RGBA,GL11.GL_FLOAT,pixels);
+            for(int y=0;y<H;y++)for(int x=0;x<W;x++) {
+                double dx=((x+.5)/W*2-1)*3,dy=((y+.5)/H*2-1)*2,length=Math.sqrt(1+dx*dx+dy*dy);
+                double mu=-facing/length;
+                var reference=io.github.rohrl.interstellar.science.FreeFallRay.trace(radius,io.github.rohrl.interstellar.science.HorizonObserver.fallingCosine(radius,mu),1e-11);
+                if(reference.outcome()==io.github.rohrl.interstellar.science.FreeFallRay.Outcome.UNRESOLVED)throw new IllegalStateException("Unresolved horizon reference");
+                int at=(x+y*W)*4;boolean sky=reference.outcome()==io.github.rohrl.interstellar.science.FreeFallRay.Outcome.SKY;
+                boolean bad=pixels.get(at+3)!=(sky?0:-1);
+                for(int c=0;c<4;c++)bad|=!Float.isFinite(pixels.get(at+c));
+                if(sky && !bad) {
+                    double transverse=Math.hypot(dx,dy),sin=Math.sin(reference.angle());
+                    double ex=transverse==0?0:sin*dx/transverse,ey=transverse==0?0:sin*dy/transverse,ez=-Math.cos(reference.angle());
+                    double error=Math.sqrt(Math.pow(pixels.get(at)-ex,2)+Math.pow(pixels.get(at+1)-ey,2)+Math.pow(pixels.get(at+2)-ez,2));
+                    maximum=Math.max(maximum,error);bad=error>.003;
+                }
+                total++;if(bad) {wrong++;if(wrong<=8)Interstellar.LOGGER.info("Horizon mismatch r={} pixel={},{} reference={} GPU={},{},{},{}",radius,x,y,reference,pixels.get(at),pixels.get(at+1),pixels.get(at+2),pixels.get(at+3));}
+            }
+        }
+        for(double radius:new double[]{0,.05,.1}) {
+            vector(shader,"Camera",0,0,(float)(-8*radius));draw.run();pixels.clear();GL11.glReadPixels(0,0,W,H,GL11.GL_RGBA,GL11.GL_FLOAT,pixels);
+            for(int i=0;i<W*H;i++) {total++;boolean bad=pixels.get(i*4+3)!=-1;for(int c=0;c<4;c++)bad|=!Float.isFinite(pixels.get(i*4+c));if(bad)wrong++;}
+        }
+        Interstellar.LOGGER.info("Horizon fixture: compared={}, mismatches={}, maximum direction chord error={}",total,wrong,maximum);
+        if(wrong>0)throw new IllegalStateException("Horizon fixture failed");
     }
     private static void set(ShaderProgram shader,String name,float value) {shader.getUniformOrDefault(name).set(value);}
     private static void vector(ShaderProgram shader,String name,float x,float y,float z) {shader.getUniformOrDefault(name).set(x,y,z);}

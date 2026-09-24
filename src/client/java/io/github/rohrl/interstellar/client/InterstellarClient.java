@@ -36,6 +36,7 @@ public final class InterstellarClient implements ClientModInitializer {
             if(!org.lwjgl.opengl.GL.getCapabilities().GL_ARB_shader_bit_encoding)return;
             context.register(Identifier.of("interstellar","terrain_glow_moving"),VertexFormats.POSITION,program->GlowingOutline.rays[0]=program);
             context.register(Identifier.of("interstellar","terrain_glow_body"),VertexFormats.POSITION,program->GlowingOutline.rays[1]=program);
+            context.register(Identifier.of("interstellar","terrain_glow_horizon"),VertexFormats.POSITION,program->GlowingOutline.rays[2]=program);
             context.register(Identifier.of("interstellar","terrain_glow_edge"),VertexFormats.POSITION,program->GlowingOutline.edge=program);
         });
         StreamingTerrain.register();
@@ -66,6 +67,10 @@ public final class InterstellarClient implements ClientModInitializer {
                 context.register(Identifier.of("interstellar", "terrain_body_mask"), VertexFormats.POSITION, program->TerrainScreen.setBodyShader(1,program));
                 context.register(Identifier.of("interstellar", "terrain_body_materials"), VertexFormats.POSITION, program->TerrainScreen.setBodyShader(2,program));
                 context.register(Identifier.of("interstellar", "terrain_body_diagnostic"), VertexFormats.POSITION, program->TerrainScreen.setBodyShader(3,program));
+                context.register(Identifier.of("interstellar", "terrain_horizon_probe"), VertexFormats.POSITION, program->TerrainScreen.setHorizonShader(0,program));
+                context.register(Identifier.of("interstellar", "terrain_horizon_mask"), VertexFormats.POSITION, program->TerrainScreen.setHorizonShader(1,program));
+                context.register(Identifier.of("interstellar", "terrain_horizon_materials"), VertexFormats.POSITION, program->TerrainScreen.setHorizonShader(2,program));
+                context.register(Identifier.of("interstellar", "terrain_horizon_diagnostic"), VertexFormats.POSITION, program->TerrainScreen.setHorizonShader(3,program));
                 if(TerrainProfile.ENABLED)for(int experiment=0;experiment<3;experiment++)for(int pass=0;pass<3;pass++) {
                     final int e=experiment,p=pass;
                     context.register(Identifier.of("interstellar", "terrain_profile_"+e+"_"+p),VertexFormats.POSITION,program->TerrainProfile.programs[e][p]=program);

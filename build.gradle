@@ -76,11 +76,13 @@ tasks.register('packageDemo', Zip) {
     from(tasks.named('remapJar').flatMap { it.archiveFile }) { into 'mods' }
     from('docs/demo-quickstart.md') {
         rename { 'README.md' }
-        filter { line -> line.replace('(minecraft-coverage.md)', '(docs/minecraft-coverage.md)').replace('(world-features.md)', '(docs/world-features.md)') }
+        filter { line -> line.replace('(minecraft-coverage.md)', '(docs/minecraft-coverage.md)').replace('(world-features.md)', '(docs/world-features.md)').replace('(horizon-body-study.md)', '(docs/horizon-body-study.md)') }
     }
     from(['docs/triangle-row.md', 'docs/science.md', 'docs/material-coverage.md', 'docs/minecraft-coverage.md', 'docs/world-features.md', 'docs/performance-review-2026-09-22.md', 'docs/quad-vertices.md', 'docs/gameplay-gravity.md']) { into 'docs' }
     from('docs/profiles/2026-09-23-gameplay-gravity.txt') { into 'docs/profiles' }
     from('docs/profiles/2026-09-24-arrow-course.txt') { into 'docs/profiles' }
     from('docs/profiles/2026-09-24-world-features.txt') { into 'docs/profiles' }
+    from('docs/horizon-body-study.md') { into 'docs' }
+    from('docs/profiles/2026-09-24-horizon-body.txt') { into 'docs/profiles' }
     from('THIRD-PARTY.md')
 }

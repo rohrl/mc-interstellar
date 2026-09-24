@@ -23,7 +23,7 @@ World bobbing/hurt/nausea transforms are not fully reproduced in the lensing cam
 | Selection/mining | Selection shape edges and native damage textures follow the curved scene. The selected target still comes from Minecraft's straight interaction ray. |
 | Glowing status outlines | A separate curved mask of glowing model geometry supplies team-coloured outlines, including through terrain. Only runs while glowing geometry is present. Adds a ray pass; thin secondary outlines share the scene's resolution limits. |
 | Rain/snow | Small native foreground pass within three columns of the camera, respecting biome/roof checks. Unbent approximation, using straight-world depth; not weather transported along curved rays. Session switch: `/interstellar-visuals weather false` (or `true`). |
-| Returning player image | Actual camera-player model/skin joins rays after they bend around the source. At default resolution its image can be a thin arc near the black-hole edge. Uses current pose, with no past-emission history. Session switch: `/interstellar-visuals body false` (or `true`). |
+| Returning player image | Off by default after full-resolution/zoom tests yielded only stretched strips. Opt in with `/interstellar-visuals body true`. Actual model/skin, current pose, no emission history. [Study](horizon-body-study.md). |
 | Fishing lines/leashes | Native geometry is visible in the curved scene; the local gravity field adds bounded sag with endpoints pinned. No rope mass, collision or tension solver. |
 
 ## Remaining graphics gaps
@@ -45,7 +45,7 @@ validated. Rendering order is not exhaustive certification of every status effec
 | Entity gravity | Mobs, ordinary/spectral arrows, tridents, vanilla thrown entities and free fishing bobbers participate. Players, mounted/passenger groups, homing projectiles, dropped items, boats and minecarts remain outside this implementation. Loyalty, fishing/reeling and leash attachments keep native rules. |
 | Motion realism | Bounded Newtonian gameplay force with native gravity/drag/collisions, not relativistic massive-particle geodesics. Red/dim approach cue is stylized; no delayed light or apparent horizon freezing. |
 | Source limits | One selected spherical optical source. No combined multi-hole spacetime. Physics supports enclosing radius up to16 blocks, horizon radius up to12 and force reach at most64. Visual tether sag uses the selected source. |
-| Terrain/horizon | No terrain destruction, absorbed-mass growth, physical accretion disk or terrain horizon crossing. Live optics pause inside the exterior camera limit and resume outside it. |
+| Terrain/horizon | F10 stays active through the horizon with a falling optical frame and straight-aim interior block editing. Central background cutoff at0.1 r_s. No physical terrain infall/destruction, absorbed-mass growth or accretion disk. [Assumptions](horizon-body-study.md). |
 | Range/updates | 256-block camera range, finite geometry budgets and queued terrain updates. Initial preparation can take tens of seconds in natural worlds. Teleporting is not a v1 support target. |
 
 The legacy calibration exhibit disables entity gravity; gameplay/arrow exhibits use it.

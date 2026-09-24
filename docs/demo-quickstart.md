@@ -56,10 +56,10 @@ These commands work inside the exhibit. They are static demonstration viewpoints
 | `/interstellar source status` | Report discovered sources and pending work |
 | `/interstellar gravity enabled true/false` | Enable/disable entity gravity for this server session |
 | `/interstellar gravity capture true/false` | Enable/disable horizon absorption for this session |
-| `/interstellar-visuals body true/false` | Show/hide returning images of the actual camera-player model |
+| `/interstellar-visuals body true/false` | Experimental returning player images (default off) |
 | `/interstellar-visuals weather true/false` | Show/hide the inexpensive local rain/snow approximation |
 
-Source edits, splits, merges and chunk reloads refresh automatically. Leaving the supported exterior/range pauses lensing and restores normal viewing; returning resumes it. F10 controls optics independently of entity gravity. Persistent physics settings are in `config/interstellar-gravity.json`. Entity dynamics currently support enclosing radius up to16 blocks and horizon radius up to12; larger sources retain optics and show the physics size limit. Terrain horizon crossing is a later feature.
+Source edits, splits, merges and chunk reloads refresh automatically. F10 stays on through the horizon; interior blocks use normal positions for editing. Leaving the supported viewing range pauses lensing; returning resumes it. F10 controls optics independently of entity gravity. Persistent physics settings are in `config/interstellar-gravity.json`. Entity dynamics currently support enclosing radius up to16 blocks and horizon radius up to12; larger sources retain optics and show the physics size limit. The central background is dark below0.1 horizon radii; block editing stays active. See [horizon assumptions and checks](horizon-body-study.md).
 
 ## Performance and coverage
 

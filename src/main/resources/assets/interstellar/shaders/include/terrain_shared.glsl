@@ -45,6 +45,11 @@ vec3 meshColour;
 // The actual camera body is visible only to rays that have passed the far side
 // of the source, avoiding an opaque head around the first-person camera.
 bool returningBody=false;
+#ifdef INTERSTELLAR_HORIZON
+// Interior matter is a straight-aim editing overlay. It is not a stationary
+// physical source inside a black hole; the surrounding sky still uses null rays.
+bool interiorCamera=false,editorPass=false;
+#endif
 #ifdef INTERSTELLAR_GLOW
 bool glowHit=false;
 #endif
@@ -112,6 +117,9 @@ vec3 nativeSky(vec3 d) {
 vec3 worldLight() {return texture(Lightmap,(surfaceLight+.5)/16.0).rgb;}
 
 vec3 missing(vec3 direction) {
+#ifdef INTERSTELLAR_HORIZON
+    if(Diagnostic>3.5) {diagnostic=vec4(direction,0);return vec3(0);}
+#endif
     if(Hybrid>.5 && Diagnostic<.5) return nativeSky(direction);
     float grid=step(.92,fract(atan(direction.x,direction.z)*8.0))+step(.92,fract(asin(clamp(direction.y,-1,1))*8.0));
     return mix(vec3(.055,.085,.12),vec3(.28,.19,.07),min(grid,1.0));
@@ -337,6 +345,16 @@ int meshSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
             COUNT_WORK(4+min(tree,1));
             vec4 vertexA=trianglePart(tree,base,0);
             float entity=vertexA.w;
+            // -4 marks native mass-block terrain; +64 marks its interaction layers.
+            // All other material/texture semantics remain their original values.
+            bool massOverlay=abs(entity)>=64.0;
+            if(massOverlay)entity-=sign(entity)*64.0;
+            bool massTerrain=entity==-4.0;
+            if(massTerrain)entity=0.0;
+#ifdef INTERSTELLAR_HORIZON
+            bool editable=massOverlay || massTerrain;
+            if(editorPass && !editable)continue;
+#endif
             if(abs(entity)>=32.0) {
                 if(!returningBody)continue;
                 entity-=sign(entity)*32.0;
@@ -367,6 +385,9 @@ int meshSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
             vec3 s=start-a;float u=dot(s,p)/det;if(u<0 || u>1)continue;
             vec3 q=cross(s,edge1);float v=dot(delta,q)/det;if(v<0 || u+v>1)continue;
             float t=dot(edge2,q)/det;if(t<0 || t>1 || t>=best)continue;
+#ifdef INTERSTELLAR_HORIZON
+            if(interiorCamera && !editorPass && editable && length(start+delta*t-Source)<=Radius)continue;
+#endif
             // U isolates terrain missing beyond the previous source-centred footprint.
             vec2 location=(start+delta*t).xz;
             if(terrain && MeshCoverage<.5 && (any(lessThan(location,OldMeshBounds.xy)) || any(greaterThanEqual(location,OldMeshBounds.zw))))continue;
@@ -595,7 +616,11 @@ vec3 pastSurface(vec3 hit,vec3 normal,vec3 direction) {
 }
 bool passMaterial(int value,vec3 hit,vec3 normal) {
     if(MeshMode<.5 || value<0 || meshAlpha>=.999 && !meshCloud || diagnostic.w==-2.0)return false;
-    if(BodyRadius==0.0 && length(hit-Source)<Radius && Lensing>.5)return false;
+    if(BodyRadius==0.0 && length(hit-Source)<Radius && Lensing>.5
+#ifdef INTERSTELLAR_HORIZON
+       && !interiorCamera
+#endif
+    )return false;
     vec3 colour=meshCloud?meshColour:surface(value,hit,normal);
     if(meshBlend==1 || meshBlend==3) {
         vec3 relative=hit-Camera;
@@ -623,10 +648,47 @@ void trace(vec2 uv) {
     vec2 xy=(uv*2.0-1.0)*ViewSlopes.xy;
     vec3 direction=normalize(Forward+(xy.x+ViewSlopes.z)*Right+(-xy.y+ViewSlopes.w)*Up);
     vec3 hit,normal;
-    vec3 radialAxis=normalize(Camera-Source);
-    float r=length(Camera-Source),mu=dot(direction,radialAxis);
+    float r=length(Camera-Source);
+    vec3 radialAxis=r>0.0?(Camera-Source)/r:vec3(0,1,0);
+    float mu=dot(direction,radialAxis);
     vec3 tangentVector=direction-mu*radialAxis;
     float tangent=length(tangentVector);
+#ifdef INTERSTELLAR_HORIZON
+    interiorCamera=Lensing>.5 && r<=Radius;editorPass=interiorCamera;
+    if(editorPass) {
+        float along=dot(Camera-Source,direction);
+        float distance=max(0.0,-along+sqrt(max(0.0,along*along+Radius*Radius-r*r)));
+        vec3 start=Camera,end=Camera+direction*distance;
+        for(int layer=0;layer<32;layer++) {
+            int value=sceneSegment(start,end,hit,normal);
+#ifdef INTERSTELLAR_MATERIALS
+            if(passMaterial(value,hit,normal)) {
+                start=pastSurface(hit,normal,direction);
+                if(dot(end-start,direction)>0.0)continue;
+                value=-1;
+            }
+#endif
+            if(value>0 || distantHit) {fragColor=vec4(surface(value,hit,normal),1);return;}
+            break;
+        }
+        editorPass=false;
+        for(int tree=0;tree<SCENE_TREES;tree++)cellKnown[tree]=false;
+    }
+    // No classical optical continuation exists at the singularity. Keep F10 and
+    // the editable matter layer active; bound the unresolved central background.
+    if(Lensing>.5 && r<=.1*Radius) {fragColor=vec4(dark(),1);return;}
+    float flow=sqrt(Radius/max(r,.0001));
+    float staticFraction=smoothstep(1.05,1.25,r/Radius);
+    float boost=min(.999999,flow*staticFraction);
+    float fallMu=clamp((mu-boost)/(1.0-boost*mu),-1.0,1.0);
+    float fallSin=tangent*sqrt(1.0-boost*boost)/(1.0-boost*mu);
+    float energy=1.0+flow*fallMu;
+    float impact=fallSin/(max(Radius/r,1e-12)*energy);
+    bool skyConnected=energy>0.0 && (r>=1.5*Radius?
+        fallMu+flow>=0.0 || impact>2.598076211:
+        fallMu+flow>0.0 && impact<2.598076211);
+    if(Lensing>.5 && tangent<1e-5 && !skyConnected) {fragColor=vec4(dark(),1);return;}
+#endif
     if(Lensing<.5 || tangent<1e-5 || r<.0001) {
         float distance=Hybrid>.5 && (Diagnostic<.5 || Diagnostic>2.5)?1024.0:400.0;
         bool horizon=BodyRadius==0.0 && Lensing>.5 && mu<0.0;
@@ -651,7 +713,11 @@ void trace(vec2 uv) {
     }
     vec3 tangentAxis=tangentVector/tangent;
     float u=Radius/r;
+#ifdef INTERSTELLAR_HORIZON
+    vec2 q=vec2(u,-u*(fallMu+flow)/max(fallSin,1e-12));
+#else
     vec2 q=vec2(u,-mu*u*sqrt(1.0-u)/tangent);
+#endif
 #ifdef INTERSTELLAR_EXTENDED_SOURCE
     if(BodyRadius>0.0) {
         vec2 metric=bodyMetric(u);
@@ -661,6 +727,9 @@ void trace(vec2 uv) {
 #endif
     // Keep delicate near-critical trajectories on the established angular cap.
     float impactSquared=tangent*tangent/(u*u*(1.0-u));
+#ifdef INTERSTELLAR_HORIZON
+    impactSquared=impact*impact;
+#endif
 #ifdef INTERSTELLAR_EXTENDED_SOURCE
     if(BodyRadius>0.0)impactSquared=1.0/rayEnergySquared;
 #endif
@@ -686,6 +755,9 @@ void trace(vec2 uv) {
         }
         // Once outgoing beyond the sphere enclosing all data, no future chord can re-enter.
         if(q.y<0.0 && Radius/q.x>(MeshMode>.5?MeshExtent:Hybrid>.5 && Diagnostic<.5?512.0:max(1.5*Radius,length(max(abs(Source),abs(vec3(SIDE)-Source)))))) {
+#ifdef INTERSTELLAR_HORIZON
+            if(!skyConnected) {fragColor=vec4(dark(),1);return;}
+#endif
             if(MeshMode>.5) {
                 vec3 radial=cos(phi)*radialAxis+sin(phi)*tangentAxis;
                 vec3 angular=-sin(phi)*radialAxis+cos(phi)*tangentAxis;
@@ -708,6 +780,9 @@ void trace(vec2 uv) {
             stepSize=clamp(sqrt(8.0*tolerance/max(curvature,1e-12)),OrbitStep>.02?min(.05,PathStep):PathStep,MeshStepLimit);
         }
         float h=min(angularCap,stepSize/max(speed,.0001));
+#ifdef INTERSTELLAR_HORIZON
+        if(q.y<0.0)h=min(h,.5*q.x/-q.y);
+#endif
 #ifdef INTERSTELLAR_EXTENDED_SOURCE
         // A spatial step estimated at its starting point can overshoot u=0 on the
         // outgoing leg of a tiny lens. Returning sky there skips intervening terrain.
@@ -719,7 +794,13 @@ void trace(vec2 uv) {
         next=q+h*(a+2.0*b+2.0*c+d)/6.0;
         captured=BodyRadius==0.0 && next.x>=1.0;
         angle=phi+h;
+#ifdef INTERSTELLAR_HORIZON
+        float boundary=interiorCamera?10.0:1.0;
+        captured=next.x>=boundary;
+        if(captured) {angle=phi+h*(boundary-q.x)/(next.x-q.x);next.x=boundary;}
+#else
         if(captured) {angle=phi+h*(1.0-q.x)/(next.x-q.x);next.x=1.0;}
+#endif
         if(next.x<=0.0) {fragColor=vec4(missing(direction),1);return;}
         end=Source+(Radius/next.x)*(cos(angle)*radialAxis+sin(angle)*tangentAxis);
 #ifdef INTERSTELLAR_MATERIALS
@@ -738,7 +819,13 @@ void trace(vec2 uv) {
             value=-1;
         }
 #endif
-        if(value>0 || distantHit) {fragColor=vec4(BodyRadius==0.0 && length(hit-Source)<Radius?dark():surface(value,hit,normal),1);return;}
+        if(value>0 || distantHit) {
+            bool hidden=BodyRadius==0.0 && length(hit-Source)<Radius;
+#ifdef INTERSTELLAR_HORIZON
+            hidden=hidden && !interiorCamera;
+#endif
+            fragColor=vec4(hidden?dark():surface(value,hit,normal),1);return;
+        }
         if(value==0 && (Hybrid<.5 || Diagnostic>.5)) {fragColor=vec4(missing(normalize(end-p)),1);return;}
         if(captured) {fragColor=vec4(dark(),1);return;}
         phi=angle;q=next;p=end;
