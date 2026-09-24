@@ -8,7 +8,7 @@ import java.nio.file.Files;
 public final class GravityConfig {
     public boolean enabled=true;
     public boolean capture=true;
-    public double strengthPerBlock=.05;
+    public double strengthPerBlock=GravityField.DEFAULT_STRENGTH;
     public static GravityConfig load() {
         var defaults=new GravityConfig();
         var path=FabricLoader.getInstance().getConfigDir().resolve("interstellar-gravity.json");

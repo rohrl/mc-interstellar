@@ -8,7 +8,7 @@ Initially implemented on `codex/gameplay-gravity`; range, arrow-course and visua
 - Nearby sources are discovered automatically. Placement/removal queues shared incremental component scans; merge, split, anchor removal and chunk changes invalidate the affected components. No per-block tickers, forced chunk loading or duplicate scans per viewer.
 - F10 arms/disarms the optical view even before a source is found. Complete updates reuse the captured world view. `/interstellar inspect <pos>` optionally pins a component; `/interstellar source auto` releases the pin; `/interstellar source status` reports tracking state.
 - `/interstellar demo gameplay` enters a separate exhibit with the new calibration and active entity gravity. The existing `/interstellar demo enter` exhibit keeps the old calibration and passive mobs. View/leave commands work for both; moving between exhibits preserves the original return record.
-- `config/interstellar-gravity.json` has `enabled`, `capture` and `strengthPerBlock` (default 0.05, range 0–0.2). Restart to reload it. Invalid settings disable entity gravity without overwriting the file. F10 controls optics, independently of server physics.
+- `config/interstellar-gravity.json` has `enabled`, `capture` and `strengthPerBlock` (default 0.2, range 0–0.2). Existing configuration files retain their values; set 0.2 and restart for the stronger pull and recalibrated arrow course. Invalid settings disable entity gravity without overwriting the file. F10 controls optics, independently of server physics.
 - Operator controls `/interstellar gravity enabled true|false` and `/interstellar gravity capture true|false` override this server session; `status` reports settings/size limits. `/interstellar gravity profile start|stop` enables otherwise inactive CPU timing counters.
 
 ## Bounded discovery
@@ -43,7 +43,7 @@ The independent reference integrates the affine Cartesian Hamiltonian `H=(-E²/A
 
 ## Entity dynamics and capture
 
-Motion is explicitly scaled Newtonian gameplay dynamics, separate from the optical metric. Exterior acceleration is `-0.05*N*rVector/r³` in blocks/tick², with a uniform finite interior and acceleration capped at 0.35 blocks/tick². On 2026-09-24 the owner requested twice the influence radius: reach is now approximately 14.1/26.0/40 blocks for the 8/27/64 reference builds. The close-range force is unchanged; the outer 40% still uses a quintic taper to zero. Real gravity has no such cutoff.
+Motion is explicitly scaled Newtonian gameplay dynamics, separate from the optical metric. Default exterior acceleration is `-0.2*N*rVector/r³` in blocks/tick², with a uniform finite interior. The acceleration cap scales with strength: `7*strengthPerBlock`, or 1.4 blocks/tick² at default. This makes the entire force four times its previous 0.05 setting, including capped regions. Reach remains approximately 14.1/26.0/40 blocks for the 8/27/64 reference builds; the outer 40% uses a quintic taper to zero. Real gravity has no such cutoff.
 
 Local entity dynamics currently support sources with enclosing radius at most 16 blocks and horizon radius at most 12; the outer reach is capped at 64. Large-source optics and the 4096-block metadata limit are separate from this gameplay limit. No horizon is silently shrunk to fit the force range. The HUD and gravity status command expose the limit.
 
@@ -61,11 +61,28 @@ The red/dimming cue is a stylized approach indicator in captured mob vertex colo
 
 Four colour-marked dispensers launch deterministic native arrows: orange attempts a transient loop around the source, cyan a deflected flyby, magenta an outward shot pulled back, and red direct capture. They are calibrated for the scene's original64-block cube and default gravity strength. Editing the mass changes their paths. These demo dispensers use a timed calibrated launch rather than inventory or vanilla random spread; ordinary dispensers elsewhere remain vanilla. Downward gravity, air drag and native collisions stay active. The loop is not a permanent circular orbit.
 
+Course version2 moves all four dispensers farther out and retunes launch velocities for strength0.2. Existing arrow exhibits update once when their station chunks are loaded. A previous dispenser/marker pair is removed only after its replacement is installed and only if its block states are unchanged and its dispenser inventory is empty. Occupied destination cells and edited/stocked old stations are preserved. Custom gravity configurations are not overwritten by the mod.
+
 One station fires each second, staggered across four stations. Only a nearby player in this exhibit activates firing. At most12 demo arrows are retained, with an8-second lifetime and removal of stale demo arrows on chunk reload. Destroying/turning a station disables its launch. Occupied setup cells are preserved.
 
 `/interstellar demo arrows on|off` controls automatic fire for this session; `once` stops automatic fire and launches one measured set, reporting winding/minimum-radius results to the log. `setup` retries station installation without overwriting other blocks. Ordinary player arrows are unaffected by demo cleanup. Tests compare the intended qualitative paths to an independent continuous-force RK4 reference including downward gravity and continuous drag; live native-tick checks remain the acceptance criterion.
 
-### Arrow-course verification — 2026-09-24
+### Stronger pull and course version2 — 2026-09-24
+
+79 unit tests pass, including fourfold near/far acceleration and cap scaling, unchanged cutoff radius, and an independent continuous-force RK4 trajectory reference. The development client's existing config was explicitly updated to0.2. All four original empty stations relocated on load; runtime status confirms strength0.2.
+
+| Station | New dispenser position | Measured native result |
+|---|---|---|
+| Orange loop | (-6,81,1), south | 579.823 degrees of XZ winding (about1.61 turns), closest centre distance7.576 blocks; later lands |
+| Cyan flyby | (-22,87,7), east | Clears the hole at minimum radius4.656, then lands near(15.405,65.040,-11.020) |
+| Magenta return | (-8,82,1), west | Travels outward to x=-9.892, reverses and reaches the horizon after19 ticks |
+| Red capture | (1,85,-22), south | Reaches the horizon after13 ticks |
+
+A newly spawned sheep below the source gained upward velocity0.063865 blocks/tick after one stepped tick and was subsequently captured. The outside-range sheep control retained native downward velocity-0.078400. Tagged fixtures were removed. A fixed-pose F10 check confirms the relocated station geometry renders with lensing. These remain gameplay trajectories, not timelike Schwarzschild geodesics.
+
+In the live205-tick measurement, source tracking averaged0.0465ms/server callback, native mob movement0.3499ms/world tick and native projectile ticks0.0108ms/world tick. These scopes include vanilla work and existing owner mobs; this is not a matched before/after overhead measurement. See [compact evidence](profiles/2026-09-24-strong-gravity.txt).
+
+### Original 0.05-strength arrow-course verification — 2026-09-24
 
 The user's existing gameplay source had moved to `(15,91,-14)`. The first fixed-layout trial consequently did not produce the intended paths; it was rejected and its eight new station blocks were removed. The final course has its own dimension and known source at `(2,82,2)`, preserving the user's edited scene.
 

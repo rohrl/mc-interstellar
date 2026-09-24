@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 class DemoArrowCourseTest {
-    private static final GravityField FIELD=new GravityField(2,82,2,64,Math.sqrt(12),Math.sqrt(12),.05);
+    private static final GravityField FIELD=new GravityField(2,82,2,64,Math.sqrt(12),Math.sqrt(12),GravityField.DEFAULT_STRENGTH);
     private record Result(double winding,double minX,double endX,double endZ,boolean captured) { }
     @Test void loopCompletesARevolutionWithOrdinaryGravityAndDrag() {
         var r=reference(0);
@@ -13,7 +13,8 @@ class DemoArrowCourseTest {
     }
     @Test void flybyEscapesWhileOutwardShotTurnsBackAndCaptureShotFallsIn() {
         var flyby=reference(1);assertFalse(flyby.captured);assertTrue(flyby.endX>10&&flyby.endZ<0);
-        var turn=reference(2);assertTrue(turn.minX<-4.7);assertTrue(turn.endX>turn.minX+2);assertTrue(turn.captured);
+        var turn=reference(2);assertTrue(turn.minX<DemoArrowCourse.SHOTS.get(2).muzzleX()-1);
+        assertTrue(turn.endX>turn.minX+2);assertTrue(turn.captured);
         assertTrue(reference(3).captured);
     }
     /** Continuous drag/gravity RK4 reference, independent of the native-tick/substep hooks. */

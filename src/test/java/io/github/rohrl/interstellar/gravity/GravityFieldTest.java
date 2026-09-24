@@ -5,6 +5,16 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class GravityFieldTest {
     private final GravityField hole=new GravityField(0,0,0,64,Math.sqrt(12),Math.sqrt(12),.05);
+    @Test void strongerDefaultScalesCloseAndDistantPullWithoutExtendingReach() {
+        var stronger=new GravityField(0,0,0,64,Math.sqrt(12),Math.sqrt(12),GravityField.DEFAULT_STRENGTH);
+        assertEquals(hole.reach(),stronger.reach());
+        for(double radius:new double[]{1,4,8,16,30})
+            assertEquals(4*hole.acceleration(radius,0,0).length(),stronger.acceleration(radius,0,0).length(),1e-12);
+        assertTrue(stronger.acceleration(0,-12,0).y()>.08,"Lifts mobs farther below the source");
+        assertEquals(0,stronger.acceleration(40,0,0).length());
+        var capped=new GravityField(0,0,0,64,1,0,GravityField.DEFAULT_STRENGTH);
+        assertEquals(1.4,capped.acceleration(1,0,0).length(),1e-12);
+    }
     @Test void inverseSquareLiftAndFiniteCentre() {
         assertEquals(4,hole.acceleration(0,-4,0).length()/hole.acceleration(0,-8,0).length(),1e-12);
         assertTrue(hole.acceleration(0,-4,0).y()>.08,"Nearby pull exceeds ordinary downward mob gravity");

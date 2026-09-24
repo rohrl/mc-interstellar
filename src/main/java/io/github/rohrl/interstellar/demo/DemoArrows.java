@@ -5,6 +5,7 @@ import net.fabricmc.fabric.api.event.lifecycle.v1.ServerEntityEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.DispenserBlock;
+import net.minecraft.block.entity.DispenserBlockEntity;
 import net.minecraft.entity.projectile.ArrowEntity;
 import net.minecraft.entity.projectile.PersistentProjectileEntity;
 import net.minecraft.item.Items;
@@ -18,6 +19,9 @@ import java.util.*;
 
 /** Demo-only calibrated dispensers. Native arrow gravity, drag and collisions stay active. */
 final class DemoArrows {
+    static final int COURSE_VERSION=2;
+    private static final List<BlockPos> PREVIOUS_STATIONS=List.of(
+            new BlockPos(-3,80,1),new BlockPos(-14,83,7),new BlockPos(-4,82,1),new BlockPos(1,83,-15));
     private static final String TAG="interstellar_demo_arrow";
     private static final Map<UUID,Flight> flights=new LinkedHashMap<>();
     private static final Vec3d CENTRE=new Vec3d(2,82,2);
@@ -55,7 +59,12 @@ final class DemoArrows {
     private static BlockPos pos(DemoArrowCourse.Shot shot) {return new BlockPos(shot.x(),shot.y(),shot.z());}
     private static Direction facing(DemoArrowCourse.Shot shot) {return shot.dx()>0?Direction.EAST:shot.dx()<0?Direction.WEST:Direction.SOUTH;}
     static boolean install(ServerWorld world) {
+        return install(world,false);
+    }
+    static boolean install(ServerWorld world,boolean relocatePrevious) {
         for(var shot:DemoArrowCourse.SHOTS)if(!world.getChunkManager().isChunkLoaded(shot.x()>>4,shot.z()>>4))return false;
+        if(relocatePrevious)for(var old:PREVIOUS_STATIONS)
+            if(!world.getChunkManager().isChunkLoaded(old.getX()>>4,old.getZ()>>4))return false;
         var markers=List.of(Blocks.ORANGE_CONCRETE,Blocks.CYAN_CONCRETE,Blocks.MAGENTA_CONCRETE,Blocks.RED_CONCRETE);
         for(int i=0;i<DemoArrowCourse.SHOTS.size();i++) {
             var shot=DemoArrowCourse.SHOTS.get(i);var p=pos(shot);
@@ -65,6 +74,16 @@ final class DemoArrows {
                 Interstellar.LOGGER.warn("Demo arrow station {} skipped: occupied cells preserved at {}",shot.name(),p);continue;
             }
             world.setBlockState(p.down(),marker,3);world.setBlockState(p,dispenser,3);
+            if(relocatePrevious) {
+                var old=PREVIOUS_STATIONS.get(i);
+                // Only remove the original empty station pair, after its replacement is installed.
+                // Player edits and inventories at either location are preserved.
+                if(world.getBlockState(old).equals(dispenser)&&world.getBlockState(old.down()).equals(marker)
+                        &&world.getBlockEntity(old) instanceof DispenserBlockEntity entity&&entity.isEmpty()) {
+                    world.removeBlock(old,false);world.removeBlock(old.down(),false);
+                    Interstellar.LOGGER.info("Relocated demo arrow station {}: {} -> {}",shot.name(),old,p);
+                } else Interstellar.LOGGER.info("Previous demo arrow station {} preserved or already removed at {}",shot.name(),old);
+            }
         }
         return true;
     }

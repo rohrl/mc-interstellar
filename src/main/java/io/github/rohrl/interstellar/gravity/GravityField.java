@@ -2,6 +2,7 @@ package io.github.rohrl.interstellar.gravity;
 
 /** Explicit gameplay force in blocks/tick²; not a timelike Schwarzschild integrator. */
 public record GravityField(double x,double y,double z,int count,double bodyRadius,double horizonRadius,double strength) {
+    public static final double DEFAULT_STRENGTH=.2;
     public record Vector(double x,double y,double z) {
         public double length() {return Math.sqrt(x*x+y*y+z*z);}
     }
@@ -15,7 +16,8 @@ public record GravityField(double x,double y,double z,int count,double bodyRadiu
         // Uniform interior mass for extended bodies; bounded force inside captured regions too.
         double core=Math.max(bodyRadius,horizonRadius),distance=Math.max(r,core);
         double factor=strength*count/(distance*distance*distance)*taper;
-        factor=Math.min(factor,.35/r);
+        // Scale the safety cap with strength too: 0.35 at the old 0.05 setting, 1.4 at default.
+        factor=Math.min(factor,7*strength/r);
         return new Vector(dx*factor,dy*factor,dz*factor);
     }
     public double closestDistanceSquared(double ax,double ay,double az,double bx,double by,double bz) {

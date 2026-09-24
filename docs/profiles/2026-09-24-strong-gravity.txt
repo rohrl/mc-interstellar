@@ -1,0 +1,51 @@
+Stronger gameplay gravity and arrow course v2 — 2026-09-24
+Branch codex/stronger-gravity-arrows, follows 01dad4b.
+
+Default strength/block 0.05 -> 0.2. Acceleration cap now 7*strength:
+0.35 at old strength, 1.4 at new default. Reach, optics and source mass unchanged.
+Development config explicitly set to0.2; other existing configs remain user-owned.
+79 unit tests, zero failures/errors. Includes continuous-force RK4 arrow reference.
+
+Runtime strong-gravity-runtime.log:
+All four original station pairs relocated at16:16:44. New dispensers:
+loop(-6,81,1), flyby(-22,87,7), return(-8,82,1), capture(1,85,-22).
+Runtime status: enabled=true, capture=true, strength/block0.2.
+Unedited empty old pairs removed; code retains edited/stocked pairs and occupied
+destination cells. Protected migration branches were reviewed, not separately
+exercised with an inventory fixture in this runtime.
+
+Native arrow results (XZ winding is not trajectory deflection or orbit precession):
+loop: ticks160, winding=-579.822565deg, minR7.575613398,
+      end(7.600762182,65.028803413,-2.929072040), demo lifetime after landing.
+flyby: ticks160, winding=-210.603326deg, minR4.655861769,
+       end(15.405154298,65.039665574,-11.020279729), demo lifetime after landing.
+return: ticks19, minR3.464101615, minimum relative x=-11.892267301
+        (world x=-9.892267301), horizon capture.
+capture: ticks13, minR3.464101615, horizon capture.
+
+205 live world ticks, counters include native movement/ticks and owner entities:
+source:205 callbacks, total9.533ms, mean0.0465ms/callback, max0.1525ms.
+mob movement:12624 calls, total71.720ms, mean0.3499ms/tick, max/call0.1830ms.
+projectile tick:270 calls, total2.214ms, mean0.0108ms/tick, max/call0.1060ms.
+Not a matched overhead comparison to the previous, different entity population.
+
+Mob fixtures, ticks frozen then stepped; normal AI with walking speed attribute0:
+sheep spawned at(2,72,2): after one tick vy=+0.0638648516207808.
+control at(50,72,2), outside40-block source reach: vy=-0.0784000015258789.
+Near sheep subsequently removed by capture; confirmed before fixture cleanup.
+Only tagged fixtures were cleaned, with empty death loot.
+
+Visual check: run/strong-gravity-course.png, F10 source64 and relocated stations.
+35-tick loop position(5.098692635,74.408698781,-6.460797174).
+No optical/shader changes; full optical validation suite was not rerun for this change.
+No runtime ERROR, exception, GL_INVALID or occupied-station warning in this run.
+
+RTX5070Ti,1440p output,1280x720 trace,2xAA,body off,live arrows/world.
+Camera feet(2,90,-18),yaw0,pitch26,64-block source,54932 terrain triangles,
+0 queued chunks,120 warmup frames/300 samples:
+GPU p50/p95/p99=19.170048/20.033920/20.379296ms.
+Frame interval p50/p95/p99=19.697600/21.205900/21.907900ms (~50.77FPS median).
+Scene observation, not a matched before/after gain or global FPS floor.
+
+Fresh player return/restored files: run/strong-gravity-{return,restored}-state.txt.
+Restoration checks dimension, position, rotation, abilities, slot, inventory, health.

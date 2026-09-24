@@ -73,8 +73,9 @@ public final class DemoCommands {
         var arrowWorld=server.getWorld(ARROWS);
         if(arrowWorld!=null) {
             var state=state(server);
-            if(!state.data.getBoolean("arrowStationsBuilt")&&!arrowWorld.getPlayers().isEmpty()&&DemoArrows.install(arrowWorld)) {
-                state.data.putBoolean("arrowStationsBuilt",true);state.markDirty();
+            if(state.data.getInt("arrowStationsVersion")<DemoArrows.COURSE_VERSION&&!arrowWorld.getPlayers().isEmpty()
+                    &&DemoArrows.install(arrowWorld,state.data.getBoolean("arrowStationsBuilt"))) {
+                state.data.putBoolean("arrowStationsBuilt",true);state.data.putInt("arrowStationsVersion",DemoArrows.COURSE_VERSION);state.markDirty();
                 for(var player:arrowWorld.getPlayers())message(player,"Arrow course installed: /interstellar demo view arrows. Orange loop, cyan flyby, magenta return, red capture. Tuned for 64 blocks; /interstellar demo arrows on|off|once for controls.");
             }
             DemoArrows.tick(arrowWorld);

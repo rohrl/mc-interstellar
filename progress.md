@@ -1,6 +1,22 @@
 # Progress
 
-## Current checkpoint — 2026-09-24, horizon access and body study
+## Current checkpoint — 2026-09-24, stronger gameplay gravity and arrow course v2
+
+Default pull is four times stronger (strength/block0.2); the acceleration cap scales
+with strength too, preserving the full multiplier near the source. Influence range
+and optical mass stay unchanged. Repositioned/recalibrated all four demo dispensers.
+Versioned migration relocates original empty pairs once; edited/stocked stations and
+occupied destinations are preserved. Existing config files keep their values; this
+development config was explicitly updated to0.2.
+
+79 tests pass, including independent trajectory reference. Live arrows demonstrate
+about1.61 turns, escaping flyby, outward turnaround/capture and direct capture.
+Nearby sheep lifts then captures; outside-range control falls normally. F10 layout
+checked. Live1440p demo measured19.698ms median frame interval (~51FPS), a scene
+sample rather than a matched regression result. See docs/gameplay-gravity.md,
+docs/profiles/2026-09-24-strong-gravity.txt and D077. Original optimization queue remains.
+
+## Previous checkpoint — 2026-09-24, horizon access and body study
 
 F10 stays active through the horizon using a regular falling optical frame near it.
 Interior mass blocks, selection and damage layers use straight aim for editing;

@@ -11,8 +11,8 @@ public final class DemoArrowCourse {
         public double muzzleZ() {return z+.5+.7*dz;}
     }
     public static final List<Shot> SHOTS=List.of(
-            new Shot("loop",-3,80,1,0,1,0,.35,.875),
-            new Shot("flyby",-14,83,7,1,0,1.1,.15,0),
-            new Shot("return",-4,82,1,-1,0,-.3,.45,0),
-            new Shot("capture",1,83,-15,0,1,0,.3,.95));
+            new Shot("loop",-6,81,1,0,1,0,.15,1.45),
+            new Shot("flyby",-22,87,7,1,0,2,.2,0),
+            new Shot("return",-8,82,1,-1,0,-.6,.55,0),
+            new Shot("capture",1,85,-22,0,1,0,.15,1.3));
 }

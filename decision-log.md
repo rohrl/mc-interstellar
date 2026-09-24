@@ -389,3 +389,22 @@ interior LMB/RMB and source updates verified. A diagnostic-only deleted-texture
 binding was fixed. Normal1440p demo about52FPS; the huge close view about18FPS, so no
 universal performance claim. Temporary sources removed and seven player fields
 restored exactly. Evidence, presentation limits and timings: docs/horizon-body-study.md.
+
+## D077 — Fourfold gameplay pull and retuned arrow course (2026-09-24)
+
+Accepted owner request. Increase default strength/block0.05→0.2 and make the existing
+acceleration safety cap proportional to strength (7*strength, default1.4). Leaving
+the old0.35 cap would defeat the requested multiplier near the hole. Keep influence
+radius, optical calibration, source discovery and bounded projectile substeps.
+The mod preserves explicit existing configs; update this development config to0.2
+and document the upgrade setting for existing installations.
+
+Move/recalibrate the four reference dispensers for the stronger force. Persist
+course version2, remove original station pairs only when unchanged/empty and after
+successful destination installation; preserve occupied cells and player inventories.
+Native validation gives1.61 turns, escaping flyby, turnaround/capture and direct
+capture. 79 tests pass, including continuous RK4 reference and strength/cap scaling.
+Mob lift/capture and an outside-range vanilla control pass. Live1440p sample~51FPS;
+no isolated before/after performance claim. Evidence: docs/gameplay-gravity.md and
+docs/profiles/2026-09-24-strong-gravity.txt. Kerr/RTX questions were informational;
+the queued optimization plan is unchanged.

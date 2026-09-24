@@ -6,6 +6,8 @@ For this checkout, install a full JDK21 and run **Launch Interstellar.cmd**. It 
 
 Development launches use the stable offline name `InterstellarDev`, so the saved return record remains associated with the same player across restarts. A normal Minecraft installation uses your normal account.
 
+Gameplay gravity now defaults to four times the original pull. If upgrading an existing installation, set `strengthPerBlock` to `0.2` in `config/interstellar-gravity.json` and restart. The arrow exhibit automatically relocates its original empty dispensers and uses launches calibrated for that strength and64 mass blocks. Edited or stocked stations are preserved.
+
 The first shader compilation can leave the window unresponsive for roughly1–3minutes on the tested driver. Wait for startup to finish; initial terrain capture begins after entering the world and enabling F10.
 
 For an existing Minecraft installation, use Minecraft1.21.1 with Fabric Loader0.16.14 and Fabric API0.102.1+1.21.1 (the versions used for this build). Put the packaged Interstellar jar and Fabric API in that instance's `mods` directory. The package contains Interstellar and these instructions, not Minecraft, Java, Fabric Loader or Fabric API. No modpack or other shader mod is needed for the demonstration.
