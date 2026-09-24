@@ -6,6 +6,7 @@ A Minecraft Java mod for educational relativistic optics. Scientific assumptions
 
 ## Start here
 
+- [Minecraft feature coverage](docs/minecraft-coverage.md): supported graphics/gameplay and the remaining limitations.
 - [Gameplay gravity](docs/gameplay-gravity.md): implementation, controls, numerical assumptions, limits and verification; [original proposal](docs/gameplay-gravity-plan.md).
 - [Performance profile and revised priorities](docs/performance-profile-2026-09-23.md): measured GPU stages, ray work counts, CPU/JFR findings and updated optimization estimates.
 - [First four performance experiments](docs/performance-experiments-1-4.md): completed trials, measured keep/reject decisions and preserved implementations.

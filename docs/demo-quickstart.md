@@ -61,6 +61,8 @@ Source edits, splits, merges and chunk reloads refresh automatically. Leaving th
 
 ## Performance and coverage
 
+First-person hands and held items remain visible over the live F10 scene. The included `docs/minecraft-coverage.md` lists current graphics and gameplay gaps.
+
 The final calibrated natural-world build measured about59FPS facing the wall and34FPS looking down at terrain, at2560x1440 on an RTX5070Ti. The fresh pre-refinement comparison measured53/33FPS; measured slow-frame percentiles also improved. These are representative medians, not an absolute floor. This exhibit is simpler and cannot establish natural-terrain performance. See `docs/material-coverage.md` for both runs, conditions and limitations.
 
 Native water/lava, stained glass, ordinary entity/item layers and block entities such as beds/chests are supported in the curved scene. Additive/glint effects, sign text, particles, coplanar overlays and boat water masks remain incomplete; rain/snow is deferred. Water uses native surface blending rather than physical refraction. Current sharp2xAA is retained: tested replacements either cost too much FPS or worsened fine-ring metrics. Very fine secondary-image detail remains limited by the sample count.

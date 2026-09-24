@@ -1,5 +1,11 @@
 # Progress
 
+## Current checkpoint — 2026-09-24, first-person foreground restored
+
+F10 previously composited the lensed world at HUD HEAD, covering vanilla hands/items and first-person overlays. Split scene/HUD rendering; composite immediately after WorldRenderer.render, before vanilla's hand pass. Preserve normal offhand/use animation, later screen effects and F1 behavior. Suppress the separate unbent glowing-outline framebuffer only when a world composite was actually drawn. Optical shaders, ray sampling and AA are unchanged. Current feature gaps are consolidated in [Minecraft coverage](docs/minecraft-coverage.md).
+
+Build/package succeeds,75 existing tests have zero failures (unchanged test task reused). Final runtime shader/mixin startup and visual checks pass: empty main hand plus offhand bow, drawn bow, F1 hidden HUD with lensing retained, and F9 frozen preview. A1440p arrow-course check (half-scale,AA2,120 warmup/300 samples) measures lensing GPU p50/p95/p99=17.985/18.939/19.295ms, frame intervals18.520/20.123/20.818ms. Comparable to the earlier short arrow-course check; no isolated speedup or worst-case FPS guarantee. Log `first-person-final-runtime.log`; images `run/first-person-*.png`. No broad optical/movement suite rerun for this rendering-order-only change. Exact user pose, flying state, inventory and window restored; F10 off, client paused. Next optimization plan remains unchanged.
+
 ## Current checkpoint — 2026-09-24, wider gravity and arrow course
 
 Local influence radii doubled (64-block source:20→40 blocks, maximum64). A separate `/interstellar demo arrows` exhibit preserves the user's relocated gameplay builds and supplies four calibrated automatic dispensers. Native runtime verifies a491.9-degree transient loop, flyby, outward reversal and capture; ordinary drag/downward gravity/collisions remain active. Launches are bounded and cleaned up. The mob approach tint begins farther out and is more visible; physical delayed-light/horizon slowing remains deferred.

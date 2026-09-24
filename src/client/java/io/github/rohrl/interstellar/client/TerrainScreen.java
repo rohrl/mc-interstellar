@@ -121,6 +121,11 @@ final class TerrainScreen extends Screen {
     private Vec3d centre() {return new Vec3d(source.x(),source.y(),source.z());}
     @Override public void render(DrawContext context,int mouseX,int mouseY,float delta) {
         context.draw();
+        renderScene();
+        renderHud(context);
+    }
+    /** Composite only the world. Live mode calls this before vanilla's first-person pass. */
+    boolean renderScene() {
         if(snapshot!=null && ((!live && SelectedSource.current()!=source) || client.world!=snapshot.world)) error="Source changed: reopen the frozen terrain preview when ready.";
         if(capturedVersion!=resourceVersion) error="Resources reloaded: reopen the terrain preview to refresh textures.";
         if(error==null && generalShader==null) error="Terrain shader unavailable: see game log.";
@@ -137,7 +142,7 @@ final class TerrainScreen extends Screen {
                         if(pending!=null) {pending.close();pending=null;}
                         Interstellar.LOGGER.info("Live terrain {}",paused==null?"resumed":"paused: "+paused);
                     }
-                    if(paused!=null) {renderPaused(context);return;}
+                    if(paused!=null)return false;
                 }
                 snapshot.advance();
                 if((live || streamedReference) && mesh==null)mesh=new WorldMesh(client.world,snapshot.origin,net.minecraft.util.math.BlockPos.ofFloored(centre()),true);
@@ -148,11 +153,14 @@ final class TerrainScreen extends Screen {
                     if(moving==null)moving=mesh.movingScene();
                     if(!moving.ready() || live && !client.isPaused())moving.updateMoving();
                 }
-                if(snapshot.ready() && (!meshMode || mesh.ready())) {AppearanceCapture.finish(this);renderTerrain();}
-                else if(!live) context.fill(0,0,width,height,0xFF101A28);
+                if(snapshot.ready() && (!meshMode || mesh.ready())) {AppearanceCapture.finish(this);renderTerrain();return true;}
             } catch(RuntimeException failure) {error="Terrain preview failed: see game log.";Interstellar.LOGGER.error(error,failure);}
         }
+        return false;
+    }
+    void renderHud(DrawContext context) {
         if(live) {
+            if(paused!=null) {renderPaused(context);return;}
             context.fill(6,6,Math.min(width-6,410),46,0xCD101824);
             context.drawTextWithShadow(textRenderer,"INTERSTELLAR | Live camera | F10: off | F12: timing",12,12,0xFF88D8FF);
             String age=meshMode?mesh.viewStatus()+" | Mass blocks: "+source.count():"Preparing world view...";
@@ -163,6 +171,7 @@ final class TerrainScreen extends Screen {
             context.drawTextWithShadow(textRenderer,textRenderer.trimToWidth(details,Math.max(1,width-24)),12,36,0xFFFFD59A);
             return;
         }
+        if(error==null && (!snapshot.ready() || meshMode && (mesh==null || !mesh.ready())))context.fill(0,0,width,height,0xFF101A28);
         if(error!=null) context.fill(0,0,width,height,0xFF201018);
         context.fill(6,6,Math.min(width-6,440),94,0xCD101824);
         context.drawTextWithShadow(textRenderer,"INTERSTELLAR | Minecraft terrain snapshot",12,12,0xFF88D8FF);

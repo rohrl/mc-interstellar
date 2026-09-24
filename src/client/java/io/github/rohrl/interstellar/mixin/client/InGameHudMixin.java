@@ -13,6 +13,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 abstract class InGameHudMixin {
     @Inject(method="render",at=@At("HEAD"))
     private void interstellar$terrain(DrawContext context,RenderTickCounter ticks,CallbackInfo ci) {
-        LiveTerrain.render(context);
+        LiveTerrain.renderHud(context);
     }
 }

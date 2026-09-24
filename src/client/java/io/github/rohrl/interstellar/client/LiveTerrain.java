@@ -5,7 +5,6 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.text.Text;
 import net.minecraft.client.world.ClientWorld;
-import io.github.rohrl.interstellar.source.SourceState;
 import org.lwjgl.glfw.GLFW;
 
 /** Client-render-thread owner of the live preview. Vanilla simulation and input stay in control. */
@@ -13,6 +12,7 @@ public final class LiveTerrain {
     private static TerrainScreen renderer;
     private static int width,height;
     private static ClientWorld armedWorld;
+    private static boolean worldComposited;
     private LiveTerrain() { }
     static boolean active() {return armedWorld!=null;}
     static void toggle(MinecraftClient client) {
@@ -43,35 +43,40 @@ public final class LiveTerrain {
         }
     }
     private static void releaseRenderer() {if(renderer!=null) {renderer.removed();renderer=null;}}
-    static void stop() {releaseRenderer();armedWorld=null;}
+    static void stop() {releaseRenderer();armedWorld=null;worldComposited=false;}
+    public static boolean worldComposited() {return worldComposited;}
     private static void message(MinecraftClient client,String message) {
         if(client.player!=null)client.player.sendMessage(Text.literal("Interstellar: "+message),true);
     }
     private static void check(MinecraftClient client) {
         if(renderer!=null && renderer.problem()!=null) {String problem=renderer.problem();stop();message(client,problem);}
     }
-    public static void render(DrawContext context) {
+    public static void renderWorld() {
+        worldComposited=false;
         if(!active())return;
         var client=MinecraftClient.getInstance();
         if(client.world==null || client.player==null)return;
         try {
             synchronize(client);
             if(!active())return;
-            if(renderer==null || SelectedSource.current()==null) {
-                context.fill(6,6,Math.min(client.getWindow().getScaledWidth()-6,440),46,0xCD101824);
-                context.drawTextWithShadow(client.textRenderer,"INTERSTELLAR | PAUSED - normal view | F10: off",12,12,0xFFFFD59A);
-                String reason=SelectedSource.state().message();
-                context.drawTextWithShadow(client.textRenderer,reason,12,24,0xFFFFFFFF);
-                context.drawTextWithShadow(client.textRenderer,"Source tracking active | Resumes automatically",12,36,0xFF88D8FF);
-                return;
-            }
+            if(renderer==null || SelectedSource.current()==null)return;
             int w=client.getWindow().getScaledWidth(),h=client.getWindow().getScaledHeight();
             if(w!=width || h!=height) {width=w;height=h;renderer.resize(client,w,h);}
-            renderer.render(context,0,0,0);
+            worldComposited=renderer.renderScene();
             check(client);
         } catch(RuntimeException failure) {
             Interstellar.LOGGER.error("Live terrain stopped",failure);stop();
             message(client,"Live terrain stopped after a rendering error; see log.");
         }
+    }
+    public static void renderHud(DrawContext context) {
+        if(!active())return;
+        var client=MinecraftClient.getInstance();
+        if(client.world==null || client.player==null || client.options.hudHidden)return;
+        if(renderer!=null && SelectedSource.current()!=null) {renderer.renderHud(context);return;}
+        context.fill(6,6,Math.min(client.getWindow().getScaledWidth()-6,440),46,0xCD101824);
+        context.drawTextWithShadow(client.textRenderer,"INTERSTELLAR | PAUSED - normal view | F10: off",12,12,0xFFFFD59A);
+        context.drawTextWithShadow(client.textRenderer,SelectedSource.state().message(),12,24,0xFFFFFFFF);
+        context.drawTextWithShadow(client.textRenderer,"Source tracking active | Resumes automatically",12,36,0xFF88D8FF);
     }
 }
