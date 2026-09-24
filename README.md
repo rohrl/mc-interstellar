@@ -6,6 +6,8 @@ A Minecraft Java mod for educational relativistic optics. Scientific assumptions
 
 ## Start here
 
+- [Illustrated rendering guide](docs/visual-guide/interstellar-visual-guide.html): graphics basics, black-hole optics, algorithms, optimizations and discoveries; self-contained offline HTML with interactive diagrams.
+- [RTX feasibility probe](docs/rtx-probe-2026-09-24.md): measured hardware intersection queries and their limits; the production renderer is unchanged.
 - [Horizon access and body-image study](docs/horizon-body-study.md): close viewing, interior block editing and why returning-body rendering now defaults off.
 - [Minecraft feature coverage](docs/minecraft-coverage.md): supported graphics/gameplay and the remaining limitations; [new world features and checks](docs/world-features.md).
 - [Gameplay gravity](docs/gameplay-gravity.md): implementation, controls, numerical assumptions, limits and verification; [original proposal](docs/gameplay-gravity-plan.md).

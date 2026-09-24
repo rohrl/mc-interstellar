@@ -1,6 +1,30 @@
 # Progress
 
-## Current checkpoint — 2026-09-24, stronger gameplay gravity and arrow course v2
+## Current checkpoint — 2026-09-24, illustrated guide and RTX feasibility
+
+Delivered docs/visual-guide/interstellar-visual-guide.html: 18 chapters, about 9,200
+words, 20 vector diagrams including interactive orbit/AA examples, and three actual
+screenshots. Covers graphics basics, physical assumptions, source-to-pixel pipeline,
+all retained optimization families, rejected experiments and discoveries. Offline,
+Node-only rebuild, no external runtime assets. Desktop/mobile rendering, diagram/image
+inspection, source/internal links, input controls and browser errors checked.
+
+Standalone Vulkan probe: RTX 5070 Ti curved-chord replay intersections 3.26–3.76x
+faster than its simplified compute BVH; random 4–16-block segments 7.68–13.60x.
+1,572,864 paired queries and 768 sampled double CPU checks; five classified triangle-edge
+disagreements, all hardware answers match CPU, no unexplained failures. Warm-cache,
+opaque synthetic geometry; excludes production empty-space certificates, materials,
+live updates and OpenGL sharing. No Minecraft FPS forecast or backend adoption.
+Method, raw samples and setup costs: docs/rtx-probe-2026-09-24.md; decision D078.
+
+Production Java/resources unchanged at fb0c827. No Gradle or optical suite rerun was
+needed for documentation and the isolated tool; probe compiled and ran successfully.
+Existing client closed normally for timing and same current saved world reopened,
+then paused. Owner had changed source/pose since the previous checkpoint: current
+join N=216, position18.8877375/85.4032348/6.1775772; no older snapshot restored.
+
+
+## Previous checkpoint — 2026-09-24, stronger gameplay gravity and arrow course v2
 
 Default pull is four times stronger (strength/block0.2); the acceleration cap scales
 with strength too, preserving the full multiplier near the source. Influence range

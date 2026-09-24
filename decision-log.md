@@ -408,3 +408,23 @@ Mob lift/capture and an outside-range vanilla control pass. Live1440p sample~51F
 no isolated before/after performance claim. Evidence: docs/gameplay-gravity.md and
 docs/profiles/2026-09-24-strong-gravity.txt. Kerr/RTX questions were informational;
 the queued optimization plan is unchanged.
+
+## D078 — Illustrated implementation account and bounded RTX probe (2026-09-24)
+
+Accepted: self-contained illustrated HTML guide, tied to fb0c827, with optional
+interactive teaching diagrams, code/source links and explicit implemented/approximate/
+deferred distinctions. Include discoveries and failed experiments; mechanisms inferred
+from speedups remain labelled as hypotheses. Preserve native screenshot provenance.
+
+Owner explicitly requests a quick RTX benchmark after the guide. Keep it standalone:
+Vulkan ray queries versus a simplified compute BVH on identical synthetic triangles
+and chord buffers. Measured curved-replay query speedups3.26–3.76x justify further
+investigation, not a shipping-backend switch or FPS promise. Five near-edge differences
+across1,572,864 comparisons are recorded, CPU-checked and retained in timing inputs.
+Warm-cache opaque fixtures omit important production optimizations and costs.
+
+Accepted result: guide and reproducible probe/report. Proposed next RTX step, not yet
+implemented: native captured geometry and chord logs, cutout/translucent behavior,
+then actual interoperability/live-update costs. Production optics/performance defaults
+and the existing optical-table/refit alternatives remain unchanged. See
+[RTX report](docs/rtx-probe-2026-09-24.md) and [guide](docs/visual-guide/README.md).

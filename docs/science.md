@@ -89,3 +89,23 @@ PG initialization; the independent PG-time solver checks sampled outgoing direct
 The material-refinement default retains the existing inverse-radius equation and triangle intersections. It uses the established0.02-radian angular cap/nominal1mm chord target through observer radius4r_s, smoothly transitioning to maxima0.08/4mm at6r_s. Near-critical impact-squared within0.005 of27/4 retains the0.02 angular cap. The16-block spatial cap and two AA rays remain. These are numerical heuristics, not global error bounds. [Material evidence](material-coverage.md) records sampled independent checks, image errors and limits; transparent composition approximates native surface blending, without water refraction, spectral transport or emission histories.
 
 [Bruneton, Real-time High-Quality Rendering of Non-Rotating Black Holes (2020)](https://arxiv.org/abs/2010.08735) demonstrates precomputed optical tables for disc/background-star rendering. The [post-refinement review](performance-review-2026-09-22.md) proposes investigating table-assisted orbit integration with retained terrain intersections. This is an unimplemented adaptation, not a claim that the paper provides constant-time arbitrary-terrain rendering or that its FPS transfers to Minecraft.
+
+
+## Illustrated account and hardware-intersection probe (2026-09-24)
+
+The [illustrated guide](visual-guide/interstellar-visual-guide.html) separates the
+Schwarzschild optical model, finite-world embedding, radius-dependent observer-frame
+transition, material approximations and gameplay overlays. Primary explanatory sources
+include [Perlick and Tsupko's shadow review](https://arxiv.org/abs/2105.07101) and
+[Chang and Zhu on freely falling observers](https://arxiv.org/abs/1911.02190).
+The latter's horizon angular size applies to the specified observer state, not every
+Minecraft trajectory. Its educational interactive RK4 ray is not a production test.
+
+The [RTX probe](rtx-probe-2026-09-24.md) uses
+[Khronos Vulkan ray queries](https://docs.vulkan.org/guide/latest/extensions/ray_tracing.html)
+for ordinary straight-segment/triangle intersections. It does not move geodesic
+integration into RT cores or validate a new spacetime model. Replay segments are
+precomputed, continue after scene hits, and see opaque synthetic geometry. The
+reported speedups therefore apply only to that isolated workload. Five triangle-edge
+rounding differences are retained and documented; no complete numerical equivalence
+or production FPS gain is claimed.

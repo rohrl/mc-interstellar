@@ -1,61 +1,67 @@
-# Handoff — stronger gameplay gravity and arrow course, 2026-09-24
+# Handoff — illustrated guide and RTX probe, 2026-09-24
 
 ## Checkout and authorization
 
-Repo C:\work\code\minecraft\interstellar\interstellar; branch codex/stronger-gravity-arrows,
-based on01dad4b. Normal implementation, branches/pushes and autonomous runtime testing
-are authorized. No subagents. Preserve AA WIP8ad46eb, previous branches and owner worlds.
+Repo C:\work\code\minecraft\interstellar\interstellar; branch
+codex/visual-guide-rtx-probe, based on fb0c827. Normal implementation, branches/pushes
+and autonomous runtime verification are authorized. No subagents. Preserve AA WIP
+8ad46eb, other branches and owner worlds. Current production Java/resources remain
+exactly at fb0c827 (stronger gameplay gravity/course v2).
 
-## Current result
+## Delivered this turn
 
-Default gameplay strength/block0.05→0.2. Acceleration cap is7*strength (default1.4),
-so the close pull increases fourfold too. Range/optics unchanged. Development config
-updated to0.2; explicit existing configs elsewhere retain their values (upgrade docs
-explain setting0.2). Version2 arrow course relocates all four original empty stations
-once. Edited/stocked old dispensers and occupied destination cells are preserved.
+- docs/visual-guide/interstellar-visual-guide.html: self-contained offline guide,
+  18 chapters, about9,200 words,20 SVG diagrams including interactive ray/AA examples,
+  three real historical screenshots. Graphics101, physics/model limits, all retained
+  rendering optimizations, failed experiments and discoveries. Code links pin fb0c827.
+- Source/build instructions in docs/visual-guide/README.md. Node-only build; no packages.
+  Desktop/mobile browser rendering and image/diagram inspection, links, SVG text bounds,
+  controls and error checks passed. Print styling supplied; no separate PDF generated.
+- tools/rtx-probe: standalone Java/LWJGL Vulkan compute microbenchmark, not a mod backend.
+  Official Maven jars live only under ignored run/rtx/lib, with pinned checksums in runner.
+- docs/rtx-probe-2026-09-24.md plus raw JSONL/setup log. RTX5070Ti driver616.92,
+  curved-chord query replay3.26–3.76x faster than simplified software BVH; random4/16
+  block segments7.68–13.60x. Six cases,262,144queries each,16dispatch batches,
+  12warmup/30alternating measured pairs. All buffers device-local/host-coherent.
+-1,572,864 paired hits and768 sampled brute-force double checks. Five triangle-edge
+  classification differences, all hardware matches CPU, retained in timed workloads;
+  no unexplained classification/distance failures. Not bit-exact equivalence.
 
-New course: orange(-6,81,1) south, cyan(-22,87,7) east, magenta(-8,82,1) west,
-red(1,85,-22) south. Native results: orange579.823deg XZ winding (~1.61 turns),
-cyan clears hole at minimum radius4.656 then lands, magenta reverses/captures19ticks,
-red captures13ticks. These remain scaled Newtonian gameplay trajectories.
+Do not apply these speedups to Minecraft FPS. Opaque synthetic fixtures, warm data,
+independent chords continuing after hits, no production empty-space certificates,
+quad/chunk layout, materials, live updates, integration register pressure or OpenGL
+sharing. Hardware builds its own tree. No Vulkan validation layer installed. Build
+costs recorded separately; cold wall observations are not a scalability comparison.
 
-79 tests pass, including RK4 arrow reference and full force/cap scaling. Nearby sheep
-lifts/captures; outside-range control retains vanilla fall. All four stations migrated;
-protected migration branches reviewed but not separately runtime-fixtured. F10 layout
-visually checked. No shader edits; full optical GPU suites were not rerun this time.
-Runtime no ERROR/exception/GL_INVALID. Live1440p,half-scale,2xAA,bodyoff,default arrow
-view: GPU median19.170ms,frame19.698ms (~51FPS). Not a matched before/after comparison.
-205-tick CPU scopes: source0.0465ms/callback,mob0.3499ms/tick,projectile0.0108ms/tick;
-include vanilla work and owner mobs. Evidence: docs/profiles/2026-09-24-strong-gravity.txt,
-docs/gameplay-gravity.md,D077; ignored strong-gravity-runtime.log and run/strong-gravity-*.
+Production unchanged, so Gradle/package and optical GPU suites were not rerun.
+Standalone javac compile and actual GPU probe passed. D078 records scope/decision.
 
-## Restored runtime
+## Client / saved state
 
-Client PID23432, exec74503; query before assuming it still runs. World Interstellar
-Calibration, dimension interstellar:arrows. Paused,F10off,world ticks unfrozen,arrows on.
-Seven recorded player fields match exactly: feet9.01961962471024/85.93707693404563/
--17.067633313258963; yaw16.948606,pitch21.450026; creative/flying,slot3 lead,health20,
-original inventory unchanged (pig egg,bow,arrow,lead,fishing rod,trident,purple concrete,
-magma,end rod). Tagged fixtures removed; no source blocks altered. Original outer
-window bounds0,0,2560x1440 restored. User may play between turns; capture fresh state.
+Closed previous client23432 normally for GPU timing; reopened the same saved world
+through run/restart-client.ps1 and dismissed its existing join confirmation.
+Client PID26904, exec session86101, log run/rtx-resume-runtime.log; left paused.
+No new ERROR/Exception/GL_INVALID in startup. No terrain/inventory/config edits.
+Owner had changed the scene since the previous checkpoint: source now N216,
+centre2/83/3, r_s11.691. Join position18.8877375156/85.4032348458/6.1775771671.
+No older state was restored. Capture fresh state before future GUI work; do not
+teleport to the older checkpoint pose or shrink the owner's new source.
 
-## Previous features and next work
+JDK C:\Portable\jdks\temurin-21.0.12.1. Close identified client normally before
+relaunch. run/restart-client.ps1/stable-init.gradle use quickPlaySingleplayer;
+Loaded1399 advancements followed by click595/305 has dismissed the confirmation.
+Escape needs600ms. External helpers are existing ignored run/control-short.ps1
+and run/send-safe-command.ps1. GUI/process enumeration needs elevated sandbox access.
 
-F10 horizon crossing/interior mass editing remain as in docs/horizon-body-study.md:
-static outside1.25rs→falling by1.05rs; presentation frame independent of player motion.
-Interior mass-only editing overlay; background core cutoff0.1rs. Returning actual
-body images defaultoff (only distorted strips even with8x horizon/spyglass); opt-in
-/interstellar-visuals body true remains. Other entity features/native hands stay on.
+## Next work
 
-Original queue: targeted GPU measurements, optical tables, moving-tree reuse/refit.
-Owner asked about Kerr effects, mob shadows and RTX only for understanding. Explained
-native blob shadows already included; ray tracing uses ordinary OpenGL shaders, not
-RT cores; hardware segmented-ray intersections are a plausible larger future backend,
-requiring a measured prototype. No new Kerr/RTX implementation authorized/requested.
+User asked for an implementation artifact first and a quick RTX benchmark second;
+both are complete. No production Vulkan rewrite was started or committed to.
+If RTX becomes the next priority: capture actual native geometry/chord logs, test
+cutout/translucency, then sharing/live-update costs before promising a backend.
+Original performance options (optical tables, moving-tree reuse/refit) remain.
 
-JDK C:\Portable\jdks\temurin-21.0.12.1. Launch Interstellar.cmd uses this checkout.
-Close the identified client normally before another launch. run/restart-client.ps1
-and stable-init.gradle use quickPlaySingleplayer; wait Loaded1399 advancements,then
-held click595/305 if the join confirmation is shown. Esc needs600ms. Token-efficient:
-narrow logs/tests, screenshots only at meaningful visual changes; no repeated optical
-validation when optics are untouched. Owner handles movement/flicker feedback.
+Gameplay defaults remain strength0.2/cap7*strength, arrow coursev2, body captureoff.
+Horizon frame transition1.25→1.05rs, corecutoff0.1rs and interior editing unchanged.
+Prior79tests and runtime evidence remain in docs/gameplay-gravity.md; previous optical
+and body results in docs/horizon-body-study.md. No new shipping FPS result this turn.

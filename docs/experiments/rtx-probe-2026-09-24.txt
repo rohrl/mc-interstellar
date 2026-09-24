@@ -1,0 +1,31 @@
+DEVICE name=NVIDIA GeForce RTX 5070 Ti timestampNs=1.000 scratchAlignment=128
+BUFFER bytes=1707744 memoryType=4 flags=0x7
+BUFFER bytes=408224 memoryType=4 flags=0x7
+BUFFER bytes=64 memoryType=4 flags=0x7
+SCENE width=96 triangles=35578 nodes=12757 cpuSceneAndTreeMs=49.945 blasGpuMs=0.305 tlasGpuMs=0.026 asAllocationBuildWallMs=13.044 asBytes=2208512
+BUFFER bytes=8388608 memoryType=4 flags=0x7
+BUFFER bytes=1048576 memoryType=4 flags=0x7
+CHECK width=96 workload=short4 queries=262144 hits=18780 classificationFailures=0 verifiedEdgeCases=0 distanceFailures=0 cpuFailures=0 maxDistanceError=9.53674316e-07
+TIMING width=96 workload=short4 softwareMs=0.101 hardwareMs=0.013 speedup=7.68
+CHECK width=96 workload=long16 queries=262144 hits=67261 classificationFailures=0 verifiedEdgeCases=0 distanceFailures=0 cpuFailures=0 maxDistanceError=2.86102295e-06
+TIMING width=96 workload=long16 softwareMs=0.203 hardwareMs=0.015 speedup=13.25
+DISAGREEMENT ray=8875 sw=-1.0 hw=0.037502382 cpu=0.037502384650819946 verifiedEdge=true
+DISAGREEMENT ray=225823 sw=0.2762361 hw=-1.0 cpu=-1.0 verifiedEdge=true
+CHECK width=96 workload=curvedReplay queries=262144 hits=1979 classificationFailures=0 verifiedEdgeCases=2 distanceFailures=0 cpuFailures=0 maxDistanceError=8.94069672e-07
+TIMING width=96 workload=curvedReplay softwareMs=0.039 hardwareMs=0.012 speedup=3.26
+DEVICE name=NVIDIA GeForce RTX 5070 Ti timestampNs=1.000 scratchAlignment=128
+BUFFER bytes=6550464 memoryType=4 flags=0x7
+BUFFER bytes=1550816 memoryType=4 flags=0x7
+BUFFER bytes=64 memoryType=4 flags=0x7
+SCENE width=192 triangles=136468 nodes=48463 cpuSceneAndTreeMs=45.861 blasGpuMs=0.486 tlasGpuMs=0.024 asAllocationBuildWallMs=3.436 asBytes=8444800
+BUFFER bytes=8388608 memoryType=4 flags=0x7
+BUFFER bytes=1048576 memoryType=4 flags=0x7
+CHECK width=192 workload=short4 queries=262144 hits=17234 classificationFailures=0 verifiedEdgeCases=0 distanceFailures=0 cpuFailures=0 maxDistanceError=7.15255737e-07
+TIMING width=192 workload=short4 softwareMs=0.103 hardwareMs=0.013 speedup=7.68
+CHECK width=192 workload=long16 queries=262144 hits=62810 classificationFailures=0 verifiedEdgeCases=0 distanceFailures=0 cpuFailures=0 maxDistanceError=2.86102295e-06
+TIMING width=192 workload=long16 softwareMs=0.219 hardwareMs=0.016 speedup=13.60
+DISAGREEMENT ray=8875 sw=-1.0 hw=0.037502382 cpu=0.037502384650819946 verifiedEdge=true
+DISAGREEMENT ray=95480 sw=1.1318982 hw=-1.0 cpu=-1.0 verifiedEdge=true
+DISAGREEMENT ray=225823 sw=0.2762361 hw=-1.0 cpu=-1.0 verifiedEdge=true
+CHECK width=192 workload=curvedReplay queries=262144 hits=1955 classificationFailures=0 verifiedEdgeCases=3 distanceFailures=0 cpuFailures=0 maxDistanceError=9.53674316e-07
+TIMING width=192 workload=curvedReplay softwareMs=0.045 hardwareMs=0.012 speedup=3.76

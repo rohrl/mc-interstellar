@@ -1,0 +1,61 @@
+#version 460
+#ifdef HARDWARE
+#extension GL_EXT_ray_query : require
+layout(set=0,binding=0) uniform accelerationStructureEXT scene;
+#endif
+layout(local_size_x=64) in;
+layout(std430,set=0,binding=1) readonly buffer Vertices { vec4 vertices[]; };
+struct Node { vec4 lo; vec4 hi; };
+layout(std430,set=0,binding=2) readonly buffer Nodes { Node nodes[]; };
+struct Ray { vec4 origin; vec4 direction; };
+layout(std430,set=0,binding=3) readonly buffer Rays { Ray rays[]; };
+layout(std430,set=0,binding=4) writeonly buffer Results { float result[]; };
+layout(push_constant) uniform Params { uint count; };
+
+#ifndef HARDWARE
+bool bounds(vec3 o,vec3 invD,vec3 d,vec3 lo,vec3 hi,float best) {
+    if(any(bvec3(d.x==0.0&&(o.x<lo.x||o.x>hi.x),
+                 d.y==0.0&&(o.y<lo.y||o.y>hi.y),
+                 d.z==0.0&&(o.z<lo.z||o.z>hi.z)))) return false;
+    vec3 a=(lo-o)*invD,b=(hi-o)*invD;
+    vec3 nearT=min(a,b),farT=max(a,b);
+    return max(max(nearT.x,nearT.y),max(nearT.z,0.0001))<=min(min(farT.x,farT.y),min(farT.z,best));
+}
+float triangle(vec3 o,vec3 d,uint index,float best) {
+    vec3 a=vertices[index*3].xyz;
+    vec3 e1=vertices[index*3+1].xyz-a,e2=vertices[index*3+2].xyz-a;
+    vec3 p=cross(d,e2);float det=dot(e1,p);
+    if(abs(det)<1e-7)return -1.0;
+    vec3 t=o-a;float u=dot(t,p)/det;
+    if(u<0.0||u>1.0)return -1.0;
+    vec3 q=cross(t,e1);float v=dot(d,q)/det;
+    if(v<0.0||u+v>1.0)return -1.0;
+    float hit=dot(e2,q)/det;
+    return hit>=0.0001&&hit<=best?hit:-1.0;
+}
+#endif
+void main() {
+    uint id=gl_GlobalInvocationID.x;if(id>=count)return;
+    Ray ray=rays[id];vec3 o=ray.origin.xyz,d=ray.direction.xyz;
+    float best=ray.direction.w;
+#ifdef HARDWARE
+    rayQueryEXT query;
+    rayQueryInitializeEXT(query,scene,gl_RayFlagsOpaqueEXT,255,o,0.0001,d,best);
+    while(rayQueryProceedEXT(query)){}
+    result[id]=rayQueryGetIntersectionTypeEXT(query,true)==gl_RayQueryCommittedIntersectionNoneEXT ? -1.0 : rayQueryGetIntersectionTEXT(query,true);
+#else
+    vec3 invD=vec3(d.x==0.0?1e30:1.0/d.x,d.y==0.0?1e30:1.0/d.y,d.z==0.0?1e30:1.0/d.z);
+    uint index=0,limit=floatBitsToUint(nodes[0].lo.w);
+    bool found=false;
+    while(index<limit) {
+        Node node=nodes[index];uint escape=floatBitsToUint(node.lo.w);
+        if(!bounds(o,invD,d,node.lo.xyz,node.hi.xyz,best)){index=escape;continue;}
+        uint header=floatBitsToUint(node.hi.w),size=header&15u;
+        if(size==0u){index++;continue;}
+        uint first=header>>4u;
+        for(uint i=0;i<size;i++) {float t=triangle(o,d,first+i,best);if(t>=0.0){best=t;found=true;}}
+        index=escape;
+    }
+    result[id]=found?best:-1.0;
+#endif
+}
