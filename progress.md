@@ -1,4 +1,31 @@
 # Progress
+## Current checkpoint — 2026-09-24, native world features and tether gravity
+
+Implemented emissive/glint materials, native nearby shadows, ordinary sign/name text,
+selection/mining overlays, curved team-coloured Glowing silhouettes, a cheap local
+rain/snow approximation and returning images of the actual player model. Tridents and
+free fishing bobbers participate in local gravity; native fishing/leash geometry bends
+with bounded endpoint-pinned sag. First-person foreground remains native. Glowing
+outlines run only when needed; weather is explicitly unbent foreground. Actual-body
+images use current pose and can appear as thin arcs. No delayed light history.
+
+Build/package and77 tests pass. Final release shader/mixin runtime:52,480 optical
+comparisons and156 material cases, zero mismatches/unresolved/failures. Visual checks
+cover the new layers, mining, native shadows, glint on/off, rain/snow, team-coloured
+through-wall outlines and actual-body on/off. Trident deflection/loyalty, fishing reel-in
+and native leash attachment were exercised. Detailed evidence and limits:
+[world features](docs/world-features.md); [current coverage](docs/minecraft-coverage.md).
+
+At the1440p arrow viewpoint: body-on GPU/frame medians21.001/21.601ms (about46FPS), body-off
+18.734/19.338ms (about52FPS). Glowing adds about3.7ms in a fixed fixture; weather's frame
+median delta0.057ms is within noise. These are scene samples, not a new worst-case floor.
+A body-only empty-cache trial gave no meaningful gain and was removed despite matching
+images. Next return to targeted GPU measurement, optical tables and moving-tree reuse;
+profile camera-body visits before attempting a separate body tree.
+
+Narrator disabled. Temporary fixtures/biome/team changes removed, original recorded
+player fields and window restored, normal ticking, F10 off and client paused. Older
+AA/performance branches remain preserved. See focused handoff for the final runtime.
 
 ## Current checkpoint — 2026-09-24, first-person foreground restored
 

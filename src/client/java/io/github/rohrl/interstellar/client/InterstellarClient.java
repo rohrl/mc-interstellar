@@ -31,6 +31,13 @@ public final class InterstellarClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         SelectedSource.register();
+        WorldFeatures.register();
+        CoreShaderRegistrationCallback.EVENT.register(context -> {
+            if(!org.lwjgl.opengl.GL.getCapabilities().GL_ARB_shader_bit_encoding)return;
+            context.register(Identifier.of("interstellar","terrain_glow_moving"),VertexFormats.POSITION,program->GlowingOutline.rays[0]=program);
+            context.register(Identifier.of("interstellar","terrain_glow_body"),VertexFormats.POSITION,program->GlowingOutline.rays[1]=program);
+            context.register(Identifier.of("interstellar","terrain_glow_edge"),VertexFormats.POSITION,program->GlowingOutline.edge=program);
+        });
         StreamingTerrain.register();
         AppearanceCapture.register();
         CoreShaderRegistrationCallback.EVENT.register(context -> context.register(Identifier.of("interstellar", "terrain"), VertexFormats.POSITION, TerrainScreen::setShader));

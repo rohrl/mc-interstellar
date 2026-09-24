@@ -18,7 +18,7 @@ public final class GravitySources {
     }
     private static final Map<ServerWorld,Index> indices=new IdentityHashMap<>();
     public static void register() {
-        config=GravityConfig.load();GravityControl.register();ServerLifecycleEvents.SERVER_STOPPED.register(server->indices.clear());
+        config=GravityConfig.load();GravityControl.register();GravityVisualPayload.register();ServerLifecycleEvents.SERVER_STOPPED.register(server->indices.clear());
     }
     private static int tile(double coordinate) {return (int)Math.floor(coordinate/16);}
     private static Index index(ServerWorld world) {

@@ -27,7 +27,7 @@ abstract class ProjectileGravityMixin {
     @WrapMethod(method="tick")
     private void interstellar$tick(Operation<Void> original) {
         Entity self=(Entity)(Object)this;
-        if(!(self instanceof ArrowEntity||self instanceof SpectralArrowEntity||self instanceof ThrownEntity)) {original.call();return;}
+        if(!(self instanceof ArrowEntity||self instanceof SpectralArrowEntity||self instanceof TridentEntity||self instanceof ThrownEntity)) {original.call();return;}
         long started=self.getWorld().isClient?0:GravityControl.begin();
         try {interstellar$step.run(self,()->original.call(),()->self instanceof ArrowStateAccessor arrow&&arrow.interstellar$inGround());}
         finally {GravityControl.end(2,started);}

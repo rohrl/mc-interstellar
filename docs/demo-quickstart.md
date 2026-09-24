@@ -56,6 +56,8 @@ These commands work inside the exhibit. They are static demonstration viewpoints
 | `/interstellar source status` | Report discovered sources and pending work |
 | `/interstellar gravity enabled true/false` | Enable/disable entity gravity for this server session |
 | `/interstellar gravity capture true/false` | Enable/disable horizon absorption for this session |
+| `/interstellar-visuals body true/false` | Show/hide returning images of the actual camera-player model |
+| `/interstellar-visuals weather true/false` | Show/hide the inexpensive local rain/snow approximation |
 
 Source edits, splits, merges and chunk reloads refresh automatically. Leaving the supported exterior/range pauses lensing and restores normal viewing; returning resumes it. F10 controls optics independently of entity gravity. Persistent physics settings are in `config/interstellar-gravity.json`. Entity dynamics currently support enclosing radius up to16 blocks and horizon radius up to12; larger sources retain optics and show the physics size limit. Terrain horizon crossing is a later feature.
 
@@ -65,4 +67,4 @@ First-person hands and held items remain visible over the live F10 scene. The in
 
 The final calibrated natural-world build measured about59FPS facing the wall and34FPS looking down at terrain, at2560x1440 on an RTX5070Ti. The fresh pre-refinement comparison measured53/33FPS; measured slow-frame percentiles also improved. These are representative medians, not an absolute floor. This exhibit is simpler and cannot establish natural-terrain performance. See `docs/material-coverage.md` for both runs, conditions and limitations.
 
-Native water/lava, stained glass, ordinary entity/item layers and block entities such as beds/chests are supported in the curved scene. Additive/glint effects, sign text, particles, coplanar overlays and boat water masks remain incomplete; rain/snow is deferred. Water uses native surface blending rather than physical refraction. Current sharp2xAA is retained: tested replacements either cost too much FPS or worsened fine-ring metrics. Very fine secondary-image detail remains limited by the sample count.
+Native water/lava, glass, ordinary entities/block entities, emissive/glint materials, text, shadows and selection/mining overlays join the curved scene. Glowing-status outlines follow curved images through walls. Actual player-body images can appear as thin arcs near the black-hole edge; no delayed pose history is simulated. Rain/snow uses a small unbent foreground pass. Particles and various special surfaces remain absent; water blending is not physical refraction. Current sharp2xAA still limits fine secondary detail. See [current coverage](minecraft-coverage.md) and [feature checks/timings](world-features.md).

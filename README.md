@@ -6,7 +6,7 @@ A Minecraft Java mod for educational relativistic optics. Scientific assumptions
 
 ## Start here
 
-- [Minecraft feature coverage](docs/minecraft-coverage.md): supported graphics/gameplay and the remaining limitations.
+- [Minecraft feature coverage](docs/minecraft-coverage.md): supported graphics/gameplay and the remaining limitations; [new world features and checks](docs/world-features.md).
 - [Gameplay gravity](docs/gameplay-gravity.md): implementation, controls, numerical assumptions, limits and verification; [original proposal](docs/gameplay-gravity-plan.md).
 - [Performance profile and revised priorities](docs/performance-profile-2026-09-23.md): measured GPU stages, ray work counts, CPU/JFR findings and updated optimization estimates.
 - [First four performance experiments](docs/performance-experiments-1-4.md): completed trials, measured keep/reject decisions and preserved implementations.
@@ -52,7 +52,7 @@ Press **V** to compare sampled GPU rays with the CPU reference and analytic shad
 
 ## Free-fall tour
 
-In the F8 lab, **T** plays/pauses a radial fall, **H** pauses exactly at the horizon, **L** looks back, and **F** switches observer frames. **R** resets. The tour stops at r/r_s=0.35. These are controlled-sky views; Minecraft terrain and the player body are still future work. [Model, controls and verification](docs/free-fall.md).
+In the F8 lab, **T** plays/pauses a radial fall, **H** pauses exactly at the horizon, **L** looks back, and **F** switches observer frames. **R** resets. The tour stops at r/r_s=0.35. These are controlled-sky views; terrain horizon crossing and delayed player-body images remain future work. [Model, controls and verification](docs/free-fall.md).
 
 Routine builds and in-game tests are handled by the development agent. Exploring the open client is optional; user input is needed only for preferences or checks that automation cannot complete.
 
@@ -72,7 +72,7 @@ Press **C** in the lab for the near-critical ray stress test (brief blocking pau
 
 ## Terrain preview
 
-In F9, **Shift+M** captures the streamed native scene for frozen comparisons (about40 seconds at render distance12 in the test scene), then **Space** enables lensing. **E** toggles entities; **N** toggles clouds; **U** compares camera coverage with the old footprint. Fluids and ordinary translucent/block-entity layers share the curved scene. Special additive effects, glint, text and particles remain incomplete. [Coverage, AA trials and current limits](docs/material-coverage.md).
+In F9, **Shift+M** captures the streamed native scene for frozen comparisons (about40 seconds at render distance12 in the test scene), then **Space** enables lensing. **E** toggles entities; **N** toggles clouds; **U** compares camera coverage with the old footprint. Fluids and ordinary translucent/block-entity layers share the curved scene. Emissive/glint, ordinary text and interaction overlays now join the curved scene; particles remain incomplete. [Coverage, AA trials and current limits](docs/material-coverage.md).
 
 Inspect a black-hole proxy, move outside 1.05 r_s, and press **F9**. **Space** compares lensing; arrows look around; **L** aims at the source; **Q** changes resolution; **J** changes path sampling; **V** checks flat geometry; **C** compares curved hits against an independent CPU reference; **B** measures GPU cost. Esc returns to Minecraft. Reopen to capture a new view. This is a frozen opaque-block preview with explicit missing-data boundaries. [Controls, performance, limits and saved test scene](docs/terrain-prototype.md).
 

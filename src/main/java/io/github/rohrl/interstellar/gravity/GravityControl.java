@@ -31,6 +31,7 @@ public final class GravityControl {
                         }))
                         .then(literal("enabled").then(argument("value",BoolArgumentType.bool()).executes(context->{
                             GravitySources.config.enabled=BoolArgumentType.getBool(context,"value");
+                            for(var player:context.getSource().getServer().getPlayerManager().getPlayerList())GravityVisualPayload.send(player);
                             context.getSource().sendFeedback(()->Text.literal("Entity gravity: "+GravitySources.config.enabled+" (this server session)"),true);return 1;
                         })))
                         .then(literal("capture").then(argument("value",BoolArgumentType.bool()).executes(context->{

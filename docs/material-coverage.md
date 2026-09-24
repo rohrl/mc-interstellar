@@ -1,5 +1,10 @@
 # Native material coverage — accepted refinement, 2026-09-22
 
+Later additions (2026-09-24): emissive/glint, shadows, text, interaction overlays,
+Glowing outlines and actual returning-body images are described in
+[world features](world-features.md). The acceptance measurements below are historical;
+[Minecraft coverage](minecraft-coverage.md) is the current support list.
+
 **Accepted for the demonstrated material subset after the final FPS/quality checks below.** This completes the bounded step4 pass: native materials/models broaden, current AA is retained after measured alternatives fail, and the [subsequent algorithm review](performance-review-2026-09-22.md) identifies the next experiments. This is not universal Minecraft rendering support.
 
 ## Final acceptance

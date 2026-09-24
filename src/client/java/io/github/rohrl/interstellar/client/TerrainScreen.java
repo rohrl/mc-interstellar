@@ -60,6 +60,7 @@ final class TerrainScreen extends Screen {
     private long publishedAt;
     private int generation;
     private SimpleFramebuffer target;
+    private final GlowingOutline glowOutline=new GlowingOutline();
     private LabBenchmark benchmark;
     private boolean profileCounters;
     private int profileExperiment;
@@ -265,6 +266,25 @@ final class TerrainScreen extends Screen {
         }
         if(antialiasing==0)target.draw(client.getWindow().getFramebufferWidth(),client.getWindow().getFramebufferHeight());
         else TerrainResolve.draw(target,client.getWindow().getFramebufferWidth(),client.getWindow().getFramebufferHeight(),antialiasing==1);
+        var glow=meshMode?(moving!=null?moving.entities.glowing:mesh.entities==null?null:mesh.entities.glowing):null;
+        var glowShader=GlowingOutline.rays[extendedSource()?1:0];
+        if(glow!=null && glow.nodes>0 && meshEntities && glowShader!=null && GlowingOutline.edge!=null) {
+            var previousShader=shader;
+            try {
+                shader=glowShader;
+                glowOutline.render(w,h,()-> {
+                    configureShader(w,h);
+                    shader.getUniformOrDefault("MeshNodeCount").set(0f);
+                    shader.getUniformOrDefault("MovingNodeCount").set((float)glow.nodes);
+                    shader.getUniformOrDefault("CloudNodeCount").set(0f);
+                    shader.getUniformOrDefault("MeshClouds").set(0f);
+                    shader.getUniformOrDefault("Diagnostic").set(0f);
+                    shader.addSampler("DistantAppearance",glow.vertices.texture);
+                    shader.addSampler("CompactMovingNodes",glow.tree.texture);
+                    RenderSystem.setShader(()->shader);drawQuad(w,h);
+                });
+            } finally {shader=previousShader;}
+        }
         if(benchmark!=null)benchmark.end();
         RenderSystem.enableBlend();RenderSystem.defaultBlendFunc();
     }
@@ -332,7 +352,7 @@ final class TerrainScreen extends Screen {
         shader.addSampler("CompactMovingNodes",meshMode && moving!=null?moving.compactNodeTexture:snapshot.paletteTexture);
         shader.addSampler("Atlas",client.getTextureManager().getTexture(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE).getGlId());
     }
-    private static void drawQuad(int w,int h) {
+    static void drawQuad(int w,int h) {
         var buffer=Tessellator.getInstance().begin(VertexFormat.DrawMode.QUADS,VertexFormats.POSITION);
         buffer.vertex(0,0,0);buffer.vertex(0,h,0);buffer.vertex(w,h,0);buffer.vertex(w,0,0);
         BufferRenderer.drawWithGlobalProgram(buffer.end());
@@ -552,6 +572,6 @@ final class TerrainScreen extends Screen {
         }
         return true;
     }
-    @Override public void removed() {cancelBenchmark();nativeSky.close();if(moving!=null)moving.close();if(mesh!=null)mesh.close();if(snapshot!=null)snapshot.close();if(pending!=null)pending.close();if(target!=null)target.delete();if(samples!=null)samples.close();}
+    @Override public void removed() {cancelBenchmark();glowOutline.close();nativeSky.close();if(moving!=null)moving.close();if(mesh!=null)mesh.close();if(snapshot!=null)snapshot.close();if(pending!=null)pending.close();if(target!=null)target.delete();if(samples!=null)samples.close();}
     @Override public boolean shouldPause() {return true;}
 }

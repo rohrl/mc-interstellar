@@ -42,7 +42,13 @@ uniform vec4 OldMeshBounds;
 #define CloudAtlas Distant
 vec4 cloudLayer=vec4(0);
 vec3 meshColour;
-#if defined(INTERSTELLAR_MATERIALS) || defined(INTERSTELLAR_MATERIAL_PROBE)
+// The actual camera body is visible only to rays that have passed the far side
+// of the source, avoiding an opaque head around the first-person camera.
+bool returningBody=false;
+#ifdef INTERSTELLAR_GLOW
+bool glowHit=false;
+#endif
+#if defined(INTERSTELLAR_MATERIALS) || defined(INTERSTELLAR_MATERIAL_PROBE) || defined(INTERSTELLAR_GLOW)
 float meshAlpha=1.0;
 uniform float OrbitStep;
 uniform float CurveFactor;
@@ -56,6 +62,7 @@ uniform sampler2D PendingRays;
 #ifdef INTERSTELLAR_MATERIALS
 // Premultiplied front-to-back surface composition, reset independently for each AA ray.
 vec4 materialLayers=vec4(0);
+int meshBlend=0;
 uniform float MaterialLimit;
 bool meshCloud=false,cloudSeen=false;
 #endif
@@ -330,11 +337,15 @@ int meshSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
             COUNT_WORK(4+min(tree,1));
             vec4 vertexA=trianglePart(tree,base,0);
             float entity=vertexA.w;
+            if(abs(entity)>=32.0) {
+                if(!returningBody)continue;
+                entity-=sign(entity)*32.0;
+            }
             bool cloud=entity==5.0 || entity==6.0;
 #if defined(INTERSTELLAR_MATERIALS) || defined(INTERSTELLAR_MATERIAL_PROBE)
             bool terrain=entity==0.0 || entity==-3.0;
             if(cloud) {COUNT_WORK(16);} else if(!terrain) {COUNT_WORK(17);}
-            bool translucent=entity==-3.0 || abs(entity)==7.0 || abs(entity)==8.0;
+            bool translucent=entity==-3.0 || abs(entity)>=7.0;
 #ifdef INTERSTELLAR_MATERIALS
             if(cloud && (MeshClouds<.5 || cloudSeen))continue;
 #else
@@ -350,7 +361,7 @@ int meshSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
             vec3 edge1=b-a,edge2=c-a,p=cross(delta,edge2);
             bool twoSided=abs(entity)==2.0 || entity==6.0;
 #if defined(INTERSTELLAR_MATERIALS) || defined(INTERSTELLAR_MATERIAL_PROBE)
-            twoSided=twoSided || abs(entity)==8.0;
+            twoSided=twoSided || abs(entity)>=7.0 && mod(abs(entity),2.0)==0.0;
 #endif
             float det=dot(edge1,p);if(twoSided?abs(det)<1e-10:det<1e-10)continue;
             vec3 s=start-a;float u=dot(s,p)/det;if(u<0 || u>1)continue;
@@ -371,6 +382,12 @@ int meshSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
                 uvC.zw=clamp(uvC.zw+offset,vec2(.5/16.0),vec2(15.5/16.0));
             }
             vec2 uv=uvA.xy*weights.x+uvB.xy*weights.y+uvC.xy*weights.z;
+            float mode=abs(entity);
+            bool glint=mode==13.0 || mode==14.0;
+            bool additive=mode==11.0 || mode==12.0 || glint;
+            bool multiply=mode==17.0 || mode==18.0;
+            bool unlit=mode>=9.0 && mode<=14.0 || multiply;
+            if(glint || multiply)uv=(mod(uvA.zw,4096.0)+fract(uv)*floor(uvA.zw/4096.0))/vec2(textureSize(EntityAtlas,0));
             if(cloud) {
                 if(t>=cloudAt)continue;
                 vec4 colour=textureLod(CloudAtlas,uv,0)*(trianglePart(tree,base,2)*weights.x+
@@ -380,29 +397,36 @@ int meshSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
                 float fog=TerrainFogRange.y>TerrainFogRange.x?smoothstep(TerrainFogRange.x,TerrainFogRange.y,distance):step(TerrainFogRange.y,distance);
                 colour.rgb=mix(colour.rgb,TerrainFogColour.rgb,fog*TerrainFogColour.a);
 #ifdef INTERSTELLAR_MATERIALS
-                meshColour=colour.rgb;meshAlpha=colour.a;meshCloud=true;
+                meshColour=colour.rgb;meshAlpha=colour.a;meshCloud=true;meshBlend=0;
                 best=t;hit=start+t*delta;normal=normalize(cross(edge1,edge2));found=true;continue;
 #else
                 nearestCloud=colour;cloudAt=t;continue;
 #endif
             }
             vec4 texel=Diagnostic>2.5?vec4(1):entity>0.0?textureLod(EntityAtlas,uv,0):textureLod(Atlas,uv,0);
-            if(texel.a<.1)continue;
+            if(mode==15.0 || mode==16.0)texel=texel.rrrr;
+            if(texel.a<(mode==9.0 || mode==10.0?.001:.1))continue;
 #ifdef INTERSTELLAR_PROFILE_NO_LIGHT
             vec3 colA=trianglePart(tree,base,2).rgb;
             vec3 colB=trianglePart(tree,base,5).rgb;
             vec3 colC=trianglePart(tree,base,8).rgb;
 #else
-            vec3 colA=trianglePart(tree,base,2).rgb*texture(Lightmap,uvA.zw).rgb;
-            vec3 colB=trianglePart(tree,base,5).rgb*texture(Lightmap,uvB.zw).rgb;
-            vec3 colC=trianglePart(tree,base,8).rgb*texture(Lightmap,uvC.zw).rgb;
+            vec3 colA=trianglePart(tree,base,2).rgb*(unlit?vec3(1):texture(Lightmap,uvA.zw).rgb);
+            vec3 colB=trianglePart(tree,base,5).rgb*(unlit?vec3(1):texture(Lightmap,uvB.zw).rgb);
+            vec3 colC=trianglePart(tree,base,8).rgb*(unlit?vec3(1):texture(Lightmap,uvC.zw).rgb);
 #endif
             meshColour=texel.rgb*(colA*weights.x+colB*weights.y+colC*weights.z);
+#ifdef INTERSTELLAR_GLOW
+            meshColour=trianglePart(tree,base,2).rgb*weights.x+trianglePart(tree,base,5).rgb*weights.y+trianglePart(tree,base,8).rgb*weights.z;
+#endif
 #if defined(INTERSTELLAR_MATERIALS) || defined(INTERSTELLAR_MATERIAL_PROBE)
             meshAlpha=translucent?texel.a*dot(vec3(trianglePart(tree,base,2).a,trianglePart(tree,base,5).a,trianglePart(tree,base,8).a),weights):1.0;
+            if(additive)meshAlpha=0.0;
+            if(multiply) {meshAlpha=1.0-2.0*meshColour.r;meshColour=vec3(0);}
 #endif
 #ifdef INTERSTELLAR_MATERIALS
             meshCloud=false;
+            meshBlend=glint?3:additive?1:multiply?2:0;
 #endif
             best=t;hit=start+t*delta;normal=normalize(cross(edge1,edge2));found=true;
         }
@@ -418,6 +442,9 @@ int meshSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
     return found?3:-1;
 }
 vec3 surface(int value,vec3 hit,vec3 normal) {
+#ifdef INTERSTELLAR_GLOW
+    glowHit=true;return meshColour;
+#endif
     if(MeshMode>.5) {
         // Synthetic opaque-box fixture: report the entered cell, preserving traversal failures.
         if(Diagnostic>2.5) {if(diagnostic.w!=-2.0)diagnostic=vec4(floor(hit-normal*.001),3);return vec3(0);}
@@ -570,7 +597,13 @@ bool passMaterial(int value,vec3 hit,vec3 normal) {
     if(MeshMode<.5 || value<0 || meshAlpha>=.999 && !meshCloud || diagnostic.w==-2.0)return false;
     if(BodyRadius==0.0 && length(hit-Source)<Radius && Lensing>.5)return false;
     vec3 colour=meshCloud?meshColour:surface(value,hit,normal);
-    materialLayers+=vec4(colour,1.0)*((1.0-materialLayers.a)*clamp(meshAlpha,0.0,1.0));
+    if(meshBlend==1 || meshBlend==3) {
+        vec3 relative=hit-Camera;
+        float distance=TerrainFogRange.z>.5?max(length(relative.xz),abs(relative.y)):length(relative);
+        float fade=1.0-(TerrainFogRange.y>TerrainFogRange.x?smoothstep(TerrainFogRange.x,TerrainFogRange.y,distance):step(TerrainFogRange.y,distance));
+        colour=meshColour*fade;
+        materialLayers.rgb+=(meshBlend==3?colour*colour:colour)*(1.0-materialLayers.a);
+    } else materialLayers+=vec4(colour,1.0)*((1.0-materialLayers.a)*(meshBlend==2?meshAlpha:clamp(meshAlpha,0.0,1.0)));
     if(meshCloud)cloudSeen=true;
     if(materialLayers.a>=.999) {meshColour=vec3(0);return false;}
     COUNT_WORK(12);
@@ -578,6 +611,10 @@ bool passMaterial(int value,vec3 hit,vec3 normal) {
 }
 #endif
 void trace(vec2 uv) {
+#ifdef INTERSTELLAR_GLOW
+    glowHit=false;
+#endif
+    returningBody=false;
     COUNT_WORK(14);
     for(int tree=0;tree<SCENE_TREES;tree++)cellKnown[tree]=false;
 #ifdef INTERSTELLAR_MATERIALS
@@ -688,6 +725,7 @@ void trace(vec2 uv) {
 #ifdef INTERSTELLAR_MATERIALS
         }
 #endif
+        returningBody=angle>3.14159265;
         int value=sceneSegment(p,end,hit,normal);
 #ifdef INTERSTELLAR_MATERIALS
         if(passMaterial(value,hit,normal)) {
@@ -745,6 +783,9 @@ void main() {
         if(samples==2)offset=vec2(sampleIndex==0?-.25:.25);
         if(samples==4)offset=vec2((sampleIndex%2)==0?-.25:.25,sampleIndex<2?-.25:.25);
         trace(screenUv+offset/Viewport);
+#ifdef INTERSTELLAR_GLOW
+        fragColor=glowHit?vec4(meshColour,1):vec4(0);
+#endif
 #ifdef INTERSTELLAR_MATERIALS
         fragColor.rgb=materialLayers.rgb+(1.0-materialLayers.a)*fragColor.rgb;
 #else

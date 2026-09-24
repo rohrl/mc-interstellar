@@ -10,4 +10,5 @@ public interface RenderPhasesAccessor {
     @Accessor("texture") RenderPhase.TextureBase interstellar$texture();
     @Accessor("program") RenderPhase.ShaderProgram interstellar$program();
     @Accessor("cull") RenderPhase.Cull interstellar$cull();
+    @Accessor("texturing") RenderPhase.Texturing interstellar$texturing();
 }

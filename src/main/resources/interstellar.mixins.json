@@ -2,6 +2,6 @@
   "required":true,
   "package":"io.github.rohrl.interstellar.mixin",
   "compatibilityLevel":"JAVA_21",
-  "mixins":["MobGravityMixin","ArrowStateAccessor","ProjectileGravityMixin"],
+  "mixins":["MobGravityMixin","ArrowStateAccessor","ProjectileGravityMixin","FishingGravityMixin"],
   "injectors":{"defaultRequire":1}
 }

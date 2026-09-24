@@ -1,6 +1,7 @@
 package io.github.rohrl.interstellar.mixin.client;
 
 import io.github.rohrl.interstellar.client.LiveTerrain;
+import io.github.rohrl.interstellar.client.LocalWeather;
 import net.minecraft.client.render.GameRenderer;
 import net.minecraft.client.render.RenderTickCounter;
 import org.spongepowered.asm.mixin.Mixin;
@@ -15,5 +16,6 @@ abstract class GameRendererMixin {
     @Inject(method="renderWorld",at=@At(value="INVOKE",target="Lnet/minecraft/client/render/WorldRenderer;render(Lnet/minecraft/client/render/RenderTickCounter;ZLnet/minecraft/client/render/Camera;Lnet/minecraft/client/render/GameRenderer;Lnet/minecraft/client/render/LightmapTextureManager;Lorg/joml/Matrix4f;Lorg/joml/Matrix4f;)V",shift=At.Shift.AFTER))
     private void interstellar$world(RenderTickCounter ticks,CallbackInfo ci) {
         LiveTerrain.renderWorld();
+        if(LiveTerrain.worldComposited())LocalWeather.render();
     }
 }

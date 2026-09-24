@@ -1,29 +1,76 @@
-# Handoff — first-person rendering restored, 2026-09-24
+# Handoff — world features integrated, 2026-09-24
 
-## Checkout and current result
+## Checkout and authorization
 
-Repo `C:\work\code\minecraft\interstellar\interstellar`; branch `codex/gameplay-arrow-exhibit`, based on a556251. Latest request: fix missing first-person hands/items and explain remaining Minecraft coverage. Implementation and verification are complete. Normal branches/commits/pushes and autonomous testing are authorized. Read AGENTS.md; no subagents or unrelated resets. Preserve prior AA/performance branches.
+Repo C:\work\code\minecraft\interstellar\interstellar; branch codex/world-feature-coverage,
+based on ecf1b09. Requested feature batch implemented and verified; normal branches,
+commits/pushes and autonomous testing are authorized. No subagents. Preserve older AA and
+performance branches. User also asked to disable narrator: run/options.txt narrator:0.
 
-The old HUD-time world composite covered vanilla hands. Scene/HUD work is now separate; GameRendererMixin calls LiveTerrain.renderWorld immediately after WorldRenderer.render, before vanilla hand rendering. Hands, offhand, item-use animation and camera overlays then follow their normal path. F1 hides HUD/hands but keeps lensing. Separate straight-ray glowing outlines are suppressed only when a lensed image was actually drawn, preserving normal fallback. No optical shader/sampling/AA change or duplicate hand/lensing pass. See D074 and docs/minecraft-coverage.md for current gaps; older coverage lists are historical.
+## Result
 
-## Checks
+Native emissive/glint, entity blob shadows, ordinary sign/name text, selection and mining
+layers now join F10. Glowing-status outlines use a separate glowing-model tree and curved
+mask, including team colour and through-wall visibility. Actual camera-body skin/model is
+eligible only after a ray bends around the source; its returning image can be a thin arc.
+There is no delayed pose history. Local native rain/snow is a small unbent foreground
+approximation. Body/weather session toggles: /interstellar-visuals body|weather true|false.
+The distinct client root is intentional: a client /interstellar root shadows server commands.
 
-Build/package successful;75 existing unit tests have zero failures (unchanged test task reused). Final runtime shader/mixin startup and visual checks: empty main hand + offhand bow, drawn bow, F1, F9 frozen preview. No broad optical/movement rerun for rendering-order-only change. 1440p arrow-course GPU p50/p95/p99=17.985/18.939/19.295ms; sampled frame intervals18.520/20.123/20.818ms. 120 warmup/300 samples, half-scale AA2. Short scene check, not an isolated regression measurement or universal FPS guarantee. Log first-person-final-runtime.log; images run/first-person-*.png; build run/first-person-build.log.
+Tridents use existing bounded server stepping while loyalty runs once. Free bobbers get a
+local kick and swept horizon capture, retaining native fishing/reeling. Fishing/leash
+geometry bends with capped, endpoint-pinned sag, no rope tension/collision solver. Client
+visual strength receives a server snapshot on join/change rather than shared server globals.
+See docs/world-features.md, docs/minecraft-coverage.md and D075 for details/current limits.
 
-The final startup also logged a player-advancement JSON parse error (null object) for27492c24-0356-36dd-99c9-dc34bebce6cd. No renderer exception. Native autosave subsequently wrote valid JSON (DataVersion3955). Cause not established; no manual save-file edits. Track if it recurs; do not claim all runtime logs are error-free.
+## Checks and cost
 
-## Runtime and user state
+Build/package,77 tests pass. Final features-release-runtime.log:52,480 optical comparisons
+and156 material cases, zero mismatches/unresolved/failures. No renderer exception. Native
+unused-sampler/optimized-out-uniform warnings remain. Visual checks cover glint on/off,
+shadows, text, mining, rain/snow, coloured through-wall outlines, invisible glowing entity
+and actual-body on/off. Physics checks cover trident deflection/loyalty, fishing/reel-in and
+native leash attachment. No broad movement/flicker test (owner handles it).
 
-Final client PID26004, exec session1020, log first-person-final-runtime.log. Query processes before assuming it is still valid. Left paused, F10 off, normal ticking, in interstellar:arrows. Fresh original and restored state records: run/first-person-return-state.txt and run/first-person-restored-state.txt; exact match for dimension, pose, flight, selected slot and all inventory entries.
+1440p arrow-course medians: body-on GPU/frame21.001/21.601ms (~46FPS), body-off18.734/19.338ms
+(~52FPS). Glowing adds~3.7ms with a glowing fixture; rain's0.057ms frame delta is within noise.
+These short scene samples are not a new worst-case FPS guarantee. A body-only empty-cache
+trial was pixel-identical but did not improve performance and was removed. Detailed rows
+and raw summaries are in docs/world-features.md and docs/profiles/2026-09-24-world-features.txt.
 
-Pose -8.284012400041416 /100.11934391327323 /-25.681458146811625; yaw-2.5497742,pitch59.900074; creative/flying1; selected slot1 bow, offhand empty. Window restored854x480, outer870x519 at951/353. Owner had left the old client at the main menu before this turn; these were the saved player coordinates loaded on startup. Do not use older arrow/actor/gameplay return poses. No builds changed. User gameplay source was previously moved to15/91/-14; never reset it to old fixture coordinates.
+## Runtime and exact restoration
 
-JDK C:\Portable\jdks\temurin-21.0.12.1. Launch Interstellar.cmd uses checkout. Close the identified client normally and wait before relaunch. run/restart-client.ps1 -Log ... handles this; quickplay experimental confirmation needs held click relative595/305. Distinguish actual pause from focus-loss pause. GUI helpers need desktop escalation. Capture fresh player/window state next turn, because the owner plays between turns.
+Final client PID4772, exec session11649, log features-release-runtime.log; query before
+assuming it still exists. Left paused, F10 off, normal ticking, body/weather defaults on,
+gravity enabled, narrator off. Window restored854x480 (outer870x519 at845/449).
 
-## Previous feature milestone and next plan
+Fresh run/features-return-state.txt and features-restored-state.txt match all six recorded
+fields exactly: dimension interstellar:arrows; position -8.284012400041416 /
+100.11934391327323 /-25.681458146811625; yaw-0.7497861,pitch25.55015; creative/flying1;
+selected slot1; original nine hotbar stacks (pig egg,bow,arrow,yellow/lime/light-blue/purple
+concrete,magma,end rod), offhand empty. Brief survival mining verification caused damage;
+healed afterwards. Initial health was not separately recorded. No inventory replacement
+remains. Preserve the existing demo return record; do not demo leave to restore this pose.
 
-Completed a556251: twice gravity reach, separate4-station arrow course (loop491.9degrees, flyby, reversal, capture), stronger stylized mob red/dim cue and fixed weak-source sky rings. docs/gameplay-gravity.md, D073, docs/profiles/2026-09-24-arrow-course.txt preserve evidence. Reference source64 blocks at0/80/0 through3/83/3 is in interstellar:arrows; keep existing gameplay/legacy exhibits intact. /interstellar demo arrows and demo view arrows enter/show course; arrows on|off|once|setup controls it; demo leave returns to saved prior world. Existing demo return record is preserved.
+Temporary tagged mobs, knot, four individual fixture blocks, aqua test team and18-cell
+snow biome patch were removed/restored. Source64 and owner builds were untouched. Clear
+weather restored. The owner gameplay source remains at15/91/-14 in the separate exhibit.
 
-Next remains targeted GPU measurement of integration/traversal, table-assisted optical integration, then moving-tree reuse/refit. Original4 experiments complete: separate roots e324e84 accepted; cloud quads9815c42, actor hierarchy7a168fb and packed bounds e62a71c rejected/preserved. AA WIP8ad46eb stays on codex/terrain-antialiasing. docs/performance-experiments-1-4.md and docs/performance-profile-2026-09-23.md hold rankings/evidence.
+## Next and efficient workflow
 
-Weather, general teleports, automated movement/flicker tests and broader step5 relativity remain deferred. Gravity excludes players/mounted groups; physical delayed-light/horizon slowing and terrain destruction remain absent. The current coverage document distinguishes visuals, gameplay and approximation limits.
+Resume targeted GPU measurement, table-assisted optics, then moving-tree reuse/refit.
+Camera-body tree visits are a measured new cost worth isolating; a dedicated returning-only
+body tree is a candidate, not an implemented/accepted speedup. General teleports, terrain
+crossing/destruction, emission history and observer-speed work remain deferred.
+
+JDK C:\Portable\jdks\temurin-21.0.12.1. Launch Interstellar.cmd uses this checkout. Close the
+identified client normally before relaunch. Startup shader compilation can take~150seconds;
+do useful independent work and report progress. Gate on Loaded1399 advancements, wait3s,
+held click relative595/305, then joined-the-game and another3s before commands. F9/F8 STOP
+F10, so do not assume live mode survives closing them. Held Escape600ms is reliable.
+Use log readiness and fixed-pose numerical pairs; reserve screenshots for major visual checks.
+run/feature-benchmark.ps1 gates on completion; helpers/logs/images stay ignored. Capture fresh
+user/window state next turn because the owner plays between sessions.
+
+Preserve AA WIP8ad46eb on codex/terrain-antialiasing and rejected performance experiments.
+Accepted separate roots e324e84 remains; original experiment1–4 outcomes are unchanged.

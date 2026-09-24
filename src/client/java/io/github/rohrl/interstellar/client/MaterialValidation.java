@@ -35,7 +35,7 @@ final class MaterialValidation {
             shader.getUniformOrDefault("ViewSlopes").set(0f,0f,0f,0f);
             shader.getUniformOrDefault("TerrainFogRange").set(10000f,20000f,0f);shader.getUniformOrDefault("TerrainFogColour").set(0f,0f,0f,0f);
             var pixels=BufferUtils.createFloatBuffer(4);
-            for(int layout=0;layout<3;layout++)for(int kind=0;kind<7;kind++)for(int reverse=0;reverse<2;reverse++)for(int cache=0;cache<2;cache++) {
+            for(int layout=0;layout<3;layout++)for(int kind=0;kind<13;kind++)for(int reverse=0;reverse<2;reverse++)for(int cache=0;cache<2;cache++) {
                 // Red at10, blue at20, opaque green at30. Cases exercise glass,
                 // entity alpha, opaque occlusion and native nearest-cloud semantics.
                 float[] data=new float[6*36];
@@ -44,7 +44,9 @@ final class MaterialValidation {
                 shader.getUniformOrDefault("Forward").set(grazing?1f:0f,0f,grazing?.0001f:1f);
                 plane(data,reverse==0?0:4,grazing?512.004f:kind==2?5:30,0,0,1,0);
                 plane(data,2,grazing?512.002f:20,kind==3 || kind==5?6:-3,0,0,1);
-                plane(data,reverse==0?4:0,grazing?512:10,kind==1?8:kind==4 || kind==5?6:-3,1,0,0);
+                int front=reverse==0?4:0;
+                float material=switch(kind) {case 1->8;case 4,5->6;case 7->10;case 8->12;case 9->14;case 10->16;case 11->18;case 12->34;default->-3;};
+                plane(data,front,grazing?512:10,material,kind==9?.5f:kind==11?.25f:1,0,0);
                 // Exercise actual actor/cloud samplers and offsets, including empty
                 // actor or cloud forests and nearest hits shared with static terrain.
                 float[] staticData=new float[data.length],movingData=new float[data.length];int statics=0,movers=0;
@@ -67,6 +69,11 @@ final class MaterialValidation {
                 set(shader,"MeshNodeCount",tree.size());set(shader,"EmptyCells",cache);
                 draw.run();pixels.clear();GL11.glReadPixels(0,0,1,1,GL11.GL_RGBA,GL11.GL_FLOAT,pixels);
                 float[] expected=kind==2?new float[]{0,1,0}:kind==5?new float[]{.5f,.5f,0}:new float[]{.5f,.25f,.25f};
+                if(kind==8)expected=new float[]{1,.5f,.5f};
+                if(kind==9)expected=new float[]{.25f,.5f,.5f};
+                if(kind==10)expected=new float[]{1,0,0};
+                if(kind==11)expected=new float[]{0,.25f,.25f};
+                if(kind==12)expected=new float[]{0,.5f,.5f};
                 float error=0;for(int c=0;c<3;c++)error=Math.max(error,Math.abs(pixels.get(c)-expected[c]));
                 checks++;worst=Math.max(worst,error);
                 if(!Float.isFinite(error) || error>2e-5f) {failures++;Interstellar.LOGGER.error("Material fixture mismatch: layout={}, case={}, reverse={}, cache={}, actual=({},{},{}), error={}",layout,kind,reverse,cache,pixels.get(0),pixels.get(1),pixels.get(2),error);}

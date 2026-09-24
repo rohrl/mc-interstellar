@@ -209,8 +209,13 @@ final class WorldMesh implements VertexConsumer,AutoCloseable {
     void entityQuad(float[] data,boolean twoSided) {
         System.arraycopy(data,0,quadData,0,48);
         if(twoSided)for(int v=0;v<4;v++){int p=v*12+3;quadData[p]+=Math.signum(quadData[p]);}
-        if(data[3]==-3 || Math.abs(data[3])>=7)materials=true;
+        if(data[3]==-3 || Math.abs(data[3])%32>=7)materials=true;
         add(0,1,2);add(2,3,0);
+    }
+    void entityTriangle(float[] a,float[] b,float[] c) {
+        System.arraycopy(a,0,quadData,0,12);System.arraycopy(b,0,quadData,12,12);System.arraycopy(c,0,quadData,24,12);
+        for(int v=0;v<3;v++)quadData[v*12+3]+=Math.signum(quadData[v*12+3]);
+        add(0,1,2);
     }
     private void upload(float[] nodes) {
         int previous=GL11.glGetInteger(GL11.GL_TEXTURE_BINDING_2D),pbo=GL11.glGetInteger(GL21.GL_PIXEL_UNPACK_BUFFER_BINDING);

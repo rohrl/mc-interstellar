@@ -1,5 +1,15 @@
 # Project plan
 
+## Current priority — world feature integration (2026-09-24)
+
+The owner authorizes emissive/glint layers, Glowing-status outlines, entity shadows,
+text, selection/mining overlays, cheap local rain/snow, actual returning player-body
+images, and gravity for tridents/fishing/leashes. This supersedes the older weather
+and actual-body deferrals below for this bounded implementation. Delayed emission
+history, terrain crossing and the independent observer-speed feature remain deferred.
+See [world features](docs/world-features.md) and [current coverage](docs/minecraft-coverage.md).
+Then resume targeted GPU measurement, table-assisted optics and moving-tree reuse/refit.
+
 ## Current priority — gameplay and automatic gravity (2026-09-23)
 
 The first four performance experiments are complete. The accepted gameplay milestone implements progressive mass-block lensing, automatic source discovery/updates, local mob attraction and curved projectile paths, including lift and horizon capture. The September24 follow-up doubles local reach, adds an isolated automatic arrow course, strengthens the approach cue and fixes small-source sky rings. See [implementation and checks](docs/gameplay-gravity.md); the owner permits a small performance cost for this milestone. Next resume targeted GPU measurement, optical-table experiments and moving-tree refit/reuse. Physical delayed-light/horizon slowing, player gravity, terrain destruction and deeper relativity outside this explicit scope stay deferred.

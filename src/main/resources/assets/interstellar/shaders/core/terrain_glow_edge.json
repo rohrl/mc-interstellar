@@ -1,0 +1,8 @@
+{
+  "vertex":"interstellar:optical_lab", "fragment":"interstellar:terrain_glow_edge",
+  "attributes":["Position"], "samplers":[{"name":"Scene"}],
+  "uniforms":[
+    {"name":"Viewport","type":"float","count":2,"values":[854,480]},
+    {"name":"Texel","type":"float","count":2,"values":[0.002,0.004]}
+  ]
+}

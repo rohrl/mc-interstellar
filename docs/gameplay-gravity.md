@@ -133,3 +133,15 @@ These scenes differ in source radius, geometry and live/frozen mode. There is no
 - [Einstein Online, Schwarzschild radius](https://www.einstein-online.info/en/explandict/schwarzschild-radius/) and [free fall/geodesics](https://www.einstein-online.info/en/spotlight/geometry_force/) motivate the exterior/compactness and force-free motion distinctions.
 - [Carroll, GR lecture notes](https://arxiv.org/abs/gr-qc/9712019) is the metric/geodesic foundation. The rational interior lapse and gameplay coupling above are this project's explicit choices, not formulas attributed to that source.
 - Projectile integration was checked against locally generated sources for the pinned Minecraft 1.21.1/Yarn build 3. [MixinExtras WrapMethod](https://github.com/LlamaLad7/MixinExtras/wiki/WrapMethod) and [WrapOperation](https://github.com/LlamaLad7/MixinExtras/wiki/WrapOperation) document the hooks. No Minecraft implementation was copied into the mod.
+
+## Tridents, fishing and hanging strings (2026-09-24)
+
+Tridents now use the existing bounded projectile stepping, including horizon collision
+ordering. Native loyalty still executes once per outer tick. Free fishing bobbers get
+local acceleration on the server and a swept capture check after native movement;
+hooked bobbers retain their native attachment. Fishing, buoyancy, ownership and reel-in
+remain native. Fishing/leash geometry is captured into F10 and has capped visual sag
+toward the selected source, with fixed endpoints and native leash break rules. No rope
+mass/collision/tension simulation or pull on players is added. The original exclusions
+above are historical; the current list is in [Minecraft coverage](minecraft-coverage.md).
+Runtime trajectory/reeling checks and remaining limits: [world features](world-features.md).
