@@ -12,8 +12,10 @@ class GravityFieldTest {
         assertEquals(0,hole.acceleration(0,0,0).length());
     }
     @Test void smoothCutoffAndInterior() {
-        assertEquals(0,hole.acceleration(20,0,0).length());assertEquals(0,hole.acceleration(21,0,0).length());
-        assertTrue(hole.acceleration(20-1e-4,0,0).length()<1e-12);
+        assertEquals(40,hole.reach());
+        assertTrue(hole.acceleration(30,0,0).length()>0,"Previously unaffected perimeter now attracts");
+        assertEquals(0,hole.acceleration(40,0,0).length());assertEquals(0,hole.acceleration(41,0,0).length());
+        assertTrue(hole.acceleration(40-1e-4,0,0).length()<1e-12);
         double r=hole.bodyRadius();assertEquals(hole.acceleration(r-1e-7,0,0).length(),hole.acceleration(r+1e-7,0,0).length(),1e-7);
     }
     @Test void sweptCaptureOrdersFastHitsAndMisses() {

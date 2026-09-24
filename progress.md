@@ -1,5 +1,11 @@
 # Progress
 
+## Current checkpoint — 2026-09-24, wider gravity and arrow course
+
+Local influence radii doubled (64-block source:20→40 blocks, maximum64). A separate `/interstellar demo arrows` exhibit preserves the user's relocated gameplay builds and supplies four calibrated automatic dispensers. Native runtime verifies a491.9-degree transient loop, flyby, outward reversal and capture; ordinary drag/downward gravity/collisions remain active. Launches are bounded and cleaned up. The mob approach tint begins farther out and is more visible; physical delayed-light/horizon slowing remains deferred.
+
+Confirmed and fixed the small-source sky rings: outgoing inverse-radius steps could overshoot infinity before testing finite terrain. The extended-source-only guard removes the rings in one/two-block checks; matched conservative-reference image MAE0.000052, with no material change in the measured single-block GPU time.75 tests pass, including independent trajectory and analytic finite-wall regressions. Live arrow-course pass medians:17.727ms firing,17.310ms cleared; sampled scene check only. Full details and limitations: [gameplay gravity](docs/gameplay-gravity.md). Next resume targeted GPU measurement, table-assisted optics and moving-tree refit/reuse.
+
 ## Current checkpoint — 2026-09-23, gameplay gravity implemented
 
 The accepted gameplay milestone adds automatic shared source discovery/refresh, gradual compact-cube lensing through a finite optical interior, local mob lift/capture, curved arrows/thrown projectiles and a cheap approach colour cue. `/interstellar demo gameplay` supplies the new exhibit; the original exhibit keeps its calibration and passive entities. The owner permits a small performance cost for this work.

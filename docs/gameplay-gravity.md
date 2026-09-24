@@ -1,6 +1,6 @@
 # Gameplay gravity — implementation and verification
 
-Implemented on `codex/gameplay-gravity`. The owner accepted the proposal and permits a small performance cost. The checks below establish sampled numerical and runtime behaviour, not complete physical accuracy or a worst-case performance guarantee.
+Initially implemented on `codex/gameplay-gravity`; range, arrow-course and visual follow-ups are on `codex/gameplay-arrow-exhibit`. The owner accepted the proposal and permits a small performance cost. The checks below establish sampled numerical and runtime behaviour, not complete physical accuracy or a worst-case performance guarantee.
 
 ## Behaviour and controls
 
@@ -43,9 +43,9 @@ The independent reference integrates the affine Cartesian Hamiltonian `H=(-E²/A
 
 ## Entity dynamics and capture
 
-Motion is explicitly scaled Newtonian gameplay dynamics, separate from the optical metric. Exterior acceleration is `-0.05*N*rVector/r³` in blocks/tick², with a uniform finite interior and acceleration capped at 0.35 blocks/tick². The finite reach is approximately 7.1/13.0/20 blocks for the 8/27/64 reference builds. The outer 40% uses a quintic taper to zero; real gravity has no such cutoff.
+Motion is explicitly scaled Newtonian gameplay dynamics, separate from the optical metric. Exterior acceleration is `-0.05*N*rVector/r³` in blocks/tick², with a uniform finite interior and acceleration capped at 0.35 blocks/tick². On 2026-09-24 the owner requested twice the influence radius: reach is now approximately 14.1/26.0/40 blocks for the 8/27/64 reference builds. The close-range force is unchanged; the outer 40% still uses a quintic taper to zero. Real gravity has no such cutoff.
 
-Local entity dynamics currently support sources with enclosing radius at most 16 blocks and horizon radius at most 12; the outer reach is capped at 32. Large-source optics and the 4096-block metadata limit are separate from this gameplay limit. No horizon is silently shrunk to fit the force range. The HUD and gravity status command expose the limit.
+Local entity dynamics currently support sources with enclosing radius at most 16 blocks and horizon radius at most 12; the outer reach is capped at 64. Large-source optics and the 4096-block metadata limit are separate from this gameplay limit. No horizon is silently shrunk to fit the force range. The HUD and gravity status command expose the limit.
 
 Mobs keep native AI, contact, friction and drag. A physical-movement hook adds the source acceleration once per world tick, including flying/swimming movement overrides. Close pull can exceed the ordinary downward acceleration and lift mobs. Players and mounted/passenger groups are excluded. The radial force preserves sideways motion rather than steering a heading at the source.
 
@@ -53,9 +53,46 @@ Ordinary/spectral arrows and vanilla thrown entities use 2–16 bounded movement
 
 Capture removes crossing mobs/projectiles through normal entity removal, without terrain damage, extra mass or a loot cascade. Projectile collision queries stop at the horizon, so a target behind it cannot be damaged first. Mobs use their swept centre and contact of their bounding box with the horizon, avoiding bodies stranded on solid source corners. General retarded/frozen horizon images remain deferred.
 
-The red/dimming cue is a stylized approach indicator in captured mob vertex colours. It adds no geometry, history buffer or extra draw pass, and is disabled in the legacy exhibit. It is not physical gravitational/Doppler spectral transport; observer dependence and emission history are not modeled.
+The red/dimming cue is a stylized approach indicator in captured mob vertex colours. It now begins at 3 horizon radii (previously1.8) and darkens/reddens more strongly, making it easier to notice during the short approach. It adds no geometry, history buffer or extra draw pass, and is disabled in the legacy exhibit. It is not physical gravitational/Doppler spectral transport; observer dependence and emission history are not modeled. Correct apparent slowing near the horizon concerns the received image; mobs are currently advanced in ordinary game time and removed on capture. A physical observer-dependent slowing/fading image requires delayed-light/history work, which remains deferred. See [the University of Texas relativity notes](https://www.as.utexas.edu/astronomy/education/fall13/wheeler/secure/rev.ex4.fall.13.pdf).
 
-## Verification — 2026-09-23
+## Automatic arrow exhibit — 2026-09-24
+
+`/interstellar demo arrows` enters a separate reference exhibit, preserving edits to the older gameplay world and its relocated sources. `/interstellar demo view arrows` returns to the closer viewing position. The usual `/interstellar demo leave` returns to the saved original world/pose.
+
+Four colour-marked dispensers launch deterministic native arrows: orange attempts a transient loop around the source, cyan a deflected flyby, magenta an outward shot pulled back, and red direct capture. They are calibrated for the scene's original64-block cube and default gravity strength. Editing the mass changes their paths. These demo dispensers use a timed calibrated launch rather than inventory or vanilla random spread; ordinary dispensers elsewhere remain vanilla. Downward gravity, air drag and native collisions stay active. The loop is not a permanent circular orbit.
+
+One station fires each second, staggered across four stations. Only a nearby player in this exhibit activates firing. At most12 demo arrows are retained, with an8-second lifetime and removal of stale demo arrows on chunk reload. Destroying/turning a station disables its launch. Occupied setup cells are preserved.
+
+`/interstellar demo arrows on|off` controls automatic fire for this session; `once` stops automatic fire and launches one measured set, reporting winding/minimum-radius results to the log. `setup` retries station installation without overwriting other blocks. Ordinary player arrows are unaffected by demo cleanup. Tests compare the intended qualitative paths to an independent continuous-force RK4 reference including downward gravity and continuous drag; live native-tick checks remain the acceptance criterion.
+
+### Arrow-course verification — 2026-09-24
+
+The user's existing gameplay source had moved to `(15,91,-14)`. The first fixed-layout trial consequently did not produce the intended paths; it was rejected and its eight new station blocks were removed. The final course has its own dimension and known source at `(2,82,2)`, preserving the user's edited scene.
+
+The native runtime with the reference64-block source measured:
+
+| Station | Result |
+|---|---|
+| Orange loop | 491.875 degrees of azimuth winding, closest centre distance4.225 blocks; later hits ground |
+| Cyan flyby | Closest distance3.867 blocks, escapes the source and subsequently embeds in exhibit terrain |
+| Magenta return | Launches outward, reverses and crosses the horizon after14 ticks |
+| Red capture | Crosses the horizon after12 ticks |
+
+Azimuth winding is a measured loop, not evidence for a stable closed orbit or relativistic periapsis precession. Downward gravity and drag remain active. Final simulation/reference checks include75 unit tests. In a160-tick four-arrow window, tracking averaged0.0067ms/server callback; the native mob-movement scope averaged0.0477ms/world tick and native projectile scope0.0405ms/world tick (maximum projectile call0.7243ms). These include vanilla work and are not an isolated added-cost measurement. The stronger mob cue was visually checked against an unchanged white sheep outside its range.
+
+A normally ticking sheep30 blocks from the source, with its AI walking-speed attribute set to zero, acquired inward x velocity−0.002346 blocks/tick. This location was outside the previous20-block reach. The earlier NoAI fixture stayed immobile and was not used as evidence for the field check; the movement hook preserves native immobilization rather than force-ticking such fixtures.
+
+### Small-source ring correction
+
+The reported concentric sky rings were reproduced around one mass block. Disabling adaptive steps removed them. A first incoming-distance limit changed the pattern but failed the image comparison and was discarded. The retained fix bounds the outgoing angular step by `0.5*u/(-u')`, only in extended-source programs. The old local spatial-step estimate could overshoot `u=0` (infinity), return sky immediately and skip finite foreground/background geometry. The new guard preserves a positive endpoint so the finite chord is intersected first. The metric and black-hole program path are unchanged.
+
+An analytic straight-ray regression uses impact parameter0.5, initial radius8 and a wall at x=28: the old16-block estimate overshoots infinity; guarded steps hit the analytically known point on the wall. Runtime images confirm the rings are removed while lensing remains. The new adaptive/conservative same-frame pair has whole-image RGB MAE below0.0001 (normalized0–1), with about0.05% of pixels differing by more than8/255. These are sampled geometry/image checks, not arbitrary critical-ray certification.
+
+At1440p, half-resolution trace,2×AA, the fixed-step reference measured27.988ms GPU p50, the flawed original adaptive path11.779ms, and the retained guard11.825ms (p95:28.365/12.034/12.093ms). The0.39% median-time difference between original and corrected adaptive runs is within the scale of normal run variation; no exact zero-cost claim. The black-hole path does not contain the new guard. The first rejected candidate measured11.787ms but retained visible errors, so its timing did not justify keeping it.
+
+The two-block follow-up is visually clean too. A live1440p arrow-view check, normal world ticking, measured pass p50/p95 of17.727/18.406ms firing and17.310/18.058ms after demo arrows cleared. Frame interval medians were18.060/17.680ms. This is a short sequential scene check with evolving actors, not a precise isolated overhead or a worst-case FPS guarantee. Compact raw evidence is in [the follow-up verification record](profiles/2026-09-24-arrow-course.txt).
+
+## Initial verification — 2026-09-23
 
 - Build and package checks cover 72 unit tests, including component merge/split/removal, chunk reload, in-flight edits, cube calibration, field taper/orbits/contact and the independent optical comparisons above.
 - All new programs compiled in Minecraft. A 64→27 edit refreshed F10 without terrain recapture; the 27-block source remained visible while the surrounding wall was lensed.

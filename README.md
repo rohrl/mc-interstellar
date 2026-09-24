@@ -61,6 +61,8 @@ Edit **run/config/interstellar-optics.json** for persistent effect defaults, obs
 
 ## Mass blocks
 
+For repeatable projectile examples, use **/interstellar demo arrows**, then **F10**. Four colour-marked dispensers show a transient loop, flyby, turnaround and capture. This separate course preserves edits to the gameplay exhibit. **/interstellar demo arrows off** stops firing; **/interstellar demo leave** returns you. The local gravity reach is now40 blocks for a64-block source, with the same close-range strength.
+
 Use **/give @s interstellar:mass_block** and place connected blocks. Nearby sources are selected and updated automatically; **F10** enables world lensing. A compact 2×2×2 build bends light, a 3×3×3 build bends it more, and a 4×4×4 cube reaches the black-hole proxy threshold. Right-click with empty hands or use **/interstellar inspect x y z** to pin a source; **/interstellar source auto** resumes automatic selection. Holding a block uses normal RMB placement. [Gameplay model, controls and checks](docs/gameplay-gravity.md).
 
 For a selected black-hole proxy, open **F8** and press **S** to use its scale and camera distance in the sky lab. F8 remains a black-hole lab; extended sources render in F9/F10. F10 recovers automatically through source edits, removal and chunk loading. **R** restores the configured F8 reference view.

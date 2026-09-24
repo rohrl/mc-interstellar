@@ -59,7 +59,7 @@ final class EntityMesh implements VertexConsumerProvider,AutoCloseable {
             if(entity instanceof net.minecraft.entity.mob.MobEntity && source!=null && source.blackHoleProxy()
                     && !client.world.getRegistryKey().getValue().toString().equals("interstellar:demo")) {
                 double ratio=entity.getPos().add(0,entity.getHeight()*.5,0).distanceTo(new net.minecraft.util.math.Vec3d(source.x(),source.y(),source.z()))/source.schwarzschildRadius();
-                float t=(float)Math.clamp((1.8-ratio)/.8,0,1);
+                float t=(float)Math.clamp((3-ratio)/2,0,1);
                 captureCue=t*t*(3-2*t);
             }
             dispatcher.render(entity,px,py,pz,entity.getYaw(delta),delta,new MatrixStack(),this,dispatcher.getLight(entity,delta));
@@ -185,8 +185,8 @@ final class EntityMesh implements VertexConsumerProvider,AutoCloseable {
             count++;int p=count*12;quad[p]=a;quad[p+1]=b;quad[p+2]=c;return this;
         }
         @Override public VertexConsumer color(int r,int g,int b,int a) {
-            float dim=1-.35f*captureCue;
-            red=r/255f*dim;green=g/255f*dim*(1-.3f*captureCue);blue=b/255f*dim*(1-.5f*captureCue);alpha=a/255f;return this;
+            float dim=1-.7f*captureCue;
+            red=r/255f*dim;green=g/255f*dim*(1-.65f*captureCue);blue=b/255f*dim*(1-.9f*captureCue);alpha=a/255f;return this;
         }
         @Override public VertexConsumer texture(float a,float b) {u=a;v=b;return this;}
         @Override public VertexConsumer overlay(int a,int b) {return this;} // Hurt/flash overlay is explicitly not captured yet.

@@ -27,22 +27,31 @@ import static net.minecraft.server.command.CommandManager.literal;
 public final class DemoCommands {
     private static final RegistryKey<World> WORLD=RegistryKey.of(RegistryKeys.WORLD,Identifier.of("interstellar","demo"));
     private static final RegistryKey<World> GAMEPLAY=RegistryKey.of(RegistryKeys.WORLD,Identifier.of("interstellar","gameplay"));
-    private static boolean exhibit(ServerWorld world) {return world.getRegistryKey().equals(WORLD)||world.getRegistryKey().equals(GAMEPLAY);}
-    private static String builtKey(ServerWorld world) {return world.getRegistryKey().equals(WORLD)?"built":"gameplayBuilt";}
+    private static final RegistryKey<World> ARROWS=RegistryKey.of(RegistryKeys.WORLD,Identifier.of("interstellar","arrows"));
+    private static boolean exhibit(ServerWorld world) {return world.getRegistryKey().equals(WORLD)||world.getRegistryKey().equals(GAMEPLAY)||world.getRegistryKey().equals(ARROWS);}
+    private static String builtKey(ServerWorld world) {return world.getRegistryKey().equals(WORLD)?"built":world.getRegistryKey().equals(GAMEPLAY)?"gameplayBuilt":"arrowExhibitBuilt";}
     private static Job job;
     private static final Map<UUID,Integer> awaitingSource=new HashMap<>();
     private DemoCommands() { }
     public static void register() {
+        DemoArrows.register();
         CommandRegistrationCallback.EVENT.register((dispatcher,access,environment)->dispatcher.register(literal("interstellar")
                 .then(literal("demo").requires(s->s.hasPermissionLevel(2))
-                        .executes(c->{message(c.getSource().getPlayerOrThrow(),"Use /interstellar demo enter or /interstellar demo leave. Enter builds a separate exhibit once; F10 enables lensing.");return 1;})
+                        .executes(c->{message(c.getSource().getPlayerOrThrow(),"Use /interstellar demo gameplay, arrows, enter (legacy), or leave. Exhibits build once; F10 enables lensing.");return 1;})
                         .then(literal("enter").executes(c->enter(c.getSource().getPlayerOrThrow())))
                         .then(literal("gameplay").executes(c->enter(c.getSource().getPlayerOrThrow(),GAMEPLAY)))
+                        .then(literal("arrows")
+                                .executes(c->enter(c.getSource().getPlayerOrThrow(),ARROWS))
+                                .then(literal("on").executes(c->arrows(c.getSource().getPlayerOrThrow(),"on")))
+                                .then(literal("off").executes(c->arrows(c.getSource().getPlayerOrThrow(),"off")))
+                                .then(literal("once").executes(c->arrows(c.getSource().getPlayerOrThrow(),"once")))
+                                .then(literal("setup").executes(c->arrows(c.getSource().getPlayerOrThrow(),"setup"))))
                         .then(literal("leave").executes(c->leave(c.getSource().getPlayerOrThrow())))
                         .then(literal("view")
                                 .then(literal("wall").executes(c->view(c.getSource().getPlayerOrThrow(),2,80.38,-54,0,0)))
                                 .then(literal("side").executes(c->view(c.getSource().getPlayerOrThrow(),58,80.38,2,90,0)))
                                 .then(literal("close").executes(c->view(c.getSource().getPlayerOrThrow(),2,80.38,-26,0,0)))
+                                .then(literal("arrows").executes(c->view(c.getSource().getPlayerOrThrow(),2,90,-18,0,26)))
                                 .then(literal("terrain").executes(c->view(c.getSource().getPlayerOrThrow(),2,80.38,-54,0,35)))))));
         ServerTickEvents.END_SERVER_TICK.register(DemoCommands::tick);
         ServerLifecycleEvents.SERVER_STOPPED.register(server->{job=null;awaitingSource.clear();});
@@ -61,6 +70,15 @@ public final class DemoCommands {
         return 1;
     }
     private static void tick(MinecraftServer server) {
+        var arrowWorld=server.getWorld(ARROWS);
+        if(arrowWorld!=null) {
+            var state=state(server);
+            if(!state.data.getBoolean("arrowStationsBuilt")&&!arrowWorld.getPlayers().isEmpty()&&DemoArrows.install(arrowWorld)) {
+                state.data.putBoolean("arrowStationsBuilt",true);state.markDirty();
+                for(var player:arrowWorld.getPlayers())message(player,"Arrow course installed: /interstellar demo view arrows. Orange loop, cyan flyby, magenta return, red capture. Tuned for 64 blocks; /interstellar demo arrows on|off|once for controls.");
+            }
+            DemoArrows.tick(arrowWorld);
+        }
         for(var iterator=awaitingSource.entrySet().iterator();iterator.hasNext();) {
             var pending=iterator.next();var player=server.getPlayerManager().getPlayer(pending.getKey());
             if(player==null || !player.getWorld().getRegistryKey().equals(WORLD)) {iterator.remove();continue;}
@@ -107,15 +125,27 @@ public final class DemoCommands {
             state.data.put(key,saved);state.markDirty();
         }
         player.changeGameMode(GameMode.CREATIVE);player.teleport(world,2,80.38,-54,0,0);
+        if(world.getRegistryKey().equals(ARROWS))player.teleport(world,2,90,-18,0,26);
         player.getAbilities().flying=true;player.sendAbilitiesUpdate();
         // Player tickets load the source after the dimension transition; never probe it prematurely.
         if(world.getRegistryKey().equals(WORLD))awaitingSource.put(player.getUuid(),200);
         message(player,"Demo ready: F10 lensing, WASD/mouse to explore, Space/Shift to fly. /interstellar demo view wall|side|close|terrain selects a viewpoint; /interstellar demo leave returns you. Initial capture takes a moment; source edits update automatically.");
+        if(world.getRegistryKey().equals(ARROWS))message(player,"Arrow course: orange loop, cyan flyby, magenta return, red capture. These demo dispensers fire calibrated arrows without inventory; native gravity/drag remain active. Tuned for 64 blocks/default gravity. /interstellar demo arrows on|off|once|setup; /interstellar demo view arrows.");
     }
     private static int view(ServerPlayerEntity player,double x,double y,double z,float yaw,float pitch) {
         if(!exhibit(player.getServerWorld())) {message(player,"Enter an exhibit first: /interstellar demo enter or gameplay");return 0;}
         player.teleport(player.getServerWorld(),x,y,z,yaw,pitch);
         player.getAbilities().flying=player.getAbilities().allowFlying;player.sendAbilitiesUpdate();return 1;
+    }
+    private static int arrows(ServerPlayerEntity player,String action) {
+        if(!player.getWorld().getRegistryKey().equals(ARROWS)) {message(player,"Enter the arrow exhibit first: /interstellar demo arrows");return 0;}
+        switch(action) {
+            case "on" -> DemoArrows.enabled=true;
+            case "off" -> DemoArrows.enabled=false;
+            case "once" -> DemoArrows.once(player.getServerWorld());
+            case "setup" -> {if(!DemoArrows.install(player.getServerWorld())) {message(player,"Arrow station chunks are loading; retry shortly.");return 0;}}
+        }
+        message(player,"Arrow course: "+action+" (this session). Orange loop, cyan flyby, magenta return, red capture; tuned for 64 blocks/default gravity.");return 1;
     }
     private static int leave(ServerPlayerEntity player) {
         awaitingSource.remove(player.getUuid());

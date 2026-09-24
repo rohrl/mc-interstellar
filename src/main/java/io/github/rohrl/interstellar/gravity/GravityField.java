@@ -6,7 +6,7 @@ public record GravityField(double x,double y,double z,int count,double bodyRadiu
         public double length() {return Math.sqrt(x*x+y*y+z*z);}
     }
     public boolean supported() {return count>0&&bodyRadius<=16&&horizonRadius<=12;}
-    public double reach() {return Math.min(32,Math.max(Math.max(bodyRadius,horizonRadius)+2,20*Math.sqrt(count/64.0)));}
+    public double reach() {return 2*Math.min(32,Math.max(Math.max(bodyRadius,horizonRadius)+2,20*Math.sqrt(count/64.0)));}
     public Vector acceleration(double px,double py,double pz) {
         double dx=x-px,dy=y-py,dz=z-pz,r=Math.sqrt(dx*dx+dy*dy+dz*dz),outer=reach();
         if(!supported()||r>=outer||r<1e-12)return new Vector(0,0,0);

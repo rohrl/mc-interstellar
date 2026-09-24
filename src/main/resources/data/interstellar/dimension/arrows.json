@@ -1,0 +1,13 @@
+{
+  "type": "interstellar:demo",
+  "generator": {
+    "type": "minecraft:flat",
+    "settings": {
+      "biome": "minecraft:plains",
+      "features": false,
+      "lakes": false,
+      "structure_overrides": [],
+      "layers": [{"height": 1, "block": "minecraft:air"}]
+    }
+  }
+}

@@ -671,6 +671,12 @@ void trace(vec2 uv) {
             stepSize=clamp(sqrt(8.0*tolerance/max(curvature,1e-12)),OrbitStep>.02?min(.05,PathStep):PathStep,MeshStepLimit);
         }
         float h=min(angularCap,stepSize/max(speed,.0001));
+#ifdef INTERSTELLAR_EXTENDED_SOURCE
+        // A spatial step estimated at its starting point can overshoot u=0 on the
+        // outgoing leg of a tiny lens. Returning sky there skips intervening terrain.
+        // Limit the fractional change of inverse radius before testing the finite chord.
+        if(BodyRadius>0.0 && q.y<0.0)h=min(h,.5*q.x/-q.y);
+#endif
         COUNT_WORK(0);
         vec2 a=derivative(q),b=derivative(q+h*a*.5),c=derivative(q+h*b*.5),d=derivative(q+h*c);
         next=q+h*(a+2.0*b+2.0*c+d)/6.0;

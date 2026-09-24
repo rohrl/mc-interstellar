@@ -4,6 +4,25 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ExtendedSourceMetricTest {
+    @Test void outgoingInverseRadiusStepsMustNotSkipAFiniteWall() {
+        // Exact straight-ray limit u''=-u, impact parameter0.5, starting radius8.
+        // A16-block estimate can cross u=0 before the ray tests the wall at x=28.
+        double rs=Math.sqrt(3)/32,u=rs/8,energy=rs/.5,v=-Math.sqrt(energy*energy-u*u);
+        double unsafe=Math.min(.08,16/(rs*Math.hypot(u,v)/(u*u)));
+        assertTrue(u*Math.cos(unsafe)+v*Math.sin(unsafe)<0,"Reproduces premature sky escape");
+        double phi=0,x=8,y=0,expectedY=20*.0625/Math.sqrt(1-.0625*.0625);
+        for(int i=0;i<12;i++) {
+            double h=Math.min(Math.min(.08,16/(rs*Math.hypot(u,v)/(u*u))),.5*u/-v);
+            double nextU=u*Math.cos(h)+v*Math.sin(h),nextV=v*Math.cos(h)-u*Math.sin(h);
+            assertTrue(nextU>0);phi+=h;
+            double nextX=rs/nextU*Math.cos(phi),nextY=rs/nextU*Math.sin(phi);
+            if(nextX>=28) {
+                assertEquals(expectedY,y+(nextY-y)*(28-x)/(nextX-x),1e-11,"Finite wall remains on the tested chord");return;
+            }
+            u=nextU;v=nextV;x=nextX;y=nextY;
+        }
+        fail("Wall was skipped");
+    }
     @Test void finiteCentreAndContinuousBoundary() {
         for(double c:new double[]{.0625,.25,.5625,.8,.95,.999}) {
             var metric=new ExtendedSourceMetric(c,1);

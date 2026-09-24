@@ -2,7 +2,7 @@
 
 ## Current priority — gameplay and automatic gravity (2026-09-23)
 
-The first four performance experiments are complete. The accepted gameplay milestone implements progressive mass-block lensing, automatic source discovery/updates, local mob attraction and curved projectile paths, including lift and horizon capture. See [implementation and checks](docs/gameplay-gravity.md); the owner permits a small performance cost for this milestone. Next resume targeted GPU measurement, optical-table experiments and moving-tree refit/reuse. Player gravity, terrain destruction and deeper relativity outside this explicit scope stay deferred.
+The first four performance experiments are complete. The accepted gameplay milestone implements progressive mass-block lensing, automatic source discovery/updates, local mob attraction and curved projectile paths, including lift and horizon capture. The September24 follow-up doubles local reach, adds an isolated automatic arrow course, strengthens the approach cue and fixes small-source sky rings. See [implementation and checks](docs/gameplay-gravity.md); the owner permits a small performance cost for this milestone. Next resume targeted GPU measurement, optical-table experiments and moving-tree refit/reuse. Physical delayed-light/horizon slowing, player gravity, terrain destruction and deeper relativity outside this explicit scope stay deferred.
 
 ## Product requirements
 

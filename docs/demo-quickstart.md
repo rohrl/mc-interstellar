@@ -17,6 +17,7 @@ Minecraft may show an experimental-settings notice because the mod registers a c
 ## Choose an exhibit
 
 - **New gameplay:** `/interstellar demo gameplay` builds a separate exhibit with gradual mass progression, automatic discovery and local mob/projectile gravity. A complete 4×4×4 source is at the black-hole threshold; removing blocks reduces the field, and compact 2×2×2/3×3×3 builds keep visible material with lensing. Close mobs can lift and be captured; ordinary/spectral arrows and thrown projectiles bend. Players and terrain are unaffected. Model, settings and limits: `docs/gameplay-gravity.md` in the repository or demo archive.
+- **Arrow course:** `/interstellar demo arrows` enters another separate exhibit with four automatic calibrated dispensers. Orange demonstrates a transient loop, cyan a flyby, magenta a shot pulled back, and red capture. `/interstellar demo view arrows` restores the close viewpoint; `/interstellar demo arrows on|off|once` controls firing. The scene is tuned for its original64-block source and default gravity; edits change the paths. Native arrow drag, downward gravity and collisions remain active. Your existing gameplay exhibit is preserved.
 - **Preserved optics reference:** `/interstellar demo enter` keeps the previous stronger mass calibration and passive mobs. Use this for comparison with earlier screenshots.
 
 ## Explore and return
