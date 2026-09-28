@@ -206,6 +206,7 @@ final class TerrainScreen extends Screen {
                     opticalRadius()/source.enclosingRadius(),camera.distanceTo(centre()),MESH_VIEW_RANGE,aaName()):benchmark.status().replace("B cancels","F12 cancels");
             if(!wormhole && (source.enclosingRadius()>16 || source.blackHoleProxy()&&opticalRadius()>12))details="Large source: optics only; entity gravity size limit";
             if(horizonView())details=camera.distanceTo(centre())<=opticalRadius()?"Inside horizon | Blocks at normal positions for editing":"Near horizon | Transition to falling camera frame";
+            if(wormhole)details+=" | "+WormholeClient.resetHint();
             if(wormhole && benchmark!=null)details=benchmark.status().replace("B cancels","F12 cancels");
             context.drawTextWithShadow(textRenderer,textRenderer.trimToWidth(details,Math.max(1,width-24)),12,36,0xFFFFD59A);
             return;

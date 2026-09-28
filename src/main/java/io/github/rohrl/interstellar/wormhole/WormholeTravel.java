@@ -17,12 +17,18 @@ public final class WormholeTravel {
     private WormholeTravel() {}
     public static void register() {
         PayloadTypeRegistry.playS2C().register(WormholeTransitPayload.ID,WormholeTransitPayload.CODEC);
+        PayloadTypeRegistry.playC2S().register(WormholeResetPayload.ID,WormholeResetPayload.CODEC);
+        ServerPlayNetworking.registerGlobalReceiver(WormholeResetPayload.ID,(payload,context)-> {
+            var player=context.player();if(!WormholePair.active(player.getServerWorld()))return;
+            reset(player);
+            player.sendMessage(net.minecraft.text.Text.translatable("message.interstellar.camera_upright"),true);
+        });
         ServerTickEvents.END_SERVER_TICK.register(WormholeTravel::tick);
         ServerLifecycleEvents.SERVER_STOPPED.register(server->motions.clear());
     }
     public static void reset(ServerPlayerEntity player) {
         motions.remove(player.getUuid());
-        // A named viewpoint is an explicit camera reset, not a physical crossing.
+        // Explicit comfort reset (also used by named viewpoints), not a crossing.
         var eye=player.getEyePos();ServerPlayNetworking.send(player,new WormholeTransitPayload(0,eye,eye,0));
     }
     public static Vec3d up(float yaw,float pitch,double roll) {

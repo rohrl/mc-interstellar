@@ -1,5 +1,15 @@
 # Progress
 
+## 2026-09-29 — Upright camera control
+
+R resets wormhole camera roll without teleporting or changing yaw/pitch. It is
+rebindable under Controls → Interstellar; both optical and normal wormhole HUDs
+show the binding. A server request clears the stored crossing frame as well as
+the client's tilt, so later crossings start from the reset orientation.
+RTX build passes (88 tests remain green). Runtime logs show a −12.53° tilt cleared;
+a repeated reset preserves exact position/yaw/pitch. No optical equations or
+per-frame GPU work changed, so no screenshot/performance rerun was needed.
+
 ## Current checkpoint — 2026-09-28, RTX coverage and rendered wormhole demo
 
 Owner authorized two overnight goals: finish RTX optical coverage, then implement a

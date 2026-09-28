@@ -13,6 +13,12 @@ Branch: codex/rtx-wormhole-demo; see Git for latest commit. Foundation: 318e79b 
 586f947; final renderer/evidence follows. Branches/pushes/runtime input authorized.
 No subagents. Preserve original worlds/settings and AA WIP8ad46eb. Follow AGENTS.md.
 
+Latest follow-up (2026-09-29): R resets wormhole roll to upright without changing
+position or aim. Rebind in Controls → Interstellar; HUD uses the current binding.
+Client request calls the existing server reset and clears both stored frames.
+Build and runtime reset/idempotence check passed; see progress.md. Logs:
+run/wormhole-reset-build.log, run/wormhole-reset-runtime.log, run/wormhole-reset-check.txt.
+
 ## Read next
 
 - docs/wormhole-demo-implementation.md: implementation, physics, results and limits.
@@ -65,10 +71,11 @@ release on exit. Use nonblocking getWorldChunk, not getChunkFutureSyncOnMainThre
 
 ## Current runtime / launch
 
-Minecraft is running, paused with Esc at mouth A in isolated save
-Interstellar Overnight Check 2026-09-28, RTX ready,1280x720 window. Esc resumes.
-Current Java PID2336; VERIFY before acting. Gradle session75453; runtime log
-run/wormhole-ready-runtime.log. No active input helpers. Close the verified client
+Minecraft is running in isolated save Interstellar Overnight Check 2026-09-28,
+RTX ready,1280x720 window. After the reset-control check, the owner's pre-test
+position/aim at mouth B was restored and Esc paused the game; the owner may resume.
+Current Java PID5536; VERIFY before acting. Gradle session84549; runtime log
+run/wormhole-reset-runtime.log. No active input helpers. Close the verified client
 normally and wait for actual exit before relaunching. Never two clients per save.
 
 Launch Interstellar RTX.cmd / gradlew.bat runClient -PinterstellarRtx enables RTX.

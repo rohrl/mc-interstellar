@@ -13,6 +13,10 @@ Wait for **World view ready**, then fly into the sphere. Alt+F12 selects RTX/Ope
 F10 toggles the optical view. Ordinary builds retain the OpenGL implementation with
 no Vulkan backend dependencies. Evidence and limits are below.
 
+Press **R** after a crossing to return the camera upright without moving or changing
+your aim. This clears roll on both client and server. Rebind **Reset wormhole camera
+tilt** under Controls → Interstellar. The HUD displays the current binding.
+
 ## Geometry and world mapping
 
 The reference is the ultrastatic Ellis metric, documented in

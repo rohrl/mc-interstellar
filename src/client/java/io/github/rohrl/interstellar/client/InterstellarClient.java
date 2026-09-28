@@ -188,7 +188,7 @@ public final class InterstellarClient implements ClientModInitializer {
         }
         if(io.github.rohrl.interstellar.wormhole.WormholePair.active(client.world)) {
             lines.clear();lines.add("INTERSTELLAR | Ellis wormhole | Normal view");
-            lines.add("F10: curved view | F9: snapshot | F6: HUD");
+            lines.add("F10: curved view | "+WormholeClient.resetHint()+" | F6: HUD");
             lines.add("Mouth radius 8 | Throat areal radius 16 | No event horizon");
             lines.add(WormholeClient.ready()?"Both destinations loaded | Fly through a mouth to cross":"Preparing both destinations...");
         }

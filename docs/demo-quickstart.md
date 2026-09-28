@@ -58,6 +58,7 @@ These commands work inside the exhibit. They are static demonstration viewpoints
 | Control | Action |
 | --- | --- |
 | F10 | Enable/disable live lensing; disabling releases the capture |
+| R | Return the wormhole camera upright; keep position and aim (rebind in Controls → Interstellar) |
 | F12 | Start/clear timing; the result is also logged |
 | F1 | Minecraft HUD visibility |
 | F9 | Frozen inspection view for comparisons; Escape returns |

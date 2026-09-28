@@ -615,3 +615,12 @@ scope. Arbitrary pairing UI, remote mob tracking, non-player transit, massive-bo
 geodesics, global relativistic illumination and a physical construction of the
 supporting matter remain outside this implementation. Four ray windings and the
 bounded geometry/step budgets are explicit numerical limits.
+
+## D089 — Manual upright camera control (2026-09-29)
+
+Owner requests a reset after wormhole crossings. Add a rebindable R key that clears
+roll while preserving position, yaw/pitch and velocity. Reuse the existing server
+frame reset and its acknowledgement, so a later crossing does not resurrect the
+old tilt. Restrict the request to the wormhole dimension; no command permission
+is needed. Display the actual binding in the HUD and acknowledge in the action bar.
+Build and in-game reset/idempotence checks pass; no optical or GPU work changes.
