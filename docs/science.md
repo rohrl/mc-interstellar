@@ -109,3 +109,20 @@ precomputed, continue after scene hits, and see opaque synthetic geometry. The
 reported speedups therefore apply only to that isolated workload. Five triangle-edge
 rounding differences are retained and documented; no complete numerical equivalence
 or production FPS gain is claimed.
+
+## Invocation clocks and performance inference (2026-09-28)
+
+The [current-renderer profile](rtx-bottleneck-profile-2026-09-28.md) uses
+[ARB_shader_clock](https://registry.khronos.org/OpenGL/extensions/ARB/ARB_shader_clock.txt).
+The specification defines invocation-local observations in undefined clock units,
+not nanoseconds, and makes clock reads code-motion barriers. Summed invocation
+latencies do not directly measure GPU elapsed-time fractions or occupancy.
+We compare coarse/detailed instrumentation, separately time its overhead, verify
+float colour equivalence, and use normal shaders for frame/stage timing. Sparse
+masked-ray attribution proves less stable and is not treated as an exact removable
+cost. No Nsight instruction/stall sampling was performed.
+
+The geometry-search dominance supports a representative RTX experiment; conditional
+Amdahl scenarios remain inferences with explicitly assumed accelerated fractions and
+zero extra overhead. No transfer of synthetic query speedups to live FPS is claimed.
+Optical equations and scientific model remain unchanged.

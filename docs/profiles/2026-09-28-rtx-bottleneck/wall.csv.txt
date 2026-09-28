@@ -1,0 +1,6 @@
+program=native-quads-selective-16.0; separateMoving=true; profileExperiment=0 camera=(16.5, 303.6199998855591, -45.5) source=(16.00769230769231, 302.03846153846155, 15.992307692307692) rs=3.518228202874282 yaw=0.281 pitch=0.90999985 logical=1280x720; Streaming terrain | 6261506 triangles | 0 queued chunks
+Clock units are undefined and local to an invocation. Shares are latency attribution, not GPU elapsed-time percentages.
+pass=0 detail=0 baselineGpuMedianMs=9.469568 instrumentedColourGpuMedianMs=10.044864 differentComponents=0 componentsAbove1e-5=0 maxColourError=0.0
+pass=0 detail=1 baselineGpuMedianMs=9.469568 instrumentedColourGpuMedianMs=11.694816 differentComponents=0 componentsAbove1e-5=0 maxColourError=0.0
+pass=1 detail=0 baselineGpuMedianMs=0.01216 instrumentedColourGpuMedianMs=0.01472 differentComponents=0 componentsAbove1e-5=0 maxColourError=0.0
+pass=1 detail=1 baselineGpuMedianMs=0.01216 instrumentedColourGpuMedianMs=0.01472 differentComponents=0 componentsAbove1e-5=0 maxColourError=0.0

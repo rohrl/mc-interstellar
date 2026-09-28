@@ -62,6 +62,7 @@ test { useJUnitPlatform() }
 tasks.named('runClient') {
     args '--username', 'InterstellarDev'
     if(project.hasProperty('interstellarProfile'))jvmArgs '-Dinterstellar.profile=true'
+    if(project.hasProperty('interstellarShaderClocks'))jvmArgs '-Dinterstellar.shaderClocks=true'
 }
 
 tasks.withType(AbstractArchiveTask).configureEach {

@@ -14,7 +14,8 @@ import java.util.function.Consumer;
 
 /** Explicit developer diagnostics. Counter readbacks block and must never be timed as production. */
 final class TerrainProfile {
-    static final boolean ENABLED=Boolean.getBoolean("interstellar.profile");
+    static final boolean COUNTERS=Boolean.getBoolean("interstellar.profile");
+    static final boolean ENABLED=COUNTERS || Boolean.getBoolean("interstellar.shaderClocks");
     static final ShaderProgram[] movingPrograms=new ShaderProgram[3];
     static final ShaderProgram[][] programs=new ShaderProgram[3][3];
     // Triangle counts are leaf entries BEFORE material/cloud rejection, not all full intersection tests.

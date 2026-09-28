@@ -1,6 +1,31 @@
 # Progress
 
-## Current checkpoint — 2026-09-24, illustrated guide and RTX feasibility
+## Current checkpoint — 2026-09-28, current-renderer bottleneck profile
+
+Completed the requested link between the isolated RTX probe and actual renderer cost.
+Opt-in ARB_shader_clock programs separate geometry queries, nested candidate shading,
+orbit steps and other work. Normal programs compile the markers away. Coarse/detailed
+initial-ray query shares agree broadly; detailed geometry share76–87%, orbit3–7%.
+These are instrumented invocation-latency shares, not removable frame fractions.
+Detailed clocks add~24% to initial draws, coarse~3–6%; all paired float colour
+components match exactly. Masked-pass attribution is less stable and reported separately.
+
+Heavy live view: ordinary optical GPU median22.52ms, frame median24.59ms (~40.7FPS).
+Frozen wall/down normal repeats agree within0.15%. Capture6.26M triangles, N65,
+rs3.518; no matched historical improvement claim. Report/raw evidence/reproducible
+analysis: docs/rtx-bottleneck-profile-2026-09-28.md. Guide and ranking updated.
+RTX native-geometry replay is the recommended next experiment, before optical tables;
+no production hardware backend started. CPU tree refit and sparse-material scheduling
+remain alternatives. Conditional FPS scenarios are explicitly not forecasts.
+
+Build passes79 existing tests; eight diagnostic programs compile; two-view colour
+equivalence and normal GPU timing checks pass. Fixed existing null-source dereference
+in the horizon predicate during early renderer controls. Full optical fixtures not
+rerun; no optical equations changed. Normal client restarted with profiling disabled,
+original N8 scene reaches F10 ready, eight saved player fields match after restart;
+ticks running, original window restored, client paused. No blocks/config/inventory edits.
+
+## Previous checkpoint — 2026-09-24, illustrated guide and RTX feasibility
 
 Delivered docs/visual-guide/interstellar-visual-guide.html: 18 chapters, about 9,200
 words, 20 vector diagrams including interactive orbit/AA examples, and three actual

@@ -1,3 +1,26 @@
+// Developer-only invocation latency clocks. Normal programs compile these markers away.
+#ifdef INTERSTELLAR_CLOCKS
+uniform float ClockOutput;
+vec4 clockTicks=vec4(0);
+float clockElapsed(uvec2 start) {
+    uvec2 end=clock2x32ARB();
+    uint high=end.y-start.y-uint(end.x<start.x);
+    return float(end.x-start.x)+4294967296.0*float(high);
+}
+#define CLOCK_BEGIN(name) uvec2 name=clock2x32ARB()
+#define CLOCK_END(name,index) clockTicks[index]+=clockElapsed(name)
+#else
+#define CLOCK_BEGIN(name)
+#define CLOCK_END(name,index)
+#endif
+#ifdef INTERSTELLAR_CLOCK_DETAIL
+#define DETAIL_BEGIN(name) CLOCK_BEGIN(name)
+#define DETAIL_END(name,index) CLOCK_END(name,index)
+#else
+#define DETAIL_BEGIN(name)
+#define DETAIL_END(name,index)
+#endif
+
 uniform sampler2D Voxels;
 uniform sampler2D Palette;
 uniform sampler2D Atlas;
@@ -245,6 +268,7 @@ vec3 emptyLow[SCENE_TREES],emptyHigh[SCENE_TREES];
 bool cellKnown[SCENE_TREES];
 // Stackless preorder traversal: escape links skip whole subtrees. Each chord has one nearest hit.
 int meshSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
+    CLOCK_BEGIN(queryClock);
     COUNT_WORK(1);
     vec3 delta=end-start;float best=1.000001;bool found=false;
 #if defined(INTERSTELLAR_MATERIALS) || defined(INTERSTELLAR_MATERIAL_PROBE)
@@ -394,6 +418,7 @@ int meshSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
             vec3 weights=vec3(1-u-v,u,v);
             COUNT_WORK(6+min(tree,1));
             if(cloud) {COUNT_WORK(18);} else if(!terrain) {COUNT_WORK(19);}
+            DETAIL_BEGIN(shadeClock);
             vec4 uvA=trianglePart(tree,base,1),uvB=trianglePart(tree,base,4),uvC=trianglePart(tree,base,7);
             if(terrain) {
                 // K retains the old half-texel offset for controlled appearance comparisons.
@@ -410,23 +435,23 @@ int meshSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
             bool unlit=mode>=9.0 && mode<=14.0 || multiply;
             if(glint || multiply)uv=(mod(uvA.zw,4096.0)+fract(uv)*floor(uvA.zw/4096.0))/vec2(textureSize(EntityAtlas,0));
             if(cloud) {
-                if(t>=cloudAt)continue;
+                if(t>=cloudAt){DETAIL_END(shadeClock,1);continue;}
                 vec4 colour=textureLod(CloudAtlas,uv,0)*(trianglePart(tree,base,2)*weights.x+
                         trianglePart(tree,base,5)*weights.y+trianglePart(tree,base,8)*weights.z);
-                if(colour.a<.1)continue;
+                if(colour.a<.1){DETAIL_END(shadeClock,1);continue;}
                 float distance=dot(vec3(cloudFogDistance(a),cloudFogDistance(b),cloudFogDistance(c)),weights);
                 float fog=TerrainFogRange.y>TerrainFogRange.x?smoothstep(TerrainFogRange.x,TerrainFogRange.y,distance):step(TerrainFogRange.y,distance);
                 colour.rgb=mix(colour.rgb,TerrainFogColour.rgb,fog*TerrainFogColour.a);
 #ifdef INTERSTELLAR_MATERIALS
                 meshColour=colour.rgb;meshAlpha=colour.a;meshCloud=true;meshBlend=0;
-                best=t;hit=start+t*delta;normal=normalize(cross(edge1,edge2));found=true;continue;
+                best=t;hit=start+t*delta;normal=normalize(cross(edge1,edge2));found=true;{DETAIL_END(shadeClock,1);continue;}
 #else
-                nearestCloud=colour;cloudAt=t;continue;
+                nearestCloud=colour;cloudAt=t;{DETAIL_END(shadeClock,1);continue;}
 #endif
             }
             vec4 texel=Diagnostic>2.5?vec4(1):entity>0.0?textureLod(EntityAtlas,uv,0):textureLod(Atlas,uv,0);
             if(mode==15.0 || mode==16.0)texel=texel.rrrr;
-            if(texel.a<(mode==9.0 || mode==10.0?.001:.1))continue;
+            if(texel.a<(mode==9.0 || mode==10.0?.001:.1)){DETAIL_END(shadeClock,1);continue;}
 #ifdef INTERSTELLAR_PROFILE_NO_LIGHT
             vec3 colA=trianglePart(tree,base,2).rgb;
             vec3 colB=trianglePart(tree,base,5).rgb;
@@ -450,16 +475,18 @@ int meshSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
             meshBlend=glint?3:additive?1:multiply?2:0;
 #endif
             best=t;hit=start+t*delta;normal=normalize(cross(edge1,edge2));found=true;
+            DETAIL_END(shadeClock,1);
         }
         node=count>0?int(lower.w):node+1;
     }
     if(EmptyCells>.5) {cellKnown[tree]=canCache && node==nodeCount;emptyLow[tree]=safeLow;emptyHigh[tree]=safeHigh;}
-    if(node!=nodeCount) {diagnostic=vec4(0,0,0,-2);meshColour=vec3(1,0,1);hit=start;normal=vec3(0,1,0);return 3;}
+    if(node!=nodeCount) {diagnostic=vec4(0,0,0,-2);meshColour=vec3(1,0,1);hit=start;normal=vec3(0,1,0);CLOCK_END(queryClock,0);return 3;}
     }
     // Vanilla fancy clouds use a depth prepass: blend the nearest cloud surface once.
 #ifndef INTERSTELLAR_MATERIALS
     if(cloudAt<best && cloudLayer.a==0.0)cloudLayer=nearestCloud;
 #endif
+    CLOCK_END(queryClock,0);
     return found?3:-1;
 }
 vec3 surface(int value,vec3 hit,vec3 normal) {
@@ -765,6 +792,7 @@ void trace(vec2 uv) {
             }
             fragColor=vec4(missing(normalize(p-Source)),1);return;
         }
+        DETAIL_BEGIN(orbitClock);
         float speed=Radius*length(q)/(q.x*q.x);
         float stepSize=PathStep;
         if(Hybrid>.5 && (Diagnostic<.5 || Diagnostic>2.5)) stepSize=mix(PathStep,4.0,smoothstep(80.0,144.0,length(p-Source)));
@@ -801,8 +829,9 @@ void trace(vec2 uv) {
 #else
         if(captured) {angle=phi+h*(1.0-q.x)/(next.x-q.x);next.x=1.0;}
 #endif
-        if(next.x<=0.0) {fragColor=vec4(missing(direction),1);return;}
+        if(next.x<=0.0) {DETAIL_END(orbitClock,2);fragColor=vec4(missing(direction),1);return;}
         end=Source+(Radius/next.x)*(cos(angle)*radialAxis+sin(angle)*tangentAxis);
+        DETAIL_END(orbitClock,2);
 #ifdef INTERSTELLAR_MATERIALS
         }
 #endif
@@ -844,6 +873,7 @@ void main() {
 #ifdef INTERSTELLAR_SPLIT_AA
     // Identical two subpixel rays, scheduled in separate draws. Average in float
     // before the original RGBA8 target and bounded cubic reconstruction.
+    CLOCK_BEGIN(totalClock);
     trace(screenUv+vec2(SampleOffset)/Viewport);
 #ifdef INTERSTELLAR_MATERIALS
     fragColor.rgb=materialLayers.rgb+(1.0-materialLayers.a)*fragColor.rgb;
@@ -881,6 +911,10 @@ void main() {
         sum+=fragColor;
     }
     fragColor=Diagnostic>.5?diagnostic:sum/float(samples);
+#endif
+#ifdef INTERSTELLAR_CLOCKS
+    CLOCK_END(totalClock,3);
+    if(ClockOutput>.5)fragColor=clockTicks;
 #endif
 #ifdef INTERSTELLAR_PROFILE_COUNTERS
     if(meshAlpha<.999) {COUNT_WORK(13);}

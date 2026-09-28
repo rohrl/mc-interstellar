@@ -30,7 +30,7 @@ final class TerrainScreen extends Screen {
     private static final ShaderProgram[] bodyShaders=new ShaderProgram[4];
     private static final ShaderProgram[] horizonShaders=new ShaderProgram[4];
     static void setHorizonShader(int pass,ShaderProgram program) {horizonShaders[pass]=program;resourceVersion++;}
-    private boolean horizonView() {return !extendedSource() && camera.distanceTo(centre())<1.25*source.schwarzschildRadius();}
+    private boolean horizonView() {return source!=null && camera!=null && !extendedSource() && camera.distanceTo(centre())<1.25*source.schwarzschildRadius();}
     static void setBodyShader(int pass,ShaderProgram program) {bodyShaders[pass]=program;resourceVersion++;}
     private boolean separateMoving=true;
     static void setMovingShader(int pass,ShaderProgram program) {movingShaders[pass]=program;resourceVersion++;}
@@ -65,7 +65,7 @@ final class TerrainScreen extends Screen {
     private SimpleFramebuffer target;
     private final GlowingOutline glowOutline=new GlowingOutline();
     private LabBenchmark benchmark;
-    private boolean profileCounters;
+    private boolean profileCounters,profileClocks;
     private int profileExperiment;
     private Vec3d camera;
     private float yaw,pitch;
@@ -254,6 +254,13 @@ final class TerrainScreen extends Screen {
                     samples.begin(1);shader.getUniformOrDefault("SampleOffset").set(.25f);drawQuad(w,h);
                     if(benchmark!=null)benchmark.mark(4);
                 } else if(benchmark!=null) {benchmark.mark(2);benchmark.mark(3);benchmark.mark(4);}
+                if(profileClocks) {
+                    profileClocks=false;
+                    TerrainClocks.capture(w,h,mask,horizonView(),new ShaderProgram[]{currentShader(),shader},
+                        program->{shader=program;configureShader(w,h);},()->drawQuad(w,h),
+                        "program="+programName()+" camera="+camera+" source="+centre()+" rs="+source.schwarzschildRadius()+" yaw="+yaw+" pitch="+pitch+" logical="+w+"x"+h+"; "+mesh.status());
+                    validationStatus="Shader clocks saved under run/profiles; normal rendering resumed";
+                }
                 if(profileCounters) {
                     profileCounters=false;
                     if(!useSelectiveMaterials())throw new IllegalStateException("Counters require the selective quad baseline");
@@ -498,6 +505,14 @@ final class TerrainScreen extends Screen {
         finally {fastFetch=old;}
     }
     @Override public boolean keyPressed(int key,int scan,int modifiers) {
+        if(TerrainClocks.ENABLED && key==GLFW.GLFW_KEY_B && (modifiers&GLFW.GLFW_MOD_ALT)!=0) {
+            cancelBenchmark();
+            if(!TerrainClocks.supported())validationStatus="Shader clocks unsupported";
+            else if(!useSplitShader() || !useSelectiveMaterials() || !useQuads() || !useSeparateMoving() || extendedSource() || profileExperiment!=0)
+                validationStatus="Clocks require ordinary selective split-moving black-hole programs";
+            else {profileClocks=true;validationStatus="Capturing shader invocation clocks (not production timing)...";}
+            return true;
+        }
         if(key==GLFW.GLFW_KEY_W && !live && useQuads()) {
             cancelBenchmark();
             if((modifiers&GLFW.GLFW_MOD_SHIFT)!=0)AppearanceCapture.request(this,15);else separateMoving=!separateMoving;
@@ -507,10 +522,10 @@ final class TerrainScreen extends Screen {
             cancelBenchmark();profileExperiment=0;moving.profileMovingContents=(moving.profileMovingContents+1)%3;moving.updateMoving();
             Interstellar.LOGGER.info("Profile moving contents: {} (0=normal, 1=actors only, 2=clouds only); {}",moving.profileMovingContents,moving.status());return true;
         }
-        if(TerrainProfile.ENABLED && key==GLFW.GLFW_KEY_B && (modifiers&GLFW.GLFW_MOD_CONTROL)!=0 && useQuads() && useSelectiveMaterials()) {
+        if(TerrainProfile.COUNTERS && key==GLFW.GLFW_KEY_B && (modifiers&GLFW.GLFW_MOD_CONTROL)!=0 && useQuads() && useSelectiveMaterials()) {
             cancelBenchmark();profileExperiment=0;profileCounters=true;return true;
         }
-        if(TerrainProfile.ENABLED && key==GLFW.GLFW_KEY_BACKSLASH && useQuads()) {
+        if(TerrainProfile.COUNTERS && key==GLFW.GLFW_KEY_BACKSLASH && useQuads()) {
             cancelBenchmark();profileExperiment=(profileExperiment+1)%3;
             Interstellar.LOGGER.info("Profile experiment selected: {} (0=normal, 1=no moving tree, 2=no lightmap reads)",profileExperiment);return true;
         }

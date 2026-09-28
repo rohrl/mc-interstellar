@@ -1,67 +1,69 @@
-# Handoff — illustrated guide and RTX probe, 2026-09-24
+# Handoff — renderer bottleneck profile, 2026-09-28
 
 ## Checkout and authorization
 
-Repo C:\work\code\minecraft\interstellar\interstellar; branch
-codex/visual-guide-rtx-probe, based on fb0c827. Normal implementation, branches/pushes
-and autonomous runtime verification are authorized. No subagents. Preserve AA WIP
-8ad46eb, other branches and owner worlds. Current production Java/resources remain
-exactly at fb0c827 (stronger gameplay gravity/course v2).
+Repo C:\work\code\minecraft\interstellar\interstellar; branch codex/rtx-bottleneck-profile,
+based on5642aa7. User authorizes implementation, branches/pushes and autonomous runtime
+verification. No subagents. Preserve AA WIP8ad46eb, other branches and owner worlds.
+Latest request: profile actual query/integration cost to assess the RTX opportunity.
+This is completed; no production RTX backend has been started.
 
-## Delivered this turn
+## Delivered
 
-- docs/visual-guide/interstellar-visual-guide.html: self-contained offline guide,
-  18 chapters, about9,200 words,20 SVG diagrams including interactive ray/AA examples,
-  three real historical screenshots. Graphics101, physics/model limits, all retained
-  rendering optimizations, failed experiments and discoveries. Code links pin fb0c827.
-- Source/build instructions in docs/visual-guide/README.md. Node-only build; no packages.
-  Desktop/mobile browser rendering and image/diagram inspection, links, SVG text bounds,
-  controls and error checks passed. Print styling supplied; no separate PDF generated.
-- tools/rtx-probe: standalone Java/LWJGL Vulkan compute microbenchmark, not a mod backend.
-  Official Maven jars live only under ignored run/rtx/lib, with pinned checksums in runner.
-- docs/rtx-probe-2026-09-24.md plus raw JSONL/setup log. RTX5070Ti driver616.92,
-  curved-chord query replay3.26–3.76x faster than simplified software BVH; random4/16
-  block segments7.68–13.60x. Six cases,262,144queries each,16dispatch batches,
-  12warmup/30alternating measured pairs. All buffers device-local/host-coherent.
--1,572,864 paired hits and768 sampled brute-force double checks. Five triangle-edge
-  classification differences, all hardware matches CPU, retained in timed workloads;
-  no unexplained classification/distance failures. Not bit-exact equivalence.
+- docs/rtx-bottleneck-profile-2026-09-28.md: normal GPU stages/live timings, invocation
+  clocks, measured instrumentation interference, numeric colour equivalence, conditional
+  RTX scenarios and revised priorities. Raw data in docs/profiles/2026-09-28-rtx-bottleneck;
+  tools/analyze-shader-clocks.py regenerates summary.json using Python3 standard library.
+- Initial-ray geometry search accounts for~87% down /76% wall of instrumented invocation
+  latency; orbit steps~3% /7%. Coarse whole-query shares86% /75% broadly agree with
+  detailed inclusive88% /77%. Detailed clocks add~24% to initial draw time, so these
+  are NOT exact GPU elapsed-time or removable-frame fractions. Mask attribution less stable.
+- Normal heavy live GPU median22.52ms; median frame24.59ms (~40.7FPS), 1440p output,
+  logical720p sharp2x, distance12, VSync/cap120. Source N65 rs3.518;6.26M triangles,
+  72 entities/5 block entities. Historical source calibration differs; no before/after claim.
+- Frozen down/wall repeats differ<0.15%. Coarse/detail float colour components match
+  baseline exactly in both passes/views; no invalid clock rows. Stage/CPU data retained.
+- -PinterstellarShaderClocks enables eight separate diagnostic programs, stage/CPU timing;
+  normal launch does not register them. Alt+B in ready F9 native streamed/default
+  selective split-moving BH mode records clocks. Shift+M initially DISABLES lensing;
+  Space restores it. B/Shift+B normal/stage; Ctrl+F12 live stages. Read report controls.
+- Existing null-source crash found during setup: horizonView now checks source/camera
+  before centre/radius access. No optics equation/default changed. Small HUD completion
+  text and stronger nonfinite diagnostic checks added after measurements.
+- Guide's RTX chapter, decisionD079, science notes and previous ranking updated.
 
-Do not apply these speedups to Minecraft FPS. Opaque synthetic fixtures, warm data,
-independent chords continuing after hits, no production empty-space certificates,
-quad/chunk layout, materials, live updates, integration register pressure or OpenGL
-sharing. Hardware builds its own tree. No Vulkan validation layer installed. Build
-costs recorded separately; cold wall observations are not a scalability comparison.
+Build passes79 existing tests. Eight diagnostic shaders compiled in game. Two-view
+numeric comparisons and representative screenshots inspected; full optical fixtures
+and automated movement/flicker tests not rerun. Normal launch/F10 on owner N8 source
+reached ready without renderer errors. Shader JSON formatting compacted with parsed
+object equality checks; normal GPU code has no clock calls.
 
-Production unchanged, so Gradle/package and optical GPU suites were not rerun.
-Standalone javac compile and actual GPU probe passed. D078 records scope/decision.
+## Recommended next work
 
-## Client / saved state
+1. RTX replay using captured native geometry and actual chord distributions; preserve
+   hit/alpha/translucent correctness checks. Measure AS builds/updates and OpenGL sharing
+   before committing to a live backend. Prior3.26–3.76x microbenchmark is not an FPS gain.
+2. CPU moving-tree reuse/refit (~3.7–3.9ms CPU construction/update here, overlaps GPU).
+3. Sparse material scheduling/compaction:0.132% active rays still cost~4.48ms.
+4. Optical tables lower priority for these exterior views; critical/close rays unprofiled.
 
-Closed previous client23432 normally for GPU timing; reopened the same saved world
-through run/restart-client.ps1 and dismissed its existing join confirmation.
-Client PID26904, exec session86101, log run/rtx-resume-runtime.log; left paused.
-No new ERROR/Exception/GL_INVALID in startup. No terrain/inventory/config edits.
-Owner had changed the scene since the previous checkpoint: source now N216,
-centre2/83/3, r_s11.691. Join position18.8877375156/85.4032348458/6.1775771671.
-No older state was restored. Capture fresh state before future GUI work; do not
-teleport to the older checkpoint pose or shrink the owner's new source.
+## Current client and owner state
 
-JDK C:\Portable\jdks\temurin-21.0.12.1. Close identified client normally before
-relaunch. run/restart-client.ps1/stable-init.gradle use quickPlaySingleplayer;
-Loaded1399 advancements followed by click595/305 has dismissed the confirmation.
-Escape needs600ms. External helpers are existing ignored run/control-short.ps1
-and run/send-safe-command.ps1. GUI/process enumeration needs elevated sandbox access.
+Normal client PID22192, exec session40120, run/rtx-profile-final-runtime.log; paused,
+profiling JVM flags absent, F10 off. Original owner source N8 in interstellar:arrows
+unchanged. No blocks/config/inventory edits. Ticks running20tps; no time/weather commands.
+Restored and verified all eight recorded player fields before and after normal restart:
+creative, walking (flying=false), dimension interstellar:arrows,
+feet16.42080350758872/65/-55.7896552801982, yaw-18.765259/pitch-5.99997,
+slot8, health20, original inventory+chainmail. Exact original outer window bounds
+845,449–1715,968 restored (client854x480). These are this turn's fresh owner state;
+never restore the older N216/N64 checkpoint poses.
 
-## Next work
-
-User asked for an implementation artifact first and a quick RTX benchmark second;
-both are complete. No production Vulkan rewrite was started or committed to.
-If RTX becomes the next priority: capture actual native geometry/chord logs, test
-cutout/translucency, then sharing/live-update costs before promising a backend.
-Original performance options (optical tables, moving-tree reuse/refit) remain.
-
-Gameplay defaults remain strength0.2/cap7*strength, arrow coursev2, body captureoff.
-Horizon frame transition1.25→1.05rs, corecutoff0.1rs and interior editing unchanged.
-Prior79tests and runtime evidence remain in docs/gameplay-gravity.md; previous optical
-and body results in docs/horizon-body-study.md. No new shipping FPS result this turn.
+Ignored run/rtx-profile-owner-state.txt, restored-state.txt and rtx-profile-window.json
+hold records. Profiling runtime log is run/rtx-clocks-runtime.log; wall/down-live PNGs
+are ignored visual checkpoints. Helpers finished. JDK C:\Portable\jdks\temurin-21.0.12.1;
+Python via py -3 (3.8 default). Normal relaunch: run/restart-client.ps1 -Log ...; close
+identified old client normally and wait before launching. Startup may be minimized:
+ShowWindow(handle,9), then dismiss the existing join confirmation at595,305 with the
+854x480 client. Gate on log readiness, not arbitrary long sleeps. No new run is needed
+merely to explain these results. Detailed evidence and limitations are in the report.

@@ -71,13 +71,18 @@ public final class InterstellarClient implements ClientModInitializer {
                 context.register(Identifier.of("interstellar", "terrain_horizon_mask"), VertexFormats.POSITION, program->TerrainScreen.setHorizonShader(1,program));
                 context.register(Identifier.of("interstellar", "terrain_horizon_materials"), VertexFormats.POSITION, program->TerrainScreen.setHorizonShader(2,program));
                 context.register(Identifier.of("interstellar", "terrain_horizon_diagnostic"), VertexFormats.POSITION, program->TerrainScreen.setHorizonShader(3,program));
-                if(TerrainProfile.ENABLED)for(int experiment=0;experiment<3;experiment++)for(int pass=0;pass<3;pass++) {
+                if(TerrainProfile.COUNTERS)for(int experiment=0;experiment<3;experiment++)for(int pass=0;pass<3;pass++) {
                     final int e=experiment,p=pass;
                     context.register(Identifier.of("interstellar", "terrain_profile_"+e+"_"+p),VertexFormats.POSITION,program->TerrainProfile.programs[e][p]=program);
                 }
-                if(TerrainProfile.ENABLED)for(int pass=0;pass<3;pass++) {
+                if(TerrainProfile.COUNTERS)for(int pass=0;pass<3;pass++) {
                     final int p=pass;
                     context.register(Identifier.of("interstellar", "terrain_moving_profile_"+p),VertexFormats.POSITION,program->TerrainProfile.movingPrograms[p]=program);
+                }
+                if(TerrainClocks.ENABLED && TerrainClocks.supported())for(int frame=0;frame<2;frame++)for(int detail=0;detail<2;detail++)for(int pass=0;pass<2;pass++) {
+                    final int f=frame,d=detail,p=pass;
+                    String name="terrain_clock_"+(frame==0?"moving":"horizon")+"_"+detail+"_"+(pass==0?"probe":"mask");
+                    context.register(Identifier.of("interstellar",name),VertexFormats.POSITION,program->TerrainClocks.PROGRAMS[f][d][p]=program);
                 }
                 context.register(Identifier.of("interstellar", "terrain_sample_fold"), VertexFormats.POSITION, TerrainSamples::setShader);
             }

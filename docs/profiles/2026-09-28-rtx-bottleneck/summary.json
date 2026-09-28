@@ -1,0 +1,362 @@
+{
+  "clocks": {
+    "down": {
+      "probe_detail0": {
+        "active_rays": [
+          1843200
+        ],
+        "gpu_ms_median": 17.79008,
+        "queryInclusive_percent": 86.22153162555031,
+        "other_percent": 13.778468374449687
+      },
+      "probe_detail1": {
+        "active_rays": [
+          1843200
+        ],
+        "gpu_ms_median": 21.125664,
+        "queryInclusive_percent": 87.69960047433193,
+        "geometrySearch_percent": 87.00939449453804,
+        "candidateShade_percent": 0.6902059797938844,
+        "orbitStep_percent": 3.1721477276268883,
+        "other_percent": 9.128251798041184
+      },
+      "mask_detail0": {
+        "active_rays": [
+          2431
+        ],
+        "gpu_ms_median": 4.69968,
+        "queryInclusive_percent": 83.78990903050953,
+        "other_percent": 16.210090969490466
+      },
+      "mask_detail1": {
+        "active_rays": [
+          2431
+        ],
+        "gpu_ms_median": 4.88656,
+        "queryInclusive_percent": 70.43398495818717,
+        "geometrySearch_percent": 69.70813951107512,
+        "candidateShade_percent": 0.725845447112047,
+        "orbitStep_percent": 0.5065429346360244,
+        "other_percent": 29.059472107176813
+      },
+      "colour_and_overhead_checks": [
+        {
+          "pass": "0",
+          "detail": "0",
+          "baselineGpuMedianMs": "17.375392",
+          "instrumentedColourGpuMedianMs": "17.88112",
+          "differentComponents": "0",
+          "5": "0",
+          "maxColourError": "0.0",
+          "overhead_percent": 2.9105990817358096
+        },
+        {
+          "pass": "0",
+          "detail": "1",
+          "baselineGpuMedianMs": "17.375392",
+          "instrumentedColourGpuMedianMs": "21.45744",
+          "differentComponents": "0",
+          "5": "0",
+          "maxColourError": "0.0",
+          "overhead_percent": 23.493271403603423
+        },
+        {
+          "pass": "1",
+          "detail": "0",
+          "baselineGpuMedianMs": "4.344736",
+          "instrumentedColourGpuMedianMs": "4.67232",
+          "differentComponents": "0",
+          "5": "0",
+          "maxColourError": "0.0",
+          "overhead_percent": 7.539790680032099
+        },
+        {
+          "pass": "1",
+          "detail": "1",
+          "baselineGpuMedianMs": "4.344736",
+          "instrumentedColourGpuMedianMs": "4.900448",
+          "differentComponents": "0",
+          "5": "0",
+          "maxColourError": "0.0",
+          "overhead_percent": 12.790466440308457
+        }
+      ]
+    },
+    "wall": {
+      "probe_detail0": {
+        "active_rays": [
+          1843200
+        ],
+        "gpu_ms_median": 10.010112,
+        "queryInclusive_percent": 75.39870521246303,
+        "other_percent": 24.601294787536975
+      },
+      "probe_detail1": {
+        "active_rays": [
+          1843200
+        ],
+        "gpu_ms_median": 11.821472,
+        "queryInclusive_percent": 76.89405638405195,
+        "geometrySearch_percent": 76.38096871975354,
+        "candidateShade_percent": 0.513087664298404,
+        "orbitStep_percent": 7.27069950866141,
+        "other_percent": 15.835244107286647
+      },
+      "mask_detail0": {
+        "active_rays": [
+          0
+        ],
+        "gpu_ms_median": 0.015008,
+        "queryInclusive_percent": null,
+        "other_percent": null
+      },
+      "mask_detail1": {
+        "active_rays": [
+          0
+        ],
+        "gpu_ms_median": 0.014944,
+        "queryInclusive_percent": null,
+        "geometrySearch_percent": null,
+        "candidateShade_percent": null,
+        "orbitStep_percent": null,
+        "other_percent": null
+      },
+      "colour_and_overhead_checks": [
+        {
+          "pass": "0",
+          "detail": "0",
+          "baselineGpuMedianMs": "9.469568",
+          "instrumentedColourGpuMedianMs": "10.044864",
+          "differentComponents": "0",
+          "5": "0",
+          "maxColourError": "0.0",
+          "overhead_percent": 6.075208499479601
+        },
+        {
+          "pass": "0",
+          "detail": "1",
+          "baselineGpuMedianMs": "9.469568",
+          "instrumentedColourGpuMedianMs": "11.694816",
+          "differentComponents": "0",
+          "5": "0",
+          "maxColourError": "0.0",
+          "overhead_percent": 23.49893891674888
+        },
+        {
+          "pass": "1",
+          "detail": "0",
+          "baselineGpuMedianMs": "0.01216",
+          "instrumentedColourGpuMedianMs": "0.01472",
+          "differentComponents": "0",
+          "5": "0",
+          "maxColourError": "0.0",
+          "overhead_percent": 21.052631578947366
+        },
+        {
+          "pass": "1",
+          "detail": "1",
+          "baselineGpuMedianMs": "0.01216",
+          "instrumentedColourGpuMedianMs": "0.01472",
+          "differentComponents": "0",
+          "5": "0",
+          "maxColourError": "0.0",
+          "overhead_percent": 21.052631578947366
+        }
+      ]
+    }
+  },
+  "timings": {
+    "down-stages": {
+      "gpu_p50": 52.778912,
+      "gpu_p95": 55.634688,
+      "gpu_p99": 56.989568,
+      "frame_p50": 53.7579,
+      "frame_p95": 56.504,
+      "frame_p99": 57.7644,
+      "stage_means": {
+        "ray0": 52.07319669333333,
+        "ray1": 0.00017429333333333333,
+        "maskCopy": 0.00017237333333333335,
+        "material0": 0.00017504,
+        "material1": 0.0001716266666666667,
+        "fold": 0.00017557333333333334,
+        "resolve": 0.7906061866666667
+      },
+      "stage_mean_total": 52.86467178666666,
+      "stage_mean_percent": {
+        "ray0": 98.50282794428897,
+        "ray1": 0.0003296971823388734,
+        "maskCopy": 0.0003260652672335492,
+        "material0": 0.0003311095937687217,
+        "material1": 0.00032465285580370094,
+        "fold": 0.0003321184590757562,
+        "resolve": 1.495528412352823
+      },
+      "fps_from_frame_median": 18.601917113577727
+    },
+    "down-on-stages": {
+      "gpu_p50": 22.584736,
+      "gpu_p95": 25.153408,
+      "gpu_p99": 25.497376,
+      "frame_p50": 23.7094,
+      "frame_p95": 25.7255,
+      "frame_p99": 25.9921,
+      "stage_means": {
+        "ray0": 9.051564373333333,
+        "ray1": 9.101904639999999,
+        "maskCopy": 0.2977501866666667,
+        "material0": 2.497751786666667,
+        "material1": 1.9890718933333336,
+        "fold": 0.015627733333333334,
+        "resolve": 0.062450773333333334
+      },
+      "stage_mean_total": 23.01612138666666,
+      "stage_mean_percent": {
+        "ray0": 39.327062198137966,
+        "ray1": 39.5457796172068,
+        "maskCopy": 1.2936592645846692,
+        "material0": 10.852183757223427,
+        "material1": 8.64208117396188,
+        "fold": 0.06789907417844324,
+        "resolve": 0.27133491470683385
+      },
+      "fps_from_frame_median": 42.177364252153154
+    },
+    "wall-stages": {
+      "gpu_p50": 10.421536,
+      "gpu_p95": 11.68128,
+      "gpu_p99": 11.997504,
+      "frame_p50": 11.176,
+      "frame_p95": 12.1505,
+      "frame_p99": 12.5174,
+      "stage_means": {
+        "ray0": 5.22120512,
+        "ray1": 4.73813088,
+        "maskCopy": 0.39731658666666664,
+        "material0": 0.010776533333333333,
+        "material1": 0.006075733333333334,
+        "fold": 0.013053973333333333,
+        "resolve": 0.06272917333333333
+      },
+      "stage_mean_total": 10.449288,
+      "stage_mean_percent": {
+        "ray0": 49.967089815114676,
+        "ray1": 45.34405482938168,
+        "maskCopy": 3.802331667637706,
+        "material0": 0.1031317476686769,
+        "material1": 0.0581449504821126,
+        "fold": 0.12492691687063591,
+        "resolve": 0.6003200728445166
+      },
+      "fps_from_frame_median": 89.4774516821761
+    },
+    "wall-repeat": {
+      "gpu_p50": 10.406368,
+      "gpu_p95": 11.667104,
+      "gpu_p99": 12.132352,
+      "frame_p50": 11.1771,
+      "frame_p95": 12.0884,
+      "frame_p99": 12.6116,
+      "stage_means": {
+        "ray0": 5.218502613333333,
+        "ray1": 4.748048213333333,
+        "maskCopy": 0.38047232,
+        "material0": 0.010797013333333334,
+        "material1": 0.006096,
+        "fold": 0.013081173333333333,
+        "resolve": 0.06108181333333333
+      },
+      "stage_mean_total": 10.438079146666663,
+      "stage_mean_percent": {
+        "ray0": 49.99485575849298,
+        "ray1": 45.48775829937631,
+        "maskCopy": 3.6450415316260707,
+        "material0": 0.10343869960768878,
+        "material1": 0.05840154988618495,
+        "fold": 0.12532165305060677,
+        "resolve": 0.5851825079601877
+      },
+      "fps_from_frame_median": 89.46864571310985
+    },
+    "down-repeat": {
+      "gpu_p50": 22.573408,
+      "gpu_p95": 25.094592,
+      "gpu_p99": 25.590496,
+      "frame_p50": 23.7407,
+      "frame_p95": 25.7317,
+      "frame_p99": 26.2337,
+      "stage_means": {
+        "ray0": 9.052526186666666,
+        "ray1": 9.114585493333333,
+        "maskCopy": 0.27939413333333335,
+        "material0": 2.4926682666666666,
+        "material1": 1.9879595733333333,
+        "fold": 0.01513952,
+        "resolve": 0.061360000000000005
+      },
+      "stage_mean_total": 23.003633173333334,
+      "stage_mean_percent": {
+        "ray0": 39.35259321193094,
+        "ray1": 39.62237366877898,
+        "maskCopy": 1.2145652437946952,
+        "material0": 10.835976421134468,
+        "material1": 8.64193737725678,
+        "fold": 0.06581360381607151,
+        "resolve": 0.2667404732880665
+      },
+      "fps_from_frame_median": 42.12175715122132
+    },
+    "live-down-stages": {
+      "gpu_p50": 22.5784,
+      "gpu_p95": 25.09616,
+      "gpu_p99": 25.653568,
+      "frame_p50": 24.8113,
+      "frame_p95": 26.8461,
+      "frame_p99": 27.6515,
+      "stage_means": {
+        "ray0": 9.003810346666667,
+        "ray1": 9.316894826666667,
+        "maskCopy": 0.35474602666666666,
+        "material0": 2.4863749333333334,
+        "material1": 1.9780744533333332,
+        "fold": 0.01666368,
+        "resolve": 0.06242229333333333
+      },
+      "stage_mean_total": 23.218986560000005,
+      "stage_mean_percent": {
+        "ray0": 38.777792146095564,
+        "ray1": 40.126190704279665,
+        "maskCopy": 1.5278273483210398,
+        "material0": 10.708369751230576,
+        "material1": 8.519210983743008,
+        "fold": 0.0717674733862286,
+        "resolve": 0.26884159294389687
+      },
+      "fps_from_frame_median": 40.3042162240592
+    },
+    "live-down-normal": {
+      "gpu_p50": 22.521984,
+      "gpu_p95": 25.147936,
+      "gpu_p99": 25.33632,
+      "frame_p50": 24.5929,
+      "frame_p95": 26.7759,
+      "frame_p99": 27.1732,
+      "stage_means": {},
+      "fps_from_frame_median": 40.66214232563057
+    }
+  },
+  "conditional_speedups_no_extra_cost": {
+    "0.5": [
+      1.5305164319248825,
+      1.5798319327731092
+    ],
+    "0.65": [
+      1.8202121719709659,
+      1.9125127161749746
+    ],
+    "0.8": [
+      2.2451790633608817,
+      2.4226804123711343
+    ]
+  }
+}

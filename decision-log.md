@@ -428,3 +428,23 @@ implemented: native captured geometry and chord logs, cutout/translucent behavio
 then actual interoperability/live-update costs. Production optics/performance defaults
 and the existing optical-table/refit alternatives remain unchanged. See
 [RTX report](docs/rtx-probe-2026-09-24.md) and [guide](docs/visual-guide/README.md).
+
+## D079 — Profile real query cost before choosing an RTX backend (2026-09-28)
+
+Accepted: separate opt-in ARB_shader_clock programs, paired colour checks, coarse
+versus detailed instrumentation and ordinary-shader stage/live timings. The detailed
+probe itself adds~24% to initial draws; invocation latency is not elapsed GPU time.
+Initial-ray geometry shares76–87% versus orbit steps3–7% make native RTX query replay
+a more promising next measurement than optical tables for these two exterior views.
+Mask attribution varies materially with instrumentation; retain that uncertainty.
+
+Heavy live run:22.52ms optical GPU /24.59ms median frame (~40.7FPS); source/world differ
+from older benchmarks. Do not call this a historical improvement. Whole-frame RTX
+scenarios use explicit assumed accelerated fractions, not measured removable shares;
+interop, scene updates, native materials and CPU limits remain unmeasured.
+
+Proposed next: captured geometry plus actual chord distributions, then cutout/
+translucent correctness and build/update/sharing costs, before a live-backend trial.
+CPU moving-tree refit and sparse-material scheduling remain alternatives. No backend
+adopted or optical/quality settings changed. Fixed a missing-source guard encountered
+during setup. Full report and evidence: docs/rtx-bottleneck-profile-2026-09-28.md.

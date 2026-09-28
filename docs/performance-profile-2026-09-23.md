@@ -1,5 +1,13 @@
 # Rendering profile and revised priorities — 2026-09-23
 
+**Latest priority update, 28 September:** the [current-renderer shader-clock study](rtx-bottleneck-profile-2026-09-28.md)
+attributes roughly76–87% of initial-ray latency to geometry search and3–7% to orbit
+steps in two exterior views, with instrumentation interference explicitly measured.
+Prioritize a representative RTX replay experiment, then CPU moving-tree reuse and
+sparse-material scheduling; optical tables move lower for these views. No RTX
+backend or guaranteed FPS improvement is implied. The measurements below remain
+the original historical checkpoint.
+
 ## Decision
 
 The [original first four proposals have been tried](performance-experiments-1-4.md).

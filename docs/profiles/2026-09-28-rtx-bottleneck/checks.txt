@@ -1,0 +1,10 @@
+Gradle build: successful; 79 existing tests, zero failures/errors (unchanged tests may be up to date).
+Runtime: all eight clock programs compiled on RTX5070Ti / NVIDIA616.92.
+Two frozen exterior views: coarse/detail float output identical to normal in both passes; zero invalid clock rows.
+Stage baseline repeats: down22.584736->22.573408ms; wall10.421536->10.406368ms.
+Live normal repeat: optical22.521984ms / frame24.5929ms median; world ticking normally.
+Screenshots: frozen wall and live down visually inspected (ignored run/rtx-profile-*.png).
+Normal restart: original N8 source F10 ready; no ERROR/Exception/GL_INVALID; profiling JVM flags absent.
+Player: eight fields match initial state before and after restart; normal20tps restored; exact window bounds restored; paused.
+No full optical fixture suite, horizon clock capture, GPU occupancy/stall sampling or automated movement/flicker test performed.
+Shader JSON compaction preserves parsed objects exactly; guide update is text only, rebuild/link checks performed.
