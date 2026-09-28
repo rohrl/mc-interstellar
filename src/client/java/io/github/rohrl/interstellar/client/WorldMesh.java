@@ -70,6 +70,8 @@ final class WorldMesh implements VertexConsumer,AutoCloseable {
         if(terrainOnly && !singleChunk){streaming=new StreamingTerrain(world,origin,centre);triangles=null;}
     }
     float[] triangleData() {return triangles;}
+    long movingRevision() {return updates;}
+    WorldRenderBackend.Terrain backendTerrain() {if(streaming==null)throw new IllegalStateException("RTX requires streamed terrain");return streaming.backendTerrain();}
     int[][] replaySpans() {if(streaming==null)throw new IllegalStateException("Replay requires streamed quads");return streaming.replaySpans();}
     int triangleCount() {return count;}
     float sourceShift(net.minecraft.util.math.Vec3d source) {return (float)source.distanceTo(net.minecraft.util.math.Vec3d.of(centre));}

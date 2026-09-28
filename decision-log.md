@@ -506,3 +506,25 @@ entity/collision handling are central engineering work. Reuse native scene/mater
 and optional geometry-query backends; do not promise FPS before measurement. A proposed
 lab→frozen pair→guided crossing→live pair sequence is documented, not scheduled or
 implemented. See docs/wormholes-feasibility.md and its primary scientific references.
+
+## D083 — Optional live RTX backend, OpenGL retained (2026-09-28)
+
+Accepted and implemented for ordinary exterior BH views. Per-chunk resident BLAS
+preserve compact quad vertices; updated actor/cloud geometry uses bounded reusable
+buffers and small BLAS rebuilds. TLAS instances combine them. GPU copies share the
+native atlases/lightmap/sky; optical/material source and GL resolve remain shared.
+Rebuild moving meshes initially because topology varies; refits and selective
+texture copies remain measured optimization candidates.
+
+The backend-neutral interface contains no Vulkan types. Optional sources/dependencies
+are selected by -PinterstellarRtx; ordinary artifacts and runtime dependencies exclude
+Vulkan/shaderc. This retains the owner's future Vulkan-free flavour option without
+creating a new distribution. GL remains the fallback for errors, extended sources
+and near/inside-horizon views; RTX resumes when eligible. Windows interop only for now.
+
+Live1440p: heavy view~42→120 FPS, wall~86→120, limited by the existing120 cap. Three
+300-sample runs per view/backend; frame intervals include the live client. Matched
+images after live updates/edits/streaming remain very close. The independent normal
+build regression check found no slowdown (GPU medians lower2.3–2.8%, treated as
+variation). Extra observed board memory~1.54GiB with both renderers. No cross-vendor,
+device-loss or sustained movement claim. Details/evidence: docs/rtx-live-world-2026-09-28.md.

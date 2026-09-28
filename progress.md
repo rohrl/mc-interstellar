@@ -1,6 +1,27 @@
 # Progress
 
-## Current checkpoint — 2026-09-28, complete frozen RTX images
+## Current checkpoint — 2026-09-28, live RTX exterior world
+
+Implemented optional F10 hardware rendering with resident per-chunk acceleration
+structures, bounded moving actor/cloud builds and GPU copies of native appearance.
+Changed chunks alone synchronize; removal, resize and horizon fallback/resumption
+were exercised. Extended/near-horizon views retain OpenGL. Ordinary builds exclude
+optional code and Vulkan/shaderc; no new distribution flavour was packaged.
+
+1440p live frame medians: heavy terrain23.981→8.361ms (~42→120 FPS),
+wall11.640→8.352ms (~86→120 FPS), at the unchanged120 FPS cap. Three runs/view/backend.
+Six matched image cases agree closely (0–12 pixels above16/255); known tiny image
+differences remain. OpenGL-only regression check: GPU24.437→23.762ms down,
+11.073→10.821ms wall. No observed regression; small improvements treated as variation.
+Both builds/79 tests and analytic material fixture pass. Final initialization guards
+compiled after runtime image checks. No device-loss or cross-vendor validation.
+
+Launch -PinterstellarRtx; F10 automatic, Alt+F12 renderer toggle, F12 live benchmark,
+Ctrl+Alt+F12 paired images. Read docs/rtx-live-world-2026-09-28.md for architecture,
+scope, evidence and timing limits. Owner state restored; temporary glass block removed.
+Next: remaining optical variants, update spikes, lifecycle and optional packaging.
+
+## Previous checkpoint — 2026-09-28, complete frozen RTX images
 
 Completed the approved full-image experiment, retaining OpenGL and a normal build
 without Vulkan/shaderc dependencies. Existing optical/material GLSL generates the

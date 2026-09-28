@@ -18,7 +18,8 @@ public final class Probe implements AutoCloseable {
     VkInstance instance; VkPhysicalDevice physical; VkDevice device; VkQueue queue;
     VkCommandBuffer command; VkPhysicalDeviceMemoryProperties memory;
     long pool,queryPool,layout,descriptorLayout,descriptorPool,set,hardware,software;
-    float timestampPeriod; int queueFamily,scratchAlignment; final List<Runnable> cleanup=new ArrayList<>();
+    float timestampPeriod; int queueFamily,scratchAlignment; long maxStorageBufferRange; final List<Runnable> cleanup=new ArrayList<>();
+    private final Map<Long,Runnable> bufferCleanup=new HashMap<>();
     final String shaderFile;final int bufferBindings,pushBytes,vertexStride;final boolean opaque;
     record Buffer(long handle,long memory,long address,ByteBuffer mapped,long size) {}
     record Acceleration(long handle,long address,double gpuMs,long bytes) {}
@@ -49,6 +50,7 @@ public final class Probe implements AutoCloseable {
             var asProps=VkPhysicalDeviceAccelerationStructurePropertiesKHR.calloc(s).sType$Default();
             var props=VkPhysicalDeviceProperties2.calloc(s).sType$Default().pNext(asProps.address());vkGetPhysicalDeviceProperties2(physical,props);
             timestampPeriod=props.properties().limits().timestampPeriod();scratchAlignment=asProps.minAccelerationStructureScratchOffsetAlignment();
+            maxStorageBufferRange=Integer.toUnsignedLong(props.properties().limits().maxStorageBufferRange());
             System.out.printf(Locale.ROOT,"DEVICE name=%s timestampNs=%.3f scratchAlignment=%d%n",props.properties().deviceNameString(),timestampPeriod,scratchAlignment);
             var ray=VkPhysicalDeviceRayQueryFeaturesKHR.calloc(s).sType$Default();
             var accel=VkPhysicalDeviceAccelerationStructureFeaturesKHR.calloc(s).sType$Default().pNext(ray.address());
@@ -99,10 +101,17 @@ public final class Probe implements AutoCloseable {
             check(vkAllocateMemory(device,VkMemoryAllocateInfo.calloc(s).sType$Default().pNext(allocationFlags.address()).allocationSize(requirements.size()).memoryTypeIndex(type),null,out));long allocation=out.get(0);check(vkBindBufferMemory(device,handle,allocation,0));
             ByteBuffer mapped=null;if(host){var pointer=s.mallocPointer(1);check(vkMapMemory(device,allocation,0,bytes,0,pointer));mapped=memByteBuffer(pointer.get(0),Math.toIntExact(bytes));}
             long address=vkGetBufferDeviceAddress(device,VkBufferDeviceAddressInfo.calloc(s).sType$Default().buffer(handle));
-            cleanup.add(()->{if(host)vkUnmapMemory(device,allocation);vkDestroyBuffer(device,handle,null);vkFreeMemory(device,allocation,null);});
+            Runnable release=()->{if(host)vkUnmapMemory(device,allocation);vkDestroyBuffer(device,handle,null);vkFreeMemory(device,allocation,null);};
+            cleanup.add(release);bufferCleanup.put(handle,release);
             if(host)System.out.printf("BUFFER bytes=%d memoryType=%d flags=0x%x%n",bytes,type,memory.memoryTypes(type).propertyFlags());
             return new Buffer(handle,allocation,address,mapped,bytes);
         }
+    }
+
+    void release(Buffer buffer) {
+        if(buffer==null)return;Runnable action=bufferCleanup.remove(buffer.handle());
+        if(action==null)throw new IllegalStateException("Buffer already released");
+        cleanup.remove(action);action.run();
     }
 
     void begin(){check(vkResetCommandBuffer(command,0));try(MemoryStack s=MemoryStack.stackPush()){check(vkBeginCommandBuffer(command,VkCommandBufferBeginInfo.calloc(s).sType$Default().flags(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT)));}vkCmdResetQueryPool(command,queryPool,0,2);vkCmdWriteTimestamp(command,VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,queryPool,0);}
@@ -155,7 +164,7 @@ public final class Probe implements AutoCloseable {
             }
             var geometry=VkAccelerationStructureGeometryKHR.calloc(1,s).sType$Default().geometryType(VK_GEOMETRY_TYPE_INSTANCES_KHR);
             geometry.geometry().instances().sType$Default().arrayOfPointers(false).data().deviceAddress(input.address);
-            var info=VkAccelerationStructureBuildGeometryInfoKHR.calloc(1,s).sType$Default().type(VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR).flags(VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR).mode(VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR).pGeometries(geometry);
+            var info=VkAccelerationStructureBuildGeometryInfoKHR.calloc(1,s).sType$Default().type(VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR).flags(VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR).mode(VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR).geometryCount(1).pGeometries(geometry);
             var sizes=VkAccelerationStructureBuildSizesInfoKHR.calloc(s).sType$Default();vkGetAccelerationStructureBuildSizesKHR(device,VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR,info.get(0),s.ints(count),sizes);
             Buffer storage=buffer(sizes.accelerationStructureSize(),VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR,false),scratch=buffer(sizes.buildScratchSize()+scratchAlignment,VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,false);
             var out=s.mallocLong(1);check(vkCreateAccelerationStructureKHR(device,VkAccelerationStructureCreateInfoKHR.calloc(s).sType$Default().buffer(storage.handle).size(storage.size).type(VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR),null,out));long handle=out.get(0);cleanup.add(()->vkDestroyAccelerationStructureKHR(device,handle,null));

@@ -1,0 +1,82 @@
+{
+  "down-fixed-rtx": {
+    "gpu_p50_ms": 3.327296,
+    "gpu_p95_ms": 3.347328,
+    "frame_p50_ms": 8.3608,
+    "frame_p95_ms": 9.3311,
+    "runs": 3,
+    "fps_from_median_interval": 119.60577935125826
+  },
+  "down-fixed-gl": {
+    "gpu_p50_ms": 22.344448,
+    "gpu_p95_ms": 24.662976,
+    "frame_p50_ms": 23.9805,
+    "frame_p95_ms": 26.1286,
+    "runs": 3,
+    "fps_from_median_interval": 41.70054836221097
+  },
+  "wall-fixed-gl": {
+    "gpu_p50_ms": 10.889952,
+    "gpu_p95_ms": 12.100192,
+    "frame_p50_ms": 11.6404,
+    "frame_p95_ms": 13.1798,
+    "runs": 3,
+    "fps_from_median_interval": 85.9077007662967
+  },
+  "wall-fixed-rtx": {
+    "gpu_p50_ms": 3.262848,
+    "gpu_p95_ms": 3.286528,
+    "frame_p50_ms": 8.3524,
+    "frame_p95_ms": 9.3597,
+    "runs": 3,
+    "fps_from_median_interval": 119.72606675925483
+  },
+  "down-return-rtx": {
+    "gpu_p50_ms": 3.328736,
+    "gpu_p95_ms": 3.349216,
+    "frame_p50_ms": 8.3452,
+    "frame_p95_ms": 9.3397,
+    "runs": 1,
+    "fps_from_median_interval": 119.82936298710636
+  },
+  "before-down": {
+    "gpu_p50_ms": 24.436672,
+    "gpu_p95_ms": 25.056192,
+    "frame_p50_ms": 25.0498,
+    "frame_p95_ms": 25.733,
+    "runs": 3,
+    "fps_from_median_interval": 39.92047840701323
+  },
+  "before-wall": {
+    "gpu_p50_ms": 11.072544,
+    "gpu_p95_ms": 12.072448,
+    "frame_p50_ms": 11.5759,
+    "frame_p95_ms": 12.5886,
+    "runs": 3,
+    "fps_from_median_interval": 86.38637168600282
+  },
+  "after-down": {
+    "gpu_p50_ms": 23.761696,
+    "gpu_p95_ms": 24.876032,
+    "frame_p50_ms": 24.4037,
+    "frame_p95_ms": 25.5857,
+    "runs": 3,
+    "fps_from_median_interval": 40.97739277240746
+  },
+  "after-wall": {
+    "gpu_p50_ms": 10.821472,
+    "gpu_p95_ms": 11.987264,
+    "frame_p50_ms": 11.3854,
+    "frame_p95_ms": 12.5326,
+    "runs": 3,
+    "fps_from_median_interval": 87.8317845661988
+  },
+  "regression-down": {
+    "gpu_p50_ms_change_percent": -2.7621437158054984,
+    "frame_p50_ms_change_percent": -2.579262109877123
+  },
+  "regression-wall": {
+    "gpu_p50_ms_change_percent": -2.267518647927713,
+    "frame_p50_ms_change_percent": -1.6456603806183523
+  }
+}

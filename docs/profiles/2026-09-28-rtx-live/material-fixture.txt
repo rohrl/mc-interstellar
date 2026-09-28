@@ -1,0 +1,4 @@
+CHECK view=view-fixture pass=probe alpha=0 queries=184 masks=[0, 0, 0, 0, 0, 0, 0, 184] hits=128 pairedFailures=0 boundaryDifferences=0 cpuFailures=0 productionDifferences=0 coplanarIdTies=0 maxTError=0.00000
+CHECK view=view-fixture pass=probe alpha=1 queries=184 masks=[0, 0, 0, 0, 0, 0, 0, 184] hits=112 pairedFailures=0 boundaryDifferences=0 cpuFailures=0 productionDifferences=0 coplanarIdTies=0 maxTError=0.00000
+CHECK view=view-fixture pass=mask alpha=0 queries=184 masks=[0, 0, 0, 0, 0, 0, 0, 184] hits=132 pairedFailures=0 boundaryDifferences=0 cpuFailures=0 productionDifferences=0 coplanarIdTies=0 maxTError=0.00000
+CHECK view=view-fixture pass=mask alpha=1 queries=184 masks=[0, 0, 0, 0, 0, 0, 0, 184] hits=114 pairedFailures=0 boundaryDifferences=0 cpuFailures=0 productionDifferences=0 coplanarIdTies=0 maxTError=0.00000

@@ -6,13 +6,24 @@ import java.util.regex.*;
 final class FullImageShader {
     final LinkedHashMap<String,Integer> uniforms=new LinkedHashMap<>(),samplers=new LinkedHashMap<>();
     final String probe,material;
-    FullImageShader(String original) {
+    final int movingBinding;
+    FullImageShader(String original) {this(original,false);}
+    FullImageShader(String original,boolean live) {
         String source=original.replaceAll("(?m)^#moj_import[^\\n]*","");
         int start=source.indexOf("#ifdef INTERSTELLAR_QUAD_MESH\nvec4 quadPart");
         if(start<0) {source=source.replace("\r\n","\n");start=source.indexOf("#ifdef INTERSTELLAR_QUAD_MESH\nvec4 quadPart");}
         int end=source.indexOf("vec3 emptyLow",start);
         if(start<0||end<0)throw new IllegalStateException("Triangle-access source markers changed");
         source=source.substring(0,start)+"vec4 trianglePart(int tree,int base,int part) {vec4 v=rtxVertices[base+part];if(part==0)v.w=mod(v.w,256.0)-128.0;return v;}\n"+source.substring(end);
+        if(live)source=source.replace("vec4 trianglePart(int tree,int base,int part) {vec4 v=rtxVertices[base+part];if(part==0)v.w=mod(v.w,256.0)-128.0;return v;}","""
+            int rtxHalf;
+            vec4 trianglePart(int tree,int base,int part) {
+                if(tree!=0)return rtxMoving[base+part];
+                int corner=part/3;
+                if(rtxHalf!=0)corner=corner==0?2:corner==1?3:0;
+                return rtxVertices[base+corner*3+part%3];
+            }
+            """);
         start=source.indexOf("int meshSegment(");end=source.indexOf("vec3 surface(",start);
         String candidate=between(source,"            COUNT_WORK(4+min(tree,1));","            DETAIL_END(shadeClock,1);\n        }");
         String intersection=between(candidate,"            vec3 s=start-a;","#ifdef INTERSTELLAR_HORIZON\n            if(interiorCamera");
@@ -46,6 +57,11 @@ final class FullImageShader {
             }
             """;
         source=source.substring(0,start)+search+source.substring(end);
+        if(live) {
+            String old="int base=int(rayQueryGetIntersectionInstanceCustomIndexEXT(query,false)+rayQueryGetIntersectionPrimitiveIndexEXT(query,false))*9;";
+            if(!source.contains(old))throw new IllegalStateException("Live query source marker changed");
+            source=source.replaceAll(Pattern.quote(old)+"\\s*int tree=0;",Matcher.quoteReplacement("uint instance=rayQueryGetIntersectionInstanceCustomIndexEXT(query,false);int primitive=int(rayQueryGetIntersectionPrimitiveIndexEXT(query,false));int tree=int(instance>>23);rtxHalf=primitive%2;int base=tree==0?(int(instance)+primitive/2)*12:(int(instance&0x7fffffu)+primitive)*9;"));
+        }
         var numeric=Pattern.compile("uniform\\s+(float|vec[234])\\s+([^;]+);").matcher(source);var out=new StringBuilder();
         while(numeric.find()) {
             StringBuilder replacement=new StringBuilder();
@@ -66,6 +82,7 @@ final class FullImageShader {
             textures.appendReplacement(out,Matcher.quoteReplacement(replacement.toString()));
         }
         textures.appendTail(out);source=out.toString();
+        movingBinding=4+samplers.size();
         source=source.replace("in vec2 screenUv;","vec2 screenUv;").replace("out vec4 fragColor;","vec4 fragColor;");
         source=source.replace("if(texelFetch(PendingRays,ivec2(gl_FragCoord.xy),0).a>.5)discard;","");
         source=source.replace("void main() {","void opticalMain() {");
@@ -98,6 +115,7 @@ final class FullImageShader {
                 opticalMain();imageStore(rtxOutput,pixel,fragColor);
             }
             """;
+        if(live)header+="layout(std430,set=0,binding="+movingBinding+") readonly buffer RtxMoving {vec4 rtxMoving[];};\n";
         probe=header+"#define INTERSTELLAR_MATERIAL_PROBE\n"+source+main;
         material=header+"#define INTERSTELLAR_MATERIALS\n#define INTERSTELLAR_MATERIAL_MASK\n"+source+main;
         if(uniforms.size()>128)throw new IllegalStateException("Uniform block capacity exceeded");

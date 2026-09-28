@@ -27,19 +27,19 @@ final class FrozenBackendCapture {
         }
         return values;
     }
-    static FrozenWorldBackend create(WorldMesh mesh,WorldMesh moving,Map<String,Integer> ids,int w,int h,String source) throws Exception {
-        var textures=new LinkedHashMap<String,FrozenWorldBackend.Texture>();
+    static WorldRenderBackend create(WorldMesh mesh,WorldMesh moving,Map<String,Integer> ids,int w,int h,String source) throws Exception {
+        var textures=new LinkedHashMap<String,WorldRenderBackend.Texture>();
         try(TerrainReplay.PackState state=new TerrainReplay.PackState()) {
             for(var entry:ids.entrySet()) {
                 int id=entry.getValue();GL11.glBindTexture(GL11.GL_TEXTURE_2D,id);
                 int width=GL11.glGetTexLevelParameteri(GL11.GL_TEXTURE_2D,0,GL11.GL_TEXTURE_WIDTH),height=GL11.glGetTexLevelParameteri(GL11.GL_TEXTURE_2D,0,GL11.GL_TEXTURE_HEIGHT);
-                textures.put(entry.getKey(),new FrozenWorldBackend.Texture(width,height,
+                textures.put(entry.getKey(),new WorldRenderBackend.Texture(width,height,
                     GL11.glGetTexParameteri(GL11.GL_TEXTURE_2D,GL11.GL_TEXTURE_MIN_FILTER),GL11.glGetTexParameteri(GL11.GL_TEXTURE_2D,GL11.GL_TEXTURE_MAG_FILTER),
                     GL11.glGetTexParameteri(GL11.GL_TEXTURE_2D,GL11.GL_TEXTURE_WRAP_S),GL11.glGetTexParameteri(GL11.GL_TEXTURE_2D,GL11.GL_TEXTURE_WRAP_T),
                     GL11.glGetTexLevelParameteri(GL11.GL_TEXTURE_2D,0,GL11.GL_TEXTURE_INTERNAL_FORMAT),TerrainReplay.readTexture(id,0,0,width,height,false)));
             }
-            var scene=new FrozenWorldBackend.Scene(TerrainReplay.exportFrozenGeometry(mesh,moving),source,textures,w,h);
-            return (FrozenWorldBackend)Class.forName("FullImageProbe").getConstructor(FrozenWorldBackend.Scene.class).newInstance(scene);
+            var scene=new WorldRenderBackend.Snapshot(TerrainReplay.exportFrozenGeometry(mesh,moving),source,textures,w,h);
+            return (WorldRenderBackend)Class.forName("FullImageProbe").getConstructor(WorldRenderBackend.Snapshot.class).newInstance(scene);
         } finally {for(var texture:textures.values())MemoryUtil.memFree(texture.rgba());}
     }
 }

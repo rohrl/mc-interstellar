@@ -67,10 +67,12 @@ final class TerrainScreen extends Screen {
     private LabBenchmark benchmark;
     private boolean profileCounters,profileClocks,recordReplay;
     private java.nio.file.Path replayScene;
-    private FrozenWorldBackend frozenBackend;
+    private WorldRenderBackend frozenBackend;
     private String frozenSource;
     private boolean requestFrozenBackend,rtxActive,compareFrozenBackend;
     private int backendWidth,backendHeight;
+    private boolean worldBackend,backendFailed,rtxPreferred=WorldBackendBridge.ENABLED,comparingBackend;
+    private WorldBackendBridge backendBridge;
     private int profileExperiment;
     private Vec3d camera;
     private float yaw,pitch;
@@ -91,6 +93,13 @@ final class TerrainScreen extends Screen {
     String problem() {return error;}
     SourcePayload selectedSource() {return source;}
     void adoptSource(SourcePayload next) {source=next;cancelBenchmark();}
+    void toggleWorldBackend() {
+        if(!WorldBackendBridge.ENABLED)return;
+        cancelBenchmark();rtxPreferred=backendFailed || !rtxPreferred;backendFailed=false;
+        if(!rtxPreferred)closeFrozenBackend();
+        Interstellar.LOGGER.info("Live renderer preference: {}",rtxPreferred?"RTX with OpenGL fallback":"OpenGL");
+    }
+    void compareWorldBackend() {if(frozenBackend!=null && rtxActive){cancelBenchmark();compareFrozenBackend=true;}}
     static void setShader(ShaderProgram program) {generalShader=program;resourceVersion++;}
     static void setMeshShader(ShaderProgram program) {meshShader=program;resourceVersion++;}
     static void setCompactMeshShader(ShaderProgram program) {compactMeshShader=program;resourceVersion++;}
@@ -172,6 +181,7 @@ final class TerrainScreen extends Screen {
             context.fill(6,6,Math.min(width-6,410),46,0xCD101824);
             context.drawTextWithShadow(textRenderer,"INTERSTELLAR | Live camera | F10: off | F12: timing",12,12,0xFF88D8FF);
             String age=meshMode?mesh.viewStatus()+" | Mass blocks: "+source.count():"Preparing world view...";
+            if(WorldBackendBridge.ENABLED)age+=" | "+(rtxActive?"RTX":"OpenGL")+" (Alt+F12)";
             context.drawTextWithShadow(textRenderer,age,12,24,0xFFFFFFFF);
             String details=benchmark==null?String.format(Locale.ROOT,"%s | C %.2f | Range %.0f / %d | AA %s",source.blackHoleProxy()?"BH r="+String.format(Locale.ROOT,"%.2f",source.schwarzschildRadius()):"Extended mass",
                     source.schwarzschildRadius()/source.enclosingRadius(),camera.distanceTo(centre()),MESH_VIEW_RANGE,aaName()):benchmark.status().replace("B cancels","F12 cancels");
@@ -222,7 +232,7 @@ final class TerrainScreen extends Screen {
         if(hybrid)nativeSky.update(!meshMode || !meshClouds);
         int w=Math.max(1,Math.round(client.getWindow().getFramebufferWidth()*scale));
         int h=Math.max(1,Math.round(client.getWindow().getFramebufferHeight()*scale));
-        if(frozenBackend!=null && (backendWidth!=w || backendHeight!=h))closeFrozenBackend();
+        if(frozenBackend!=null && (backendWidth!=w || backendHeight!=h)){cancelBenchmark();closeFrozenBackend();}
         if(target==null || target.textureWidth!=w || target.textureHeight!=h) {
             cancelBenchmark();if(target!=null)target.delete();target=new SimpleFramebuffer(w,h,false,false);
         }
@@ -233,16 +243,23 @@ final class TerrainScreen extends Screen {
         target.beginWrite(true);
         try {
             configureShader(w,h);
+            boolean eligible=WorldBackendBridge.ENABLED && useSelectiveMaterials() && useQuads() && useSeparateMoving() && !horizonView() && !extendedSource() && mesh.ready();
+            if(WorldBackendBridge.ENABLED && live && !comparingBackend) {
+                boolean next=rtxPreferred && eligible && frozenBackend!=null;
+                if(next!=rtxActive)cancelBenchmark();rtxActive=next;
+                if(rtxPreferred && eligible && frozenBackend==null && !backendFailed)requestFrozenBackend=true;
+            }
             if(requestFrozenBackend) {
                 requestFrozenBackend=false;
                 try {
                     frozenSource=FrozenBackendCapture.source();
-                    var ids=java.util.Map.of("Atlas",client.getTextureManager().getTexture(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE).getGlId(),
-                        "LocalLight",moving.entities.texture,"Distant",moving.clouds.texture,"SkyAtlas",nativeSky.texture(),
-                        "Lightmap",((io.github.rohrl.interstellar.mixin.client.LightmapAccessor)client.gameRenderer.getLightmapTextureManager()).interstellar$texture().getGlId());
-                    frozenBackend=FrozenBackendCapture.create(mesh,moving,ids,w,h,frozenSource);backendWidth=w;backendHeight=h;rtxActive=true;
+                    var ids=backendImages();
+                    worldBackend=WorldBackendBridge.ENABLED;
+                    if(worldBackend){backendBridge=new WorldBackendBridge();frozenBackend=backendBridge.create(mesh,frozenSource,ids,w,h);}
+                    else frozenBackend=FrozenBackendCapture.create(mesh,moving,ids,w,h,frozenSource);
+                    backendWidth=w;backendHeight=h;rtxActive=true;
                     validationStatus=frozenBackend.description()+" | Ctrl+Alt+V: switch | Ctrl+Alt+P: compare";
-                } catch(Exception|LinkageError failure) {closeFrozenBackend();validationStatus="RTX setup failed; OpenGL retained (see log)";io.github.rohrl.interstellar.Interstellar.LOGGER.error("RTX full-image setup failed",failure);}
+                } catch(Exception|LinkageError failure) {backendFailed=true;closeFrozenBackend();validationStatus="RTX setup failed; OpenGL retained (see log)";io.github.rohrl.interstellar.Interstellar.LOGGER.error("RTX setup failed; retaining OpenGL",failure);}
             }
             var projection=WorldProjection.current();
             Vec3d forward=Vec3d.fromPolar(pitch,yaw),right=Vec3d.fromPolar(0,yaw+90);
@@ -258,9 +275,12 @@ final class TerrainScreen extends Screen {
             if(rtxActive && frozenBackend!=null) {
                 shader=movingShaders[1];configureShader(w,h);
                 int texture;
-                try {texture=frozenBackend.render(FrozenBackendCapture.uniforms(shader,frozenSource));}
+                try {
+                    if(worldBackend)frozenBackend.update(moving.triangleData(),moving.triangleCount(),moving.movingRevision(),backendBridge.images(backendImages()));
+                    texture=frozenBackend.render(FrozenBackendCapture.uniforms(shader,frozenSource));
+                }
                 catch(RuntimeException|LinkageError failure) {
-                    closeFrozenBackend();cancelBenchmark();validationStatus="RTX failed; OpenGL restored (see log)";
+                    backendFailed=true;closeFrozenBackend();cancelBenchmark();validationStatus="RTX failed; OpenGL restored (see log)";
                     io.github.rohrl.interstellar.Interstellar.LOGGER.error("RTX frame failed; retaining OpenGL",failure);renderTerrain();return;
                 }
                 if(benchmark!=null)for(int i=0;i<5;i++)benchmark.mark(i);
@@ -340,14 +360,19 @@ final class TerrainScreen extends Screen {
     }
     void renderFrozenComparison(boolean hardware) {
         if(frozenBackend==null)throw new IllegalStateException("RTX backend unavailable");
-        boolean previous=rtxActive;rtxActive=hardware;
+        boolean previous=rtxActive;rtxActive=hardware;comparingBackend=true;
         try {
             renderTerrain();
             if(hardware && (frozenBackend==null || !rtxActive))throw new IllegalStateException("RTX failed during comparison; refusing fallback timings");
-        }finally{rtxActive=frozenBackend!=null && previous;}
+        }finally{rtxActive=frozenBackend!=null && previous;comparingBackend=false;}
     }
     double completeFrozenGpuMillis() {return frozenBackend.completedGpuMillis();}
-    private void closeFrozenBackend() {rtxActive=false;if(frozenBackend!=null){frozenBackend.close();frozenBackend=null;}}
+    private void closeFrozenBackend() {rtxActive=false;if(frozenBackend!=null){frozenBackend.close();frozenBackend=null;}worldBackend=false;backendBridge=null;}
+    private java.util.Map<String,Integer> backendImages() {
+        return java.util.Map.of("Atlas",client.getTextureManager().getTexture(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE).getGlId(),
+            "LocalLight",moving.entities.texture,"Distant",moving.clouds.texture,"SkyAtlas",nativeSky.texture(),
+            "Lightmap",((io.github.rohrl.interstellar.mixin.client.LightmapAccessor)client.gameRenderer.getLightmapTextureManager()).interstellar$texture().getGlId());
+    }
     /** Near observers magnify trajectory errors; this setting is constant for the whole image. */
     static void setPathQuality(ShaderProgram program,float angularCap,float curveFactor,double radiusRatio) {
         float t=(float)Math.clamp((radiusRatio-4)/2,0,1);
@@ -556,17 +581,17 @@ final class TerrainScreen extends Screen {
     }
     @Override public boolean keyPressed(int key,int scan,int modifiers) {
         boolean ctrlAlt=(modifiers&(GLFW.GLFW_MOD_CONTROL|GLFW.GLFW_MOD_ALT))==(GLFW.GLFW_MOD_CONTROL|GLFW.GLFW_MOD_ALT);
-        if(FrozenBackendCapture.ENABLED && ctrlAlt && key==GLFW.GLFW_KEY_V) {
+        if((FrozenBackendCapture.ENABLED || WorldBackendBridge.ENABLED) && ctrlAlt && key==GLFW.GLFW_KEY_V) {
             cancelBenchmark();
             if(frozenBackend!=null){rtxActive=!rtxActive;validationStatus=rtxActive?frozenBackend.description():"OpenGL comparison | Ctrl+Alt+V: RTX";}
             else if(live || !useSelectiveMaterials() || !useQuads() || !useSeparateMoving() || horizonView() || extendedSource() || mesh==null || !mesh.ready())validationStatus="RTX image needs ready frozen ordinary BH/default native rendering";
             else {requestFrozenBackend=true;validationStatus="Preparing optional RTX full image...";}
             return true;
         }
-        if(FrozenBackendCapture.ENABLED && ctrlAlt && key==GLFW.GLFW_KEY_P) {
+        if((FrozenBackendCapture.ENABLED || WorldBackendBridge.ENABLED) && ctrlAlt && key==GLFW.GLFW_KEY_P) {
             cancelBenchmark();if(frozenBackend!=null)compareFrozenBackend=true;else validationStatus="Enable frozen RTX first with Ctrl+Alt+V";return true;
         }
-        if(rtxActive && key==GLFW.GLFW_KEY_B) {
+        if(rtxActive && key==GLFW.GLFW_KEY_B && !worldBackend) {
             validationStatus="Use Ctrl+Alt+P: synchronized RTX timings (OpenGL timer alone omits external work)";return true;
         }
         if(frozenBackend!=null && !(key>=GLFW.GLFW_KEY_LEFT_SHIFT && key<=GLFW.GLFW_KEY_RIGHT_SUPER) && key!=GLFW.GLFW_KEY_UP && key!=GLFW.GLFW_KEY_DOWN && key!=GLFW.GLFW_KEY_LEFT && key!=GLFW.GLFW_KEY_RIGHT && key!=GLFW.GLFW_KEY_L && key!=GLFW.GLFW_KEY_B)closeFrozenBackend();
@@ -609,7 +634,7 @@ final class TerrainScreen extends Screen {
         if(key==GLFW.GLFW_KEY_B && snapshot!=null && snapshot.ready() && error==null && paused==null && target!=null) {
             if(benchmark!=null)cancelBenchmark();
             else benchmark=new LabBenchmark(String.format(Locale.ROOT,"TERRAIN %dx%d, scale=%.2f, r/rs=%.5f, lensing=%s, fine=%s, snapshot=%s, hybrid="+hybrid+", live="+live+", mesh="+meshMode+", entities="+meshEntities+", nativeLight="+faceLighting+", coverage="+meshCoverage+", clouds="+meshClouds,
-                    target.textureWidth,target.textureHeight,scale,camera.distanceTo(centre())/source.schwarzschildRadius(),lensing,fine,meshMode?mesh.status():snapshot.status())+"; yaw="+yaw+"; pitch="+pitch+"; AA="+aaName()+"; adaptive="+adaptivePath+"; fastBounds="+fastBounds+"; fastFetch="+fastFetch+"; emptyCells="+emptyCells+"; emptyReach="+emptyReach+"; program="+programName()+"; movingContents="+(moving==null?0:moving.profileMovingContents)+"; angularCap="+orbitStep+"; curveFactor="+curveFactor+"; includes resolve",TerrainProfile.ENABLED && (modifiers&GLFW.GLFW_MOD_SHIFT)!=0);
+                    target.textureWidth,target.textureHeight,scale,camera.distanceTo(centre())/source.schwarzschildRadius(),lensing,fine,meshMode?mesh.status():snapshot.status())+"; yaw="+yaw+"; pitch="+pitch+"; AA="+aaName()+"; adaptive="+adaptivePath+"; fastBounds="+fastBounds+"; fastFetch="+fastFetch+"; emptyCells="+emptyCells+"; emptyReach="+emptyReach+"; program="+programName()+"; movingContents="+(moving==null?0:moving.profileMovingContents)+"; angularCap="+orbitStep+"; curveFactor="+curveFactor+"; includes resolve",TerrainProfile.ENABLED && (modifiers&GLFW.GLFW_MOD_SHIFT)!=0,rtxActive?frozenBackend:null);
             return true;
         }
         cancelBenchmark();

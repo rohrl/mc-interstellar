@@ -151,3 +151,13 @@ exclude them and Vulkan/shaderc dependencies. It is an experimental development
 configuration, not a finished optional-backend installer. See the
 [full-image report](../../docs/rtx-full-image-2026-09-28.md) for measurements,
 source-sharing architecture, memory costs and remaining limits.
+
+## Live world backend
+
+`./gradlew.bat runClient -PinterstellarRtx` adds live exterior-BH rendering. F10
+selects RTX when supported; Alt+F12 switches to/from OpenGL, F12 benchmarks the
+active path, Ctrl+Alt+F12 records paired images. Extended sources and near/inside
+horizon views retain GL automatically. Ordinary builds exclude this backend and
+its Vulkan/shaderc dependencies. No new distribution flavour is packaged.
+
+See [live implementation and regression checks](../../docs/rtx-live-world-2026-09-28.md).

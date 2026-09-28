@@ -10,6 +10,7 @@ A Minecraft Java mod for educational relativistic optics. Scientific assumptions
 - [RTX feasibility probe](docs/rtx-probe-2026-09-24.md): measured hardware intersection queries and their limits; the production renderer is unchanged.
 - [RTX with real Minecraft geometry](docs/rtx-native-feasibility-2026-09-28.md): native ray replay, material checks and working Vulkan/OpenGL image sharing; evidence for the next bounded prototype.
 - [Complete frozen RTX images](docs/rtx-full-image-2026-09-28.md): matched images and 2.88–6.25× measured optical-frame speedups at 1440p; optional backend, ordinary OpenGL retained.
+- [Live RTX integration](docs/rtx-live-world-2026-09-28.md): live mobs and chunk updates, approximately 42→120 FPS in the tested heavy view, and no observed OpenGL-only regression. Launch with `gradlew.bat runClient -PinterstellarRtx`; unsupported views fall back to OpenGL.
 - [Wormhole feasibility study](docs/wormholes-feasibility.md): spherical views, physically specified lensing and passage, gameplay challenges and a proposed sequence; analysis only.
 - [Horizon access and body-image study](docs/horizon-body-study.md): close viewing, interior block editing and why returning-body rendering now defaults off.
 - [Minecraft feature coverage](docs/minecraft-coverage.md): supported graphics/gameplay and the remaining limitations; [new world features and checks](docs/world-features.md).

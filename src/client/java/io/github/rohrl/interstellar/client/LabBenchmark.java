@@ -15,6 +15,7 @@ final class LabBenchmark implements AutoCloseable {
     private final int[][] marks = new int[6][8];
     private final double[][] stages = new double[7][300];
     private final boolean profile;
+    private final WorldRenderBackend external;
     private static final String[] STAGES={"ray0","ray1","maskCopy","material0","material1","fold","resolve"};
     private final double[] gpu = new double[300], frame = new double[300];
     private int slot, samples, warmup = 120, active = -1;
@@ -27,8 +28,12 @@ final class LabBenchmark implements AutoCloseable {
         this(scene,false);
     }
     LabBenchmark(String scene,boolean profile) {
+        this(scene,profile,null);
+    }
+    LabBenchmark(String scene,boolean profile,WorldRenderBackend external) {
         this.scene = scene;
-        this.profile=profile;
+        this.profile=profile && external==null;this.external=external;
+        if(external!=null){external.profiling(true);Interstellar.LOGGER.info("RTX live benchmark started: {}",scene);return;}
         if (!GL.getCapabilities().OpenGL33 && !GL.getCapabilities().GL_ARB_timer_query) {
             closed = true;
             status = "GPU timestamps unavailable (timer query unsupported)";
@@ -46,6 +51,15 @@ final class LabBenchmark implements AutoCloseable {
         if (warmup-- > 0) { previous = now; return; }
         double interval = (now - previous) / 1e6;
         previous = now;
+        if(external!=null) {
+            double milliseconds=external.previousGpuMillis();if(!Double.isFinite(milliseconds))return;
+            gpu[samples]=milliseconds;frame[samples++]=interval;status="RTX benchmark "+samples+"/300";
+            if(samples==gpu.length) {
+                Arrays.sort(gpu);Arrays.sort(frame);status=String.format(Locale.ROOT,"RTX frame p50 %.2f / p95 %.2f ms | logged",frame[149],frame[284]);
+                Interstellar.LOGGER.info("RTX live benchmark completed: {}; 120 warmup frames; 300 samples; Vulkan update/render GPU p50={} p95={} p99={} ms; sampled frame intervals p50={} p95={} p99={} ms (includes cap/vsync; Vulkan timing excludes GL appearance copies and resolve)",scene,gpu[149],gpu[284],gpu[296],frame[149],frame[284],frame[296]);close();
+            }
+            return;
+        }
         if (pending[slot]) {
             if (GL15.glGetQueryObjecti(end[slot], GL15.GL_QUERY_RESULT_AVAILABLE) == 0) return;
             gpu[samples] = (GL33.glGetQueryObjectui64(end[slot], GL15.GL_QUERY_RESULT)
@@ -89,8 +103,9 @@ final class LabBenchmark implements AutoCloseable {
     String status() { return status; }
     @Override public void close() {
         if (closed) return;
+        closed = true;
+        if(external!=null){external.profiling(false);return;}
         for (int i = 0; i < 8; i++) { GL15.glDeleteQueries(start[i]); GL15.glDeleteQueries(end[i]); }
         if(profile)for(int[] row:marks)for(int query:row)GL15.glDeleteQueries(query);
-        closed = true;
     }
 }
