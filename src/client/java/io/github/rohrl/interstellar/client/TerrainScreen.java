@@ -98,7 +98,7 @@ final class TerrainScreen extends Screen {
         cancelBenchmark();rtxPreferred=backendFailed || !rtxPreferred;backendFailed=false;
         if(!rtxPreferred)closeFrozenBackend();
         Interstellar.LOGGER.info("Live renderer preference: {}",rtxPreferred?"RTX with OpenGL fallback":"OpenGL");
-        client.player.sendMessage(Text.literal(!rtxPreferred?"Renderer: OpenGL":extendedSource()?"RTX preferred; extended mass currently uses OpenGL":horizonView()?"RTX preferred; near-horizon view currently uses OpenGL":"Renderer: RTX preferred (OpenGL fallback available)"),true);
+        client.player.sendMessage(Text.literal(!rtxPreferred?"Renderer: OpenGL":"Renderer: RTX preferred (OpenGL fallback available)"),true);
     }
     void compareWorldBackend() {if(frozenBackend!=null && rtxActive){cancelBenchmark();compareFrozenBackend=true;}}
     static void setShader(ShaderProgram program) {generalShader=program;resourceVersion++;}
@@ -245,7 +245,7 @@ final class TerrainScreen extends Screen {
         target.beginWrite(true);
         try {
             configureShader(w,h);
-            boolean eligible=WorldBackendBridge.ENABLED && useSelectiveMaterials() && useQuads() && useSeparateMoving() && !horizonView() && !extendedSource() && mesh.ready();
+            boolean eligible=WorldBackendBridge.ENABLED && useSelectiveMaterials() && useQuads() && useSeparateMoving() && mesh.ready();
             if(WorldBackendBridge.ENABLED && live && !comparingBackend) {
                 boolean next=rtxPreferred && eligible && frozenBackend!=null;
                 if(next!=rtxActive)cancelBenchmark();rtxActive=next;
@@ -275,9 +275,10 @@ final class TerrainScreen extends Screen {
             }
             if(benchmark!=null)benchmark.begin();
             if(rtxActive && frozenBackend!=null) {
-                shader=movingShaders[1];configureShader(w,h);
+                shader=horizonView()?horizonShaders[1]:extendedSource()?bodyShaders[1]:movingShaders[1];configureShader(w,h);
                 int texture;
                 try {
+                    frozenBackend.optics(horizonView()?WorldRenderBackend.Optics.HORIZON:extendedSource()?WorldRenderBackend.Optics.EXTENDED:WorldRenderBackend.Optics.EXTERIOR);
                     if(worldBackend)frozenBackend.update(moving.triangleData(),moving.triangleCount(),moving.movingRevision(),backendBridge.images(backendImages()));
                     texture=frozenBackend.render(FrozenBackendCapture.uniforms(shader,frozenSource));
                 }
@@ -586,7 +587,7 @@ final class TerrainScreen extends Screen {
         if((FrozenBackendCapture.ENABLED || WorldBackendBridge.ENABLED) && ctrlAlt && key==GLFW.GLFW_KEY_V) {
             cancelBenchmark();
             if(frozenBackend!=null){rtxActive=!rtxActive;validationStatus=rtxActive?frozenBackend.description():"OpenGL comparison | Ctrl+Alt+V: RTX";}
-            else if(live || !useSelectiveMaterials() || !useQuads() || !useSeparateMoving() || horizonView() || extendedSource() || mesh==null || !mesh.ready())validationStatus="RTX image needs ready frozen ordinary BH/default native rendering";
+            else if(live || !useSelectiveMaterials() || !useQuads() || !useSeparateMoving() || !WorldBackendBridge.ENABLED && (horizonView() || extendedSource()) || mesh==null || !mesh.ready())validationStatus="RTX image needs ready frozen/default native rendering (variants require -PinterstellarRtx)";
             else {requestFrozenBackend=true;validationStatus="Preparing optional RTX full image...";}
             return true;
         }

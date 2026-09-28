@@ -1,0 +1,30 @@
+
+> Configure project :
+Fabric Loom: 1.7.4
+
+> Task :clean
+> Task :compileJava
+> Task :processResources
+> Task :classes
+
+> Task :compileClientJava
+
+> Task :processClientResources NO-SOURCE
+Note: Some input files use or override a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+> Task :jar
+> Task :processIncludeJars
+> Task :sourcesJar
+> Task :compileTestJava
+> Task :processTestResources NO-SOURCE
+> Task :testClasses
+> Task :remapJar
+> Task :test
+> Task :validateAccessWidener NO-SOURCE
+> Task :check
+> Task :remapSourcesJar
+> Task :assemble
+> Task :build
+
+BUILD SUCCESSFUL in 10s
+11 actionable tasks: 11 executed

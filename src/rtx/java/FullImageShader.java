@@ -1,5 +1,6 @@
 import java.util.*;
 import java.util.regex.*;
+import io.github.rohrl.interstellar.client.WorldRenderBackend.Optics;
 
 /** Builds the experimental compute programs from the SAME optical/material source as OpenGL.
  * Marker checks deliberately fail if that source changes incompatibly. No hand-copied orbit solver. */
@@ -8,7 +9,8 @@ final class FullImageShader {
     final String probe,material;
     final int movingBinding;
     FullImageShader(String original) {this(original,false);}
-    FullImageShader(String original,boolean live) {
+    FullImageShader(String original,boolean live) {this(original,live,Optics.EXTERIOR);}
+    FullImageShader(String original,boolean live,Optics optics) {
         String source=original.replaceAll("(?m)^#moj_import[^\\n]*","");
         int start=source.indexOf("#ifdef INTERSTELLAR_QUAD_MESH\nvec4 quadPart");
         if(start<0) {source=source.replace("\r\n","\n");start=source.indexOf("#ifdef INTERSTELLAR_QUAD_MESH\nvec4 quadPart");}
@@ -116,6 +118,11 @@ final class FullImageShader {
             }
             """;
         if(live)header+="layout(std430,set=0,binding="+movingBinding+") readonly buffer RtxMoving {vec4 rtxMoving[];};\n";
+        header+=switch(optics) {
+            case EXTERIOR -> "";
+            case EXTENDED -> "#define INTERSTELLAR_EXTENDED_SOURCE\n";
+            case HORIZON -> "#define INTERSTELLAR_HORIZON\n";
+        };
         probe=header+"#define INTERSTELLAR_MATERIAL_PROBE\n"+source+main;
         material=header+"#define INTERSTELLAR_MATERIALS\n#define INTERSTELLAR_MATERIAL_MASK\n"+source+main;
         if(uniforms.size()>128)throw new IllegalStateException("Uniform block capacity exceeded");

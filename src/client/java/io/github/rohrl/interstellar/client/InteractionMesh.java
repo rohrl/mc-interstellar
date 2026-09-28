@@ -24,9 +24,16 @@ final class InteractionMesh {
                 target.massOverlay=state.getBlock() instanceof io.github.rohrl.interstellar.source.MassBlock;
                 var out=target.solidColour();
                 float radius=(float)Math.max(.002,Math.min(.015,camera.distanceTo(Vec3d.ofCenter(pos))*.0009));
-                state.getOutlineShape(world,pos,ShapeContext.of(client.player)).forEachEdge((ax,ay,az,bx,by,bz)->
-                    line(out,new Vec3d(pos.getX()-origin.getX()+ax,pos.getY()-origin.getY()+ay,pos.getZ()-origin.getZ()+az),
-                            new Vec3d(pos.getX()-origin.getX()+bx,pos.getY()-origin.getY()+by,pos.getZ()-origin.getZ()+bz),radius,0,0,0,102));
+                var view=camera.subtract(Vec3d.of(origin));
+                state.getOutlineShape(world,pos,ShapeContext.of(client.player)).forEachEdge((ax,ay,az,bx,by,bz)-> {
+                    var a=new Vec3d(pos.getX()-origin.getX()+ax,pos.getY()-origin.getY()+ay,pos.getZ()-origin.getZ()+az);
+                    var b=new Vec3d(pos.getX()-origin.getX()+bx,pos.getY()-origin.getY()+by,pos.getZ()-origin.getZ()+bz);
+                    // Native selection uses depth bias. Keep its captured ribbons
+                    // just ahead of the face too, avoiding GL/RTX hit-order ties.
+                    a=a.add(view.subtract(a).normalize().multiply(.002));
+                    b=b.add(view.subtract(b).normalize().multiply(.002));
+                    line(out,a,b,radius,0,0,0,102);
+                });
             }
         }
         var matrices=new MatrixStack();

@@ -1,0 +1,17 @@
+[m[34m[22:08:51][m [32m[Render thread/INFO][m [36m(Minecraft)[m [0m[STDOUT]: RTX live backend ready: 640x360 sharp2x, resident chunks + moving geometry, GPU appearance sharing; optics=[EXTERIOR, EXTENDED, HORIZON]
+[m[34m[22:11:50][m [32m[Render thread/INFO][m [36m(interstellar)[m [0mLive source refreshed without terrain reload: N=8, r_s=0.4330127018922193
+[m[34m[22:11:50][m [32m[Render thread/INFO][m [36m(Minecraft)[m [0m[STDOUT]: RTX optics: EXTENDED (resident geometry retained)
+[m[34m[22:11:51][m [32m[Render thread/INFO][m [36m(interstellar)[m [0mLive source refreshed without terrain reload: N=8, r_s=0.4330127018922193
+[m[34m[22:12:31][m [32m[Render thread/INFO][m [36m(interstellar)[m [0mLive source refreshed without terrain reload: N=64, r_s=3.4641016151377544
+[m[34m[22:12:31][m [32m[Render thread/INFO][m [36m(Minecraft)[m [0m[STDOUT]: RTX optics: HORIZON (resident geometry retained)
+[m[34m[22:12:32][m [32m[Render thread/INFO][m [36m(interstellar)[m [0mLive source refreshed without terrain reload: N=64, r_s=3.4641016151377544
+[m[34m[22:19:03][m [32m[Render thread/INFO][m [36m(Minecraft)[m [0m[STDOUT]: RTX live backend ready: 640x360 sharp2x, resident chunks + moving geometry, GPU appearance sharing; optics=[EXTERIOR, EXTENDED, HORIZON]
+[m[34m[22:19:03][m [32m[Render thread/INFO][m [36m(Minecraft)[m [0m[STDOUT]: RTX optics: HORIZON (resident geometry retained)
+[m[34m[22:19:48][m [32m[Render thread/INFO][m [36m(Minecraft)[m [0m[STDOUT]: RTX live backend ready: 1280x720 sharp2x, resident chunks + moving geometry, GPU appearance sharing; optics=[EXTERIOR, EXTENDED, HORIZON]
+[m[34m[22:19:48][m [32m[Render thread/INFO][m [36m(Minecraft)[m [0m[STDOUT]: RTX optics: HORIZON (resident geometry retained)
+[m[34m[22:21:22][m [32m[Render thread/INFO][m [36m(interstellar)[m [0mLive source refreshed without terrain reload: N=8, r_s=0.4330127018922193
+[m[34m[22:21:22][m [32m[Render thread/INFO][m [36m(Minecraft)[m [0m[STDOUT]: RTX optics: EXTENDED (resident geometry retained)
+[m[34m[22:21:24][m [32m[Render thread/INFO][m [36m(interstellar)[m [0mLive source refreshed without terrain reload: N=8, r_s=0.4330127018922193
+[m[34m[22:21:45][m [32m[Render thread/INFO][m [36m(interstellar)[m [0mLive source refreshed without terrain reload: N=12, r_s=0.649519052838329
+[m[34m[22:21:47][m [32m[Render thread/INFO][m [36m(interstellar)[m [0mLive source refreshed without terrain reload: N=14, r_s=0.7577722283113838
+[m[34m[22:21:48][m [32m[Render thread/INFO][m [36m(interstellar)[m [0mLive source refreshed without terrain reload: N=14, r_s=0.7577722283113838

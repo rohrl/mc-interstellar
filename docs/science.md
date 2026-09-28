@@ -162,3 +162,15 @@ regions are separate questions. Its primary sources are
 [Nakajima and Asada, Ellis deflection](https://arxiv.org/abs/1204.3710), and the
 [energy-condition discussion](https://arxiv.org/abs/2202.07431). No wormhole model has
 been added to the running mod.
+# Wormhole reference added 28 September 2026
+
+The active demo uses the symmetric ultrastatic Ellis metric. Reference null rays
+evolve signed proper radius, its conjugate momentum and a plane angle; independent
+elliptic-integral deflections, reversal and invariant tests are in EllisWormholeTest.
+The isotropic coordinate derivation and orientation-preserving chart transfer are
+documented in [the active implementation note](overnight-goals-2026-09-28.md).
+Primary sources: [James et al., equations1,2,16](https://arxiv.org/html/1502.03809),
+[Nakajima & Asada, exact deflection](https://arxiv.org/html/1204.3710).
+At this checkpoint the reference maths is implemented; the demo renderer/crossing
+are pending. Do not present hypothetical supporting matter or the two-mouth world
+identification as a demonstrated physical construction.

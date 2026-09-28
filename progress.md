@@ -1,6 +1,24 @@
 # Progress
 
-## Current checkpoint — 2026-09-28, small-mass artifacts and Alt+F12
+## Current checkpoint — 2026-09-28, RTX coverage and active wormhole goal
+
+Owner authorized two overnight goals: finish RTX optical coverage, then implement a
+physics-based playable two-way spherical wormhole demo. Full scope/checks are in
+docs/overnight-goals-2026-09-28.md. The overall goal remains active.
+
+Goal1 is implemented and checked: shared extended/horizon equations compile into
+RTX pipelines, preloaded to retain geometry across transitions. 1440p paired images
+agree closely; interior editing matches exactly after correcting shared outline
+depth bias. Running-world frame medians8.32–8.37ms at120FPS cap. Both builds/87 tests
+pass; optional dependencies remain absent from normal jars. See
+docs/rtx-optical-variants-2026-09-28.md for evidence and limits.
+
+Goal2 reference maths is implemented: Ellis Hamiltonian rays, exact elliptic-integral
+checks and reversible isotropic-chart transfer with preserved camera handedness.
+Six new tests pass. Rendering, distant-region delivery, demo and traversal remain
+unimplemented and are the next work; the wormhole goal is not complete.
+
+## Previous checkpoint — 2026-09-28, small-mass artifacts and Alt+F12
 
 Found the owner's three21:00 F2 screenshots. They came from an OpenGL-only launch;
 extended masses also retain GL in optional builds. Reproduced periodic serrations

@@ -1,7 +1,9 @@
 # Traversable wormholes in Interstellar: feasibility study
 
-Status: **analysis only**, requested 28 September 2026. No wormhole gameplay or renderer
-is implemented. The full-image RTX experiment remains the active implementation task.
+Status: original feasibility study, requested 28 September 2026. The owner has now
+authorized a two-way demo implementation; see [active scope and progress](overnight-goals-2026-09-28.md).
+The study below records the reasoning and proposed extensions, not a claim that
+every described feature is implemented.
 
 ## Recommendation
 

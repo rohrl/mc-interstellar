@@ -22,7 +22,10 @@ import static org.lwjgl.opengl.EXTSemaphoreWin32.*;
 public final class VulkanWorldBackend implements WorldRenderBackend {
     private Probe vk;private FullImageShader source;private Probe.Buffer parameters;
     private final List<Runnable> cleanup=new ArrayList<>();
-    private long layout,descriptorLayout,descriptorPool,set,initialPipeline,materialPipeline,toVk,toGl;
+    private long layout,descriptorLayout,descriptorPool,set,toVk,toGl;
+    private record Pipelines(long initial,long material) {}
+    private final EnumMap<Optics,Pipelines> pipelines=new EnumMap<>(Optics.class);
+    private Optics optics=Optics.EXTERIOR;
     private int glToVk,glToGl,glMemory,sharedTexture;
     private TextureImage output;private final int width,height;
     private boolean closed,profile,rendered;private double previousGpu=Double.NaN;
@@ -45,12 +48,21 @@ public final class VulkanWorldBackend implements WorldRenderBackend {
             output=image(width*2,height,VK_FORMAT_R32G32B32A32_SFLOAT,VK_IMAGE_USAGE_STORAGE_BIT|VK_IMAGE_USAGE_SAMPLED_BIT,true);
             importOutput();
             createDescriptors(textures);
-            initialPipeline=pipeline(source.probe,"initial");materialPipeline=pipeline(source.material,"material");
+            // All variants share descriptors/geometry. Prepare them during initial
+            // loading so passing a source or horizon never compiles on that frame.
+            for(var model:Optics.values()) {
+                var variant=model==Optics.EXTERIOR?source:new FullImageShader(scene.opticalSource(),true,model);
+                if(!variant.uniforms.equals(source.uniforms) || !variant.samplers.equals(source.samplers))
+                    throw new IllegalStateException("RTX optical variants must share bindings");
+                long initial=pipeline(variant.probe,model+"-initial");
+                pipelines.put(model,new Pipelines(initial,0));
+                pipelines.put(model,new Pipelines(initial,pipeline(variant.material,model+"-material")));
+            }
             vk.begin();geometry.record();for(var input:inputs.values())barrier(input.image.image,VK_IMAGE_LAYOUT_UNDEFINED,VK_IMAGE_LAYOUT_GENERAL,vk.queueFamily,VK_QUEUE_FAMILY_EXTERNAL,0,0);barrier(output.image,VK_IMAGE_LAYOUT_UNDEFINED,VK_IMAGE_LAYOUT_GENERAL,vk.queueFamily,VK_QUEUE_FAMILY_EXTERNAL,0,0);vk.finish();
             verifyGeometry();
             long[] sem=semaphore();toVk=sem[0];glToVk=(int)sem[1];sem=semaphore();toGl=sem[0];glToGl=(int)sem[1];
             glCheck();
-            System.out.println("RTX live backend ready: "+width+"x"+height+" sharp2x, resident chunks + moving geometry, GPU appearance sharing");
+            System.out.println("RTX live backend ready: "+width+"x"+height+" sharp2x, resident chunks + moving geometry, GPU appearance sharing; optics="+pipelines.keySet());
         } catch(Exception|LinkageError failure) {close();throw failure;}
     }
     private static void check(int status){Probe.check(status);}
@@ -186,9 +198,10 @@ public final class VulkanWorldBackend implements WorldRenderBackend {
             barrier(output.image,VK_IMAGE_LAYOUT_GENERAL,VK_IMAGE_LAYOUT_GENERAL,VK_QUEUE_FAMILY_EXTERNAL,vk.queueFamily,0,VK_ACCESS_SHADER_WRITE_BIT);
             for(var input:inputs.values())barrier(input.image.image,VK_IMAGE_LAYOUT_GENERAL,VK_IMAGE_LAYOUT_GENERAL,VK_QUEUE_FAMILY_EXTERNAL,vk.queueFamily,0,VK_ACCESS_SHADER_READ_BIT);
             vkCmdBindDescriptorSets(vk.command,VK_PIPELINE_BIND_POINT_COMPUTE,layout,0,s.longs(set),null);
-            vkCmdBindPipeline(vk.command,VK_PIPELINE_BIND_POINT_COMPUTE,initialPipeline);vkCmdDispatch(vk.command,(width*2+7)/8,(height+7)/8,1);
+            var programs=pipelines.get(optics);
+            vkCmdBindPipeline(vk.command,VK_PIPELINE_BIND_POINT_COMPUTE,programs.initial);vkCmdDispatch(vk.command,(width*2+7)/8,(height+7)/8,1);
             barrier(output.image,VK_IMAGE_LAYOUT_GENERAL,VK_IMAGE_LAYOUT_GENERAL,vk.queueFamily,vk.queueFamily,VK_ACCESS_SHADER_WRITE_BIT,VK_ACCESS_SHADER_READ_BIT|VK_ACCESS_SHADER_WRITE_BIT);
-            vkCmdBindPipeline(vk.command,VK_PIPELINE_BIND_POINT_COMPUTE,materialPipeline);vkCmdDispatch(vk.command,(width*2+7)/8,(height+7)/8,1);
+            vkCmdBindPipeline(vk.command,VK_PIPELINE_BIND_POINT_COMPUTE,programs.material);vkCmdDispatch(vk.command,(width*2+7)/8,(height+7)/8,1);
             barrier(output.image,VK_IMAGE_LAYOUT_GENERAL,VK_IMAGE_LAYOUT_GENERAL,vk.queueFamily,VK_QUEUE_FAMILY_EXTERNAL,VK_ACCESS_SHADER_WRITE_BIT,0);
             for(var input:inputs.values())barrier(input.image.image,VK_IMAGE_LAYOUT_GENERAL,VK_IMAGE_LAYOUT_GENERAL,vk.queueFamily,VK_QUEUE_FAMILY_EXTERNAL,VK_ACCESS_SHADER_READ_BIT,0);
             vkCmdWriteTimestamp(vk.command,VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,vk.queryPool,1);check(vkEndCommandBuffer(vk.command));
@@ -198,6 +211,11 @@ public final class VulkanWorldBackend implements WorldRenderBackend {
         rendered=true;return sharedTexture;
     }
     @Override public void profiling(boolean enabled){profile=enabled;}
+    @Override public void optics(Optics model) {
+        if(!pipelines.containsKey(model))throw new IllegalArgumentException("Unknown RTX optics: "+model);
+        if(optics!=model)System.out.println("RTX optics: "+model+" (resident geometry retained)");
+        optics=model;
+    }
     @Override public double previousGpuMillis(){return previousGpu;}
     @Override public String description(){return "RTX live world | shared native appearance + selective materials | "+width+"x"+height;}
     @Override public double completedGpuMillis() {
@@ -211,7 +229,8 @@ public final class VulkanWorldBackend implements WorldRenderBackend {
     @Override public void close() {
         if(closed)return;closed=true;GL11.glFinish();if(vk==null)return;vkDeviceWaitIdle(vk.device);
         if(sharedTexture!=0)GL11.glDeleteTextures(sharedTexture);if(glMemory!=0)glDeleteMemoryObjectsEXT(glMemory);
-        vkDestroyPipeline(vk.device,initialPipeline,null);vkDestroyPipeline(vk.device,materialPipeline,null);vkDestroyDescriptorPool(vk.device,descriptorPool,null);vkDestroyPipelineLayout(vk.device,layout,null);vkDestroyDescriptorSetLayout(vk.device,descriptorLayout,null);
+        for(var p:pipelines.values()){vkDestroyPipeline(vk.device,p.initial,null);vkDestroyPipeline(vk.device,p.material,null);}
+        vkDestroyDescriptorPool(vk.device,descriptorPool,null);vkDestroyPipelineLayout(vk.device,layout,null);vkDestroyDescriptorSetLayout(vk.device,descriptorLayout,null);
         for(int i=cleanup.size()-1;i>=0;i--)cleanup.get(i).run();if(geometry!=null)geometry.close();vk.close();
     }
 }

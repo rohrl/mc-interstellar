@@ -547,3 +547,27 @@ and limitations in docs/extended-lens-artifacts-2026-09-28.md.
 F12 modifier handling moves to the key event so quick Alt taps are reliable. A
 normal build explicitly explains the optional RTX flag instead of benchmarking.
 Always name the live backend and explain extended/near-horizon fallback when toggled.
+
+## D085 — Complete current RTX optical coverage (2026-09-28)
+
+Accepted and implemented: precompile exterior, extended-body and horizon probe/
+material pipelines from the existing GLSL, with a shared uniform/image layout.
+Select optics without releasing resident scene geometry. Preserve normal builds
+and manual OpenGL selection/error fallback. Fixed captured selection ribbons'
+coplanar depth ties in both renderers. Paired images and running-world1440p timings
+pass the bounded checks; see docs/rtx-optical-variants-2026-09-28.md.
+
+## D086 — Implement an Ellis wormhole demo using isotropic charts (2026-09-28)
+
+Owner explicitly authorizes the wormhole implementation, superseding D082's
+analysis-only scope. Keep the full two-mouth, distant-region, bidirectional player
+passage objective active until rendered crossings and playable FPS are verified.
+
+Choose the study's ultrastatic symmetric Ellis metric. Use isotropic exterior charts
+and spherical inversion plus a fixed axis reflection to identify the mouths. The
+combined differential preserves handedness and transports camera axes/velocity;
+the inverse mapping is identical. Six independent/conservation/reference tests pass.
+This is the metric of a hypothetical local passage plus an explicit world mapping,
+not a global Einstein solution for arbitrary Minecraft mouth placement. No compulsory
+gravity suction or gravitational redshift is implied by this ultrastatic metric.
+See docs/overnight-goals-2026-09-28.md for derivation and remaining implementation.

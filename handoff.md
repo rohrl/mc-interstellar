@@ -1,90 +1,101 @@
-# Handoff — small-mass lens artifacts, 2026-09-28
+# Handoff — overnight RTX + wormhole goals, 2026-09-28
 
-## Current state
+## Goal and scope
 
-Repo C:\work\code\minecraft\interstellar\interstellar; branch codex/extended-lens-artifacts,
-based on 8306d6d (live RTX). This iteration fixes the owner's jagged extended-mass
-screenshots and ambiguous Alt+F12 behaviour. Branches/pushes/runtime checks authorized;
-no subagents. Preserve AA WIP 8ad46eb and unrelated branches/worlds.
+ACTIVE full user goal: (1) RTX for small masses and near/inside horizons without
+visible correctness regressions; (2) implement the studied wormhole as a playable,
+physics-based two-mouth demo connecting distant locations, with smooth two-way
+player passage, preferably RTX. The owner leaves the PC overnight. Continue both
+until verified; do not mark the overall goal complete after finishing only RTX.
+Wormholes are NOW explicitly authorized, superseding earlier analysis-only notes.
 
-Read docs/extended-lens-artifacts-2026-09-28.md and its linked evidence. For the
-previous live RTX architecture/results, read docs/rtx-live-world-2026-09-28.md.
-The wormhole side study is complete; implementation remains unauthorized.
+Repo C:\work\code\minecraft\interstellar\interstellar, branch codex/rtx-wormhole-demo,
+based on8c637da. No subagents. Branches/commits/pushes/runtime actions authorized.
+Preserve AA WIP8ad46eb, existing saves and settings. Token-efficient fixed-pose image
+metrics plus visual inspection; broad movement/flicker suite remains deferred.
+Actual wormhole passage still needs runtime checks because it is part of the goal.
 
-## Findings and implementation
+## Read next
 
-Owner F2 images are run/screenshots/2026-09-28_21.00.{29,31,39}.png, N14 extended
-mass, C~0.32. That launch was OpenGL-only. Extended sources also use OpenGL with
-RTX enabled; the old integrator predates RTX. RK stages straddled the metric surface,
-where the radial derivative jumps. bodyAdvance now uses one branch per RK step,
-splits at the surface, fixes the slope via the null invariant, and handles grazing
-entry/immediate exit. AA, resolution and BH equations are unchanged.
+- docs/overnight-goals-2026-09-28.md: requirements, chosen physics, pending architecture.
+- docs/rtx-optical-variants-2026-09-28.md: completed Goal1 and measured evidence.
+- docs/wormholes-feasibility.md: original study, now implementation authorized.
+- docs/rtx-live-world-2026-09-28.md: underlying optional backend architecture.
 
-F12 now uses the registered key's press-event modifiers through KeyboardMixin;
-repeat events do not retrigger. Alt+F12 in a normal build explains the launch flag,
-with no benchmark. Optional builds toggle renderer preference and explain extended/
-near-horizon fallback. HUD always names the active renderer. Plain F12 measures,
-Ctrl+Alt+F12 compares. Launch RTX: gradlew.bat runClient -PinterstellarRtx.
+## Goal1 finished
 
-## Checks and limits
+WorldRenderBackend.Optics selects EXTERIOR/EXTENDED/HORIZON. VulkanWorldBackend
+precompiles six probe/material pipelines during setup and switches them without
+rebuilding geometry. FrozenBackendCapture expands the extended_source include;
+FullImageShader defines the matching production variant. TerrainScreen removes
+variant eligibility exclusions and reads uniforms from the correct material shader.
+The historical -PinterstellarRtxImage frozen experiment remains exterior-only;
+-PinterstellarRtx covers all current models in live and manually enabled F9 views.
 
-Optional build and clean normal build pass 81 tests. Runtime shaders compile.
-Independent Hamiltonian checks cover both directions/4 compactnesses/3 incidence
-angles; grazing tests cover entry and immediate exit. Final fixed-pose crop error
-against finer angular steps falls 94.5%; inspected 14-block and 2x2x2 cases.
-Tool tools/LensBoundaryEvidence.java checks camera/projection/quality before comparing
-static terrain; full-frame cross-restart comparisons would include moving actors.
+A shared correctness fix moves captured selection-outline ribbons .002 blocks
+towards the camera to remove coplanar hit-order ties. Its interior edit image now
+matches exactly. No optical-equation changes. Normal GL shader source unchanged.
+1440p comparisons: N8/N14/near/inside MAE .0006–.0018 on0–255;25–56 pixels over16.
+Centre cutoff and forward black views are trivial checks; sideways images validate
+actual sky/terrain optics. Representative contact sheets were inspected.
 
-Final small-source GPU medians 4.118/4.297 ms, frame medians 8.337/8.373 ms at 120 FPS
-cap. Original GPU medians 3.455/4.109 ms; intermediate correction 3.910–4.554 ms.
-Noisy, different actors after restart: some correction cost is plausible; do not
-claim zero overhead. See report for raw timings. RTX BH final smoke check: frame
-8.338 ms, Vulkan GPU 1.605 ms (excludes GL copies/resolve). Same-frame RTX/GL MAE
-0.00220/255, 28 pixels over16/255; tiny differences remain. This is not a repeat of
-the prior 1440p regression series. BH shader equations were not changed.
+With simulation RUNNING at1440p, frame medians8.321/8.328/8.374ms forN14/near/inside,
+at existing120FPS cap. GPU3.029/7.215/3.137ms excludes GL copies/resolve. Raw evidence
+in docs/profiles/2026-09-28-rtx-variants; standard-library analyze-variant-checks.py.
+Both optional build and clean normal build pass87 tests; normal jar excludes optional
+classes. Do not extrapolate to every view or call cap-limited timings uncapped FPS.
 
-Brief (20 ms) Alt+F12 switches optional renderer both directions, benchmark-start
-count remains 2->2. Normal launch gives guidance. Plain F12 benchmark still finishes.
-Automated movement/flicker tests remain owner-deferred.
+## Goal2 progress — incomplete
 
-## Runtime and preservation
+Only reference mathematics is implemented so far:
+src/main/java/io/github/rohrl/interstellar/science/EllisWormhole.java and six tests.
+All87 total tests pass. Metric is ultrastatic Ellis; signed proper radial coordinate
+l and Hamiltonian radial momentum/plane angle. Exact elliptic-integral reflection
+and transmission limits, invariant, reversal, end symmetry and circular throat ray
+are checked. Isotropic charts use l=R-a²/(4R), conformal factor1+a²/(4R²), mouth
+coordinate radiusa/2. Transition is spherical inversion followed by z reflection,
+with differential for velocity and camera axes. It is reversible and preserves
+handedness. See goal doc for physics sources and careful explanation.
 
-No development client left running. Closed test PID23720 normally, then restored
-run/options.txt from run/lens-check-owner-options.txt. Both builds pass; final build
-is normal OpenGL-only. To try optional RTX, use the launch flag above.
+NEXT: implement bounded distant chunk delivery/cache, union capture of both regions,
+wormhole shader/shared RTX variant, separate demo and continuous authoritative
+player crossing. Read the planned details in the goal doc; none is implemented yet.
+Use real remote geometry, not cubemaps for terrain. Fog must not count the long
+Minecraft separation; preserve camera up/roll across off-axis crossings. Pair
+centres can be roughly1024 blocks apart in a new void demo dimension. Avoid changing
+render distance or making mouths artificially close merely to evade remote loading.
 
-All in-world edits/tests were in the separate save folder:
-run/saves/Interstellar Visual Check 2026-09-28
-Created from Interstellar Calibration. Its internal display name is still
-Interstellar Calibration, so logs alone do not distinguish it. Verified running
-command line: --quickPlaySingleplayer "Interstellar Visual Check 2026-09-28".
-Original world was not opened: level.dat remains21:10:27, session.lock21:08:54.
-Do NOT restore old player coordinates from prior handoffs: the owner explored after
-8306d6d and changed their original source to64 blocks. That save remains authoritative.
+Minecraft source extracts for APIs are in run/mc-source, obtained with
+run/read-mc-sources.py (Windows long-path prefix required). Important APIs:
+ClientChunkManager.loadChunkFromPacket/getChunk; handler.onChunkData reads native
+lighting afterwards. Native onUnloadChunk separately clears light; retained remote
+chunks need protection from that. Normal chunk ring buffer cannot store both regions.
+StreamingTerrain currently one camera-centred window capped16 chunks; adapt it to
+retain both bounded regions in wormhole world. Other world behaviour must stay intact.
 
-Test copy is frozen/spectator, last source64 blocks at centre3/82/3. Earlier14-block
-fixture: fill2/80/3..3/82/4 plus4/80/3..4/80/4; eye0.4/82.4199998856/1.0, yaw-43,
-pitch18. Use decimal1.0 in /tp (integer1 centres at1.5). Body reference pair uses
-F9 Shift+[ after capture readiness. The final shared shader was reloaded before
-final pair18411850027943348760; it includes both grazing guards. Pair9626865030655472664
-is the actual8-block case. Before pair15350767883361577764. Archived under
- docs/profiles/2026-09-28-lens-boundary.
+## Runtime safety and current state
 
-Owner briefly explored during the final check, then explicitly left the client idle;
-fixed camera and recaptured before final measurements. Earlier wrong-pose/unfinished
-captures are not final evidence. Shader reload/compile can take about3 minutes;
-do not send input until completion. The last diagnostic shader warning marks the
-end, but gate actual captures on their completion log.
+No development client running. Closed latest overnight test client normally.
+Original options restored from run/overnight-owner-options.txt. Final build is
+OpenGL-only; use -PinterstellarRtx to launch optional backend again.
 
-JDK C:\Portable\jdks\temurin-21.0.12.1. Python py -3 (3.8, no PIL).
-Local logs run/lens-check-baseline-runtime.log, run/lens-check-rtx-runtime.log;
-builds run/lens-final-build.log (optional), run/lens-normal-build.log (clean normal).
-Startup helper run/lens-check-init.gradle targets only the copied world.
+All tests used NEW save folder: run/saves/Interstellar Overnight Check 2026-09-28.
+Its internal display name is still Interstellar Calibration; verify quick-play
+argument, not log display name. Init script run/overnight-init.gradle targets it.
+Original Calibration level.dat remains21:10:27; prior Visual Check remains21:58:12.
+Both preserved. Test copy ends spectator, ticks running,64-block sourcecentre3/82/3,
+feet3/80.38/0 yaw90 pitch0, F10 was active before exit.
 
-## Next work
+Logs run/rtx-variants-runtime.log and runtime2.log. Last build logs
+run/rtx-variants-final-build.log / run/rtx-variants-normal-build.log.
+Initial test client21744 closed; subsequent client also closed by verified quick-play
+match. Do not reuse old PIDs. Existing control scripts run/control-short.ps1,
+run/send-safe-command.ps1 (preserves clipboard), run/size-minecraft.ps1,
+run/rtx-live-pair.ps1, run/rtx-live-timings.ps1. They gate on completed log events.
+Startup confirmation click595/305 in854x480; resize explicitly after world entry.
 
-No outstanding work on this reported defect. Preserve GL fallback and optional
-Vulkan-free builds. Existing RTX candidates remain additional optical variants,
-measured update spikes, selective texture copies/refits, lifecycle/cross-vendor checks,
-then optional distribution. Do not infer all-angle scientific validation or uncapped
-FPS from the limited artifact checks.
+JDK C:\Portable\jdks\temurin-21.0.12.1. Python py -3 (3.8, no PIL/numpy).
+For plain F12 timing, client must be in game. Alt+F12 toggles; Ctrl+Alt+F12 pairs.
+Remember decimal1.0 in /tp (integer1 becomes1.5). Helper focus can shift mouse view
+when leaving menus; check captured camera metadata. Shader compile/reload may take
+minutes when common GLSL changes; wait for actual completion before GUI sequences.
