@@ -1,79 +1,90 @@
-# Handoff — live RTX exterior world, 2026-09-28
+# Handoff — small-mass lens artifacts, 2026-09-28
 
-## Checkout and scope
+## Current state
 
-Repo C:\work\code\minecraft\interstellar\interstellar; branch codex/rtx-live-world,
-based on2f4bd2d. Branches/pushes/runtime checks authorized. Preserve AA WIP8ad46eb,
-other branches and worlds. No subagents. Owner requested live RTX with OpenGL fallback,
-a future Vulkan-free flavour option (do not package it now), and an OpenGL-only
-performance regression check. This bounded live milestone is implemented and checked.
-Wormhole side study is complete; no implementation authorized.
+Repo C:\work\code\minecraft\interstellar\interstellar; branch codex/extended-lens-artifacts,
+based on 8306d6d (live RTX). This iteration fixes the owner's jagged extended-mass
+screenshots and ambiguous Alt+F12 behaviour. Branches/pushes/runtime checks authorized;
+no subagents. Preserve AA WIP 8ad46eb and unrelated branches/worlds.
 
-## Read first
+Read docs/extended-lens-artifacts-2026-09-28.md and its linked evidence. For the
+previous live RTX architecture/results, read docs/rtx-live-world-2026-09-28.md.
+The wormhole side study is complete; implementation remains unauthorized.
 
-docs/rtx-live-world-2026-09-28.md and docs/profiles/2026-09-28-rtx-live.
-Live1440p frame medians: heavy terrain23.981→8.361ms (~42→120 FPS),
-wall11.640→8.352ms (~86→120), at unchanged120 FPS cap/VSync settings. Three
-120-warmup/300-sample runs per view/backend; simulation running. RTX Vulkan GPU
-3.327/3.263ms includes AS builds but excludes GL copies/resolve. Use frame intervals
-for live FPS. Six same-frame image cases show0–12 pixels over16/255, not pixel identity.
+## Findings and implementation
 
-Separate normal-build regression, simulation frozen: GPU down24.437→23.762ms,
-wall11.073→10.821ms. No observed regression; small gains are treated as variation.
-Static terrain count identical; moving triangles8944→8908 across restarts. Raw logs
-and standard-library tools/analyze-live-rtx.py reproduce the summary.
+Owner F2 images are run/screenshots/2026-09-28_21.00.{29,31,39}.png, N14 extended
+mass, C~0.32. That launch was OpenGL-only. Extended sources also use OpenGL with
+RTX enabled; the old integrator predates RTX. RK stages straddled the metric surface,
+where the radial derivative jumps. bodyAdvance now uses one branch per RK step,
+splits at the surface, fixes the slope via the null invariant, and handles grazing
+entry/immediate exit. AA, resolution and BH equations are unchanged.
 
-## Implementation and limits
+F12 now uses the registered key's press-event modifiers through KeyboardMixin;
+repeat events do not retrigger. Alt+F12 in a normal build explains the launch flag,
+with no benchmark. Optional builds toggle renderer preference and explain extended/
+near-horizon fallback. HUD always names the active renderer. Plain F12 measures,
+Ctrl+Alt+F12 compares. Launch RTX: gradlew.bat runClient -PinterstellarRtx.
 
-WorldRenderBackend replaces FrozenWorldBackend. No Vulkan types in the common API.
-WorldBackendBridge reflects into src/rtx/java only when -PinterstellarRtx is enabled.
-Ordinary clean jar/dependency graph exclude optional classes and Vulkan/shaderc.
-No new flavour/installer; this is a Windows development configuration beside OpenGL.
+## Checks and limits
 
-LiveGeometry retains compact quad terrain, a BLAS per chunk and small reusable actor/
-cloud BLAS buffers. Changed chunks alone read back/synchronize/rebuild; removed chunks
-release their structures. Moving BLAS/TLAS rebuild, no refits yet. VulkanWorldBackend
-GPU-copies five native appearance images each frame and shares the two-AA-sample result
-through Win32 memory/semaphores. FullImageShader derives optics/materials from production
-GLSL. One frame in flight. About1.54GiB extra observed whole-board memory, not peak.
+Optional build and clean normal build pass 81 tests. Runtime shaders compile.
+Independent Hamiltonian checks cover both directions/4 compactnesses/3 incidence
+angles; grazing tests cover entry and immediate exit. Final fixed-pose crop error
+against finer angular steps falls 94.5%; inspected 14-block and 2x2x2 cases.
+Tool tools/LensBoundaryEvidence.java checks camera/projection/quality before comparing
+static terrain; full-frame cross-restart comparisons would include moving actors.
 
-F10 auto-selects RTX for default ordinary exterior BH rendering. Alt+F12 toggles,
-F12 measures active live backend, Ctrl+Alt+F12 saves paired images. Extended sources
-and r<1.25rs use GL; exterior return resumes RTX. Setup/frame failure retains GL;
-Alt+F12 retries. Historical -PinterstellarRtxImage frozen F9 experiment still works
-by design (not rerun this turn). Other vendors, device-loss and production packaging
-remain unverified. Automated movement/flicker suite is owner-deferred.
+Final small-source GPU medians 4.118/4.297 ms, frame medians 8.337/8.373 ms at 120 FPS
+cap. Original GPU medians 3.455/4.109 ms; intermediate correction 3.910–4.554 ms.
+Noisy, different actors after restart: some correction cost is plausible; do not
+claim zero overhead. See report for raw timings. RTX BH final smoke check: frame
+8.338 ms, Vulkan GPU 1.605 ms (excludes GL copies/resolve). Same-frame RTX/GL MAE
+0.00220/255, 28 pixels over16/255; tiny differences remain. This is not a repeat of
+the prior 1440p regression series. BH shader equations were not changed.
 
-Known-triangle startup query catches empty acceleration structures. During development,
-missing geometryCount (LWJGL pGeometries does not set it) caused missing terrain;
-fixed and images rechecked. No broken-image timing accepted. Normal terrain capture
-~30sec; extra initial terrain BLAS setup~1–2sec in coarse logs. Single glass edit
-rebuilt one chunk. Update spikes/long-duration behaviour are not characterized.
+Brief (20 ms) Alt+F12 switches optional renderer both directions, benchmark-start
+count remains 2->2. Normal launch gives guidance. Plain F12 benchmark still finishes.
+Automated movement/flicker tests remain owner-deferred.
 
-Next candidates: remaining optical variants, measured update spikes, selective texture
-copies/refits, lifecycle/cross-vendor validation, then optional distribution. Keep GL.
+## Runtime and preservation
 
-## Verification and current client
+No development client left running. Closed test PID23720 normally, then restored
+run/options.txt from run/lens-check-owner-options.txt. Both builds pass; final build
+is normal OpenGL-only. To try optional RTX, use the launch flag above.
 
-Final optional build and clean normal build pass;79 tests. Material fixture passes736
-paired queries/256 CPU checks. Runtime image/live-mob/edit/chunk/resize/toggle/horizon
-checks pass. Final initializer/storage-limit guards compiled after those runtime checks.
-No shader-equation changes. Read report for limits rather than extrapolating FPS.
+All in-world edits/tests were in the separate save folder:
+run/saves/Interstellar Visual Check 2026-09-28
+Created from Interstellar Calibration. Its internal display name is still
+Interstellar Calibration, so logs alone do not distinguish it. Verified running
+command line: --quickPlaySingleplayer "Interstellar Visual Check 2026-09-28".
+Original world was not opened: level.dat remains21:10:27, session.lock21:08:54.
+Do NOT restore old player coordinates from prior handoffs: the owner explored after
+8306d6d and changed their original source to64 blocks. That save remains authoritative.
 
-Normal client PID12488, exec session43438, run/rtx-live-gl-after-runtime.log. Paused,
-F10 off, no RTX flags, narrator0; ticks unfrozen20tps. To try RTX, close this client
-normally first, then gradlew.bat runClient -PinterstellarRtx. No second client/world.
+Test copy is frozen/spectator, last source64 blocks at centre3/82/3. Earlier14-block
+fixture: fill2/80/3..3/82/4 plus4/80/3..4/80/4; eye0.4/82.4199998856/1.0, yaw-43,
+pitch18. Use decimal1.0 in /tp (integer1 centres at1.5). Body reference pair uses
+F9 Shift+[ after capture readiness. The final shared shader was reloaded before
+final pair18411850027943348760; it includes both grazing guards. Pair9626865030655472664
+is the actual8-block case. Before pair15350767883361577764. Archived under
+ docs/profiles/2026-09-28-lens-boundary.
 
-All eight fresh owner player fields match: creative, flying=false, interstellar:arrows,
-feet16.42080350758872/65/-55.7896552801982, yaw-18.765259/pitch-5.99997,
-slot8, health20, inventory/chainmail unchanged. Source auto restored. Temporary glass
-at17/303/-5 in overworld was placed only after an air check and removed. Normal time
-advanced; no time/weather edits. Window854x480 at outer1241,579–2111,1098 restored
-from previous checkpoint's window record (not freshly captured before this turn).
-Player records: run/rtx-live-owner-state.txt, run/rtx-live-restored-state.txt.
+Owner briefly explored during the final check, then explicitly left the client idle;
+fixed camera and recaptured before final measurements. Earlier wrong-pose/unfinished
+captures are not final evidence. Shader reload/compile can take about3 minutes;
+do not send input until completion. The last diagnostic shader warning marks the
+end, but gate actual captures on their completion log.
 
-JDK C:\Portable\jdks\temurin-21.0.12.1; Python py -3 (3.8, noPIL).
-Local helpers run/restart-client.ps1, run/restart-rtx-live.ps1; run/rtx-live-pair.ps1
-waits for comparison completion, run/rtx-live-timings.ps1 handles live F12 tests.
-Runtime5 contains successful live checks; earlier logs are failed development attempts.
-Initial down-live-rtx labels had wrong pose and are excluded from archived evidence.
+JDK C:\Portable\jdks\temurin-21.0.12.1. Python py -3 (3.8, no PIL).
+Local logs run/lens-check-baseline-runtime.log, run/lens-check-rtx-runtime.log;
+builds run/lens-final-build.log (optional), run/lens-normal-build.log (clean normal).
+Startup helper run/lens-check-init.gradle targets only the copied world.
+
+## Next work
+
+No outstanding work on this reported defect. Preserve GL fallback and optional
+Vulkan-free builds. Existing RTX candidates remain additional optical variants,
+measured update spikes, selective texture copies/refits, lifecycle/cross-vendor checks,
+then optional distribution. Do not infer all-angle scientific validation or uncapped
+FPS from the limited artifact checks.

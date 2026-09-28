@@ -22,11 +22,16 @@ public final class LiveTerrain {
         synchronize(client);
     }
     // Ctrl avoids the crouch/descent side effect of holding Shift in a live world.
-    static void benchmark() {
+    static void benchmark(int modifiers) {
         if(renderer==null)return;
-        if(WorldBackendBridge.ENABLED && net.minecraft.client.gui.screen.Screen.hasAltDown()) {
-            if(net.minecraft.client.gui.screen.Screen.hasControlDown())renderer.compareWorldBackend();else renderer.toggleWorldBackend();
-        } else renderer.keyPressed(GLFW.GLFW_KEY_B,0,net.minecraft.client.gui.screen.Screen.hasControlDown()?GLFW.GLFW_MOD_SHIFT:0);
+        if((modifiers&GLFW.GLFW_MOD_ALT)!=0) {
+            if(!WorldBackendBridge.ENABLED) {
+                var message="OpenGL-only launch. Enable RTX with: gradlew.bat runClient -PinterstellarRtx";
+                MinecraftClient.getInstance().player.sendMessage(Text.literal(message),false);
+                Interstellar.LOGGER.info(message);return;
+            }
+            if((modifiers&GLFW.GLFW_MOD_CONTROL)!=0)renderer.compareWorldBackend();else renderer.toggleWorldBackend();
+        } else renderer.keyPressed(GLFW.GLFW_KEY_B,0,(modifiers&GLFW.GLFW_MOD_CONTROL)!=0?GLFW.GLFW_MOD_SHIFT:0);
     }
     static void tick(MinecraftClient client) {synchronize(client);}
     private static void synchronize(MinecraftClient client) {

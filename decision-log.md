@@ -528,3 +528,22 @@ images after live updates/edits/streaming remain very close. The independent nor
 build regression check found no slowdown (GPU medians lower2.3–2.8%, treated as
 variation). Extra observed board memory~1.54GiB with both renderers. No cross-vendor,
 device-loss or sustained movement claim. Details/evidence: docs/rtx-live-world-2026-09-28.md.
+
+## D084 — Split extended-source rays at the metric surface (2026-09-28)
+
+Accepted implementation of the owner's reported small-mass silhouette defect.
+The OpenGL RK4 step sampled both sides of a radial-metric derivative jump; crossing
+phase varied between rays, producing periodic serrations. Preserve existing AA and
+ordinary angular budget; locate the surface and continue on the appropriate smooth
+branch, with the null first integral setting the crossing slope. Include grazing
+entry/exit. This corrects the numerical method without changing the proxy metric.
+
+Final affected-crop error against a finer-step reference falls94.5%; inspected14-
+and8-block cases agree closely. Extra boundary work has some cost; observed capped
+frame times remain near120FPS but do not establish zero GPU overhead. Independent
+Hamiltonian crossing checks plus existing tests pass (81 total). See the evidence
+and limitations in docs/extended-lens-artifacts-2026-09-28.md.
+
+F12 modifier handling moves to the key event so quick Alt taps are reliable. A
+normal build explicitly explains the optional RTX flag instead of benchmarking.
+Always name the live backend and explain extended/near-horizon fallback when toggled.

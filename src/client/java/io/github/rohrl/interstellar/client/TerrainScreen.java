@@ -98,6 +98,7 @@ final class TerrainScreen extends Screen {
         cancelBenchmark();rtxPreferred=backendFailed || !rtxPreferred;backendFailed=false;
         if(!rtxPreferred)closeFrozenBackend();
         Interstellar.LOGGER.info("Live renderer preference: {}",rtxPreferred?"RTX with OpenGL fallback":"OpenGL");
+        client.player.sendMessage(Text.literal(!rtxPreferred?"Renderer: OpenGL":extendedSource()?"RTX preferred; extended mass currently uses OpenGL":horizonView()?"RTX preferred; near-horizon view currently uses OpenGL":"Renderer: RTX preferred (OpenGL fallback available)"),true);
     }
     void compareWorldBackend() {if(frozenBackend!=null && rtxActive){cancelBenchmark();compareFrozenBackend=true;}}
     static void setShader(ShaderProgram program) {generalShader=program;resourceVersion++;}
@@ -181,7 +182,8 @@ final class TerrainScreen extends Screen {
             context.fill(6,6,Math.min(width-6,410),46,0xCD101824);
             context.drawTextWithShadow(textRenderer,"INTERSTELLAR | Live camera | F10: off | F12: timing",12,12,0xFF88D8FF);
             String age=meshMode?mesh.viewStatus()+" | Mass blocks: "+source.count():"Preparing world view...";
-            if(WorldBackendBridge.ENABLED)age+=" | "+(rtxActive?"RTX":"OpenGL")+" (Alt+F12)";
+            age+=" | "+(rtxActive?"RTX":"OpenGL");
+            if(WorldBackendBridge.ENABLED)age+=" (Alt+F12)";
             context.drawTextWithShadow(textRenderer,age,12,24,0xFFFFFFFF);
             String details=benchmark==null?String.format(Locale.ROOT,"%s | C %.2f | Range %.0f / %d | AA %s",source.blackHoleProxy()?"BH r="+String.format(Locale.ROOT,"%.2f",source.schwarzschildRadius()):"Extended mass",
                     source.schwarzschildRadius()/source.enclosingRadius(),camera.distanceTo(centre()),MESH_VIEW_RANGE,aaName()):benchmark.status().replace("B cancels","F12 cancels");

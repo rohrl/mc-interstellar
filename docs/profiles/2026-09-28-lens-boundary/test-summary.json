@@ -1,0 +1,14 @@
+[
+  {
+    "Property": "tests",
+    "Sum": 81.0
+  },
+  {
+    "Property": "failures",
+    "Sum": 0.0
+  },
+  {
+    "Property": "errors",
+    "Sum": 0.0
+  }
+]

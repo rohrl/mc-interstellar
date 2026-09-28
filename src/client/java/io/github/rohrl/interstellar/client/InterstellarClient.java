@@ -25,6 +25,15 @@ import java.util.List;
 import java.util.Locale;
 
 public final class InterstellarClient implements ClientModInitializer {
+    private static KeyBinding liveTiming;
+    /** Use the event's modifiers: a quick Alt tap may be released before the next tick. */
+    public static boolean handleTimingKey(long window,int key,int scan,int action,int modifiers) {
+        var client=MinecraftClient.getInstance();
+        if(client.currentScreen!=null || client.world==null || window!=client.getWindow().getHandle()
+                || liveTiming==null || !liveTiming.matchesKey(key,scan) || action==GLFW.GLFW_RELEASE)return false;
+        if(action==GLFW.GLFW_PRESS)LiveTerrain.benchmark(modifiers);
+        return true;
+    }
     private CalibrationSettings settings;
     private boolean showHud;
     private Vec3d referenceCentre;
@@ -104,7 +113,7 @@ public final class InterstellarClient implements ClientModInitializer {
                 Identifier.of("interstellar", "optical_lab"), VertexFormats.POSITION, OpticalLabScreen::setShader));
         KeyBinding opticalLab = KeyBindingHelper.registerKeyBinding(new KeyBinding("key.interstellar.optical_lab", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_F8, "key.categories.interstellar"));
         KeyBinding liveTerrain = KeyBindingHelper.registerKeyBinding(new KeyBinding("key.interstellar.live_terrain", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_F10, "key.categories.interstellar"));
-        KeyBinding liveTiming = KeyBindingHelper.registerKeyBinding(new KeyBinding("key.interstellar.live_timing", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_F12, "key.categories.interstellar"));
+        liveTiming = KeyBindingHelper.registerKeyBinding(new KeyBinding("key.interstellar.live_timing", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_F12, "key.categories.interstellar"));
         settings = CalibrationConfig.load();
         showHud = settings.hudEnabled();
         KeyBinding toggleHud = KeyBindingHelper.registerKeyBinding(new KeyBinding(
@@ -117,7 +126,6 @@ public final class InterstellarClient implements ClientModInitializer {
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             LiveTerrain.tick(client);
             while(liveTerrain.wasPressed()) LiveTerrain.toggle(client);
-            while(liveTiming.wasPressed()) LiveTerrain.benchmark();
             while (terrain.wasPressed()) { LiveTerrain.stop(); if (client.world != null) client.setScreen(new TerrainScreen(SelectedSource.current())); }
             while (opticalLab.wasPressed()) {
                 LiveTerrain.stop();

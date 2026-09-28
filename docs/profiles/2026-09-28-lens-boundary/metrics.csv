@@ -1,0 +1,4 @@
+image,region,mae255,rmse255,pixelsAbove16,pixels
+before,terrain-crop,1.10094713,3.81269748,790,36250
+after,terrain-crop,0.06013793,0.79698282,21,36250
+after,full-frame,0.06060294,0.94771957,848,921600

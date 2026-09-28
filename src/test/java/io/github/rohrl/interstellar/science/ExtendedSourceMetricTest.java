@@ -69,6 +69,75 @@ class ExtendedSourceMetricTest {
             assertEquals(reference,phi,1e-3,"C="+c+", tangent="+tangent);
         }
     }
+    @Test void splitSurfaceStepAgreesWithIndependentHamiltonianCrossing() {
+        // Exercise both sides of the discontinuous radial metric derivative.
+        // The reference evolves Cartesian Hamiltonian variables, not u(phi).
+        for(double c:new double[]{.0625,.309,.5625,.8})for(boolean inside:new boolean[]{false,true})for(double tangent:new double[]{.1,.4,.8}) {
+            var m=new ExtendedSourceMetric(c,1);double start=inside?.99:1.01;
+            double mu=(inside?1:-1)*Math.sqrt(1-tangent*tangent),u=c/start;
+            double v=-mu*u*Math.sqrt(m.inverseRadial(start))/tangent;
+            double energy=u*u*m.lapse(start)/(tangent*tangent);
+            double surfaceV=Math.copySign(Math.sqrt(energy-c*c*(1-c)),v);
+            double h=2*(c-u)/(v+surfaceV);
+            for(int i=0;i<3;i++) {
+                double[] at=surfaceRk(m,u,v,energy,h,inside);
+                h+=(c-at[0])/at[1];
+            }
+            assertTrue(h>0 && h<.08,"Fixture crosses within one production-sized angular step");
+            double[] state={start,0,mu/Math.sqrt(m.inverseRadial(start)),tangent};
+            double dt=.00002;boolean crossed=false;
+            for(int i=0;i<20000;i++) {
+                double[] old=state,a=m.affineDerivative(old,m.lapse(start));
+                double[] b=m.affineDerivative(add(old,a,dt/2),m.lapse(start));
+                double[] d=m.affineDerivative(add(old,b,dt/2),m.lapse(start));
+                double[] e=m.affineDerivative(add(old,d,dt),m.lapse(start));state=old.clone();
+                for(int k=0;k<4;k++)state[k]+=dt*(a[k]+2*b[k]+2*d[k]+e[k])/6;
+                double r=Math.hypot(state[0],state[1]);
+                if(inside?r>=1:r<=1) {
+                    double previous=Math.hypot(old[0],old[1]),fraction=(1-previous)/(r-previous);
+                    double phi=Math.atan2(old[1]+fraction*(state[1]-old[1]),old[0]+fraction*(state[0]-old[0]));
+                    assertEquals(phi,h,3e-6,"C="+c+", inside="+inside+", tangent="+tangent);
+                    crossed=true;break;
+                }
+            }
+            assertTrue(crossed);
+        }
+    }
+    @Test void grazingEntryCanBeHiddenByTwoExteriorEndpoints() {
+        for(double c:new double[]{.0625,.309,.5625}) {
+            var m=new ExtendedSourceMetric(c,1);double u=c/1.00001,energy=c*c*(1-c)+1e-8;
+            double v=Math.sqrt(energy-u*u*(1-u));
+            double[] end=surfaceRk(m,u,v,energy,.08,false);
+            assertTrue(end[0]<c && end[1]<0,"Both endpoints outside although the ray crosses the surface");
+            double h=2*(c-u)/(v+Math.sqrt(energy-c*c*(1-c)));
+            for(int i=0;i<3;i++) {double[] at=surfaceRk(m,u,v,energy,h,false);h+=(c-at[0])/at[1];}
+            double[] at=surfaceRk(m,u,v,energy,h,false);
+            assertTrue(h>0 && h<.08);assertEquals(c,at[0],1e-10);
+            assertTrue(at[1]>0,"Use the entry crossing, not the later exit");
+            // Continue from that exact boundary: a shallow interior excursion
+            // must split at its exit too, rather than retain the interior ODE.
+            double surfaceV=Math.sqrt(energy-c*c*(1-c));
+            end=surfaceRk(m,c,surfaceV,energy,.08,true);
+            assertTrue(end[0]<c);
+            h=-2*surfaceV/surfaceAcceleration(m,c,energy,true);
+            for(int i=0;i<3;i++) {at=surfaceRk(m,c,surfaceV,energy,h,true);h+=(c-at[0])/at[1];}
+            at=surfaceRk(m,c,surfaceV,energy,h,true);
+            assertTrue(h>0 && h<.08);assertEquals(c,at[0],1e-10);
+            assertEquals(-surfaceV,at[1],1e-9,"Exit has the opposite radial slope");
+        }
+    }
+    private static double surfaceAcceleration(ExtendedSourceMetric m,double u,double energy,boolean inside) {
+        if(!inside)return 1.5*u*u-u;
+        double c=m.compactness(),t=c*c*c/(u*u),d=1-c;
+        return energy*t*(3-c-2*t)/(2*u*d*d)-u;
+    }
+    private static double[] surfaceRk(ExtendedSourceMetric m,double u,double v,double energy,double h,boolean inside) {
+        double a=surfaceAcceleration(m,u,energy,inside),bv=v+h*a/2;
+        double b=surfaceAcceleration(m,u+h*v/2,energy,inside),cv=v+h*b/2;
+        double c=surfaceAcceleration(m,u+h*bv/2,energy,inside),dv=v+h*c;
+        double d=surfaceAcceleration(m,u+h*cv,energy,inside);
+        return new double[]{u+h*(v+2*bv+2*cv+dv)/6,v+h*(a+2*b+2*c+d)/6};
+    }
     private static double[] add(double[] state,double[] derivative,double dt) {
         var result=state.clone();for(int i=0;i<4;i++)result[i]+=dt*derivative[i];return result;
     }

@@ -858,8 +858,13 @@ void trace(vec2 uv) {
         if(BodyRadius>0.0 && q.y<0.0)h=min(h,.5*q.x/-q.y);
 #endif
         COUNT_WORK(0);
-        vec2 a=derivative(q),b=derivative(q+h*a*.5),c=derivative(q+h*b*.5),d=derivative(q+h*c);
-        next=q+h*(a+2.0*b+2.0*c+d)/6.0;
+#ifdef INTERSTELLAR_EXTENDED_SOURCE
+        if(BodyRadius>0.0)next=bodyAdvance(q,h);else
+#endif
+        {
+            vec2 a=derivative(q),b=derivative(q+h*a*.5),c=derivative(q+h*b*.5),d=derivative(q+h*c);
+            next=q+h*(a+2.0*b+2.0*c+d)/6.0;
+        }
         captured=BodyRadius==0.0 && next.x>=1.0;
         angle=phi+h;
 #ifdef INTERSTELLAR_HORIZON

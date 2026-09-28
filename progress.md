@@ -1,6 +1,23 @@
 # Progress
 
-## Current checkpoint — 2026-09-28, live RTX exterior world
+## Current checkpoint — 2026-09-28, small-mass artifacts and Alt+F12
+
+Found the owner's three21:00 F2 screenshots. They came from an OpenGL-only launch;
+extended masses also retain GL in optional builds. Reproduced periodic serrations
+caused by RK stages crossing the extended-source metric's surface derivative jump.
+Split steps at that surface, including grazing entry/exit; retained AA, resolution
+and black-hole equations. Final static-crop error against a finer-step reference
+falls94.5%; both14-block and2×2×2 scenes checked. This predates the RTX integration.
+
+F12 now uses keyboard-event modifiers; brief Alt presses cannot become a benchmark.
+Normal builds explain the optional launch flag; HUD always shows the active backend.
+Optional switching and BH paired image/timing checked. Both builds/81 tests pass.
+Small-view frames remain near120FPS cap; extra GL surface-crossing cost is possible
+and no zero-overhead claim is made. See docs/extended-lens-artifacts-2026-09-28.md.
+All world tests used a verified copy. Client closed, original options restored,
+original save untouched. Branch codex/extended-lens-artifacts, based on8306d6d.
+
+## Previous checkpoint — 2026-09-28, live RTX exterior world
 
 Implemented optional F10 hardware rendering with resident per-chunk acceleration
 structures, bounded moving actor/cloud builds and GPU copies of native appearance.
