@@ -1,0 +1,4 @@
+Optional build: 88 tests, 0 failures/errors/skipped
+Normal build: {'tests': 88, 'failures': 0, 'errors': 0, 'skipped': 0}
+Jar: interstellar-0.1.0-dev.jar
+Optional backend/Vulkan/shaderc entries: []

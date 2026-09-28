@@ -2,6 +2,7 @@ package io.github.rohrl.interstellar.demo;
 
 import io.github.rohrl.interstellar.Interstellar;
 import io.github.rohrl.interstellar.source.SourceInspector;
+import io.github.rohrl.interstellar.wormhole.WormholePair;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
@@ -28,8 +29,8 @@ public final class DemoCommands {
     private static final RegistryKey<World> WORLD=RegistryKey.of(RegistryKeys.WORLD,Identifier.of("interstellar","demo"));
     private static final RegistryKey<World> GAMEPLAY=RegistryKey.of(RegistryKeys.WORLD,Identifier.of("interstellar","gameplay"));
     private static final RegistryKey<World> ARROWS=RegistryKey.of(RegistryKeys.WORLD,Identifier.of("interstellar","arrows"));
-    private static boolean exhibit(ServerWorld world) {return world.getRegistryKey().equals(WORLD)||world.getRegistryKey().equals(GAMEPLAY)||world.getRegistryKey().equals(ARROWS);}
-    private static String builtKey(ServerWorld world) {return world.getRegistryKey().equals(WORLD)?"built":world.getRegistryKey().equals(GAMEPLAY)?"gameplayBuilt":"arrowExhibitBuilt";}
+    private static boolean exhibit(ServerWorld world) {return WormholePair.active(world)||world.getRegistryKey().equals(WORLD)||world.getRegistryKey().equals(GAMEPLAY)||world.getRegistryKey().equals(ARROWS);}
+    private static String builtKey(ServerWorld world) {return WormholePair.active(world)?"wormholeExhibitBuilt":world.getRegistryKey().equals(WORLD)?"built":world.getRegistryKey().equals(GAMEPLAY)?"gameplayBuilt":"arrowExhibitBuilt";}
     private static Job job;
     private static final Map<UUID,Integer> awaitingSource=new HashMap<>();
     private DemoCommands() { }
@@ -37,9 +38,11 @@ public final class DemoCommands {
         DemoArrows.register();
         CommandRegistrationCallback.EVENT.register((dispatcher,access,environment)->dispatcher.register(literal("interstellar")
                 .then(literal("demo").requires(s->s.hasPermissionLevel(2))
-                        .executes(c->{message(c.getSource().getPlayerOrThrow(),"Use /interstellar demo gameplay, arrows, enter (legacy), or leave. Exhibits build once; F10 enables lensing.");return 1;})
+                        .executes(c->{message(c.getSource().getPlayerOrThrow(),"Use /interstellar demo gameplay, arrows, wormholes, enter (legacy), or leave. Exhibits build once; F10 enables lensing.");return 1;})
                         .then(literal("enter").executes(c->enter(c.getSource().getPlayerOrThrow())))
                         .then(literal("gameplay").executes(c->enter(c.getSource().getPlayerOrThrow(),GAMEPLAY)))
+                        .then(literal("wormholes").executes(c->enter(c.getSource().getPlayerOrThrow(),WormholePair.WORLD))
+                                .then(literal("status").executes(c->{var p=c.getSource().getPlayerOrThrow();message(p,io.github.rohrl.interstellar.wormhole.WormholeChunks.status(p));return 1;})))
                         .then(literal("arrows")
                                 .executes(c->enter(c.getSource().getPlayerOrThrow(),ARROWS))
                                 .then(literal("on").executes(c->arrows(c.getSource().getPlayerOrThrow(),"on")))
@@ -48,6 +51,10 @@ public final class DemoCommands {
                                 .then(literal("setup").executes(c->arrows(c.getSource().getPlayerOrThrow(),"setup"))))
                         .then(literal("leave").executes(c->leave(c.getSource().getPlayerOrThrow())))
                         .then(literal("view")
+                                .then(literal("mouth_a").executes(c->wormholeView(c.getSource().getPlayerOrThrow(),0,32)))
+                                .then(literal("mouth_b").executes(c->wormholeView(c.getSource().getPlayerOrThrow(),1,32)))
+                                .then(literal("throat_a").executes(c->wormholeView(c.getSource().getPlayerOrThrow(),0,8.5)))
+                                .then(literal("throat_b").executes(c->wormholeView(c.getSource().getPlayerOrThrow(),1,8.5)))
                                 .then(literal("wall").executes(c->view(c.getSource().getPlayerOrThrow(),2,80.38,-54,0,0)))
                                 .then(literal("side").executes(c->view(c.getSource().getPlayerOrThrow(),58,80.38,2,90,0)))
                                 .then(literal("close").executes(c->view(c.getSource().getPlayerOrThrow(),2,80.38,-26,0,0)))
@@ -107,12 +114,12 @@ public final class DemoCommands {
             }
             if(work.cursor<work.blocks.size())return;
             if(!work.build) {work.build=true;work.cursor=0;return;}
-            for(int i=0;i<3;i++) {
+            for(int i=0;i<(WormholePair.active(work.world)?0:3);i++) {
                 var sheep=EntityType.SHEEP.create(work.world);
                 if(sheep!=null) {sheep.refreshPositionAndAngles(-8+i*7,65,-24,0,0);sheep.setPersistent();sheep.setCustomName(Text.literal("Demo sheep "+(i+1)));work.world.spawnEntity(sheep);}
             }
             var state=state(server);state.data.putBoolean(builtKey(work.world),true);state.markDirty();job=null;
-            Interstellar.LOGGER.info("Demo exhibit ready: {} blocks, 3 sheep, separate dimension {}",work.blocks.size(),work.world.getRegistryKey().getValue());
+            Interstellar.LOGGER.info("Demo exhibit ready: {} blocks, separate dimension {}",work.blocks.size(),work.world.getRegistryKey().getValue());
             for(var id:work.waiting) {var p=server.getPlayerManager().getPlayer(id);if(p!=null)arrive(p,work.world);}
         } catch(RuntimeException failure) {job=null;Interstellar.LOGGER.error("Demo setup failed",failure);for(var id:work.waiting){var p=server.getPlayerManager().getPlayer(id);if(p!=null)message(p,"Demo setup failed; see game log. Your original world was not edited.");}}
     }
@@ -128,6 +135,11 @@ public final class DemoCommands {
         player.changeGameMode(GameMode.CREATIVE);player.teleport(world,2,80.38,-54,0,0);
         if(world.getRegistryKey().equals(ARROWS))player.teleport(world,2,90,-18,0,26);
         player.getAbilities().flying=true;player.sendAbilitiesUpdate();
+        if(WormholePair.active(world)) {
+            wormholeView(player,0,32);
+            message(player,"Wormhole exhibit: orange and cyan destinations, 1145 blocks apart. Preparing both regions. /interstellar demo view mouth_a|mouth_b|throat_a|throat_b; /interstellar demo leave returns you.");
+            return;
+        }
         // Player tickets load the source after the dimension transition; never probe it prematurely.
         if(world.getRegistryKey().equals(WORLD))awaitingSource.put(player.getUuid(),200);
         message(player,"Demo ready: F10 lensing, WASD/mouse to explore, Space/Shift to fly. /interstellar demo view wall|side|close|terrain selects a viewpoint; /interstellar demo leave returns you. Initial capture takes a moment; source edits update automatically.");
@@ -137,6 +149,12 @@ public final class DemoCommands {
         if(!exhibit(player.getServerWorld())) {message(player,"Enter an exhibit first: /interstellar demo enter or gameplay");return 0;}
         player.teleport(player.getServerWorld(),x,y,z,yaw,pitch);
         player.getAbilities().flying=player.getAbilities().allowFlying;player.sendAbilitiesUpdate();return 1;
+    }
+    private static int wormholeView(ServerPlayerEntity player,int end,double distance) {
+        if(!WormholePair.active(player.getWorld())) {message(player,"Enter the wormhole exhibit first: /interstellar demo wormholes");return 0;}
+        var c=WormholePair.centre(end);
+        int result=view(player,c.x,c.y-player.getStandingEyeHeight(),c.z-distance,0,0);
+        io.github.rohrl.interstellar.wormhole.WormholeTravel.reset(player);return result;
     }
     private static int arrows(ServerPlayerEntity player,String action) {
         if(!player.getWorld().getRegistryKey().equals(ARROWS)) {message(player,"Enter the arrow exhibit first: /interstellar demo arrows");return 0;}
@@ -170,8 +188,8 @@ public final class DemoCommands {
         @Override public NbtCompound writeNbt(NbtCompound nbt,RegistryWrapper.WrapperLookup registries) {nbt.copyFrom(data);return nbt;}
     }
     private static final class Job {
-        final ServerWorld world;final List<Map.Entry<BlockPos,BlockState>> blocks=new ArrayList<>(DemoScene.blocks().entrySet());
+        final ServerWorld world;final List<Map.Entry<BlockPos,BlockState>> blocks;
         final Set<UUID> waiting=new HashSet<>();int cursor;boolean build;
-        Job(ServerWorld world) {this.world=world;}
+        Job(ServerWorld world) {this.world=world;blocks=new ArrayList<>((WormholePair.active(world)?WormholeScene.blocks():DemoScene.blocks()).entrySet());}
     }
 }

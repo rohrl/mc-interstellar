@@ -68,5 +68,32 @@ class EllisWormholeTest {
             assertTrue(determinant>0,"A crossing must not mirror the player's camera");
         }
     }
+    @Test void aRayHasTheSamePathBeforeAndAfterChangingCharts() {
+        var m=new EllisWormhole(16);
+        double[] n={.6,0,-.8},t={0,1,0};double mu=-.75,sine=Math.sqrt(1-mu*mu);
+        for(double radius:new double[]{7.8,8,8.2,12}) {
+            double[] eye={radius*n[0],0,radius*n[2]},direction={mu*n[0],sine,mu*n[2]};
+            var mapped=m.transfer(eye);var moved=m.transferVector(eye,direction);
+            double rb=norm(mapped),muB=dot(mapped,moved)/(rb*norm(moved));
+            assertEquals(-mu,muB,1e-12);
+            double ell=m.properDistance(radius),ellB=m.properDistance(rb);
+            assertEquals(-ell,ellB,1e-12);
+            double impact=m.arealRadius(ell)*sine;
+            assertEquals(impact,m.arealRadius(ellB)*Math.sqrt(1-muB*muB),1e-12);
+            var a=new EllisWormhole.Ray(ell,mu,0);var b=new EllisWormhole.Ray(ellB,muB,0);
+            for(int i=0;i<500;i++) {
+                a=m.step(a,impact,.02);b=m.step(b,impact,.02);
+                double ra=(m.arealRadius(a.ell())+a.ell())/2;
+                double other=(m.arealRadius(b.ell())+b.ell())/2;
+                var point=new double[3];var expected=new double[3];
+                for(int axis=0;axis<3;axis++) {
+                    point[axis]=ra*(Math.cos(a.angle())*n[axis]+Math.sin(a.angle())*t[axis]);
+                    expected[axis]=(axis==2?-1:1)*other*(Math.cos(b.angle())*n[axis]+Math.sin(b.angle())*t[axis]);
+                }
+                assertArrayEquals(expected,m.transfer(point),2e-11);
+            }
+        }
+    }
+    private static double dot(double[] a,double[] b){return a[0]*b[0]+a[1]*b[1]+a[2]*b[2];}
     private static double norm(double[] a){return Math.sqrt(a[0]*a[0]+a[1]*a[1]+a[2]*a[2]);}
 }

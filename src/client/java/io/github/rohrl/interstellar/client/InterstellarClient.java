@@ -42,6 +42,7 @@ public final class InterstellarClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         SelectedSource.register();
+        WormholeClient.register();
         WorldFeatures.register();
         CoreShaderRegistrationCallback.EVENT.register(context -> {
             if(!org.lwjgl.opengl.GL.getCapabilities().GL_ARB_shader_bit_encoding)return;

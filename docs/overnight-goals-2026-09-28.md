@@ -29,8 +29,12 @@ the native-style depth bias to the captured outline fixes both paths; the checke
 interior editing image then matches exactly. Both builds/87 tests and the normal
 jar boundary pass. Goal1's report is `rtx-optical-variants-2026-09-28.md`.
 
-The CPU Ellis reference and six tests are implemented; all 87 tests currently pass.
-Renderer, remote data delivery, demo and player crossing are still to be implemented.
+The CPU Ellis reference, two distant native scenes, bounded remote chunk/light
+delivery and server-authoritative player crossing are implemented. Runtime checks
+cover native lighting, edits at the unvisited end, region retention and release,
+and centreline/oblique crossings both ways. A seventh maths test checks chart-invariant
+ray paths. The optical renderer, rendered crossing acceptance and performance checks
+are still pending. See `wormhole-demo-implementation.md` for evidence and limits.
 
 ## Wormhole model and coordinate choice
 
@@ -63,20 +67,20 @@ Primary sources: [James et al., metric and camera/ray equations](https://arxiv.o
 The coordinate transformation and transfer differential above are derived from
 that metric; they are implementation choices, not copied rendering code.
 
-## Planned implementation details (not yet implemented)
+## Architecture and remaining integration
 
-- Use a new void demo dimension with two distinct built environments, approximately
-  1024 blocks apart. Keep the original demos untouched and retain the saved return
+- Implemented: a new void demo dimension with two distinct built environments,
+  1145 blocks apart. Keep the original demos untouched and retain the saved return
   location/game-mode convention. Creative flight is the initial traversal control.
-- Maintain a bounded region around each mouth. Vanilla does not deliver chunks that
+- Implemented: maintain a bounded region around each mouth. Vanilla does not deliver chunks that
   far from the player; send normal chunk/light packets for those regions and retain
   them in a small client cache keyed by chunk position. Scope this to the new demo.
   ClientChunkManager's normal ring buffer cannot hold both regions safely.
-- A client chunk-manager mixin can capture loads/getChunk for these designated chunks.
+- Implemented: a client chunk-manager mixin captures loads/getChunk for these designated chunks.
   Prevent vanilla unload packets from clearing their cached lighting while retained.
   Notify StreamingTerrain when received/changed. Release remote state on dimension
   exit. Server work/load tickets and packet delivery must be bounded.
-- StreamingTerrain can retain the union of both mouth regions plus the local view;
+- Implemented, awaiting optical runtime coverage: StreamingTerrain retains the union of both mouth regions plus the local view;
   a single geometry arena and RTX scene then serve both ends. Ordinary BH behaviour
   stays unchanged. Native light/material data must come from the destination chunks.
 - Trace Ellis rays in signed proper radius, radial momentum and plane angle. Split
@@ -86,7 +90,7 @@ that metric; they are implementation choices, not copied rendering code.
 - Fog must use local/path distance, not the Minecraft separation of the mouths.
   Sky directions and any cloud geometry must match the active end's frame. Avoid
   the old background-paste error. Do not silently substitute a remote screenshot.
-- Use the same inversion differential for player velocity, look direction and up.
+- Implemented for native views, awaiting optical acceptance: use the same inversion differential for player velocity, look direction and up.
   Off-axis passages can rotate the camera's up axis; yaw/pitch alone cannot represent
   that roll. Preserve it explicitly. Map the eye position and ensure client camera
   interpolation agrees immediately before/after the authoritative teleport.

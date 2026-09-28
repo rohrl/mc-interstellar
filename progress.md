@@ -13,10 +13,13 @@ depth bias. Running-world frame medians8.32–8.37ms at120FPS cap. Both builds/8
 pass; optional dependencies remain absent from normal jars. See
 docs/rtx-optical-variants-2026-09-28.md for evidence and limits.
 
-Goal2 reference maths is implemented: Ellis Hamiltonian rays, exact elliptic-integral
-checks and reversible isotropic-chart transfer with preserved camera handedness.
-Six new tests pass. Rendering, distant-region delivery, demo and traversal remain
-unimplemented and are the next work; the wormhole goal is not complete.
+Goal2 now has the Ellis reference maths, two separate block-built environments1145
+blocks apart, bounded native remote chunk/light delivery, and authoritative player
+crossing. Runtime checks cover both regions/remote edits/native light, cache release
+and re-entry, W/S passage both ways and oblique camera/velocity transfer (−12.18° roll
+at the first off-centre exit). The wormhole optical renderer is still unimplemented;
+these checks do not prove rendered continuity or FPS. See
+docs/wormhole-demo-implementation.md. The full wormhole goal remains active.
 
 ## Previous checkpoint — 2026-09-28, small-mass artifacts and Alt+F12
 

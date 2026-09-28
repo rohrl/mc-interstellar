@@ -571,3 +571,20 @@ This is the metric of a hypothetical local passage plus an explicit world mappin
 not a global Einstein solution for arbitrary Minecraft mouth placement. No compulsory
 gravity suction or gravitational redshift is implied by this ultrastatic metric.
 See docs/overnight-goals-2026-09-28.md for derivation and remaining implementation.
+
+## D087 — Retain bounded native regions and transport the camera frame (2026-09-28)
+
+Implemented the wormhole foundation: a separate dimension with two real scenes1145
+blocks apart,242 designated native chunks and light data, two tickets/packets per
+tick and coalesced event-driven refresh. Native chunk lookup is nonblocking; the
+similarly named future API waits on the server thread and is unsuitable here.
+Client storage is independent of vanilla's moving ring buffer. A native-light-queue
+acknowledgement gates travel; native readiness is distinct from GPU capture readiness.
+
+Crossing maps the eye and transports direction, up and creative-flight velocity.
+Keep camera roll from off-axis passage and move interpolation endpoints to the new
+chart. Minecraft retains authoritative teleport acknowledgement and normal controls.
+Remote block/light edits, lifecycle and actual bidirectional centreline/oblique
+crossings were checked in a copied world. Wormhole shaders and rendered continuity/FPS
+are still pending; do not mistake the ordinary-world camera screenshots for optical
+acceptance. Evidence/limits: docs/wormhole-demo-implementation.md.
