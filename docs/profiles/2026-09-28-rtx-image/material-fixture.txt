@@ -1,0 +1,22 @@
+NATIVE scene=C:\work\code\minecraft\interstellar\interstellar\run\rtx-native\material-fixture triangles=184 groups=[104, 72, 8] softwareNodes=59 cpuBuildMs=1.913
+DEVICE name=NVIDIA GeForce RTX 5070 Ti timestampNs=1.000 scratchAlignment=128
+LIMIT maxStorageBufferRange=4294967295
+BUFFER bytes=18874368 memoryType=4 flags=0x7
+UPLOAD geometryBytes=26496 stagingBytes=18874368 copyGpuMs=0.001536
+BUFFER bytes=1888 memoryType=4 flags=0x7
+BUFFER bytes=96 memoryType=4 flags=0x7
+BUFFER bytes=192 memoryType=4 flags=0x7
+AS bottomBuildGpuMs=0.256768 topBuildGpuMs=0.032288 storageBytes=21248
+BUFFER bytes=8832 memoryType=4 flags=0x7
+BUFFER bytes=2944 memoryType=4 flags=0x7
+CHECK view=view-fixture pass=probe alpha=0 queries=184 masks=[0, 0, 0, 0, 0, 0, 0, 184] hits=128 pairedFailures=0 boundaryDifferences=0 cpuFailures=0 productionDifferences=0 coplanarIdTies=0 maxTError=0.00000
+TIMING pass=probe alpha=0 softwareMs=0.012580 hardwareMs=0.003632 speedup=3.464
+CHECK view=view-fixture pass=probe alpha=1 queries=184 masks=[0, 0, 0, 0, 0, 0, 0, 184] hits=112 pairedFailures=0 boundaryDifferences=0 cpuFailures=0 productionDifferences=0 coplanarIdTies=0 maxTError=0.00000
+TIMING pass=probe alpha=1 softwareMs=0.015908 hardwareMs=0.004132 speedup=3.850
+BUFFER bytes=8832 memoryType=4 flags=0x7
+BUFFER bytes=2944 memoryType=4 flags=0x7
+CHECK view=view-fixture pass=mask alpha=0 queries=184 masks=[0, 0, 0, 0, 0, 0, 0, 184] hits=132 pairedFailures=0 boundaryDifferences=0 cpuFailures=0 productionDifferences=0 coplanarIdTies=0 maxTError=0.00000
+TIMING pass=mask alpha=0 softwareMs=0.012584 hardwareMs=0.003652 speedup=3.446
+CHECK view=view-fixture pass=mask alpha=1 queries=184 masks=[0, 0, 0, 0, 0, 0, 0, 184] hits=114 pairedFailures=0 boundaryDifferences=0 cpuFailures=0 productionDifferences=0 coplanarIdTies=0 maxTError=0.00000
+TIMING pass=mask alpha=1 softwareMs=0.016680 hardwareMs=0.004128 speedup=4.041
+RESULTS C:\work\code\minecraft\interstellar\interstellar\run\rtx-native\material-fixture\replay-results-1790567333921.jsonl

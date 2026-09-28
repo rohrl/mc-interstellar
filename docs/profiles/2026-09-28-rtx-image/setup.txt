@@ -1,0 +1,10 @@
+[mDEVICE name=NVIDIA GeForce RTX 5070 Ti timestampNs=1.000 scratchAlignment=128
+NATIVE scene=rtx-image\scene-1790567007118 triangles=6270450 groups=[6261506, 6256, 2688] softwareNodes=2171363 cpuBuildMs=1276.663
+UPLOAD geometryBytes=902944800 stagingBytes=18874368 copyGpuMs=2.106592
+AS bottomBuildGpuMs=14.123744 topBuildGpuMs=0.032768 storageBytes=387805696
+[34m[13:43:30][m [32m[Render thread/INFO][m [36m(Minecraft)[m [0m[STDOUT]: RTX full-image ready: 6270450 triangles, 1280x720 sharp2x; rtx-image\scene-1790567007118
+[mDEVICE name=NVIDIA GeForce RTX 5070 Ti timestampNs=1.000 scratchAlignment=128
+NATIVE scene=rtx-image\scene-1790567106135 triangles=6270450 groups=[6261506, 6256, 2688] softwareNodes=2171363 cpuBuildMs=1255.224
+UPLOAD geometryBytes=902944800 stagingBytes=18874368 copyGpuMs=2.079840
+AS bottomBuildGpuMs=14.792352 topBuildGpuMs=0.032640 storageBytes=387805696
+[34m[13:45:09][m [32m[Render thread/INFO][m [36m(Minecraft)[m [0m[STDOUT]: RTX full-image ready: 6270450 triangles, 640x360 sharp2x; rtx-image\scene-1790567106135

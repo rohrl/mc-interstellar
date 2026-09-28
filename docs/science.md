@@ -144,3 +144,21 @@ return. Measured RGBA8 cycles cost about 0.17–0.18ms wall time, with pixel che
 This is not full-renderer transfer overhead or portability validation. Future dynamic
 geometry must respect the [Vulkan build/update rules](https://docs.vulkan.org/refpages/latest/refpages/source/VkAccelerationStructureBuildGeometryInfoKHR.html)
 and be measured separately. No new physical model or production backend is adopted.
+
+## Frozen full-image RTX and proposed wormholes (2026-09-28)
+
+The [complete-image experiment](rtx-full-image-2026-09-28.md) reuses production optics
+and material equations while replacing geometry queries. Paired RGB8 images agree
+closely, with a few unresolved platform-pixel differences; this is not independent
+validation of the underlying geodesics. Explicit cross-API completion and Vulkan
+timestamps establish frozen optical-frame savings, not live-world FPS.
+
+The [wormhole feasibility study](wormholes-feasibility.md) is analysis only. Proposed
+stationary Ellis geometry has a smooth signed throat coordinate and a constant time
+coefficient. It permits precise light-path and observer calculations within that
+hypothetical metric; supporting matter, stability and matching two arbitrary game
+regions are separate questions. Its primary sources are
+[James et al., visualizing wormholes](https://arxiv.org/abs/1502.03809),
+[Nakajima and Asada, Ellis deflection](https://arxiv.org/abs/1204.3710), and the
+[energy-condition discussion](https://arxiv.org/abs/2202.07431). No wormhole model has
+been added to the running mod.

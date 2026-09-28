@@ -1,6 +1,38 @@
 # Progress
 
-## Current checkpoint — 2026-09-28, native RTX feasibility milestone
+## Current checkpoint — 2026-09-28, complete frozen RTX images
+
+Completed the approved full-image experiment, retaining OpenGL and a normal build
+without Vulkan/shaderc dependencies. Existing optical/material GLSL generates the
+optional compute programs; hardware queries replace geometry traversal. Shared RGBA32F
+output feeds existing AA fold/resolve, with GPU semaphores and no per-frame CPU image copy.
+
+1440p paired completed optical-frame medians: down22.132→3.543ms (6.25x),
+wall9.826→3.417ms (2.88x). Explicit Vulkan completion/timestamps confirm the gain;
+GL timestamps alone can omit external-queue work. These are frozen-render timings,
+not live Minecraft FPS. Four paired cases/two resolutions show very close RGB8 images;
+1440p has4/8 pixels over16/255, max36. Tiny platform differences remain unexplained.
+Sampled whole-board memory rises about1.4GiB while both scene representations exist.
+
+Report/evidence: docs/rtx-full-image-2026-09-28.md and
+docs/profiles/2026-09-28-rtx-image. Reproducible standard-library summary tool included.
+Optional flag -PinterstellarRtxImage, F9 Ctrl+Alt+V/P; F10 remains OpenGL. Next proposed
+milestone is actor/texture updates with static terrain resident, followed by chunk
+updates, other optical variants and production lifecycle. No live RTX backend yet.
+
+Both builds pass; clean normal build79 tests. Analytic material fixture passes736
+paired queries/256 CPU checks after shared-probe changes. Image/shader/rotation/toggle/
+resize checks pass; normal jar excludes optional classes. Final control guards and
+constructor-failure cleanup were compiled/fixture-checked after image measurements.
+Normal F10 ready on unchanged ownerN8; eight player fields and window restored, ticks
+running20tps, narrator0, ordinary client paused. No blocks/config/inventory edits.
+
+Side quest delivered: docs/wormholes-feasibility.md, a sourced physics/engineering
+analysis only. Stationary Ellis geometry, accurate lensing and continuous camera
+passage are proposed; two-region streaming/collision/transfer work remains significant.
+No wormhole code or gameplay was implemented.
+
+## Previous checkpoint — 2026-09-28, native RTX feasibility milestone
 
 Completed real-scene geometry/chord replay, analytic material acceptance checks and
 Vulkan/OpenGL image sharing inside Minecraft. Main scene: 6,273,150 triangles;

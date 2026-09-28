@@ -89,6 +89,11 @@ final class TerrainReplay {
         target.beginWrite(false);RenderSystem.viewport(0,0,w*2,h);GL11.glClearColor(0,0,0,0);GL11.glClear(GL11.GL_COLOR_BUFFER_BIT);
         for(int sample=0;sample<2;sample++) {RenderSystem.viewport(sample*w,0,w,h);program.getUniformOrDefault("SampleOffset").set(sample==0?-.25f:.25f);draw.run();}
     }
+    static Path exportFrozenGeometry(WorldMesh terrain,WorldMesh moving) throws Exception {
+        Path directory=Path.of("rtx-image","scene-"+System.currentTimeMillis());Files.createDirectories(directory);
+        try(PackState state=new PackState()) {exportGeometry(directory,terrain,moving);}
+        return directory;
+    }
     private static void exportGeometry(Path directory,WorldMesh terrain,WorldMesh moving) throws Exception {
         int[][] spans=terrain.replaySpans();int terrainCount=java.util.Arrays.stream(spans).mapToInt(s->s[1]*2).sum();
         try(FileChannel file=FileChannel.open(directory.resolve("triangles.bin"),StandardOpenOption.CREATE_NEW,StandardOpenOption.WRITE)) {
@@ -116,7 +121,7 @@ final class TerrainReplay {
         ByteBuffer pixels=readTexture(texture,0,0,w,h,false);
         try {write(file,new int[]{w,h},pixels);}finally {MemoryUtil.memFree(pixels);}
     }
-    private static ByteBuffer readTexture(int texture,int x,int y,int w,int h,boolean floats) {
+    static ByteBuffer readTexture(int texture,int x,int y,int w,int h,boolean floats) {
         int previous=GL11.glGetInteger(GL30.GL_READ_FRAMEBUFFER_BINDING),fbo=GL30.glGenFramebuffers();
         ByteBuffer data=MemoryUtil.memAlloc(w*h*4*(floats?4:1)).order(ByteOrder.LITTLE_ENDIAN);
         try {
@@ -130,7 +135,7 @@ final class TerrainReplay {
         try(FileChannel file=FileChannel.open(path,StandardOpenOption.CREATE_NEW,StandardOpenOption.WRITE)) {ByteBuffer bytes=ByteBuffer.allocate(header.length*4).order(ByteOrder.LITTLE_ENDIAN);bytes.asIntBuffer().put(header);write(file,bytes);write(file,body);}
     }
     private static void write(FileChannel file,ByteBuffer data) throws java.io.IOException {while(data.hasRemaining())file.write(data);}
-    private static final class PackState implements AutoCloseable {
+    static final class PackState implements AutoCloseable {
         final int texture=GL11.glGetInteger(GL11.GL_TEXTURE_BINDING_2D),pack=GL11.glGetInteger(GL21.GL_PIXEL_PACK_BUFFER_BINDING),unpack=GL11.glGetInteger(GL21.GL_PIXEL_UNPACK_BUFFER_BINDING);
         final int[] names={GL11.GL_PACK_ALIGNMENT,GL11.GL_PACK_ROW_LENGTH,GL11.GL_PACK_SKIP_PIXELS,GL11.GL_PACK_SKIP_ROWS,GL11.GL_UNPACK_ALIGNMENT,GL11.GL_UNPACK_ROW_LENGTH,GL11.GL_UNPACK_SKIP_PIXELS,GL11.GL_UNPACK_SKIP_ROWS},values=new int[names.length];
         PackState(){for(int i=0;i<names.length;i++){values[i]=GL11.glGetInteger(names[i]);GL11.glPixelStorei(names[i],i%4==0?4:0);}GL15.glBindBuffer(GL21.GL_PIXEL_PACK_BUFFER,0);GL15.glBindBuffer(GL21.GL_PIXEL_UNPACK_BUFFER,0);}

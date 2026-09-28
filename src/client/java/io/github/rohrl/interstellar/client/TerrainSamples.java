@@ -38,9 +38,12 @@ final class TerrainSamples implements AutoCloseable {
         RenderSystem.viewport(sample*width,0,width,height);
     }
     void fold(SimpleFramebuffer destination,Runnable draw) {
+        foldFrom(target.getColorAttachment(),destination,draw);
+    }
+    void foldFrom(int texture,SimpleFramebuffer destination,Runnable draw) {
         destination.beginWrite(true);
         RenderSystem.setShader(()->foldShader);
-        foldShader.addSampler("Samples",target.getColorAttachment());
+        foldShader.addSampler("Samples",texture);
         foldShader.getUniformOrDefault("Viewport").set((float)width,(float)height);
         draw.run();
     }

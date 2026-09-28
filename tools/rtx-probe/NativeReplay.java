@@ -49,7 +49,10 @@ public final class NativeReplay {
         nodes[p+3]=Float.intBitsToFloat(nodeCount);return index;
     }
     void upload() throws Exception {
-        probe=new Probe("tools/rtx-probe/native-query.comp",5,20,48,false);
+        upload(null);
+    }
+    void upload(Probe context) throws Exception {
+        probe=context==null?new Probe("tools/rtx-probe/native-query.comp",5,20,48,false):context;
         try(MemoryStack s=MemoryStack.stackPush()) {var properties=VkPhysicalDeviceProperties.calloc(s);vkGetPhysicalDeviceProperties(probe.physical,properties);
             long limit=Integer.toUnsignedLong(properties.limits().maxStorageBufferRange());System.out.println("LIMIT maxStorageBufferRange="+limit);
             if(count*144L>limit)throw new IllegalStateException("Native vertex buffer exceeds descriptor range; split buffers or device-address access required");}
@@ -67,11 +70,13 @@ public final class NativeReplay {
                 vkCmdPipelineBarrier(probe.command,VK_PIPELINE_STAGE_TRANSFER_BIT,VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT|VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR,0,barrier,null,null);uploadGpu+=probe.finish();}
         }
         System.out.printf(Locale.ROOT,"UPLOAD geometryBytes=%d stagingBytes=%d copyGpuMs=%.6f%n",count*144L,staging.size(),uploadGpu);
+        if(context==null) {
         treeBuffer=probe.buffer(nodeCount*32L,VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,true);treeBuffer.mapped().asFloatBuffer().put(nodes,0,nodeCount*8);
         int words=12;for(var image:images){if(image.capacity()!=8L+image.getInt(0)*image.getInt(4)*4L)throw new IllegalArgumentException("Bad atlas");words+=(image.capacity()-8)/4;}
         atlasBuffer=probe.buffer(words*4L,VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,true);int offset=12;
         for(int i=0;i<3;i++){var image=images[i];var out=atlasBuffer.mapped();out.putInt(i*16,image.getInt(0));out.putInt(i*16+4,image.getInt(4));out.putInt(i*16+8,offset);
             MemoryUtil.memCopy(MemoryUtil.memAddress(image)+8,MemoryUtil.memAddress(out)+offset*4L,image.capacity()-8);offset+=(image.capacity()-8)/4;}
+        }
         Probe.Acceleration[] bottoms=new Probe.Acceleration[3];double gpuBuild=0;long storage=0;
         for(int i=0;i<3;i++)if(groups[i]>0){var slice=new Probe.Buffer(vertices.handle(),vertices.memory(),vertices.address()+starts[i]*144L,null,groups[i]*144L);bottoms[i]=probe.build(slice,groups[i],null);gpuBuild+=bottoms[i].gpuMs();storage+=bottoms[i].bytes();}
         top=probe.instances(bottoms,starts);

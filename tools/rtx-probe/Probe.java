@@ -27,7 +27,11 @@ public final class Probe implements AutoCloseable {
 
     Probe() throws Exception {this("tools/rtx-probe/query.comp",4,4,16,true);}
     Probe(String shaderFile,int bufferBindings,int pushBytes,int vertexStride,boolean opaque) throws Exception {
+        this(shaderFile,bufferBindings,pushBytes,vertexStride,opaque,null);
+    }
+    Probe(String shaderFile,int bufferBindings,int pushBytes,int vertexStride,boolean opaque,ByteBuffer glUuid) throws Exception {
         this.shaderFile=shaderFile;this.bufferBindings=bufferBindings;this.pushBytes=pushBytes;this.vertexStride=vertexStride;this.opaque=opaque;
+        try {
         try(MemoryStack s=MemoryStack.stackPush()) {
             var app=VkApplicationInfo.calloc(s).sType$Default().pApplicationName(s.UTF8("Interstellar RTX probe")).apiVersion(VK_API_VERSION_1_2);
             var create=VkInstanceCreateInfo.calloc(s).sType$Default().pApplicationInfo(app);
@@ -35,7 +39,11 @@ public final class Probe implements AutoCloseable {
             var count=s.ints(0);check(vkEnumeratePhysicalDevices(instance,count,null));var devices=s.mallocPointer(count.get(0));check(vkEnumeratePhysicalDevices(instance,count,devices));
             for(int i=0;i<count.get(0);i++){
                 var candidate=new VkPhysicalDevice(devices.get(i),instance);var props=VkPhysicalDeviceProperties.calloc(s);vkGetPhysicalDeviceProperties(candidate,props);
-                if(props.deviceType()==VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU){physical=candidate;break;}
+                if(glUuid!=null) {
+                    var id=VkPhysicalDeviceIDProperties.calloc(s).sType$Default();
+                    vkGetPhysicalDeviceProperties2(candidate,VkPhysicalDeviceProperties2.calloc(s).sType$Default().pNext(id.address()));
+                    if(id.deviceUUID().equals(glUuid)){physical=candidate;break;}
+                } else if(props.deviceType()==VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU){physical=candidate;break;}
             }
             if(physical==null)throw new IllegalStateException("No discrete Vulkan GPU");
             var asProps=VkPhysicalDeviceAccelerationStructurePropertiesKHR.calloc(s).sType$Default();
@@ -52,14 +60,17 @@ public final class Probe implements AutoCloseable {
             queueFamily=-1;for(int i=0;i<count.get(0);i++)if((queues.get(i).queueFlags()&VK_QUEUE_COMPUTE_BIT)!=0&&queues.get(i).timestampValidBits()==64){queueFamily=i;break;}
             if(queueFamily<0)throw new IllegalStateException("No compute queue with 64-bit timestamps");
             var queueInfo=VkDeviceQueueCreateInfo.calloc(1,s).sType$Default().queueFamilyIndex(queueFamily).pQueuePriorities(s.floats(1));
-            var deviceInfo=VkDeviceCreateInfo.calloc(s).sType$Default().pNext(v12.address()).pQueueCreateInfos(queueInfo)
-                .ppEnabledExtensionNames(s.pointers(s.UTF8("VK_KHR_acceleration_structure"),s.UTF8("VK_KHR_deferred_host_operations"),s.UTF8("VK_KHR_ray_query")));
+            var extensions=new ArrayList<>(List.of("VK_KHR_acceleration_structure","VK_KHR_deferred_host_operations","VK_KHR_ray_query"));
+            if(glUuid!=null)extensions.addAll(List.of("VK_KHR_external_memory_win32","VK_KHR_external_semaphore_win32"));
+            var names=s.mallocPointer(extensions.size());for(String name:extensions)names.put(s.UTF8(name));names.flip();
+            var deviceInfo=VkDeviceCreateInfo.calloc(s).sType$Default().pNext(v12.address()).pQueueCreateInfos(queueInfo).ppEnabledExtensionNames(names);
             check(vkCreateDevice(physical,deviceInfo,null,p));device=new VkDevice(p.get(0),physical,deviceInfo);vkGetDeviceQueue(device,queueFamily,0,p);queue=new VkQueue(p.get(0),device);
             memory=VkPhysicalDeviceMemoryProperties.calloc();vkGetPhysicalDeviceMemoryProperties(physical,memory);
             var out=s.mallocLong(1);
             check(vkCreateCommandPool(device,VkCommandPoolCreateInfo.calloc(s).sType$Default().queueFamilyIndex(queueFamily).flags(VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT),null,out));pool=out.get(0);
             check(vkAllocateCommandBuffers(device,VkCommandBufferAllocateInfo.calloc(s).sType$Default().commandPool(pool).level(VK_COMMAND_BUFFER_LEVEL_PRIMARY).commandBufferCount(1),p));command=new VkCommandBuffer(p.get(0),device);
             check(vkCreateQueryPool(device,VkQueryPoolCreateInfo.calloc(s).sType$Default().queryType(VK_QUERY_TYPE_TIMESTAMP).queryCount(2),null,out));queryPool=out.get(0);
+            if(shaderFile==null)return; // Optional image backend owns its descriptor layout and pipelines.
             var bindings=VkDescriptorSetLayoutBinding.calloc(bufferBindings+1,s);
             for(int i=0;i<=bufferBindings;i++)bindings.get(i).binding(i).descriptorType(i==0?VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR:VK_DESCRIPTOR_TYPE_STORAGE_BUFFER).descriptorCount(1).stageFlags(VK_SHADER_STAGE_COMPUTE_BIT);
             check(vkCreateDescriptorSetLayout(device,VkDescriptorSetLayoutCreateInfo.calloc(s).sType$Default().pBindings(bindings),null,out));descriptorLayout=out.get(0);
@@ -70,6 +81,7 @@ public final class Probe implements AutoCloseable {
             check(vkAllocateDescriptorSets(device,VkDescriptorSetAllocateInfo.calloc(s).sType$Default().descriptorPool(descriptorPool).pSetLayouts(s.longs(descriptorLayout)),out));set=out.get(0);
         }
         software=pipeline(false);hardware=pipeline(true);
+        } catch(Exception|LinkageError failure) {close();throw failure;}
     }
 
     Buffer buffer(long bytes,int usage,boolean host) {

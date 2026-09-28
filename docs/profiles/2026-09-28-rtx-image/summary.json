@@ -1,0 +1,174 @@
+[
+  {
+    "case": "1440-down",
+    "timings": {
+      "OpenGL_wall_ms": {
+        "median": 22.131700000000002,
+        "min": 21.8408,
+        "max": 24.4529,
+        "samples": 16
+      },
+      "RTX_wall_ms": {
+        "median": 3.5434,
+        "min": 3.5034,
+        "max": 3.625,
+        "samples": 16
+      },
+      "RTX_Vulkan_gpu_ms": {
+        "median": 3.025472,
+        "min": 3.013888,
+        "max": 3.03984,
+        "samples": 16
+      },
+      "OpenGL_GLtimeline_ms": {
+        "median": 21.970768,
+        "min": 21.692672,
+        "max": 22.151584,
+        "samples": 16
+      },
+      "RTX_GLtimeline_ms": {
+        "median": 3.373232,
+        "min": 3.358944,
+        "max": 3.401824,
+        "samples": 16
+      }
+    },
+    "wall_speedup": 6.245893774341029,
+    "wall_reduction_percent": 83.98948115147051,
+    "width": 2560.0,
+    "height": 1440.0,
+    "RGB_mean_abs_255": 0.0002643952546296296,
+    "RGB_RMSE_255": 0.038728899571728564,
+    "changedPixels": 1311.0,
+    "pixelsMaxErrorAbove16": 4.0
+  },
+  {
+    "case": "1440-wall",
+    "timings": {
+      "OpenGL_wall_ms": {
+        "median": 9.826450000000001,
+        "min": 9.6398,
+        "max": 10.1943,
+        "samples": 16
+      },
+      "RTX_wall_ms": {
+        "median": 3.4175,
+        "min": 3.369,
+        "max": 3.5239,
+        "samples": 16
+      },
+      "RTX_Vulkan_gpu_ms": {
+        "median": 2.9144959999999998,
+        "min": 2.908576,
+        "max": 2.945792,
+        "samples": 16
+      },
+      "OpenGL_GLtimeline_ms": {
+        "median": 9.702736,
+        "min": 9.522592,
+        "max": 10.083648,
+        "samples": 16
+      },
+      "RTX_GLtimeline_ms": {
+        "median": 3.255808,
+        "min": 3.237952,
+        "max": 3.295296,
+        "samples": 16
+      }
+    },
+    "wall_speedup": 2.8753328456474034,
+    "wall_reduction_percent": 65.22141770425739,
+    "width": 2560.0,
+    "height": 1440.0,
+    "RGB_mean_abs_255": 0.0001981155960648148,
+    "RGB_RMSE_255": 0.046338558545792635,
+    "changedPixels": 747.0,
+    "pixelsMaxErrorAbove16": 8.0
+  },
+  {
+    "case": "720-down",
+    "timings": {
+      "OpenGL_wall_ms": {
+        "median": 10.14125,
+        "min": 9.3107,
+        "max": 11.0377,
+        "samples": 16
+      },
+      "RTX_wall_ms": {
+        "median": 1.80815,
+        "min": 1.6496,
+        "max": 2.0417,
+        "samples": 16
+      },
+      "RTX_Vulkan_gpu_ms": {
+        "median": 1.015888,
+        "min": 1.00304,
+        "max": 1.03488,
+        "samples": 16
+      },
+      "OpenGL_GLtimeline_ms": {
+        "median": 9.838416,
+        "min": 9.001568,
+        "max": 10.749728,
+        "samples": 16
+      },
+      "RTX_GLtimeline_ms": {
+        "median": 0.270896,
+        "min": 0.264384,
+        "max": 0.434048,
+        "samples": 16
+      }
+    },
+    "wall_speedup": 5.608633133313055,
+    "wall_reduction_percent": 82.17034389251819,
+    "width": 1280.0,
+    "height": 720.0,
+    "RGB_mean_abs_255": 0.000458984375,
+    "RGB_RMSE_255": 0.047197961496704965,
+    "changedPixels": 474.0,
+    "pixelsMaxErrorAbove16": 3.0
+  },
+  {
+    "case": "720-wall",
+    "timings": {
+      "OpenGL_wall_ms": {
+        "median": 4.167350000000001,
+        "min": 3.9617,
+        "max": 4.7444,
+        "samples": 16
+      },
+      "RTX_wall_ms": {
+        "median": 1.4127,
+        "min": 1.3339,
+        "max": 1.687,
+        "samples": 16
+      },
+      "RTX_Vulkan_gpu_ms": {
+        "median": 0.921744,
+        "min": 0.885376,
+        "max": 0.984,
+        "samples": 16
+      },
+      "OpenGL_GLtimeline_ms": {
+        "median": 4.032896,
+        "min": 3.678976,
+        "max": 4.53104,
+        "samples": 16
+      },
+      "RTX_GLtimeline_ms": {
+        "median": 1.200704,
+        "min": 0.26176,
+        "max": 1.420736,
+        "samples": 16
+      }
+    },
+    "wall_speedup": 2.949918595597084,
+    "wall_reduction_percent": 66.10075947544603,
+    "width": 1280.0,
+    "height": 720.0,
+    "RGB_mean_abs_255": 0.0005747251157407408,
+    "RGB_RMSE_255": 0.09244657178207995,
+    "changedPixels": 245.0,
+    "pixelsMaxErrorAbove16": 8.0
+  }
+]

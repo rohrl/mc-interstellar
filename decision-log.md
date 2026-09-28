@@ -475,3 +475,34 @@ rules and an OpenGL comparison path. Require image parity and useful complete-fr
 savings before expanding to live updates, streaming and production lifecycle work.
 Keep CPU tree reuse and sparse material scheduling as alternatives. Detailed evidence,
 scope and reproduction: docs/rtx-native-feasibility-2026-09-28.md.
+
+## D081 — Optional full-image RTX backend with OpenGL retained (2026-09-28)
+
+Accepted by owner: test a full image while preserving a fallback and a separate
+Vulkan-free build option. Implement a Vulkan-free backend interface and opt-in sources/
+dependencies; reuse production optical/material source and existing AA resolve. The
+experimental backend is confined to frozen ordinary exterior BH scenes in F9.
+
+Measured complete frozen optical-frame savings:6.25x down/2.88x wall at1440p. Verify
+completion on both APIs: GL timestamps alone sometimes omit Vulkan work. Image
+differences are very small but not zero; max36/255 platform patches remain unresolved.
+Expanded replay geometry adds roughly1.4GiB observed board memory with both paths
+resident. These results support further work, not live-FPS or feature-parity claims.
+
+Proposed next: resident static terrain plus actor/texture updates, then chunk
+replacement, additional optical variants and lifecycle/packaging. Preserve the
+OpenGL implementation throughout. See docs/rtx-full-image-2026-09-28.md.
+
+## D082 — Wormholes remain a physics/engineering proposal (2026-09-28)
+
+Owner requests analysis, explicitly no implementation. Recommend a stationary,
+symmetric ultrastatic Ellis model for an initial lab: real geodesic bending and
+continuous passage through a specified hypothetical metric. Do not imply observed
+existence, physical manufacturability, universal spherical geometry, compulsory
+redshift/suction or an exact global metric for arbitrary Minecraft mouth placement.
+
+Remote-region data, finite-distance parallax, continuous camera mapping and authoritative
+entity/collision handling are central engineering work. Reuse native scene/material
+and optional geometry-query backends; do not promise FPS before measurement. A proposed
+lab→frozen pair→guided crossing→live pair sequence is documented, not scheduled or
+implemented. See docs/wormholes-feasibility.md and its primary scientific references.

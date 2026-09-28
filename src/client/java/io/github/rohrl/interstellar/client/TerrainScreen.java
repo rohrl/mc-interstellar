@@ -67,6 +67,10 @@ final class TerrainScreen extends Screen {
     private LabBenchmark benchmark;
     private boolean profileCounters,profileClocks,recordReplay;
     private java.nio.file.Path replayScene;
+    private FrozenWorldBackend frozenBackend;
+    private String frozenSource;
+    private boolean requestFrozenBackend,rtxActive,compareFrozenBackend;
+    private int backendWidth,backendHeight;
     private int profileExperiment;
     private Vec3d camera;
     private float yaw,pitch;
@@ -218,6 +222,7 @@ final class TerrainScreen extends Screen {
         if(hybrid)nativeSky.update(!meshMode || !meshClouds);
         int w=Math.max(1,Math.round(client.getWindow().getFramebufferWidth()*scale));
         int h=Math.max(1,Math.round(client.getWindow().getFramebufferHeight()*scale));
+        if(frozenBackend!=null && (backendWidth!=w || backendHeight!=h))closeFrozenBackend();
         if(target==null || target.textureWidth!=w || target.textureHeight!=h) {
             cancelBenchmark();if(target!=null)target.delete();target=new SimpleFramebuffer(w,h,false,false);
         }
@@ -228,6 +233,17 @@ final class TerrainScreen extends Screen {
         target.beginWrite(true);
         try {
             configureShader(w,h);
+            if(requestFrozenBackend) {
+                requestFrozenBackend=false;
+                try {
+                    frozenSource=FrozenBackendCapture.source();
+                    var ids=java.util.Map.of("Atlas",client.getTextureManager().getTexture(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE).getGlId(),
+                        "LocalLight",moving.entities.texture,"Distant",moving.clouds.texture,"SkyAtlas",nativeSky.texture(),
+                        "Lightmap",((io.github.rohrl.interstellar.mixin.client.LightmapAccessor)client.gameRenderer.getLightmapTextureManager()).interstellar$texture().getGlId());
+                    frozenBackend=FrozenBackendCapture.create(mesh,moving,ids,w,h,frozenSource);backendWidth=w;backendHeight=h;rtxActive=true;
+                    validationStatus=frozenBackend.description()+" | Ctrl+Alt+V: switch | Ctrl+Alt+P: compare";
+                } catch(Exception|LinkageError failure) {closeFrozenBackend();validationStatus="RTX setup failed; OpenGL retained (see log)";io.github.rohrl.interstellar.Interstellar.LOGGER.error("RTX full-image setup failed",failure);}
+            }
             var projection=WorldProjection.current();
             Vec3d forward=Vec3d.fromPolar(pitch,yaw),right=Vec3d.fromPolar(0,yaw+90);
             RenderSystem.disableDepthTest();RenderSystem.depthMask(false);RenderSystem.disableBlend();
@@ -239,7 +255,18 @@ final class TerrainScreen extends Screen {
                         projection,lensing,centre().subtract(Vec3d.of(snapshot.origin)),source.schwarzschildRadius(),curvedValidation,()->drawQuad(w,h));
             }
             if(benchmark!=null)benchmark.begin();
-            if(split) {
+            if(rtxActive && frozenBackend!=null) {
+                shader=movingShaders[1];configureShader(w,h);
+                int texture;
+                try {texture=frozenBackend.render(FrozenBackendCapture.uniforms(shader,frozenSource));}
+                catch(RuntimeException|LinkageError failure) {
+                    closeFrozenBackend();cancelBenchmark();validationStatus="RTX failed; OpenGL restored (see log)";
+                    io.github.rohrl.interstellar.Interstellar.LOGGER.error("RTX frame failed; retaining OpenGL",failure);renderTerrain();return;
+                }
+                if(benchmark!=null)for(int i=0;i<5;i++)benchmark.mark(i);
+                samples.foldFrom(texture,target,()->drawQuad(w,h));
+                if(benchmark!=null)benchmark.mark(5);
+            } else if(split) {
                 samples.begin(0);shader.getUniformOrDefault("SampleOffset").set(-.25f);drawQuad(w,h);
                 if(benchmark!=null)benchmark.mark(0);
                 samples.begin(1);shader.getUniformOrDefault("SampleOffset").set(.25f);drawQuad(w,h);
@@ -305,7 +332,22 @@ final class TerrainScreen extends Screen {
         }
         if(benchmark!=null)benchmark.end();
         RenderSystem.enableBlend();RenderSystem.defaultBlendFunc();
+        if(compareFrozenBackend) {
+            compareFrozenBackend=false;
+            try {validationStatus=FrozenImageComparison.run(this);}
+            catch(Exception failure) {validationStatus="RTX image comparison failed; see log";io.github.rohrl.interstellar.Interstellar.LOGGER.error("RTX image comparison failed",failure);}
+        }
     }
+    void renderFrozenComparison(boolean hardware) {
+        if(frozenBackend==null)throw new IllegalStateException("RTX backend unavailable");
+        boolean previous=rtxActive;rtxActive=hardware;
+        try {
+            renderTerrain();
+            if(hardware && (frozenBackend==null || !rtxActive))throw new IllegalStateException("RTX failed during comparison; refusing fallback timings");
+        }finally{rtxActive=frozenBackend!=null && previous;}
+    }
+    double completeFrozenGpuMillis() {return frozenBackend.completedGpuMillis();}
+    private void closeFrozenBackend() {rtxActive=false;if(frozenBackend!=null){frozenBackend.close();frozenBackend=null;}}
     /** Near observers magnify trajectory errors; this setting is constant for the whole image. */
     static void setPathQuality(ShaderProgram program,float angularCap,float curveFactor,double radiusRatio) {
         float t=(float)Math.clamp((radiusRatio-4)/2,0,1);
@@ -513,6 +555,21 @@ final class TerrainScreen extends Screen {
         finally {fastFetch=old;}
     }
     @Override public boolean keyPressed(int key,int scan,int modifiers) {
+        boolean ctrlAlt=(modifiers&(GLFW.GLFW_MOD_CONTROL|GLFW.GLFW_MOD_ALT))==(GLFW.GLFW_MOD_CONTROL|GLFW.GLFW_MOD_ALT);
+        if(FrozenBackendCapture.ENABLED && ctrlAlt && key==GLFW.GLFW_KEY_V) {
+            cancelBenchmark();
+            if(frozenBackend!=null){rtxActive=!rtxActive;validationStatus=rtxActive?frozenBackend.description():"OpenGL comparison | Ctrl+Alt+V: RTX";}
+            else if(live || !useSelectiveMaterials() || !useQuads() || !useSeparateMoving() || horizonView() || extendedSource() || mesh==null || !mesh.ready())validationStatus="RTX image needs ready frozen ordinary BH/default native rendering";
+            else {requestFrozenBackend=true;validationStatus="Preparing optional RTX full image...";}
+            return true;
+        }
+        if(FrozenBackendCapture.ENABLED && ctrlAlt && key==GLFW.GLFW_KEY_P) {
+            cancelBenchmark();if(frozenBackend!=null)compareFrozenBackend=true;else validationStatus="Enable frozen RTX first with Ctrl+Alt+V";return true;
+        }
+        if(rtxActive && key==GLFW.GLFW_KEY_B) {
+            validationStatus="Use Ctrl+Alt+P: synchronized RTX timings (OpenGL timer alone omits external work)";return true;
+        }
+        if(frozenBackend!=null && !(key>=GLFW.GLFW_KEY_LEFT_SHIFT && key<=GLFW.GLFW_KEY_RIGHT_SUPER) && key!=GLFW.GLFW_KEY_UP && key!=GLFW.GLFW_KEY_DOWN && key!=GLFW.GLFW_KEY_LEFT && key!=GLFW.GLFW_KEY_RIGHT && key!=GLFW.GLFW_KEY_L && key!=GLFW.GLFW_KEY_B)closeFrozenBackend();
         if(TerrainReplay.ENABLED && key==GLFW.GLFW_KEY_I && (modifiers&(GLFW.GLFW_MOD_CONTROL|GLFW.GLFW_MOD_ALT))==(GLFW.GLFW_MOD_CONTROL|GLFW.GLFW_MOD_ALT)) {
             cancelBenchmark();validationStatus=TerrainReplay.interopOnly();return true;
         }
@@ -613,6 +670,6 @@ final class TerrainScreen extends Screen {
         }
         return true;
     }
-    @Override public void removed() {cancelBenchmark();glowOutline.close();nativeSky.close();if(moving!=null)moving.close();if(mesh!=null)mesh.close();if(snapshot!=null)snapshot.close();if(pending!=null)pending.close();if(target!=null)target.delete();if(samples!=null)samples.close();}
+    @Override public void removed() {closeFrozenBackend();cancelBenchmark();glowOutline.close();nativeSky.close();if(moving!=null)moving.close();if(mesh!=null)mesh.close();if(snapshot!=null)snapshot.close();if(pending!=null)pending.close();if(target!=null)target.delete();if(samples!=null)samples.close();}
     @Override public boolean shouldPause() {return true;}
 }

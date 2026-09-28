@@ -137,3 +137,17 @@ is assumed. Clear/blit results are not full-backend timing or long-duration vali
 
 Return to the ordinary client with `./gradlew.bat clean build` and
 `./gradlew.bat runClient` without the property. Restore any changed player/test state.
+
+## Complete frozen-image backend
+
+The subsequent experiment uses `./gradlew.bat runClient -PinterstellarRtxImage`.
+In a ready default native frozen exterior BH scene, **Ctrl+Alt+V** initializes/toggles
+RTX and **Ctrl+Alt+P** saves paired complete images and synchronized timings.
+Arrow keys retain the scene; size/settings changes invalidate it. F10 stays OpenGL.
+Use the paired timing rather than GL-only B timing, which can miss external work.
+
+This flag includes `src/rtx/java` and the probe allocation helpers; ordinary builds
+exclude them and Vulkan/shaderc dependencies. It is an experimental development
+configuration, not a finished optional-backend installer. See the
+[full-image report](../../docs/rtx-full-image-2026-09-28.md) for measurements,
+source-sharing architecture, memory costs and remaining limits.

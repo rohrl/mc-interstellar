@@ -46,6 +46,16 @@ if (project.hasProperty('interstellarRtxProbe')) {
     sourceSets.client.java.srcDir 'tools/rtx-probe/client'
     dependencies { clientImplementation 'org.lwjgl:lwjgl-vulkan:3.3.3' }
 }
+// Separate experimental backend: ordinary artifacts retain no Vulkan/shaderc dependency.
+if (project.hasProperty('interstellarRtxImage')) {
+    sourceSets.client.java.srcDir 'tools/rtx-probe'
+    sourceSets.client.java.srcDir 'src/rtx/java'
+    dependencies {
+        clientImplementation 'org.lwjgl:lwjgl-vulkan:3.3.3'
+        clientImplementation 'org.lwjgl:lwjgl-shaderc:3.3.3'
+        clientRuntimeOnly 'org.lwjgl:lwjgl-shaderc:3.3.3:natives-windows'
+    }
+}
 
 processResources {
     inputs.property 'version', project.version
@@ -70,6 +80,7 @@ tasks.named('runClient') {
     if(project.hasProperty('interstellarProfile'))jvmArgs '-Dinterstellar.profile=true'
     if(project.hasProperty('interstellarShaderClocks'))jvmArgs '-Dinterstellar.shaderClocks=true'
     if(project.hasProperty('interstellarRtxProbe'))jvmArgs '-Dinterstellar.rtxProbe=true', '-Dorg.lwjgl.system.stackSize=512'
+    if(project.hasProperty('interstellarRtxImage'))jvmArgs '-Dinterstellar.rtxImage=true', '-Dorg.lwjgl.system.stackSize=512'
 }
 
 tasks.withType(AbstractArchiveTask).configureEach {
