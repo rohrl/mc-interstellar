@@ -61,7 +61,7 @@ final class EntityMesh implements VertexConsumerProvider,AutoCloseable {
             if(cameraBody && !WorldFeatures.body)continue;
             var box=entity.getBoundingBox();
             if((box.maxX<minChunkX*16 || box.minX>(minChunkX+chunks)*16 || box.maxZ<minChunkZ*16 || box.minZ>(minChunkZ+chunks)*16)
-                    && !(WormholePair.active(client.world)&&WormholePair.contains(entity.getBlockX()>>4,entity.getBlockZ()>>4)))continue;
+                    && !(WormholePair.active(client.world)&&WormholePair.contains(client.world,entity.getBlockX()>>4,entity.getBlockZ()>>4)))continue;
             double px=MathHelper.lerp(delta,entity.lastRenderX,entity.getX())-origin.getX();
             double py=MathHelper.lerp(delta,entity.lastRenderY,entity.getY())-origin.getY();
             double pz=MathHelper.lerp(delta,entity.lastRenderZ,entity.getZ())-origin.getZ();
@@ -85,7 +85,7 @@ final class EntityMesh implements VertexConsumerProvider,AutoCloseable {
             blockEntityList.clear();blockEntityTick=tick;blockEntityX=minChunkX;blockEntityZ=minChunkZ;blockEntityChunks=chunks;
             for(int cx=minChunkX;cx<minChunkX+chunks;cx++)for(int cz=minChunkZ;cz<minChunkZ+chunks;cz++)
                 if(client.world.getChunkManager().isChunkLoaded(cx,cz))blockEntityList.addAll(client.world.getChunk(cx,cz).getBlockEntities().values());
-            if(WormholePair.active(client.world))for(var pos:WormholePair.CHUNKS) {
+            if(WormholePair.active(client.world))for(var pos:WormholePair.chunks(client.world)) {
                 if(pos.x>=minChunkX&&pos.x<minChunkX+chunks&&pos.z>=minChunkZ&&pos.z<minChunkZ+chunks)continue;
                 var chunk=client.world.getChunkManager().getWorldChunk(pos.x,pos.z,false);
                 if(chunk!=null)blockEntityList.addAll(chunk.getBlockEntities().values());

@@ -1,8 +1,12 @@
 {
+  "item.interstellar.wormhole_seed": "Wormhole Seed",
+  "entity.interstellar.wormhole_seed": "Wormhole Seed",
+  "key.interstellar.settings": "Interstellar settings",
   "key.interstellar.live_terrain": "Toggle live terrain lensing",
   "key.interstellar.live_timing": "Benchmark live terrain",
   "key.interstellar.reset_orientation": "Reset wormhole camera tilt",
   "message.interstellar.camera_upright": "Camera upright",
+  "message.interstellar.wormhole_exit_blocked": "Exit obstructed — try a clearer part of the mouth",
   "key.interstellar.terrain": "Open terrain lensing prototype",
   "block.interstellar.mass_block": "Mass Block",
   "key.categories.interstellar": "Interstellar",

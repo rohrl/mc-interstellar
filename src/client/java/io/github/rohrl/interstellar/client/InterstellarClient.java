@@ -115,6 +115,7 @@ public final class InterstellarClient implements ClientModInitializer {
         });
         CoreShaderRegistrationCallback.EVENT.register(context -> context.register(Identifier.of("interstellar", "terrain_resolve"), VertexFormats.POSITION, TerrainResolve::setShader));
         KeyBinding terrain = KeyBindingHelper.registerKeyBinding(new KeyBinding("key.interstellar.terrain", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_F9, "key.categories.interstellar"));
+        KeyBinding menu = KeyBindingHelper.registerKeyBinding(new KeyBinding("key.interstellar.settings", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_F4, "key.categories.interstellar"));
         CoreShaderRegistrationCallback.EVENT.register(context -> context.register(
                 Identifier.of("interstellar", "optical_lab"), VertexFormats.POSITION, OpticalLabScreen::setShader));
         KeyBinding opticalLab = KeyBindingHelper.registerKeyBinding(new KeyBinding("key.interstellar.optical_lab", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_F8, "key.categories.interstellar"));
@@ -131,6 +132,7 @@ public final class InterstellarClient implements ClientModInitializer {
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             LiveTerrain.tick(client);
+            while(menu.wasPressed())if(client.player!=null && client.currentScreen==null)client.setScreen(new InterstellarSettingsScreen());
             while(liveTerrain.wasPressed()) LiveTerrain.toggle(client);
             while (terrain.wasPressed()) { LiveTerrain.stop(); if (client.world != null) client.setScreen(io.github.rohrl.interstellar.wormhole.WormholePair.active(client.world)?TerrainScreen.wormhole(false):new TerrainScreen(SelectedSource.current())); }
             while (opticalLab.wasPressed()) {

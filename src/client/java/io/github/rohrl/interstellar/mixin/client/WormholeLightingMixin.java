@@ -18,7 +18,7 @@ abstract class WormholeLightingMixin {
     // would run on the network thread. Retain the lighting as well as chunk data.
     @Inject(method="unloadChunk",at=@At("HEAD"),cancellable=true)
     private void interstellar$keep(UnloadChunkS2CPacket packet,CallbackInfo ci) {
-        if(WormholePair.active(world)&&WormholePair.contains(packet.pos().x,packet.pos().z))ci.cancel();
+        if(WormholePair.active(world)&&WormholePair.contains(world,packet.pos().x,packet.pos().z))ci.cancel();
     }
     @Inject(method="onPlayerPositionLook",at=@At("TAIL"))
     private void interstellar$transit(net.minecraft.network.packet.s2c.play.PlayerPositionLookS2CPacket packet,CallbackInfo ci) {WormholeClient.afterTeleport();}

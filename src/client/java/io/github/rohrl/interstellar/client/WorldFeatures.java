@@ -15,6 +15,7 @@ final class WorldFeatures {
     static double gravityStrength;
     private WorldFeatures() {}
     static void register() {
+        var preferences=TerrainOptions.load();body=preferences.bodyImages();weather=preferences.weather();
         ClientPlayConnectionEvents.DISCONNECT.register((handler,client)->gravityEnabled=false);
         ClientPlayNetworking.registerGlobalReceiver(GravityVisualPayload.ID,(p,context)-> {
             gravityEnabled=p.enabled() && Double.isFinite(p.strength()) && p.strength()>=0 && p.strength()<=.2;gravityStrength=p.strength();
@@ -22,10 +23,14 @@ final class WorldFeatures {
         // A distinct client root must not shadow the server's /interstellar commands.
         ClientCommandRegistrationCallback.EVENT.register((dispatcher,registry)->dispatcher.register(literal("interstellar-visuals")
                         .then(literal("body").then(argument("enabled",BoolArgumentType.bool()).executes(context->{
-                            body=BoolArgumentType.getBool(context,"enabled");context.getSource().sendFeedback(Text.literal("Returning player-body images: "+body));return 1;
+                            body=BoolArgumentType.getBool(context,"enabled");save();context.getSource().sendFeedback(Text.literal("Returning player-body images: "+body));return 1;
                         })))
                         .then(literal("weather").then(argument("enabled",BoolArgumentType.bool()).executes(context->{
-                            weather=BoolArgumentType.getBool(context,"enabled");context.getSource().sendFeedback(Text.literal("Local foreground weather: "+weather));return 1;
+                            weather=BoolArgumentType.getBool(context,"enabled");save();context.getSource().sendFeedback(Text.literal("Local foreground weather: "+weather));return 1;
                         })))));
+    }
+    private static void save() {
+        var options=LiveTerrain.preferences().features(weather,body);LiveTerrain.applyPreferences(options);
+        try {options.save();}catch(Exception failure) {io.github.rohrl.interstellar.Interstellar.LOGGER.error("Cannot save visual preferences",failure);}
     }
 }

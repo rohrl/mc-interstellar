@@ -1,0 +1,9 @@
+scene=Streaming terrain | 24540 triangles | 0 queued chunks; mesh=true; streamedReference=false; entities=true; coverage=true; clouds=true; distant=true; faceLight=true; smoothLight=true; origin=BlockPos{x=242, y=62, z=195}
+quality=AA=2x, scale=0.5, lensing=true, fine=false, adaptive=true, fastBounds=true, fastFetch=true, emptyCells=true, emptyReach=1024.0, angularCap=0.08, curveFactor=4.0, program=native-ellis-wormhole-quads
+width=1280 height=720 camera=(290.5, 109.99999988555908, 211.68) yaw=0.0 pitch=0.0
+RGB_mean_abs_255=0.0077586082175925926 RGB_RMSE_255=0.2113077597455988 changedPixels=3652 pixelsMaxErrorAbove16=12
+OpenGL_wall_ms=[12.0155, 9.2878, 10.2312, 9.6462, 8.9592, 9.9306, 9.9335, 9.2873, 9.3828, 9.3852, 9.6721, 9.449, 10.9416, 9.7647, 9.6897, 9.7625]
+RTX_wall_ms=[2.9347, 2.8712, 2.9816, 2.8958, 2.9987, 2.9786, 3.043, 2.9918, 2.9166, 2.92, 2.9101, 2.9208, 3.0096, 2.88, 2.996, 2.8992]
+RTX_Vulkan_gpu_ms=[2.44384, 2.419744, 2.432384, 2.427648, 2.461408, 2.488224, 2.445184, 2.42624, 2.447968, 2.4672, 2.455968, 2.464, 2.469536, 2.439552, 2.485792, 2.460128]
+OpenGL_GLtimeline_ms=[9.671744, 9.156864, 9.573696, 9.502656, 8.796384, 9.796288, 9.780224, 9.07904, 9.220256, 9.215072, 9.427168, 9.313984, 10.72272, 9.639456, 9.56768, 9.638464]
+RTX_GLtimeline_ms=[2.725984, 2.699616, 2.700608, 2.707264, 2.730336, 2.757664, 2.719808, 2.749536, 2.72208, 2.73648, 2.71408, 2.735744, 2.747488, 2.70368, 2.75552, 2.72624]

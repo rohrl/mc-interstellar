@@ -12,7 +12,7 @@ final class WormholeScene {
     static Map<BlockPos,BlockState> blocks() {
         var blocks=new LinkedHashMap<BlockPos,BlockState>();
         for(int end=0;end<2;end++) {
-            var c=BlockPos.ofFloored(WormholePair.centre(end));
+            var c=BlockPos.ofFloored(end==0?WormholePair.A:WormholePair.B);
             var ground=(end==0?Blocks.GRASS_BLOCK:Blocks.SMOOTH_SANDSTONE).getDefaultState();
             var accent=(end==0?Blocks.ORANGE_CONCRETE:Blocks.CYAN_CONCRETE).getDefaultState();
             var light=Blocks.SEA_LANTERN.getDefaultState();

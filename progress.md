@@ -1,5 +1,30 @@
 # Progress
 
+## 2026-09-29 — Live settings and throwable wormhole pair
+
+F4 now consolidates quality, renderer, lensing, upright reset and optional visuals;
+preferences persist. Off/Edge AA run on RTX with one centred sample;2×/4×/8× use
+shared GL/RTX patterns, with2× still the default. Native AO refreshes captured lighting. Fixed opaque-only
+scenes unnecessarily failing RTX eligibility.
+
+Wormhole Seed adds a reusable ballistic placement item, recipe, one saved global
+pair, oldest-mouth replacement and sneak-to-close. Layout revisions synchronize
+client/server, release old chunk tickets, deduplicate overlapping destinations,
+gate travel on fresh light readiness and refresh reconnect/respawn viewers.
+Placement rejects close players, overlap, obstruction and unsupported bounds.
+
+Both builds pass88 tests; normal jar excludes optional Vulkan/backend classes.
+Runtime: menu/settings, actual throws outside the fixed exhibit, rejection,
+oldest replacement, retired-mouth inactivity, bidirectional walking and reload
+persistence checked. GL/RTX image MAE0.00193–0.00776/255; opaque course RTX2.74ms
+GPU/8.32ms frame at120FPS cap. Details and limitations:
+[settings and placed wormholes](docs/settings-and-wormhole-seed.md).
+
+Full-resolution/fine-path RTX medians:2×15.95ms/frame,4×26.45ms,8×48.36ms.
+Default2× is within about1% of its pre-extension check;8× is optional high quality.
+Ground-level traversal exposed feet embedding in the exit floor; full-body
+clearance now rejects obstructed crossings before transporting the camera.
+
 ## 2026-09-29 — Upright camera control
 
 R resets wormhole camera roll without teleporting or changing yaw/pitch. It is

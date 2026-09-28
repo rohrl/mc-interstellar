@@ -97,26 +97,32 @@ final class FullImageShader {
             layout(std140,set=0,binding=2) uniform RtxParameters {vec4 rtxParameters[128];};
             layout(rgba32f,set=0,binding=3) uniform image2D rtxOutput;
             vec4 rtxFragCoord;
+            vec2 rtxSampleOffset;
             #define gl_FragCoord rtxFragCoord
             #define INTERSTELLAR_SPLIT_MOVING
             #define INTERSTELLAR_NATIVE_MESH
             #define INTERSTELLAR_LIVE_DEFAULTS
             #define INTERSTELLAR_VARIABLE_CHORD
             #define INTERSTELLAR_SPLIT_AA
+            #define INTERSTELLAR_RTX_AA
             """;
         String main="""
             void main() {
                 ivec2 pixel=ivec2(gl_GlobalInvocationID.xy);
-                if(pixel.x>=int(Viewport.x)*2 || pixel.y>=int(Viewport.y))return;
+                int requested=int(RTX_SAMPLE_COUNT);
+                int rtxSamples=requested==1?1:requested==4?4:requested==8?8:2;
+                if(pixel.x>=int(Viewport.x)*min(rtxSamples,2) || pixel.y>=int(Viewport.y)*max(rtxSamples/2,1))return;
             #ifdef INTERSTELLAR_MATERIAL_MASK
                 if(imageLoad(rtxOutput,pixel).a>.5)return;
             #endif
                 rtxFragCoord=vec4(vec2(pixel)+.5,0,1);
-                SampleOffset=pixel.x<int(Viewport.x)?-.25:.25;
-                screenUv=vec2((float(pixel.x%int(Viewport.x))+.5)/Viewport.x,1.0-(float(pixel.y)+.5)/Viewport.y);
+                int sampleIndex=pixel.x/int(Viewport.x)+2*(pixel.y/int(Viewport.y));
+                rtxSampleOffset=aaOffset(rtxSamples,sampleIndex);SampleOffset=rtxSampleOffset.x;
+                screenUv=vec2((float(pixel.x%int(Viewport.x))+.5)/Viewport.x,1.0-(float(pixel.y%int(Viewport.y))+.5)/Viewport.y);
                 opticalMain();imageStore(rtxOutput,pixel,fragColor);
             }
             """;
+        main=main.replace("RTX_SAMPLE_COUNT","rtxParameters["+uniforms.get("RaySamples")+"].x");
         if(live)header+="layout(std430,set=0,binding="+movingBinding+") readonly buffer RtxMoving {vec4 rtxMoving[];};\n";
         header+=switch(optics) {
             case EXTERIOR -> "";

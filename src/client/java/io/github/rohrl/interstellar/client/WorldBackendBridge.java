@@ -30,8 +30,8 @@ final class WorldBackendBridge {
         }
         previous=Map.copyOf(ids);images=Map.copyOf(result);return images;
     }
-    WorldRenderBackend create(WorldMesh mesh,String source,Map<String,Integer> ids,int width,int height) throws Exception {
-        var scene=new WorldRenderBackend.Scene(mesh.backendTerrain(),source,images(ids),width,height);
+    WorldRenderBackend create(WorldMesh mesh,String source,Map<String,Integer> ids,int width,int height,int samples) throws Exception {
+        var scene=new WorldRenderBackend.Scene(mesh.backendTerrain(),source,images(ids),width,height,samples);
         try(var state=new TerrainReplay.PackState()) {
             return (WorldRenderBackend)Class.forName("VulkanWorldBackend").getConstructor(WorldRenderBackend.Scene.class).newInstance(scene);
         }

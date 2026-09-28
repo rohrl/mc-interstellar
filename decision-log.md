@@ -624,3 +624,41 @@ frame reset and its acknowledgement, so a later crossing does not resurrect the
 old tilt. Restrict the request to the wormhole dimension; no command permission
 is needed. Display the actual binding in the HUD and acknowledge in the action bar.
 Build and in-game reset/idempotence checks pass; no optical or GPU work changes.
+
+## D090 — Live graphics menu and shared supersampling (2026-09-29)
+
+Accepted: F4 consolidates product controls and persists visual preferences. Native
+smooth lighting changes Minecraft AO and recaptures geometry; a legacy voxel-only
+uniform would be an inert control for native terrain. Keep diagnostics in F9.
+
+AA Off/Edge trace one ray,2x/4x/8x trace distinct shared subpixel patterns on both
+renderers. RTX uses a two-column float sample atlas with one/two/four rows, then
+averages before the existing reconstruction. Extra rows allocate only when needed;
+2x remains the default. The independent4x reference remains explicitly on GL.
+Opaque-only scenes must be RTX eligible too; lack of special materials is not a
+backend limitation. Normal packaging remains Vulkan-free. Evidence and limits:
+docs/settings-and-wormhole-seed.md.
+
+## D091 — One persistent throwable wormhole pair (2026-09-29)
+
+Accepted: a reusable seed opens a radius8 mouth after a surface hit, offset9 blocks
+outward. First two placements connect; later successful throws keep the newest
+mouth and replace the oldest. One pair per server/save, shared by players/item
+copies, including the demo pair. Sneak-use closes it. Same-dimension pairing for
+this version; cross-dimension native lighting/sky and entity tracking need their
+own implementation.
+
+Server validates player clearance, nonoverlap, open volume and bounds without
+loading chunks or removing blocks. Immutable layout revisions separate client and
+server state, invalidate readiness and release tickets from the retired layout.
+Overlapping chunk regions are deduplicated. Nearby retired client chunks survive
+until vanilla refresh/unload to avoid holes; distant chunks/light/block entities
+are released. Reconnect/respawn reset the viewer. Existing Ellis chart optics and
+player-only transfer are reused, with their documented finite capture and nearest
+chart limitations. Placement is not a global two-mouth Einstein solution.
+
+Runtime follow-up: near the bottom rim, eye transport embedded the player's feet
+in the destination floor. Check the full destination bounding box before travel;
+on obstruction, return to the preceding clear entrance pose and preserve the
+camera frame. Do not move blocks or silently shift the mapped arrival upward.
+This is a bounded gameplay collision guard, independent of the optical equations.

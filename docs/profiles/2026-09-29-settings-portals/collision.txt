@@ -1,0 +1,20 @@
+BEFORE: lower-rim arrival embeds feet below floor top Y101
+[m[34m[09:30:41][m [32m[Render thread/INFO][m [36m(interstellar)[m [0mWormhole client layout: revision=8, mouths=[(250.5, 110.0, 243.67978012696636), (243.75889273363606, 110.0, 212.71281489326503)]
+[m[34m[09:31:14][m [32m[Render thread/INFO][m [36m(Minecraft)[m [0m[System] [CHAT] InterstellarDev has the following entity data: [250.5d, 108.38d, 275.7d]
+[m[34m[09:31:15][m [32m[Render thread/INFO][m [36m(Minecraft)[m [0m[System] [CHAT] InterstellarDev has the following entity data: {invulnerable: 1b, mayfly: 1b, instabuild: 1b, walkSpeed: 0.1f, mayBuild: 1b, flying: 1b, flySpeed: 0.05f}
+[m[34m[09:31:18][m [32m[Server thread/INFO][m [36m(interstellar)[m [0mWormhole crossing: 1 -> 0, eye=(243.75889273363606, 102.62000000476837, 215.5606714475653) -> (250.5, 102.45189991003464, 240.76705569233067), yaw=-0.0, pitch=42.20205, roll=180.0
+[m[34m[09:31:19][m [32m[Render thread/INFO][m [36m(Minecraft)[m [0m[System] [CHAT] InterstellarDev has the following entity data: [250.5d, 100.38563564147182d, 241.69999998807907d]
+AFTER: obstructed arrival rejected; centre crossings work both ways
+[m[34m[09:34:33][m [32m[Render thread/INFO][m [36m(interstellar)[m [0mWormhole client layout: revision=8, mouths=[(250.5, 110.0, 243.67978012696636), (243.75889273363606, 110.0, 212.71281489326503)]
+[m[34m[09:34:33][m [32m[Render thread/INFO][m [36m(interstellar)[m [0mWormhole camera upright: roll=0.0 -> 0, eye=(250.5, 110.00000000476837, 275.7), yaw=-180.0, pitch=0.0
+[m[34m[09:34:39][m [32m[Render thread/INFO][m [36m(Minecraft)[m [0m[STDOUT]: RTX live backend ready: 854x480 dynamic AA, resident chunks + moving geometry, GPU appearance sharing; optics=[EXTERIOR, EXTENDED, HORIZON, WORMHOLE]
+[m[34m[09:34:39][m [32m[Render thread/INFO][m [36m(interstellar)[m [0mWormhole native regions ready: 143 chunks with light data applied
+[m[34m[09:34:44][m [32m[Render thread/INFO][m [36m(Minecraft)[m [0m[STDOUT]: RTX live backend ready: 1280x720 dynamic AA, resident chunks + moving geometry, GPU appearance sharing; optics=[EXTERIOR, EXTENDED, HORIZON, WORMHOLE]
+[m[34m[09:35:01][m [32m[Server thread/INFO][m [36m(interstellar)[m [0mWormhole exit obstructed: eye=(243.75889273363606, 102.62000000476837, 215.5606714475653), target=(250.5, 102.45189991003464, 240.76705569233067), retained=(243.75889273363606, 102.62000000476837, 215.84908955079098)
+[m[34m[09:35:02][m [32m[Render thread/INFO][m [36m(Minecraft)[m [0m[System] [CHAT] InterstellarDev has the following entity data: [243.75889273363606d, 101.0d, 215.84908955079098d]
+[m[34m[09:35:02][m [32m[Server thread/INFO][m [36m(interstellar)[m [0mWormhole exit obstructed: eye=(243.75889273363606, 102.62000000476837, 215.80008954910716), target=(250.5, 102.6195000601071, 240.59229632932437), retained=(243.75889273363606, 102.62000000476837, 215.84908955079098)
+[m[34m[09:35:04][m [32m[Server thread/INFO][m [36m(interstellar)[m [0mWormhole crossing: 1 -> 0, eye=(243.75889273363606, 110.00000000476837, 220.5606714475653) -> (250.5, 110.00000000495504, 235.52468713346218), yaw=-180.0, pitch=-6.962597E-8, roll=0.0
+[m[34m[09:35:05][m [32m[Render thread/INFO][m [36m(Minecraft)[m [0m[System] [CHAT] InterstellarDev has the following entity data: [250.5d, 108.38000000018667d, 230.32242180602375d]
+[m[34m[09:35:08][m [32m[Server thread/INFO][m [36m(interstellar)[m [0mWormhole crossing: 0 -> 1, eye=(250.5, 110.00000000476837, 251.5606714475653) -> (243.75889273363606, 110.00000000491359, 204.59190605231734), yaw=-180.0, pitch=-6.9334114E-8, roll=0.0
+[m[34m[09:35:09][m [32m[Render thread/INFO][m [36m(Minecraft)[m [0m[System] [CHAT] InterstellarDev has the following entity data: [243.75889273363606d, 108.38000000014522d, 199.51904482838594d]
+[m[34m[09:35:11][m [32m[Render thread/INFO][m [36m(interstellar)[m [0mWormhole camera upright: roll=0.0 -> 0, eye=(250.5, 110.00000000476837, 275.7), yaw=-180.0, pitch=0.0

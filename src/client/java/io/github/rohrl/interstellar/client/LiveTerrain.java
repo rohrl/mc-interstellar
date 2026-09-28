@@ -17,6 +17,18 @@ public final class LiveTerrain {
     private static boolean worldComposited;
     private LiveTerrain() { }
     static boolean active() {return armedWorld!=null;}
+    static TerrainOptions preferences() {return renderer==null?TerrainOptions.load():renderer.preferences();}
+    static void applyPreferences(TerrainOptions options) {if(renderer!=null)renderer.applyPreferences(options);}
+    static void refreshLighting() {releaseRenderer();synchronize(MinecraftClient.getInstance());}
+    static void wormholeChanged() {
+        var client=MinecraftClient.getInstance();releaseRenderer();
+        if(WormholePair.active(client.world))armedWorld=client.world;
+        synchronize(client);
+    }
+    static void setEnabled(boolean enabled) {
+        var client=MinecraftClient.getInstance();
+        if(!enabled)stop();else if(client.world!=null){armedWorld=client.world;synchronize(client);}
+    }
     static void toggle(MinecraftClient client) {
         if(active()) {stop();return;}
         if(client.world==null || client.currentScreen!=null)return;
@@ -46,13 +58,14 @@ public final class LiveTerrain {
         if(!active())return;
         if(client.world!=armedWorld) {stop();return;}
         var source=SelectedSource.current();
-        if(WormholePair.active(client.world)) {
+        if(WormholeClient.nearby()) {
             if(renderer!=null && renderer.isWormhole())return;
             if(client.player==null)return;
             releaseRenderer();renderer=TerrainScreen.wormhole(true);
             width=client.getWindow().getScaledWidth();height=client.getWindow().getScaledHeight();
             renderer.init(client,width,height);Interstellar.LOGGER.info("Live Ellis wormhole view armed; preparing both regions");check(client);return;
         }
+        if(renderer!=null && renderer.isWormhole())releaseRenderer();
         if(renderer!=null&&renderer.selectedSource()==source)return;
         if(source!=null&&source.count()>0) {
             if(renderer!=null) {

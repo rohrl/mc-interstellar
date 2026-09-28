@@ -226,7 +226,9 @@ not claimed.
 
 ## Deliberate v1 limits
 
-- Two fixed mouths in a dedicated demo dimension; no general placement/pairing UI.
+- This original check used two fixed mouths in a dedicated demo dimension.
+  [The September 29 follow-up](settings-and-wormhole-seed.md) adds a throwable
+  item for placing and relocating one persistent pair in any supported dimension.
 - Players cross; vehicles, mobs, projectiles, inventory interaction through the
   image and distant mob tracking are not implemented. Locally tracked actors can
   participate in the existing optical capture.

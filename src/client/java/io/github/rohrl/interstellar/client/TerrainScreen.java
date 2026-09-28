@@ -75,7 +75,8 @@ final class TerrainScreen extends Screen {
     private WorldRenderBackend frozenBackend;
     private String frozenSource;
     private boolean requestFrozenBackend,rtxActive,compareFrozenBackend;
-    private int backendWidth,backendHeight;
+    private int backendWidth,backendHeight,backendSamples;
+    private boolean qualityReference;
     private boolean worldBackend,backendFailed,rtxPreferred=WorldBackendBridge.ENABLED,comparingBackend;
     private WorldBackendBridge backendBridge;
     private int profileExperiment;
@@ -84,7 +85,7 @@ final class TerrainScreen extends Screen {
     private boolean lensing=true, fine=false;
     private String error;
     private String paused;
-    private final TerrainOptions options=TerrainOptions.load();
+    private TerrainOptions options=TerrainOptions.load();
     private float scale=options.renderScale();
     private int antialiasing=options.antialiasing();
     private float emptyReach=1024;
@@ -95,7 +96,17 @@ final class TerrainScreen extends Screen {
     private final NativeSky nativeSky=new NativeSky();
     TerrainScreen(SourcePayload source) {this(source,false);}
     TerrainScreen(SourcePayload source,boolean live) {this(source,live,false);}
-    private TerrainScreen(SourcePayload source,boolean live,boolean wormhole) {super(Text.literal("Interstellar terrain prototype"));this.source=source;this.live=live;this.wormhole=wormhole;}
+    private TerrainScreen(SourcePayload source,boolean live,boolean wormhole) {
+        super(Text.literal("Interstellar terrain prototype"));this.source=source;this.live=live;this.wormhole=wormhole;
+        fine=options.finePaths();rtxPreferred=WorldBackendBridge.ENABLED && options.preferRtx();
+    }
+    TerrainOptions preferences() {return options;}
+    void applyPreferences(TerrainOptions next) {
+        options=next;scale=next.renderScale();antialiasing=next.antialiasing();fine=next.finePaths();
+        rtxPreferred=WorldBackendBridge.ENABLED && next.preferRtx();backendFailed=false;cancelBenchmark();
+        if(!rtxPreferred)closeFrozenBackend();
+        Interstellar.LOGGER.info("Live quality applied: {}; RTX preferred={}",qualitySettings(),rtxPreferred);
+    }
     static TerrainScreen wormhole(boolean live) {return new TerrainScreen(null,live,true);}
     boolean isWormhole() {return wormhole;}
     String problem() {return error;}
@@ -104,6 +115,8 @@ final class TerrainScreen extends Screen {
     void toggleWorldBackend() {
         if(!WorldBackendBridge.ENABLED)return;
         cancelBenchmark();rtxPreferred=backendFailed || !rtxPreferred;backendFailed=false;
+        options=options.quality(scale,antialiasing,fine,rtxPreferred);
+        try {options.save();}catch(Exception e){Interstellar.LOGGER.error("Could not save renderer preference",e);}
         if(!rtxPreferred)closeFrozenBackend();
         Interstellar.LOGGER.info("Live renderer preference: {}",rtxPreferred?"RTX with OpenGL fallback":"OpenGL");
         client.player.sendMessage(Text.literal(!rtxPreferred?"Renderer: OpenGL":"Renderer: RTX preferred (OpenGL fallback available)"),true);
@@ -153,7 +166,7 @@ final class TerrainScreen extends Screen {
         // choose the same numerical accuracy, including when R<a/2.
         return (wormhole?Math.max(r,a*a/(4*Math.max(r,1e-9))):r)/a;
     }
-    private Vec3d centre() {return wormhole?WormholePair.centre(WormholePair.nearest(camera)):new Vec3d(source.x(),source.y(),source.z());}
+    private Vec3d centre() {return wormhole?WormholePair.centre(client.world,WormholePair.nearest(client.world,camera)):new Vec3d(source.x(),source.y(),source.z());}
     @Override public void render(DrawContext context,int mouseX,int mouseY,float delta) {
         context.draw();
         renderScene();
@@ -197,12 +210,12 @@ final class TerrainScreen extends Screen {
         if(live) {
             if(paused!=null) {renderPaused(context);return;}
             context.fill(6,6,Math.min(width-6,410),46,0xCD101824);
-            context.drawTextWithShadow(textRenderer,"INTERSTELLAR | Live camera | F10: off | F12: timing",12,12,0xFF88D8FF);
+            context.drawTextWithShadow(textRenderer,"INTERSTELLAR | F4: settings | F10: off | F12: timing",12,12,0xFF88D8FF);
             String age=meshMode && mesh!=null?mesh.viewStatus()+(wormhole?" | Ellis wormhole":" | Mass blocks: "+source.count()):"Preparing world view...";
             age+=" | "+(rtxActive?"RTX":"OpenGL");
             if(WorldBackendBridge.ENABLED)age+=" (Alt+F12)";
             context.drawTextWithShadow(textRenderer,age,12,24,0xFFFFFFFF);
-            String details=wormhole?"Mouth "+(WormholePair.nearest(camera)==0?"A (orange)":"B (cyan)")+" | Radius 8 | Fly through to cross":benchmark==null?String.format(Locale.ROOT,"%s | C %.2f | Range %.0f / %d | AA %s",source.blackHoleProxy()?"BH r="+String.format(Locale.ROOT,"%.2f",opticalRadius()):"Extended mass",
+            String details=wormhole?"Mouth "+(WormholePair.nearest(client.world,camera)==0?"A":"B")+" | Radius 8 | Fly through to cross":benchmark==null?String.format(Locale.ROOT,"%s | C %.2f | Range %.0f / %d | AA %s",source.blackHoleProxy()?"BH r="+String.format(Locale.ROOT,"%.2f",opticalRadius()):"Extended mass",
                     opticalRadius()/source.enclosingRadius(),camera.distanceTo(centre()),MESH_VIEW_RANGE,aaName()):benchmark.status().replace("B cancels","F12 cancels");
             if(!wormhole && (source.enclosingRadius()>16 || source.blackHoleProxy()&&opticalRadius()>12))details="Large source: optics only; entity gravity size limit";
             if(horizonView())details=camera.distanceTo(centre())<=opticalRadius()?"Inside horizon | Blocks at normal positions for editing":"Near horizon | Transition to falling camera frame";
@@ -258,18 +271,18 @@ final class TerrainScreen extends Screen {
         }
         int w=Math.max(1,Math.round(client.getWindow().getFramebufferWidth()*scale));
         int h=Math.max(1,Math.round(client.getWindow().getFramebufferHeight()*scale));
-        if(frozenBackend!=null && (backendWidth!=w || backendHeight!=h)){cancelBenchmark();closeFrozenBackend();}
+        if(frozenBackend!=null && (backendWidth!=w || backendHeight!=h || worldBackend && backendSamples!=Math.max(2,raySamples()))){cancelBenchmark();closeFrozenBackend();}
         if(target==null || target.textureWidth!=w || target.textureHeight!=h) {
             cancelBenchmark();if(target!=null)target.delete();target=new SimpleFramebuffer(w,h,false,false);
         }
         boolean split=useSplitShader();
-        if(split && (samples==null || samples.width!=w || samples.height!=h)) {
+        boolean eligible=WorldBackendBridge.ENABLED && supportsRtx() && mesh.ready();
+        if((split || eligible || frozenBackend!=null) && (samples==null || samples.width!=w || samples.height!=h)) {
             if(samples!=null)samples.close();samples=new TerrainSamples(w,h);
         }
         target.beginWrite(true);
         try {
             configureShader(w,h);
-            boolean eligible=WorldBackendBridge.ENABLED && useSelectiveMaterials() && useQuads() && useSeparateMoving() && mesh.ready();
             if(WorldBackendBridge.ENABLED && live && !comparingBackend) {
                 boolean next=rtxPreferred && eligible && frozenBackend!=null;
                 if(next!=rtxActive)cancelBenchmark();rtxActive=next;
@@ -281,9 +294,9 @@ final class TerrainScreen extends Screen {
                     frozenSource=FrozenBackendCapture.source();
                     var ids=backendImages();
                     worldBackend=WorldBackendBridge.ENABLED;
-                    if(worldBackend){backendBridge=new WorldBackendBridge();frozenBackend=backendBridge.create(mesh,frozenSource,ids,w,h);}
+                    if(worldBackend){backendBridge=new WorldBackendBridge();frozenBackend=backendBridge.create(mesh,frozenSource,ids,w,h,raySamples());}
                     else frozenBackend=FrozenBackendCapture.create(mesh,moving,ids,w,h,frozenSource);
-                    backendWidth=w;backendHeight=h;rtxActive=true;
+                    backendWidth=w;backendHeight=h;backendSamples=Math.max(2,raySamples());rtxActive=true;
                     validationStatus=frozenBackend.description()+" | Ctrl+Alt+V: switch | Ctrl+Alt+P: compare";
                 } catch(Exception|LinkageError failure) {backendFailed=true;closeFrozenBackend();validationStatus="RTX setup failed; OpenGL retained (see log)";io.github.rohrl.interstellar.Interstellar.LOGGER.error("RTX setup failed; retaining OpenGL",failure);}
             }
@@ -298,20 +311,23 @@ final class TerrainScreen extends Screen {
                         projection,lensing,centre().subtract(Vec3d.of(snapshot.origin)),opticalRadius(),curvedValidation,()->drawQuad(w,h));
             }
             if(benchmark!=null)benchmark.begin();
-            if(rtxActive && frozenBackend!=null) {
+            if(rtxActive && frozenBackend!=null && !qualityReference) {
                 shader=wormhole?wormholeShaders[1]:horizonView()?horizonShaders[1]:extendedSource()?bodyShaders[1]:movingShaders[1];configureShader(w,h);
                 int texture;
                 try {
                     frozenBackend.optics(wormhole?WorldRenderBackend.Optics.WORMHOLE:horizonView()?WorldRenderBackend.Optics.HORIZON:extendedSource()?WorldRenderBackend.Optics.EXTENDED:WorldRenderBackend.Optics.EXTERIOR);
                     if(worldBackend)frozenBackend.update(moving.triangleData(),moving.triangleCount(),moving.movingRevision(),backendBridge.images(backendImages()));
-                    texture=frozenBackend.render(FrozenBackendCapture.uniforms(shader,frozenSource));
+                    var uniforms=FrozenBackendCapture.uniforms(shader,frozenSource);
+                    // The optimized GL wrapper compiles RaySamples to 2; RTX dispatch is dynamic.
+                    uniforms.put("RaySamples",new float[]{raySamples(),0,0,0});
+                    texture=frozenBackend.render(uniforms);
                 }
                 catch(RuntimeException|LinkageError failure) {
                     backendFailed=true;closeFrozenBackend();cancelBenchmark();validationStatus="RTX failed; OpenGL restored (see log)";
                     io.github.rohrl.interstellar.Interstellar.LOGGER.error("RTX frame failed; retaining OpenGL",failure);renderTerrain();return;
                 }
                 if(benchmark!=null)for(int i=0;i<5;i++)benchmark.mark(i);
-                samples.foldFrom(texture,target,()->drawQuad(w,h));
+                samples.foldFrom(texture,target,raySamples(),()->drawQuad(w,h));
                 if(benchmark!=null)benchmark.mark(5);
             } else if(split) {
                 samples.begin(0);shader.getUniformOrDefault("SampleOffset").set(-.25f);drawQuad(w,h);
@@ -421,7 +437,7 @@ final class TerrainScreen extends Screen {
         var up=right.crossProduct(forward);
         if(wormhole) {var oldRight=right;right=right.multiply(Math.cos(cameraRoll)).subtract(up.multiply(Math.sin(cameraRoll)));up=up.multiply(Math.cos(cameraRoll)).add(oldRight.multiply(Math.sin(cameraRoll)));}
         setVector("Forward",forward);setVector("Right",right);setVector("Up",up);
-        if(wormhole) {setVector("OtherSource",WormholePair.centre(1-WormholePair.nearest(camera)).subtract(Vec3d.of(snapshot.origin)));shader.getUniformOrDefault("WormholeExtent").set(768f);}
+        if(wormhole) {setVector("OtherSource",WormholePair.centre(client.world,1-WormholePair.nearest(client.world,camera)).subtract(Vec3d.of(snapshot.origin)));shader.getUniformOrDefault("WormholeExtent").set(768f);}
         shader.getUniformOrDefault("Radius").set((float)opticalRadius());
         shader.getUniformOrDefault("BodyRadius").set(extendedSource()?(float)source.enclosingRadius():0f);
         shader.getUniformOrDefault("Lensing").set(lensing?1f:0f);
@@ -446,7 +462,7 @@ final class TerrainScreen extends Screen {
         shader.getUniformOrDefault("PathStep").set(fine?.225f:.45f);
         shader.getUniformOrDefault("MeshStepLimit").set(meshStepLimit);
         setPathQuality(shader,orbitStep,curveFactor,pathRadiusRatio());
-        shader.getUniformOrDefault("RaySamples").set(antialiasing==2?2f:antialiasing==4?4f:1f);
+        shader.getUniformOrDefault("RaySamples").set((float)raySamples());
         shader.getUniformOrDefault("AdaptivePath").set(adaptivePath?1f:0f);
         shader.getUniformOrDefault("FastBounds").set(fastBounds?1f:0f);
         shader.getUniformOrDefault("FastFetch").set(fastFetch?1f:0f);
@@ -493,12 +509,13 @@ final class TerrainScreen extends Screen {
         finally {lensing=oldLensing;scale=oldScale;validate=oldValidate;antialiasing=oldAa;}
     }
     String qualitySettings() {return "AA="+aaName()+", scale="+scale+", lensing="+lensing+", fine="+fine+", adaptive="+adaptivePath+", fastBounds="+fastBounds+", fastFetch="+fastFetch+", emptyCells="+emptyCells+", emptyReach="+emptyReach+", angularCap="+orbitStep+", curveFactor="+curveFactor+", program="+programName();}
-    private String aaName() {return antialiasing==0?"OFF":antialiasing==1?"EDGE":antialiasing==2?"2x":"4x reference";}
+    private int raySamples() {return Math.max(1,antialiasing);}
+    private String aaName() {return TerrainOptions.aaLabel(antialiasing)+(qualityReference?" reference":"");}
     void renderQuality(boolean reference) {
-        int oldAa=antialiasing;float oldScale=scale,oldOrbit=orbitStep,oldCurve=curveFactor;boolean oldValidate=validate,oldFine=fine;
+        int oldAa=antialiasing;float oldScale=scale,oldOrbit=orbitStep,oldCurve=curveFactor;boolean oldValidate=validate,oldFine=fine,oldReference=qualityReference;
         cancelBenchmark();
-        try {validate=false;if(reference){antialiasing=4;scale=1;fine=true;orbitStep=.02f;curveFactor=1;}renderTerrain();}
-        finally {antialiasing=oldAa;scale=oldScale;validate=oldValidate;fine=oldFine;orbitStep=oldOrbit;curveFactor=oldCurve;}
+        try {validate=false;qualityReference=reference;if(reference){antialiasing=4;scale=1;fine=true;orbitStep=.02f;curveFactor=1;}renderTerrain();}
+        finally {antialiasing=oldAa;scale=oldScale;validate=oldValidate;fine=oldFine;orbitStep=oldOrbit;curveFactor=oldCurve;qualityReference=oldReference;}
     }
     void renderPathComparison(boolean reference) {
         boolean old=adaptivePath;cancelBenchmark();
@@ -522,12 +539,19 @@ final class TerrainScreen extends Screen {
     }
     private boolean useMeshShader() {return meshMode && specialized && meshShader!=null;}
     private boolean useDefaultShader() {
-        return liveDefaults && useMeshShader() && compactNodes && defaultMeshShader!=null && antialiasing==2 && lensing && hybrid
+        return antialiasing==2 && useDefaultSettings();
+    }
+    private boolean useDefaultSettings() {
+        return liveDefaults && useMeshShader() && compactNodes && defaultMeshShader!=null && lensing && hybrid
                 && faceLighting && meshEntities && meshClouds && meshCoverage && adaptivePath && fastBounds && fastFetch && emptyCells && emptyReach==1024;
     }
     private boolean useLongShader() {return useMeshShader() && compactNodes && adaptivePath && meshStepLimit!=4 && longMeshShader!=null && longDefaultShader!=null;}
-    private boolean useSplitShader() {return splitSamples && (!useQuads() || fixedLayout) && useDefaultShader() && useLongShader() && splitShader!=null
+    private boolean useSplitShader() {return antialiasing==2 && useSplitSettings();}
+    private boolean useSplitSettings() {return splitSamples && (!useQuads() || fixedLayout) && useDefaultSettings() && useLongShader() && splitShader!=null
             && TerrainSamples.supported(Math.max(1,Math.round(client.getWindow().getFramebufferWidth()*scale)));}
+    private boolean supportsRtx() {return !qualityReference && TerrainSamples.supported(Math.max(1,Math.round(client.getWindow().getFramebufferWidth()*scale)),
+        Math.max(1,Math.round(client.getWindow().getFramebufferHeight()*scale)),raySamples()) && useQuads() && useSeparateMoving() && useSplitSettings() && fixedLayout && mesh.streamed()
+        && selectiveMaterials && layoutShader!=null && layoutDiagnosticShader!=null && materialProbeShader!=null && materialMaskedShader!=null;}
     private ShaderProgram currentShader() {
         if(useQuads()) {
             if(wormhole)return wormholeShaders[!useLayoutShader()?3:useMaterials() && !useSelectiveMaterials()?2:0];
@@ -583,10 +607,10 @@ final class TerrainScreen extends Screen {
         var oldCamera=camera;float oldYaw=yaw,oldPitch=pitch;double oldRoll=cameraRoll;cancelBenchmark();
         try {
             if(otherChart) {
-                int from=WormholePair.nearest(camera);
-                var forward=WormholePair.transferVector(from,camera,Vec3d.fromPolar(pitch,yaw)).normalize();
-                var up=WormholePair.transferVector(from,camera,io.github.rohrl.interstellar.wormhole.WormholeTravel.up(yaw,pitch,cameraRoll)).normalize();
-                camera=WormholePair.transfer(from,camera);
+                int from=WormholePair.nearest(client.world,camera);
+                var forward=WormholePair.transferVector(client.world,from,camera,Vec3d.fromPolar(pitch,yaw)).normalize();
+                var up=WormholePair.transferVector(client.world,from,camera,io.github.rohrl.interstellar.wormhole.WormholeTravel.up(yaw,pitch,cameraRoll)).normalize();
+                camera=WormholePair.transfer(client.world,from,camera);
                 yaw=(float)Math.toDegrees(Math.atan2(-forward.x,forward.z));pitch=(float)-Math.toDegrees(Math.atan2(forward.y,Math.hypot(forward.x,forward.z)));
                 var right=Vec3d.fromPolar(0,yaw+90);cameraRoll=Math.atan2(up.dotProduct(right),up.dotProduct(right.crossProduct(forward)));
             }
@@ -634,7 +658,7 @@ final class TerrainScreen extends Screen {
         if((FrozenBackendCapture.ENABLED || WorldBackendBridge.ENABLED) && ctrlAlt && key==GLFW.GLFW_KEY_V) {
             cancelBenchmark();
             if(frozenBackend!=null){rtxActive=!rtxActive;validationStatus=rtxActive?frozenBackend.description():"OpenGL comparison | Ctrl+Alt+V: RTX";}
-            else if(live || !useSelectiveMaterials() || !useQuads() || !useSeparateMoving() || !WorldBackendBridge.ENABLED && (wormhole || horizonView() || extendedSource()) || mesh==null || !mesh.ready())validationStatus="RTX image needs ready frozen/default native rendering (variants require -PinterstellarRtx)";
+            else if(live || !supportsRtx() || !WorldBackendBridge.ENABLED && (antialiasing!=2 || wormhole || horizonView() || extendedSource()) || mesh==null || !mesh.ready())validationStatus="RTX image needs ready frozen/default native rendering (variants require -PinterstellarRtx)";
             else {requestFrozenBackend=true;validationStatus="Preparing optional RTX full image...";}
             return true;
         }
@@ -718,7 +742,7 @@ final class TerrainScreen extends Screen {
             case GLFW.GLFW_KEY_I -> {if((modifiers&GLFW.GLFW_MOD_SHIFT)!=0)emptyReach=emptyReach==16?1024:16;else emptyCells=!emptyCells;validationStatus="I: cache "+emptyCells+" | Shift+I reach "+emptyReach+" | Ctrl+Alt+P: compare reach";}
             case GLFW.GLFW_KEY_R -> {fastFetch=!fastFetch;validationStatus="R: fast mesh addressing "+(fastFetch?"ON":"OFF")+" | Alt+P: compare addressing";}
             case GLFW.GLFW_KEY_T -> {fastBounds=!fastBounds;validationStatus="T: fast bounds "+(fastBounds?"ON":"OFF")+" | Ctrl+Shift+P: compare bounds";}
-            case GLFW.GLFW_KEY_A -> antialiasing=(antialiasing+1)%3;
+            case GLFW.GLFW_KEY_A -> antialiasing=TerrainOptions.nextAa(antialiasing);
             case GLFW.GLFW_KEY_G -> {adaptivePath=!adaptivePath;validationStatus="G: adaptive paths "+(adaptivePath?"ON":"OFF")+" | Ctrl+P: compare old path";}
             case GLFW.GLFW_KEY_H -> {if(!meshMode)hybrid=!hybrid;}
             case GLFW.GLFW_KEY_K -> faceLighting=!faceLighting;

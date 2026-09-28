@@ -19,7 +19,7 @@ public interface WorldRenderBackend extends AutoCloseable {
         ByteBuffer read(Chunk chunk);
     }
     record Image(int id,int width,int height,int minFilter,int magFilter,int wrapS,int wrapT,int format) {}
-    record Scene(Terrain terrain,String opticalSource,Map<String,Image> images,int width,int height) {}
+    record Scene(Terrain terrain,String opticalSource,Map<String,Image> images,int width,int height,int samples) {}
     default void update(float[] triangles,int count,long revision,Map<String,Image> images) {}
     default void profiling(boolean enabled) {}
     /** Select precompiled optics without rebuilding resident scene geometry. */
@@ -27,7 +27,7 @@ public interface WorldRenderBackend extends AutoCloseable {
         if(model!=Optics.EXTERIOR)throw new UnsupportedOperationException("Optical variant unavailable: "+model);
     }
     default double previousGpuMillis() {return Double.NaN;}
-    /** Returns a shared OpenGL RGBA32F texture containing both AA samples side by side. */
+    /** Returns an RGBA32F sample atlas: two columns, up to four rows (sample i at i%2, i/2). */
     int render(Map<String,float[]> uniforms);
     /** Benchmark only: explicitly finish backend work and read its own GPU clock. */
     double completedGpuMillis();

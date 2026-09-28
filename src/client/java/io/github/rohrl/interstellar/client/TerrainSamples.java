@@ -15,6 +15,7 @@ final class TerrainSamples implements AutoCloseable {
     final int width,height;
     static void setShader(ShaderProgram program) {foldShader=program;maxTextureWidth=GL11.glGetInteger(GL11.GL_MAX_TEXTURE_SIZE);}
     static boolean supported(int width) {return foldShader!=null && width<=maxTextureWidth/2;}
+    static boolean supported(int width,int height,int count) {return supported(width) && height<=maxTextureWidth/Math.max(1,count/2);}
     TerrainSamples(int width,int height) {
         this.width=width;this.height=height;
         target=new SimpleFramebuffer(width*2,height,false,false);
@@ -41,10 +42,14 @@ final class TerrainSamples implements AutoCloseable {
         foldFrom(target.getColorAttachment(),destination,draw);
     }
     void foldFrom(int texture,SimpleFramebuffer destination,Runnable draw) {
+        foldFrom(texture,destination,2,draw);
+    }
+    void foldFrom(int texture,SimpleFramebuffer destination,int count,Runnable draw) {
         destination.beginWrite(true);
         RenderSystem.setShader(()->foldShader);
         foldShader.addSampler("Samples",texture);
         foldShader.getUniformOrDefault("Viewport").set((float)width,(float)height);
+        foldShader.getUniformOrDefault("SampleCount").set((float)count);
         draw.run();
     }
     int copyMask() {

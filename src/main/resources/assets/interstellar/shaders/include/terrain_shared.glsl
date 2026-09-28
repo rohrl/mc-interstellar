@@ -939,6 +939,17 @@ void trace(vec2 uv) {
     fragColor=vec4(.7,.05,.5,1);
 }
 #endif
+// Shared subpixel pattern for software traversal and hardware ray queries.
+vec2 aaOffset(int samples,int index) {
+    if(samples==2)return vec2(index==0?-.25:.25);
+    if(samples==4)return vec2((index%2)==0?-.25:.25,index<2?-.25:.25);
+    if(samples==8) {
+        const vec2 offsets[8]=vec2[8](vec2(1,-3),vec2(-1,3),vec2(5,1),vec2(-3,-5),
+            vec2(-5,5),vec2(-7,-1),vec2(3,7),vec2(7,-7));
+        return offsets[index]/16.0;
+    }
+    return vec2(0);
+}
 void main() {
 #ifdef INTERSTELLAR_MATERIAL_MASK
     if(texelFetch(PendingRays,ivec2(gl_FragCoord.xy),0).a>.5)discard;
@@ -947,7 +958,11 @@ void main() {
     // Identical two subpixel rays, scheduled in separate draws. Average in float
     // before the original RGBA8 target and bounded cubic reconstruction.
     CLOCK_BEGIN(totalClock);
+#ifdef INTERSTELLAR_RTX_AA
+    trace(screenUv+rtxSampleOffset/Viewport);
+#else
     trace(screenUv+vec2(SampleOffset)/Viewport);
+#endif
 #ifdef INTERSTELLAR_MATERIALS
     fragColor.rgb=materialLayers.rgb+(1.0-materialLayers.a)*fragColor.rgb;
 #else
@@ -965,13 +980,11 @@ void main() {
     }
     int samples=Diagnostic>.5?1:int(RaySamples);
     vec4 sum=vec4(0);
-    for(int sampleIndex=0;sampleIndex<4;sampleIndex++) {
+    for(int sampleIndex=0;sampleIndex<8;sampleIndex++) {
         if(sampleIndex>=samples)break;
         // Each ray owns its hit/cloud state; no cloud or far hit may leak into the next subpixel.
         cloudLayer=vec4(0);diagnostic=vec4(0);distantHit=false;distantLayer=0;distantSide=false;
-        vec2 offset=vec2(0);
-        if(samples==2)offset=vec2(sampleIndex==0?-.25:.25);
-        if(samples==4)offset=vec2((sampleIndex%2)==0?-.25:.25,sampleIndex<2?-.25:.25);
+        vec2 offset=aaOffset(samples,sampleIndex);
         trace(screenUv+offset/Viewport);
 #ifdef INTERSTELLAR_GLOW
         fragColor=glowHit?vec4(meshColour,1):vec4(0);

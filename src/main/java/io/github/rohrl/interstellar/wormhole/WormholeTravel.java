@@ -13,7 +13,7 @@ import java.util.*;
 /** Server-authoritative chart change at the throat. Creative controls prescribe the path. */
 public final class WormholeTravel {
     private static final Map<UUID,Motion> motions=new HashMap<>();
-    private record Motion(Vec3d eye,double roll) {}
+    private record Motion(Vec3d eye,double roll,long lastBlockedWarning) {}
     private WormholeTravel() {}
     public static void register() {
         PayloadTypeRegistry.playS2C().register(WormholeTransitPayload.ID,WormholeTransitPayload.CODEC);
@@ -36,19 +36,36 @@ public final class WormholeTravel {
         return right.crossProduct(forward).multiply(Math.cos(roll)).add(right.multiply(Math.sin(roll)));
     }
     private static void tick(MinecraftServer server) {
-        var world=server.getWorld(WormholePair.WORLD);
-        if(world==null || world.getPlayers().isEmpty()) {motions.clear();return;}
+        var world=server.getWorld(WormholeState.get(server).layout.dimension());
+        if(world==null || !WormholePair.active(world) || world.getPlayers().isEmpty()) {motions.clear();return;}
         var players=world.getPlayers();motions.keySet().removeIf(id->players.stream().noneMatch(p->p.getUuid().equals(id)));
         for(var player:players) {
             var eye=player.getEyePos();var previous=motions.get(player.getUuid());
-            double roll=previous==null?0:previous.roll;int from=WormholePair.nearest(eye);
-            double r=eye.distanceTo(WormholePair.centre(from)),mouth=WormholePair.METRIC.mouthRadius();
+            long lastWarning=previous==null?-20:previous.lastBlockedWarning;
+            double roll=previous==null?0:previous.roll;int from=WormholePair.nearest(world,eye);
+            double r=eye.distanceTo(WormholePair.centre(world,from)),mouth=WormholePair.METRIC.mouthRadius();
             // A small numerical deadband prevents the exactly-on-throat case bouncing.
             // Remote readiness is acknowledged only after applying chunk/light packets.
             if(WormholeChunks.ready(player) && !player.hasVehicle() && r<mouth-1e-5 && r>1e-4) {
-                var target=WormholePair.transfer(from,eye);
-                var forward=WormholePair.transferVector(from,eye,Vec3d.fromPolar(player.getPitch(),player.getYaw())).normalize();
-                var up=WormholePair.transferVector(from,eye,up(player.getYaw(),player.getPitch(),roll)).normalize();
+                var target=WormholePair.transfer(world,from,eye);
+                // Eye transport alone can place the feet inside a floor near the
+                // lower rim. Reject that crossing before changing either camera frame.
+                if(!world.isSpaceEmpty(player,player.getBoundingBox().offset(target.subtract(eye)))) {
+                    var safe=eye;
+                    if(previous!=null && eye.squaredDistanceTo(previous.eye)<16
+                        && previous.eye.distanceTo(WormholePair.centre(world,from))>=mouth
+                        && world.isSpaceEmpty(player,player.getBoundingBox().offset(previous.eye.subtract(eye))))safe=previous.eye;
+                    if(!safe.equals(eye))player.teleport(world,safe.x,safe.y-player.getStandingEyeHeight(),safe.z,player.getYaw(),player.getPitch());
+                    player.setVelocity(Vec3d.ZERO);player.velocityModified=true;player.fallDistance=0;
+                    if(world.getTime()-lastWarning>=20) {
+                        player.sendMessage(net.minecraft.text.Text.translatable("message.interstellar.wormhole_exit_blocked"),true);
+                        Interstellar.LOGGER.info("Wormhole exit obstructed: eye={}, target={}, retained={}",eye,target,safe);
+                        lastWarning=world.getTime();
+                    }
+                    motions.put(player.getUuid(),new Motion(safe,roll,lastWarning));continue;
+                }
+                var forward=WormholePair.transferVector(world,from,eye,Vec3d.fromPolar(player.getPitch(),player.getYaw())).normalize();
+                var up=WormholePair.transferVector(world,from,eye,up(player.getYaw(),player.getPitch(),roll)).normalize();
                 float yaw=(float)Math.toDegrees(Math.atan2(-forward.x,forward.z));
                 float pitch=(float)-Math.toDegrees(Math.atan2(forward.y,Math.hypot(forward.x,forward.z)));
                 var right=Vec3d.fromPolar(0,yaw+90);var vertical=right.crossProduct(forward).normalize();
@@ -57,12 +74,12 @@ public final class WormholeTravel {
                 // The receiver transports its own actual velocity before vanilla resets it.
                 ServerPlayNetworking.send(player,new WormholeTransitPayload(from,eye,target,nextRoll));
                 var velocity=previous==null || eye.squaredDistanceTo(previous.eye)>16?player.getVelocity():eye.subtract(previous.eye);
-                var mappedVelocity=WormholePair.transferVector(from,eye,velocity);
+                var mappedVelocity=WormholePair.transferVector(world,from,eye,velocity);
                 player.teleport(world,target.x,target.y-player.getStandingEyeHeight(),target.z,yaw,pitch);
                 player.setVelocity(mappedVelocity);player.fallDistance=0;
-                motions.put(player.getUuid(),new Motion(target,nextRoll));
+                motions.put(player.getUuid(),new Motion(target,nextRoll,lastWarning));
                 Interstellar.LOGGER.info("Wormhole crossing: {} -> {}, eye={} -> {}, yaw={}, pitch={}, roll={}",from,1-from,eye,target,yaw,pitch,Math.toDegrees(nextRoll));
-            } else motions.put(player.getUuid(),new Motion(eye,roll));
+            } else motions.put(player.getUuid(),new Motion(eye,roll,lastWarning));
         }
     }
 }

@@ -25,7 +25,7 @@ final class CloudMesh {
             // not replace the destination's clouds with the departure's layout.
             float height=client.world.getDimensionEffects().getCloudsHeight();
             for(int end=0;end<2;end++) {
-                var centre=WormholePair.centre(end);
+                var centre=WormholePair.centre(client.world,end);
                 captureAt(mesh,origin,new net.minecraft.util.math.Vec3d(centre.x,height+.33f,centre.z));
             }
         } else captureAt(mesh,origin,client.gameRenderer.getCamera().getPos());

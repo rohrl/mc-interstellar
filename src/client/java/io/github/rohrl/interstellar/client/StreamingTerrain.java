@@ -45,7 +45,7 @@ public final class StreamingTerrain implements AutoCloseable {
     public static void dirty(int x,int z) {
         var cache=active;if(cache==null)return;var w=cache.window;
         if(w!=null && (Math.abs((long)x-w.x)<=w.radius+1 && Math.abs((long)z-w.z)<=w.radius+1
-                || WormholePair.active(cache.world)&&WormholePair.contains(x,z)))cache.incoming.add(ChunkPos.toLong(x,z));
+                || WormholePair.active(cache.world)&&WormholePair.contains(cache.world,x,z)))cache.incoming.add(ChunkPos.toLong(x,z));
     }
     StreamingTerrain(ClientWorld world,BlockPos origin,BlockPos centre) {
         this.world=world;this.origin=origin;this.centre=centre;
@@ -88,7 +88,7 @@ public final class StreamingTerrain implements AutoCloseable {
         boolean indexChanged=false;
         // Unloaded geometry disappears promptly, even if other chunks are waiting to rebuild.
         for(long key:List.copyOf(queue))if(!loaded(key)) {
-            if(WormholePair.active(world)&&WormholePair.contains(ChunkPos.getPackedX(key),ChunkPos.getPackedZ(key)))continue;
+            if(WormholePair.active(world)&&WormholePair.contains(world,ChunkPos.getPackedX(key),ChunkPos.getPackedZ(key)))continue;
             var old=entries.put(key,new Entry(0,0,0,0,0,null,false,0));if(old!=null){release(old);indexChanged|=old.part!=null;}
             queue.remove(key);
             if(capture!=null && capturing==key){capture.close();capture=null;}
@@ -121,7 +121,7 @@ public final class StreamingTerrain implements AutoCloseable {
         window=new Window(x,z,radius);
         wanted.clear();
         for(int dx=-radius;dx<=radius;dx++)for(int dz=-radius;dz<=radius;dz++)wanted.add(ChunkPos.toLong(x+dx,z+dz));
-        if(WormholePair.active(world))for(var pos:WormholePair.CHUNKS)wanted.add(pos.toLong());
+        if(WormholePair.active(world))for(var pos:WormholePair.chunks(world))wanted.add(pos.toLong());
         boolean changed=false;
         for(var iterator=entries.entrySet().iterator();iterator.hasNext();) {
             var entry=iterator.next();if(!wanted.contains(entry.getKey())){release(entry.getValue());iterator.remove();changed=true;}

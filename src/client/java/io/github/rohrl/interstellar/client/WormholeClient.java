@@ -23,6 +23,19 @@ public final class WormholeClient {
     private record Transit(WormholeTransitPayload payload,Vec3d velocity,Vec3d previousEye,long tick) {}
     private WormholeClient() {}
     public static void register() {
+        net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents.DISCONNECT.register((handler,client)-> {
+            WormholePair.clientLayout(null,WormholePair.EMPTY);readyWorld=null;cameraWorld=null;transit=null;roll=0;
+        });
+        net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry.register(io.github.rohrl.interstellar.wormhole.WormholeSeed.ENTITY,
+            net.minecraft.client.render.entity.FlyingItemEntityRenderer::new);
+        ClientPlayNetworking.registerGlobalReceiver(io.github.rohrl.interstellar.wormhole.WormholeLayoutPayload.ID,(payload,context)-> {
+            var world=context.client().world;if(world==null)return;
+            WormholePair.clientLayout(world,payload.layout());readyWorld=null;transit=null;roll=0;cameraWorld=world;
+            if(context.client().currentScreen instanceof TerrainScreen screen && screen.isWormhole())context.client().setScreen(null);
+            ((WormholeChunkCache)world.getChunkManager()).interstellar$refreshRegions();
+            LiveTerrain.wormholeChanged();
+            Interstellar.LOGGER.info("Wormhole client layout: revision={}, mouths={}",payload.layout().revision(),payload.layout().mouths());
+        });
         resetOrientation=KeyBindingHelper.registerKeyBinding(new KeyBinding("key.interstellar.reset_orientation",
             InputUtil.Type.KEYSYM,GLFW.GLFW_KEY_R,"key.categories.interstellar"));
         ClientPlayNetworking.registerGlobalReceiver(WormholeTransitPayload.ID,(payload,context)-> {
@@ -34,23 +47,23 @@ public final class WormholeClient {
                 roll=0;transit=null;return;
             }
             var p=client.player;
-            transit=new Transit(payload,WormholePair.transferVector(payload.from(),payload.eye(),p.getVelocity()),
+            transit=new Transit(payload,WormholePair.transferVector(client.world,payload.from(),payload.eye(),p.getVelocity()),
                 new Vec3d(p.prevX,p.prevY+p.getStandingEyeHeight(),p.prevZ),client.world.getTime());
         });
         ClientPlayNetworking.registerGlobalReceiver(WormholeReadyPayload.ID,(payload,context)-> {
-            var world=context.client().world;if(!WormholePair.active(world))return;
+            var world=context.client().world;if(!WormholePair.active(world)||payload.revision()!=WormholePair.layout(world).revision())return;
             // Chunk data is applied immediately, but native light packets are queued.
             // Insert the readiness barrier in that same ordered queue.
             world.enqueueChunkUpdate(()-> {
-                if(context.client().world!=world)return;
+                if(context.client().world!=world||payload.revision()!=WormholePair.layout(world).revision())return;
                 int count=((WormholeChunkCache)world.getChunkManager()).interstellar$remoteChunkCount();
-                if(count!=WormholePair.CHUNKS.size()) {
-                    Interstellar.LOGGER.error("Wormhole readiness rejected: {}/{} chunks",count,WormholePair.CHUNKS.size());return;
+                if(count!=WormholePair.chunks(world).size()) {
+                    Interstellar.LOGGER.error("Wormhole readiness rejected: {}/{} chunks",count,WormholePair.chunks(world).size());return;
                 }
                 readyWorld=world;ClientPlayNetworking.send(payload);
                 Interstellar.LOGGER.info("Wormhole native regions ready: {} chunks with light data applied",count);
                 for(int end=0;end<2;end++) {
-                    var pos=net.minecraft.util.math.BlockPos.ofFloored(WormholePair.centre(end)).add(20,-12,20);
+                    var pos=net.minecraft.util.math.BlockPos.ofFloored(WormholePair.centre(world,end)).add(20,-12,20);
                     Interstellar.LOGGER.info("Wormhole client region {}: sample={}, block={}, sky={}, blocklight={}",end,pos,
                         net.minecraft.registry.Registries.BLOCK.getId(world.getBlockState(pos).getBlock()),
                         world.getLightLevel(net.minecraft.world.LightType.SKY,pos.up()),world.getLightLevel(net.minecraft.world.LightType.BLOCK,pos.up()));
@@ -61,13 +74,19 @@ public final class WormholeClient {
             if(readyWorld!=client.world)readyWorld=null;
             if(cameraWorld!=client.world) {cameraWorld=null;transit=null;roll=0;}
             if(transit!=null && client.world.getTime()-transit.tick>10)transit=null;
-            while(resetOrientation.wasPressed())if(client.currentScreen==null && WormholePair.active(client.world)
-                    && ClientPlayNetworking.canSend(WormholeResetPayload.ID))
-                ClientPlayNetworking.send(WormholeResetPayload.INSTANCE);
+            while(resetOrientation.wasPressed())if(client.currentScreen==null)resetOrientation();
         });
     }
     static String resetHint() {return resetOrientation.getBoundKeyLocalizedText().getString()+": upright";}
+    static boolean canResetOrientation() {return WormholePair.active(MinecraftClient.getInstance().world)
+        && ClientPlayNetworking.canSend(WormholeResetPayload.ID);}
+    static void resetOrientation() {if(canResetOrientation())ClientPlayNetworking.send(WormholeResetPayload.INSTANCE);}
     public static boolean ready() {return readyWorld!=null && readyWorld==MinecraftClient.getInstance().world;}
+    static boolean nearby() {
+        var client=MinecraftClient.getInstance();if(!WormholePair.active(client.world)||client.player==null)return false;
+        var eye=client.player.getEyePos();double reach=client.options.getViewDistance().getValue()*16+32;
+        return eye.squaredDistanceTo(WormholePair.centre(client.world,WormholePair.nearest(client.world,eye)))<=reach*reach;
+    }
     public static double roll() {return cameraWorld==MinecraftClient.getInstance().world?roll:0;}
     /** Called after vanilla has accepted the matching position packet and sent its acknowledgement. */
     public static void afterTeleport() {
@@ -77,8 +96,8 @@ public final class WormholeClient {
         roll=t.payload.roll();p.setVelocity(t.velocity);
         // Keep adjacent frame positions in the same chart. The old chart's last
         // tick can lie inside the new chart's throat, which the ray solver supports.
-        if(t.previousEye.squaredDistanceTo(t.payload.eye())<16 && t.previousEye.squaredDistanceTo(WormholePair.centre(t.payload.from()))>1e-8) {
-            var previous=WormholePair.transfer(t.payload.from(),t.previousEye);
+        if(t.previousEye.squaredDistanceTo(t.payload.eye())<16 && t.previousEye.squaredDistanceTo(WormholePair.centre(client.world,t.payload.from()))>1e-8) {
+            var previous=WormholePair.transfer(client.world,t.payload.from(),t.previousEye);
             p.prevX=previous.x;p.prevY=previous.y-p.getStandingEyeHeight();p.prevZ=previous.z;
             p.lastRenderX=p.prevX;p.lastRenderY=p.prevY;p.lastRenderZ=p.prevZ;
         }

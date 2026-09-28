@@ -29,8 +29,8 @@ public final class DemoCommands {
     private static final RegistryKey<World> WORLD=RegistryKey.of(RegistryKeys.WORLD,Identifier.of("interstellar","demo"));
     private static final RegistryKey<World> GAMEPLAY=RegistryKey.of(RegistryKeys.WORLD,Identifier.of("interstellar","gameplay"));
     private static final RegistryKey<World> ARROWS=RegistryKey.of(RegistryKeys.WORLD,Identifier.of("interstellar","arrows"));
-    private static boolean exhibit(ServerWorld world) {return WormholePair.active(world)||world.getRegistryKey().equals(WORLD)||world.getRegistryKey().equals(GAMEPLAY)||world.getRegistryKey().equals(ARROWS);}
-    private static String builtKey(ServerWorld world) {return WormholePair.active(world)?"wormholeExhibitBuilt":world.getRegistryKey().equals(WORLD)?"built":world.getRegistryKey().equals(GAMEPLAY)?"gameplayBuilt":"arrowExhibitBuilt";}
+    private static boolean exhibit(ServerWorld world) {return world.getRegistryKey().equals(WormholePair.WORLD)||world.getRegistryKey().equals(WORLD)||world.getRegistryKey().equals(GAMEPLAY)||world.getRegistryKey().equals(ARROWS);}
+    private static String builtKey(ServerWorld world) {return world.getRegistryKey().equals(WormholePair.WORLD)?"wormholeExhibitBuilt":world.getRegistryKey().equals(WORLD)?"built":world.getRegistryKey().equals(GAMEPLAY)?"gameplayBuilt":"arrowExhibitBuilt";}
     private static Job job;
     private static final Map<UUID,Integer> awaitingSource=new HashMap<>();
     private DemoCommands() { }
@@ -114,7 +114,7 @@ public final class DemoCommands {
             }
             if(work.cursor<work.blocks.size())return;
             if(!work.build) {work.build=true;work.cursor=0;return;}
-            for(int i=0;i<(WormholePair.active(work.world)?0:3);i++) {
+            for(int i=0;i<(work.world.getRegistryKey().equals(WormholePair.WORLD)?0:3);i++) {
                 var sheep=EntityType.SHEEP.create(work.world);
                 if(sheep!=null) {sheep.refreshPositionAndAngles(-8+i*7,65,-24,0,0);sheep.setPersistent();sheep.setCustomName(Text.literal("Demo sheep "+(i+1)));work.world.spawnEntity(sheep);}
             }
@@ -135,7 +135,8 @@ public final class DemoCommands {
         player.changeGameMode(GameMode.CREATIVE);player.teleport(world,2,80.38,-54,0,0);
         if(world.getRegistryKey().equals(ARROWS))player.teleport(world,2,90,-18,0,26);
         player.getAbilities().flying=true;player.sendAbilitiesUpdate();
-        if(WormholePair.active(world)) {
+        if(world.getRegistryKey().equals(WormholePair.WORLD)) {
+            io.github.rohrl.interstellar.wormhole.WormholeState.demo(player.getServer());
             wormholeView(player,0,32);
             message(player,"Wormhole exhibit: orange and cyan destinations, 1145 blocks apart. Preparing both regions. /interstellar demo view mouth_a|mouth_b|throat_a|throat_b; /interstellar demo leave returns you.");
             return;
@@ -152,7 +153,7 @@ public final class DemoCommands {
     }
     private static int wormholeView(ServerPlayerEntity player,int end,double distance) {
         if(!WormholePair.active(player.getWorld())) {message(player,"Enter the wormhole exhibit first: /interstellar demo wormholes");return 0;}
-        var c=WormholePair.centre(end);
+        var c=WormholePair.centre(player.getWorld(),end);
         int result=view(player,c.x,c.y-player.getStandingEyeHeight(),c.z-distance,0,0);
         io.github.rohrl.interstellar.wormhole.WormholeTravel.reset(player);return result;
     }
@@ -190,6 +191,6 @@ public final class DemoCommands {
     private static final class Job {
         final ServerWorld world;final List<Map.Entry<BlockPos,BlockState>> blocks;
         final Set<UUID> waiting=new HashSet<>();int cursor;boolean build;
-        Job(ServerWorld world) {this.world=world;blocks=new ArrayList<>((WormholePair.active(world)?WormholeScene.blocks():DemoScene.blocks()).entrySet());}
+        Job(ServerWorld world) {this.world=world;blocks=new ArrayList<>((world.getRegistryKey().equals(WormholePair.WORLD)?WormholeScene.blocks():DemoScene.blocks()).entrySet());}
     }
 }

@@ -24,6 +24,18 @@ Minecraft may show an experimental-settings notice because the mod registers a c
 
 ## Choose an exhibit
 
+**F4** opens the live Interstellar settings menu, including AA, resolution, fine
+light paths, smooth lighting, RTX/OpenGL, F10 lensing and camera upright reset.
+Quality changes work on both renderers and are saved. Smooth lighting recaptures
+terrain; full resolution costs substantially more than the default50%.
+
+For your own portals, obtain **Wormhole Seed** in Creative → Tools & Utilities,
+or `/give @s interstellar:wormhole_seed`. Throw it onto a surface well ahead:
+the first mouth waits for a second, then the pair connects. Later throws move the
+oldest mouth. **Sneak + use** closes the pair. One pair per save, same dimension,
+radius8. The demo command installs its exhibit as this same pair; close it before
+starting a pair in another dimension. [Full controls and limits](settings-and-wormhole-seed.md).
+
 - **Wormholes:** `/interstellar demo wormholes` connects orange and cyan scenes about 1,145 blocks apart. Lensing arms automatically; wait for **World view ready**, then fly into the sphere to cross. `/interstellar demo view mouth_a` or `mouth_b` gives an exterior view; `throat_a` or `throat_b` starts just before passage. Cross either way. Off-centre entry can rotate the camera; a named viewpoint resets it. These are hypothetical Ellis wormholes, with no event horizon or compulsory gravity pull. Player passage and remote terrain/block entities are supported; remote mob tracking and mob/projectile passage are not part of this version.
 - **New gameplay:** `/interstellar demo gameplay` builds a separate exhibit with gradual mass progression, automatic discovery and local mob/projectile gravity. A complete 4×4×4 source is at the black-hole threshold; removing blocks reduces the field, and compact 2×2×2/3×3×3 builds keep visible material with lensing. Close mobs can lift and be captured; ordinary/spectral arrows and thrown projectiles bend. Players and terrain are unaffected. Model, settings and limits: `docs/gameplay-gravity.md` in the repository or demo archive.
 - **Arrow course:** `/interstellar demo arrows` enters another separate exhibit with four automatic calibrated dispensers. Orange demonstrates a transient loop, cyan a flyby, magenta a shot pulled back, and red capture. `/interstellar demo view arrows` restores the close viewpoint; `/interstellar demo arrows on|off|once` controls firing. The scene is tuned for its original64-block source and default gravity; edits change the paths. Native arrow drag, downward gravity and collisions remain active. Your existing gameplay exhibit is preserved.
