@@ -1,0 +1,29 @@
+NATIVE scene=C:\work\code\minecraft\interstellar\interstellar\run\rtx-native\capture-1790563283292 triangles=6273150 groups=[6261506, 8956, 2688] softwareNodes=2172333 cpuBuildMs=1409.809
+DEVICE name=NVIDIA GeForce RTX 5070 Ti timestampNs=1.000 scratchAlignment=128
+LIMIT maxStorageBufferRange=4294967295
+BUFFER bytes=18874368 memoryType=4 flags=0x7
+UPLOAD geometryBytes=903333600 stagingBytes=18874368 copyGpuMs=2.057760
+BUFFER bytes=69514656 memoryType=4 flags=0x7
+BUFFER bytes=19136560 memoryType=4 flags=0x7
+BUFFER bytes=192 memoryType=4 flags=0x7
+AS bottomBuildGpuMs=15.250688 topBuildGpuMs=0.032672 storageBytes=387975680
+BUFFER bytes=13739280 memoryType=4 flags=0x7
+BUFFER bytes=4579760 memoryType=4 flags=0x7
+CHECK view=view-1790563284453 pass=probe alpha=0 queries=286235 masks=[214192, 43098, 663, 446, 0, 0, 10731, 17105] hits=3482 pairedFailures=0 boundaryDifferences=0 cpuFailures=0 productionDifferences=0 coplanarIdTies=0 maxTError=1.78814e-07
+TIMING pass=probe alpha=0 softwareMs=0.119368 hardwareMs=0.015136 speedup=7.886
+CHECK view=view-1790563284453 pass=probe alpha=1 queries=286235 masks=[214192, 43098, 663, 446, 0, 0, 10731, 17105] hits=3482 pairedFailures=0 boundaryDifferences=0 cpuFailures=0 productionDifferences=0 coplanarIdTies=0 maxTError=1.78814e-07
+TIMING pass=probe alpha=1 softwareMs=0.121896 hardwareMs=0.015916 speedup=7.659
+BUFFER bytes=11088 memoryType=4 flags=0x7
+BUFFER bytes=3696 memoryType=4 flags=0x7
+CHECK view=view-1790563284453 pass=mask alpha=0 queries=231 masks=[109, 63, 0, 0, 0, 0, 21, 38] hits=29 pairedFailures=0 boundaryDifferences=0 cpuFailures=0 productionDifferences=0 coplanarIdTies=0 maxTError=1.19209e-07
+TIMING pass=mask alpha=0 softwareMs=0.025380 hardwareMs=0.003620 speedup=7.011
+CHECK view=view-1790563284453 pass=mask alpha=1 queries=231 masks=[109, 63, 0, 0, 0, 0, 21, 38] hits=20 pairedFailures=0 boundaryDifferences=0 cpuFailures=0 productionDifferences=0 coplanarIdTies=0 maxTError=5.96046e-08
+TIMING pass=mask alpha=1 softwareMs=0.027388 hardwareMs=0.004124 speedup=6.641
+BUFFER bytes=16138464 memoryType=4 flags=0x7
+BUFFER bytes=5379488 memoryType=4 flags=0x7
+CHECK view=view-1790563310533 pass=probe alpha=0 queries=336218 masks=[286778, 29430, 304, 31, 0, 0, 8631, 11044] hits=2309 pairedFailures=0 boundaryDifferences=0 cpuFailures=0 productionDifferences=0 coplanarIdTies=0 maxTError=1.78814e-07
+TIMING pass=probe alpha=0 softwareMs=0.070704 hardwareMs=0.012068 speedup=5.859
+CHECK view=view-1790563310533 pass=probe alpha=1 queries=336218 masks=[286778, 29430, 304, 31, 0, 0, 8631, 11044] hits=2304 pairedFailures=0 boundaryDifferences=0 cpuFailures=0 productionDifferences=0 coplanarIdTies=0 maxTError=1.78814e-07
+TIMING pass=probe alpha=1 softwareMs=0.071216 hardwareMs=0.012576 speedup=5.663
+EMPTY C:\work\code\minecraft\interstellar\interstellar\run\rtx-native\capture-1790563283292\view-1790563310533 mask
+RESULTS C:\work\code\minecraft\interstellar\interstellar\run\rtx-native\capture-1790563283292\replay-results-1790563336286.jsonl

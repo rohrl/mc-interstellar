@@ -41,6 +41,12 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
+// Experimental interop code and Vulkan bindings are absent from ordinary builds.
+if (project.hasProperty('interstellarRtxProbe')) {
+    sourceSets.client.java.srcDir 'tools/rtx-probe/client'
+    dependencies { clientImplementation 'org.lwjgl:lwjgl-vulkan:3.3.3' }
+}
+
 processResources {
     inputs.property 'version', project.version
     filesMatching('fabric.mod.json') { expand version: project.version }
@@ -63,6 +69,7 @@ tasks.named('runClient') {
     args '--username', 'InterstellarDev'
     if(project.hasProperty('interstellarProfile'))jvmArgs '-Dinterstellar.profile=true'
     if(project.hasProperty('interstellarShaderClocks'))jvmArgs '-Dinterstellar.shaderClocks=true'
+    if(project.hasProperty('interstellarRtxProbe'))jvmArgs '-Dinterstellar.rtxProbe=true', '-Dorg.lwjgl.system.stackSize=512'
 }
 
 tasks.withType(AbstractArchiveTask).configureEach {

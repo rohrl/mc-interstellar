@@ -1,5 +1,7 @@
 package io.github.rohrl.interstellar.client;
 
+import io.github.rohrl.interstellar.Interstellar;
+
 import io.github.rohrl.interstellar.config.CalibrationSettings;
 import io.github.rohrl.interstellar.science.Schwarzschild;
 import net.fabricmc.api.ClientModInitializer;
@@ -83,6 +85,15 @@ public final class InterstellarClient implements ClientModInitializer {
                     final int f=frame,d=detail,p=pass;
                     String name="terrain_clock_"+(frame==0?"moving":"horizon")+"_"+detail+"_"+(pass==0?"probe":"mask");
                     context.register(Identifier.of("interstellar",name),VertexFormats.POSITION,program->TerrainClocks.PROGRAMS[f][d][p]=program);
+                }
+                if(TerrainReplay.ENABLED) {
+                    Interstellar.LOGGER.info("RTX replay capabilities: SSBO={}, externalMemory={}, externalSemaphore={}",
+                        TerrainReplay.supported(),org.lwjgl.opengl.GL.getCapabilities().GL_EXT_memory_object_win32,
+                        org.lwjgl.opengl.GL.getCapabilities().GL_EXT_semaphore_win32);
+                    if(TerrainReplay.supported())for(int pass=0;pass<2;pass++) {
+                        final int p=pass;
+                        context.register(Identifier.of("interstellar","terrain_replay_"+(pass==0?"probe":"mask")),VertexFormats.POSITION,program->TerrainReplay.PROGRAMS[p]=program);
+                    }
                 }
                 context.register(Identifier.of("interstellar", "terrain_sample_fold"), VertexFormats.POSITION, TerrainSamples::setShader);
             }

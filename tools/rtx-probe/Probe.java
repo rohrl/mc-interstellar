@@ -19,12 +19,15 @@ public final class Probe implements AutoCloseable {
     VkCommandBuffer command; VkPhysicalDeviceMemoryProperties memory;
     long pool,queryPool,layout,descriptorLayout,descriptorPool,set,hardware,software;
     float timestampPeriod; int queueFamily,scratchAlignment; final List<Runnable> cleanup=new ArrayList<>();
+    final String shaderFile;final int bufferBindings,pushBytes,vertexStride;final boolean opaque;
     record Buffer(long handle,long memory,long address,ByteBuffer mapped,long size) {}
     record Acceleration(long handle,long address,double gpuMs,long bytes) {}
     static void check(int result){if(result!=VK_SUCCESS)throw new IllegalStateException("Vulkan error "+result);}
     static long aligned(long n,long a){return (n+a-1)&-a;}
 
-    Probe() throws Exception {
+    Probe() throws Exception {this("tools/rtx-probe/query.comp",4,4,16,true);}
+    Probe(String shaderFile,int bufferBindings,int pushBytes,int vertexStride,boolean opaque) throws Exception {
+        this.shaderFile=shaderFile;this.bufferBindings=bufferBindings;this.pushBytes=pushBytes;this.vertexStride=vertexStride;this.opaque=opaque;
         try(MemoryStack s=MemoryStack.stackPush()) {
             var app=VkApplicationInfo.calloc(s).sType$Default().pApplicationName(s.UTF8("Interstellar RTX probe")).apiVersion(VK_API_VERSION_1_2);
             var create=VkInstanceCreateInfo.calloc(s).sType$Default().pApplicationInfo(app);
@@ -57,12 +60,12 @@ public final class Probe implements AutoCloseable {
             check(vkCreateCommandPool(device,VkCommandPoolCreateInfo.calloc(s).sType$Default().queueFamilyIndex(queueFamily).flags(VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT),null,out));pool=out.get(0);
             check(vkAllocateCommandBuffers(device,VkCommandBufferAllocateInfo.calloc(s).sType$Default().commandPool(pool).level(VK_COMMAND_BUFFER_LEVEL_PRIMARY).commandBufferCount(1),p));command=new VkCommandBuffer(p.get(0),device);
             check(vkCreateQueryPool(device,VkQueryPoolCreateInfo.calloc(s).sType$Default().queryType(VK_QUERY_TYPE_TIMESTAMP).queryCount(2),null,out));queryPool=out.get(0);
-            var bindings=VkDescriptorSetLayoutBinding.calloc(5,s);
-            for(int i=0;i<5;i++)bindings.get(i).binding(i).descriptorType(i==0?VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR:VK_DESCRIPTOR_TYPE_STORAGE_BUFFER).descriptorCount(1).stageFlags(VK_SHADER_STAGE_COMPUTE_BIT);
+            var bindings=VkDescriptorSetLayoutBinding.calloc(bufferBindings+1,s);
+            for(int i=0;i<=bufferBindings;i++)bindings.get(i).binding(i).descriptorType(i==0?VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR:VK_DESCRIPTOR_TYPE_STORAGE_BUFFER).descriptorCount(1).stageFlags(VK_SHADER_STAGE_COMPUTE_BIT);
             check(vkCreateDescriptorSetLayout(device,VkDescriptorSetLayoutCreateInfo.calloc(s).sType$Default().pBindings(bindings),null,out));descriptorLayout=out.get(0);
-            var push=VkPushConstantRange.calloc(1,s).stageFlags(VK_SHADER_STAGE_COMPUTE_BIT).offset(0).size(4);
+            var push=VkPushConstantRange.calloc(1,s).stageFlags(VK_SHADER_STAGE_COMPUTE_BIT).offset(0).size(pushBytes);
             check(vkCreatePipelineLayout(device,VkPipelineLayoutCreateInfo.calloc(s).sType$Default().pSetLayouts(s.longs(descriptorLayout)).pPushConstantRanges(push),null,out));layout=out.get(0);
-            var sizes=VkDescriptorPoolSize.calloc(2,s);sizes.get(0).type(VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR).descriptorCount(1);sizes.get(1).type(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER).descriptorCount(4);
+            var sizes=VkDescriptorPoolSize.calloc(2,s);sizes.get(0).type(VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR).descriptorCount(1);sizes.get(1).type(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER).descriptorCount(bufferBindings);
             check(vkCreateDescriptorPool(device,VkDescriptorPoolCreateInfo.calloc(s).sType$Default().maxSets(1).pPoolSizes(sizes),null,out));descriptorPool=out.get(0);
             check(vkAllocateDescriptorSets(device,VkDescriptorSetAllocateInfo.calloc(s).sType$Default().descriptorPool(descriptorPool).pSetLayouts(s.longs(descriptorLayout)),out));set=out.get(0);
         }
@@ -101,9 +104,9 @@ public final class Probe implements AutoCloseable {
     Acceleration build(Buffer vertices,int triangles,Acceleration bottom) {
         try(MemoryStack s=MemoryStack.stackPush()) {
             boolean top=bottom!=null;Buffer input=vertices;
-            var geometry=VkAccelerationStructureGeometryKHR.calloc(1,s).sType$Default().flags(VK_GEOMETRY_OPAQUE_BIT_KHR).geometryType(top?VK_GEOMETRY_TYPE_INSTANCES_KHR:VK_GEOMETRY_TYPE_TRIANGLES_KHR);
+            var geometry=VkAccelerationStructureGeometryKHR.calloc(1,s).sType$Default().flags(opaque?VK_GEOMETRY_OPAQUE_BIT_KHR:0).geometryType(top?VK_GEOMETRY_TYPE_INSTANCES_KHR:VK_GEOMETRY_TYPE_TRIANGLES_KHR);
             if(top){input=buffer(64,VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR,true);var inst=VkAccelerationStructureInstanceKHR.create(memAddress(input.mapped));for(int i=0;i<12;i++)inst.transform().matrix(i,i==0||i==5||i==10?1:0);inst.instanceCustomIndex(0).mask(255).instanceShaderBindingTableRecordOffset(0).flags(VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR).accelerationStructureReference(bottom.address);geometry.geometry().instances().sType$Default().arrayOfPointers(false).data().deviceAddress(input.address);}
-            else geometry.geometry().triangles().sType$Default().vertexFormat(VK_FORMAT_R32G32B32_SFLOAT).vertexStride(16).maxVertex(triangles*3-1).indexType(VK_INDEX_TYPE_NONE_KHR).vertexData().deviceAddress(input.address);
+            else geometry.geometry().triangles().sType$Default().vertexFormat(VK_FORMAT_R32G32B32_SFLOAT).vertexStride(vertexStride).maxVertex(triangles*3-1).indexType(VK_INDEX_TYPE_NONE_KHR).vertexData().deviceAddress(input.address);
             int count=top?1:triangles;
             var info=VkAccelerationStructureBuildGeometryInfoKHR.calloc(1,s).sType$Default().type(top?VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR:VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR).flags(VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR).mode(VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR).geometryCount(1).pGeometries(geometry);
             var sizes=VkAccelerationStructureBuildSizesInfoKHR.calloc(s).sType$Default();vkGetAccelerationStructureBuildSizesKHR(device,VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR,info.get(0),s.ints(count),sizes);
@@ -118,7 +121,7 @@ public final class Probe implements AutoCloseable {
         }
     }
     long pipeline(boolean rt) throws Exception {
-        String source=Files.readString(Path.of("tools/rtx-probe/query.comp"));if(rt)source=source.replace("#version 460","#version 460\n#define HARDWARE");
+        String source=Files.readString(Path.of(shaderFile));if(rt)source=source.replace("#version 460","#version 460\n#define HARDWARE");
         long compiler=shaderc_compiler_initialize(),options=shaderc_compile_options_initialize();
         shaderc_compile_options_set_target_env(options,shaderc_target_env_vulkan,shaderc_env_version_vulkan_1_2);shaderc_compile_options_set_optimization_level(options,shaderc_optimization_level_performance);
         long result=shaderc_compile_into_spv(compiler,source,shaderc_compute_shader,"query.comp","main",options);
@@ -129,11 +132,34 @@ public final class Probe implements AutoCloseable {
             var info=VkComputePipelineCreateInfo.calloc(1,s).sType$Default().stage(stage).layout(layout);check(vkCreateComputePipelines(device,VK_NULL_HANDLE,info,null,out));long pipeline=out.get(0);vkDestroyShaderModule(device,module,null);return pipeline;
         }finally{shaderc_result_release(result);shaderc_compile_options_release(options);shaderc_compiler_release(compiler);}
     }
+    Acceleration instances(Acceleration[] bottoms,int[] firstTriangle) {
+        try(MemoryStack s=MemoryStack.stackPush()) {
+            int count=0;for(var bottom:bottoms)if(bottom!=null)count++;
+            Buffer input=buffer(count*64L,VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR,true);int at=0;
+            for(int tree=0;tree<bottoms.length;tree++)if(bottoms[tree]!=null) {
+                var inst=VkAccelerationStructureInstanceKHR.create(memAddress(input.mapped)+64L*at++);
+                for(int i=0;i<12;i++)inst.transform().matrix(i,i==0||i==5||i==10?1:0);
+                inst.instanceCustomIndex(firstTriangle[tree]).mask(1<<tree).instanceShaderBindingTableRecordOffset(0).flags(VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR).accelerationStructureReference(bottoms[tree].address);
+            }
+            var geometry=VkAccelerationStructureGeometryKHR.calloc(1,s).sType$Default().geometryType(VK_GEOMETRY_TYPE_INSTANCES_KHR);
+            geometry.geometry().instances().sType$Default().arrayOfPointers(false).data().deviceAddress(input.address);
+            var info=VkAccelerationStructureBuildGeometryInfoKHR.calloc(1,s).sType$Default().type(VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR).flags(VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR).mode(VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR).pGeometries(geometry);
+            var sizes=VkAccelerationStructureBuildSizesInfoKHR.calloc(s).sType$Default();vkGetAccelerationStructureBuildSizesKHR(device,VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR,info.get(0),s.ints(count),sizes);
+            Buffer storage=buffer(sizes.accelerationStructureSize(),VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR,false),scratch=buffer(sizes.buildScratchSize()+scratchAlignment,VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,false);
+            var out=s.mallocLong(1);check(vkCreateAccelerationStructureKHR(device,VkAccelerationStructureCreateInfoKHR.calloc(s).sType$Default().buffer(storage.handle).size(storage.size).type(VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR),null,out));long handle=out.get(0);cleanup.add(()->vkDestroyAccelerationStructureKHR(device,handle,null));
+            info.dstAccelerationStructure(handle).scratchData().deviceAddress(aligned(scratch.address,scratchAlignment));
+            begin();vkCmdBuildAccelerationStructuresKHR(command,info,s.pointers(VkAccelerationStructureBuildRangeInfoKHR.calloc(s).primitiveCount(count).address()));
+            var barrier=VkMemoryBarrier.calloc(1,s).sType$Default().srcAccessMask(VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_KHR).dstAccessMask(VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR);
+            vkCmdPipelineBarrier(command,VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR,VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,0,barrier,null,null);
+            double ms=finish();long address=vkGetAccelerationStructureDeviceAddressKHR(device,VkAccelerationStructureDeviceAddressInfoKHR.calloc(s).sType$Default().accelerationStructure(handle));
+            return new Acceleration(handle,address,ms,sizes.accelerationStructureSize());
+        }
+    }
     void descriptors(Acceleration top,Buffer... buffers) {
         try(MemoryStack s=MemoryStack.stackPush()){
-            var writes=VkWriteDescriptorSet.calloc(5,s);var as=VkWriteDescriptorSetAccelerationStructureKHR.calloc(s).sType$Default().pAccelerationStructures(s.longs(top.handle));
+            var writes=VkWriteDescriptorSet.calloc(bufferBindings+1,s);var as=VkWriteDescriptorSetAccelerationStructureKHR.calloc(s).sType$Default().pAccelerationStructures(s.longs(top.handle));
             writes.get(0).sType$Default().dstSet(set).dstBinding(0).descriptorCount(1).descriptorType(VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR).pNext(as.address());
-            for(int i=0;i<4;i++){var info=VkDescriptorBufferInfo.calloc(1,s).buffer(buffers[i].handle).offset(0).range(buffers[i].size);writes.get(i+1).sType$Default().dstSet(set).dstBinding(i+1).descriptorType(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER).descriptorCount(1).pBufferInfo(info);}
+            for(int i=0;i<bufferBindings;i++){var info=VkDescriptorBufferInfo.calloc(1,s).buffer(buffers[i].handle).offset(0).range(buffers[i].size);writes.get(i+1).sType$Default().dstSet(set).dstBinding(i+1).descriptorType(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER).descriptorCount(1).pBufferInfo(info);}
             vkUpdateDescriptorSets(device,writes,null);
         }
     }

@@ -1,7 +1,8 @@
 # RTX intersection probe
 
-A standalone Vulkan 1.2 compute comparison. It does not install a Minecraft backend,
-change production shaders, or read any saved world. See the
+A standalone Vulkan 1.2 compute comparison, with an opt-in native capture and
+in-game sharing test described below. It does not install a production backend
+or parse saved-world files. See the
 [measured report](../../docs/rtx-probe-2026-09-24.md) before interpreting its numbers.
 
 On Windows x64 with Java 21 and a Vulkan ray-query-capable discrete GPU:
@@ -61,3 +62,78 @@ from actual hit readback, sampled CPU references and API return checks.
 Primary API references: [Khronos ray queries](https://docs.vulkan.org/samples/latest/samples/extensions/ray_queries/README.html),
 [Vulkan ray-tracing guide](https://docs.vulkan.org/guide/latest/extensions/ray_tracing.html),
 [LWJGL bindings](https://www.lwjgl.org/).
+
+## Native capture and interop milestone
+
+The [real-scene report](../../docs/rtx-native-feasibility-2026-09-28.md) covers
+`NativeReplay.java`, `native-query.comp`, the capture shaders and the optional
+`client/.../RtxInteropSmoke.java`. Ordinary builds exclude the latter and its Vulkan
+dependency. The standalone replay still uses the hash-checked jars above.
+
+### Capture actual renderer work
+
+```powershell
+./gradlew.bat runClient -PinterstellarRtxProbe
+```
+
+Use a disposable scene or record the owner's original state before testing. Capture
+requires SSBO and 420pack support; the tested sharing path requires Windows external
+memory/semaphore extensions. Diagnostic Vulkan setup uses a 512 KiB LWJGL stack.
+
+1. Use an ordinary exterior BH source, then F9 for the frozen terrain screen.
+2. Shift+M selects the streamed native scene and initially disables lensing; Space
+   restores lensing. Wait for `Streaming terrain ready:` in the log.
+3. Keep default selective, split-moving, shared-quad settings. **Ctrl+Alt+R** records
+   native geometry, atlases, actual chords and paired colour checks. It pauses briefly
+   for GPU readback and file writes; it is never a live performance measurement.
+4. Rotate with the arrow keys, then record another view. Geometry is reused within
+   that screen. Keep geometry/material settings and frozen world state unchanged
+   between captures; reopen F9 for a different scene. Large captures consume about
+   1 GB each; use a small number of views per replay process.
+5. Completion logs name `run/rtx-native/capture-.../view-...`. Missing completion,
+   buffer overflow, nonfinite data or colour differences invalidate that capture.
+
+Historical recordings used Ctrl+Alt+B; the final shortcut avoids Minecraft's global
+Ctrl+B narrator action. The final shortcut/metadata-only edits were build-checked.
+
+### Replay, with Minecraft closed normally
+
+```powershell
+tools/rtx-probe/run-native.ps1 -Scene run/rtx-native/capture-TIMESTAMP
+```
+
+The runner refuses an open development client. It builds three native-geometry
+BLAS plus a TLAS, a separate software BVH, then replays each view in opaque-acceptance
+and alpha-aware modes. Results use unique `replay-results-TIMESTAMP.jsonl` files;
+unexplained hit/reference discrepancies suppress that case's timing. Retain the log
+as well: it has CPU/GPU setup costs, tree masks and correctness counters.
+
+The software baseline is a flat triangle BVH, not the production chunk/quad shader.
+Recorded empty-region masks are consumed without paying to create them. Query inputs
+are compact and warm; no complete optical frame or live update is timed.
+
+Small reproducible material fixture (no Minecraft world needed):
+
+```powershell
+py -3 tools/rtx-probe/native-fixture.py
+tools/rtx-probe/run-native.ps1 -Scene run/rtx-native/material-fixture
+```
+
+Fixture timings are not performance evidence. It checks candidate acceptance and
+analytic distances, not final colour compositing. CPU checks share the software BVH
+but use double-precision intersections. See the report for boundary/tolerance rules.
+
+### In-game image sharing
+
+In the opt-in client, **Ctrl+Alt+I** in F9 runs the independent Vulkan/GL test, even
+before terrain capture is ready. It does not need an exported scene. Results appear
+under `run/rtx-native/interop-TIMESTAMP/interop.txt`; errors are logged explicitly.
+
+The test matches device UUIDs, imports a Vulkan RGBA8 image and two Win32 semaphore
+handles into GL, clears/blits with ownership round trips, and checks sampled pixels.
+Win32 exported handles are closed after import. Framebuffers, texture bindings,
+pixel pack/unpack state and scissor state are restored. No Vulkan validation layer
+is assumed. Clear/blit results are not full-backend timing or long-duration validation.
+
+Return to the ordinary client with `./gradlew.bat clean build` and
+`./gradlew.bat runClient` without the property. Restore any changed player/test state.

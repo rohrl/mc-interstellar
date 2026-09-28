@@ -65,7 +65,8 @@ final class TerrainScreen extends Screen {
     private SimpleFramebuffer target;
     private final GlowingOutline glowOutline=new GlowingOutline();
     private LabBenchmark benchmark;
-    private boolean profileCounters,profileClocks;
+    private boolean profileCounters,profileClocks,recordReplay;
+    private java.nio.file.Path replayScene;
     private int profileExperiment;
     private Vec3d camera;
     private float yaw,pitch;
@@ -254,6 +255,13 @@ final class TerrainScreen extends Screen {
                     samples.begin(1);shader.getUniformOrDefault("SampleOffset").set(.25f);drawQuad(w,h);
                     if(benchmark!=null)benchmark.mark(4);
                 } else if(benchmark!=null) {benchmark.mark(2);benchmark.mark(3);benchmark.mark(4);}
+                if(recordReplay) {
+                    recordReplay=false;
+                    replayScene=TerrainReplay.capture(replayScene,w,h,mask,mesh,moving,
+                        new ShaderProgram[]{currentShader(),shader},program->{shader=program;configureShader(w,h);},()->drawQuad(w,h),
+                        appearanceScene()+" camera="+camera+" source="+centre()+" rs="+source.schwarzschildRadius()+" yaw="+yaw+" pitch="+pitch);
+                    validationStatus="Native replay saved under run/rtx-native; normal rendering resumed";
+                }
                 if(profileClocks) {
                     profileClocks=false;
                     TerrainClocks.capture(w,h,mask,horizonView(),new ShaderProgram[]{currentShader(),shader},
@@ -505,6 +513,18 @@ final class TerrainScreen extends Screen {
         finally {fastFetch=old;}
     }
     @Override public boolean keyPressed(int key,int scan,int modifiers) {
+        if(TerrainReplay.ENABLED && key==GLFW.GLFW_KEY_I && (modifiers&(GLFW.GLFW_MOD_CONTROL|GLFW.GLFW_MOD_ALT))==(GLFW.GLFW_MOD_CONTROL|GLFW.GLFW_MOD_ALT)) {
+            cancelBenchmark();validationStatus=TerrainReplay.interopOnly();return true;
+        }
+        // Ctrl+B is Minecraft's global narrator shortcut, even with Alt held.
+        if(TerrainReplay.ENABLED && key==GLFW.GLFW_KEY_R && (modifiers&(GLFW.GLFW_MOD_CONTROL|GLFW.GLFW_MOD_ALT))==(GLFW.GLFW_MOD_CONTROL|GLFW.GLFW_MOD_ALT)) {
+            cancelBenchmark();
+            if(!TerrainReplay.supported())validationStatus="Native replay SSBO support unavailable";
+            else if(live || !useSelectiveMaterials() || !useQuads() || !useSeparateMoving() || horizonView() || extendedSource() || !mesh.ready())
+                validationStatus="Replay needs ready frozen ordinary BH/default native rendering";
+            else {recordReplay=true;validationStatus="Recording native rays and geometry...";}
+            return true;
+        }
         if(TerrainClocks.ENABLED && key==GLFW.GLFW_KEY_B && (modifiers&GLFW.GLFW_MOD_ALT)!=0) {
             cancelBenchmark();
             if(!TerrainClocks.supported())validationStatus="Shader clocks unsupported";

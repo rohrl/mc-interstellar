@@ -1,0 +1,21 @@
+NATIVE scene=run\rtx-native\capture-1790562042737 triangles=6273234 groups=[6261506, 9040, 2688] softwareNodes=2172381 cpuBuildMs=1390.340
+DEVICE name=NVIDIA GeForce RTX 5070 Ti timestampNs=1.000 scratchAlignment=128
+LIMIT maxStorageBufferRange=4294967295
+BUFFER bytes=18874368 memoryType=4 flags=0x7
+UPLOAD geometryBytes=903345696 stagingBytes=18874368 copyGpuMs=2.069696
+BUFFER bytes=69516192 memoryType=4 flags=0x7
+BUFFER bytes=19136560 memoryType=4 flags=0x7
+BUFFER bytes=192 memoryType=4 flags=0x7
+AS bottomBuildGpuMs=15.341376 topBuildGpuMs=0.032544 storageBytes=387976704
+BUFFER bytes=13751280 memoryType=4 flags=0x7
+BUFFER bytes=4583760 memoryType=4 flags=0x7
+CHECK view=view-1790562043873 pass=probe alpha=0 queries=286485 masks=[214857, 43691, 697, 532, 0, 0, 10280, 16428] hits=3482 pairedFailures=0 boundaryDifferences=0 cpuFailures=0 productionDifferences=0 coplanarIdTies=0 maxTError=1.78814e-07
+TIMING pass=probe alpha=0 softwareMs=0.115228 hardwareMs=0.014880 speedup=7.744
+CHECK view=view-1790562043873 pass=probe alpha=1 queries=286485 masks=[214857, 43691, 697, 532, 0, 0, 10280, 16428] hits=3482 pairedFailures=0 boundaryDifferences=0 cpuFailures=0 productionDifferences=0 coplanarIdTies=0 maxTError=1.78814e-07
+TIMING pass=probe alpha=1 softwareMs=0.117028 hardwareMs=0.015656 speedup=7.475
+BUFFER bytes=11088 memoryType=4 flags=0x7
+BUFFER bytes=3696 memoryType=4 flags=0x7
+CHECK view=view-1790562043873 pass=mask alpha=0 queries=231 masks=[110, 65, 0, 0, 0, 0, 20, 36] hits=29 pairedFailures=0 boundaryDifferences=0 cpuFailures=0 productionDifferences=0 coplanarIdTies=0 maxTError=5.96046e-08
+TIMING pass=mask alpha=0 softwareMs=0.028456 hardwareMs=0.003620 speedup=7.861
+CHECK view=view-1790562043873 pass=mask alpha=1 queries=231 masks=[110, 65, 0, 0, 0, 0, 20, 36] hits=20 pairedFailures=0 boundaryDifferences=0 cpuFailures=0 productionDifferences=0 coplanarIdTies=0 maxTError=5.96046e-08
+TIMING pass=mask alpha=1 softwareMs=0.030504 hardwareMs=0.004132 speedup=7.382

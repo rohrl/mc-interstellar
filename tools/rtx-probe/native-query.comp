@@ -1,0 +1,97 @@
+#version 460
+#ifdef HARDWARE
+#extension GL_EXT_ray_query : require
+layout(set=0,binding=0) uniform accelerationStructureEXT scene;
+#endif
+layout(local_size_x=64) in;
+layout(std430,set=0,binding=1) readonly buffer Vertices {vec4 vertices[];};
+struct Node {vec4 lo;vec4 hi;};
+layout(std430,set=0,binding=2) readonly buffer Nodes {Node nodes[];};
+struct Ray {vec4 origin;vec4 delta;uvec4 meta;};
+layout(std430,set=0,binding=3) readonly buffer Rays {Ray rays[];};
+layout(std430,set=0,binding=4) writeonly buffer Results {vec4 result[];};
+layout(std430,set=0,binding=5) readonly buffer Atlases {uint texels[];};
+layout(push_constant) uniform Params {uint count;uint alphaMode;uint root0;uint root1;uint root2;};
+
+// Both implementations use identical native material candidate acceptance.
+// Captured transparent continuations are separate queries; this does not composite a frame.
+bool accept(uint tri,vec2 bary,Ray ray) {
+    uint base=tri*9;
+    float encoded=vertices[base].w;
+    uint tree=uint(encoded)/256u;float tag=mod(encoded,256.0)-128.0;
+    if((ray.meta.w&tree)==0)return false;
+    if(abs(tag)>=64.0)tag-=sign(tag)*64.0;
+    if(tag==-4.0)tag=0.0;
+    if(abs(tag)>=32.0)return false; // returning-body history is outside this capture's scope
+    float mode=abs(tag);bool cloud=mode==5.0||mode==6.0;
+    if(cloud && (ray.meta.z&2u)==0u)return false; // probe clouds blend but do not become the solid hit
+    bool twoSided=mode==2.0||mode==6.0||(mode>=7.0&&mod(mode,2.0)==0.0);
+    vec3 a=vertices[base].xyz,b=vertices[base+3].xyz,c=vertices[base+6].xyz;
+    float det=dot(b-a,cross(ray.delta.xyz,c-a));
+    if(twoSided?abs(det)<1e-10:det<1e-10)return false;
+    if(alphaMode==0)return true;
+    vec3 weights=vec3(1-bary.x-bary.y,bary);
+    vec4 uvA=vertices[base+1],uvB=vertices[base+4],uvC=vertices[base+7];
+    vec2 uv=uvA.xy*weights.x+uvB.xy*weights.y+uvC.xy*weights.z;
+    uint atlas=cloud?2u:tag>0.0?1u:0u,header=atlas*4u;
+    uvec2 size=uvec2(texels[header],texels[header+1]);
+    if(mode==13.0||mode==14.0||mode==17.0||mode==18.0)
+        uv=(mod(uvA.zw,4096.0)+fract(uv)*floor(uvA.zw/4096.0))/vec2(size);
+    ivec2 xy=clamp(ivec2(floor(uv*vec2(size))),ivec2(0),ivec2(size)-1);
+    uint rgba=texels[texels[header+2]+uint(xy.y)*size.x+uint(xy.x)];
+    float alpha=float(mode==15.0||mode==16.0?rgba&255u:rgba>>24u)/255.0;
+    if(cloud)alpha*=dot(vec3(vertices[base+2].a,vertices[base+5].a,vertices[base+8].a),weights);
+    return alpha>=(mode==9.0||mode==10.0?.001:.1);
+}
+#ifndef HARDWARE
+bool bounds(vec3 o,vec3 invD,vec3 d,vec3 lo,vec3 hi,float best) {
+    if(any(bvec3(abs(d.x)<1e-12&&(o.x<lo.x||o.x>hi.x),abs(d.y)<1e-12&&(o.y<lo.y||o.y>hi.y),abs(d.z)<1e-12&&(o.z<lo.z||o.z>hi.z))))return false;
+    vec3 p=(lo-o)*invD,q=(hi-o)*invD;
+    vec3 nearT=min(p,q),farT=max(p,q);
+    nearT=mix(nearT,vec3(-1e30),lessThan(abs(d),vec3(1e-12)));farT=mix(farT,vec3(1e30),lessThan(abs(d),vec3(1e-12)));
+    return max(max(nearT.x,nearT.y),max(nearT.z,0.0))<=min(min(farT.x,farT.y),min(farT.z,best));
+}
+vec3 triangle(Ray ray,uint tri,float best) {
+    uint base=tri*9;vec3 a=vertices[base].xyz,e1=vertices[base+3].xyz-a,e2=vertices[base+6].xyz-a;
+    vec3 p=cross(ray.delta.xyz,e2);float det=dot(e1,p);if(abs(det)<1e-10)return vec3(-1);
+    vec3 s=ray.origin.xyz-a;float u=dot(s,p)/det;if(u<0||u>1)return vec3(-1);
+    vec3 q=cross(s,e1);float v=dot(ray.delta.xyz,q)/det;if(v<0||u+v>1)return vec3(-1);
+    float t=dot(e2,q)/det;if(t<0||t>1||t>=best)return vec3(-1);
+    return vec3(t,u,v);
+}
+#endif
+void main() {
+    uint id=gl_GlobalInvocationID.x;if(id>=count)return;
+    Ray ray=rays[id];vec4 hit=vec4(-1,0,0,0);
+    if(ray.meta.w==0){result[id]=hit;return;}
+#ifdef HARDWARE
+    rayQueryEXT query;
+    rayQueryInitializeEXT(query,scene,0u,ray.meta.w,ray.origin.xyz,0.0,ray.delta.xyz,1.0);
+    while(rayQueryProceedEXT(query)) {
+        uint tri=rayQueryGetIntersectionInstanceCustomIndexEXT(query,false)+rayQueryGetIntersectionPrimitiveIndexEXT(query,false);
+        if(accept(tri,rayQueryGetIntersectionBarycentricsEXT(query,false),ray))rayQueryConfirmIntersectionEXT(query);
+    }
+    if(rayQueryGetIntersectionTypeEXT(query,true)!=gl_RayQueryCommittedIntersectionNoneEXT) {
+        uint tri=rayQueryGetIntersectionInstanceCustomIndexEXT(query,true)+rayQueryGetIntersectionPrimitiveIndexEXT(query,true);
+        hit=vec4(rayQueryGetIntersectionTEXT(query,true),float(tri+1u),rayQueryGetIntersectionBarycentricsEXT(query,true));
+    }
+#else
+    float best=1.000001;vec3 invD=1.0/mix(ray.delta.xyz,vec3(1),lessThan(abs(ray.delta.xyz),vec3(1e-12)));
+    uint roots[3]=uint[3](root0,root1,root2);
+    for(uint tree=0;tree<3;tree++) {
+        uint node=roots[tree];if((ray.meta.w&(1u<<tree))==0u||node==0xffffffffu)continue;
+        uint limit=floatBitsToUint(nodes[node].lo.w);
+        while(node<limit) {
+            Node box=nodes[node];uint escape=floatBitsToUint(box.lo.w);
+            if(!bounds(ray.origin.xyz,invD,ray.delta.xyz,box.lo.xyz,box.hi.xyz,best)){node=escape;continue;}
+            uint header=floatBitsToUint(box.hi.w),size=header&15u;
+            if(size==0){node++;continue;}
+            uint first=header>>4u;
+            for(uint j=0;j<size;j++) {uint tri=first+j;vec3 candidate=triangle(ray,tri,best);
+                if(candidate.x>=0 && accept(tri,candidate.yz,ray)){best=candidate.x;hit=vec4(best,float(tri+1u),candidate.yz);}}
+            node=escape;
+        }
+    }
+#endif
+    result[id]=hit;
+}

@@ -1,0 +1,4 @@
+Streaming terrain | 6261506 triangles | 0 queued chunks; mesh=true; streamedReference=true; entities=true; coverage=true; clouds=true; distant=true; faceLight=true; smoothLight=true; origin=BlockPos{x=-32, y=254, z=-33} camera=(16.5, 303.6199998855591, -45.5) source=(16.00769230769231, 302.03846153846155, 15.992307692307692) rs=3.518228202874282 yaw=0.281 pitch=0.90999985
+stride=16; two AA samples; raw native chords; tree masks preserve recorded empty-region reuse
+pass=0 queries=336218 colourDifferences=0 maxError=0.0
+pass=1 queries=0 colourDifferences=0 maxError=0.0

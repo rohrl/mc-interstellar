@@ -1,3 +1,13 @@
+// Diagnostic-only sparse records of actual production queries, including reuse masks.
+#ifdef INTERSTELLAR_REPLAY
+struct ReplaySegment {vec4 origin;vec4 delta;uvec4 meta;};
+layout(std430,binding=0) buffer ReplayLog {uvec4 replayStats;ReplaySegment replaySegments[];};
+uint replayStep=0u,replayTrees=0u;
+bool replayPixel() {return int(gl_FragCoord.x)%16==0 && int(gl_FragCoord.y)%16==0;}
+#define REPLAY_EXHAUSTED atomicAdd(replayStats.z,1u)
+#else
+#define REPLAY_EXHAUSTED
+#endif
 // Developer-only invocation latency clocks. Normal programs compile these markers away.
 #ifdef INTERSTELLAR_CLOCKS
 uniform float ClockOutput;
@@ -268,6 +278,14 @@ vec3 emptyLow[SCENE_TREES],emptyHigh[SCENE_TREES];
 bool cellKnown[SCENE_TREES];
 // Stackless preorder traversal: escape links skip whole subtrees. Each chord has one nearest hit.
 int meshSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
+#ifdef INTERSTELLAR_REPLAY
+    uint replayIndex=0xffffffffu;
+    if(replayPixel()) {
+        replayIndex=atomicAdd(replayStats.x,1u);
+        if(replayIndex>=uint(replaySegments.length())) {atomicAdd(replayStats.y,1u);replayIndex=0xffffffffu;}
+    }
+    replayTrees=0u;
+#endif
     CLOCK_BEGIN(queryClock);
     COUNT_WORK(1);
     vec3 delta=end-start;float best=1.000001;bool found=false;
@@ -290,6 +308,17 @@ int meshSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
     if(EmptyCells>.5 && cellKnown[tree] &&
        all(greaterThan(min(start,end),emptyLow[tree])) && all(lessThan(max(start,end),emptyHigh[tree]))) {COUNT_WORK(8+min(tree,1));continue;}
     vec3 safeLow=start-vec3(EmptyReach),safeHigh=start+vec3(EmptyReach);
+#ifdef INTERSTELLAR_REPLAY
+    if(tree==0)replayTrees|=1u;
+    else {
+        replayTrees|=2u;
+#ifdef INTERSTELLAR_MATERIALS
+        if(!cloudSeen)replayTrees|=4u;
+#else
+        if(cloudLayer.a==0.0)replayTrees|=4u;
+#endif
+    }
+#endif
     bool canCache=true;
     int node=0,nodeCount=int(tree==0?MeshNodeCount:MovingNodeCount),returnTo=0;
 #ifdef INTERSTELLAR_SPLIT_MOVING
@@ -480,13 +509,24 @@ int meshSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
         node=count>0?int(lower.w):node+1;
     }
     if(EmptyCells>.5) {cellKnown[tree]=canCache && node==nodeCount;emptyLow[tree]=safeLow;emptyHigh[tree]=safeHigh;}
-    if(node!=nodeCount) {diagnostic=vec4(0,0,0,-2);meshColour=vec3(1,0,1);hit=start;normal=vec3(0,1,0);CLOCK_END(queryClock,0);return 3;}
+    if(node!=nodeCount) {diagnostic=vec4(0,0,0,-2);meshColour=vec3(1,0,1);hit=start;normal=vec3(0,1,0);CLOCK_END(queryClock,0);REPLAY_EXHAUSTED;return 3;}
     }
     // Vanilla fancy clouds use a depth prepass: blend the nearest cloud surface once.
 #ifndef INTERSTELLAR_MATERIALS
     if(cloudAt<best && cloudLayer.a==0.0)cloudLayer=nearestCloud;
 #endif
     CLOCK_END(queryClock,0);
+#ifdef INTERSTELLAR_REPLAY
+    if(replayIndex!=0xffffffffu) {
+        replaySegments[replayIndex].origin=vec4(start,found?best:-1.0);
+        replaySegments[replayIndex].delta=vec4(end-start,1);
+        uint pass=SampleOffset>0.0?1u:0u;
+#ifdef INTERSTELLAR_MATERIALS
+        pass|=2u;
+#endif
+        replaySegments[replayIndex].meta=uvec4(uint(gl_FragCoord.x)%uint(Viewport.x)+uint(gl_FragCoord.y)*uint(Viewport.x),replayStep++,pass,replayTrees);
+    }
+#endif
     return found?3:-1;
 }
 vec3 surface(int value,vec3 hit,vec3 normal) {

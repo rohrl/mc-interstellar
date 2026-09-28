@@ -1,0 +1,15 @@
+#version 150
+#extension GL_ARB_shader_storage_buffer_object : require
+#extension GL_ARB_shading_language_420pack : require
+#define INTERSTELLAR_REPLAY
+#extension GL_ARB_shader_bit_encoding : require
+#define INTERSTELLAR_SPLIT_MOVING
+#define INTERSTELLAR_NATIVE_MESH
+#define INTERSTELLAR_QUAD_MESH
+#define INTERSTELLAR_MATERIAL_PROBE
+#define INTERSTELLAR_COMPACT_NODES
+#define INTERSTELLAR_LIVE_DEFAULTS
+#define INTERSTELLAR_VARIABLE_CHORD
+#define INTERSTELLAR_SPLIT_AA
+#define INTERSTELLAR_STREAMED_LAYOUT
+#moj_import <interstellar:terrain_shared.glsl>

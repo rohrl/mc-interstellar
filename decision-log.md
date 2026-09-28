@@ -448,3 +448,30 @@ translucent correctness and build/update/sharing costs, before a live-backend tr
 CPU moving-tree refit and sparse-material scheduling remain alternatives. No backend
 adopted or optical/quality settings changed. Fixed a missing-source guard encountered
 during setup. Full report and evidence: docs/rtx-bottleneck-profile-2026-09-28.md.
+
+## D080 — Real-scene RTX replay and working image sharing (2026-09-28)
+
+Accepted: opt-in native geometry/chord exporter, standalone candidate-acceptance
+comparison and Windows Vulkan/OpenGL shared-image smoke test. Production shaders
+compile out recorders; normal build has no Vulkan dependency or interop class.
+The milestone is diagnostic tooling, not adoption of a hardware rendering backend.
+
+On 6.27M real triangles, alpha-aware initial-query replay is 5.66–7.66x faster with
+hardware traversal than its standalone flat triangle BVH. Production recorded hit
+answers match; paired float colours match. Geometry reuse masks are inputs and are
+not recomputed in timing. Compact warm replay omits integration and full shading;
+the ratio cannot be applied directly to Minecraft FPS. Materials have analytic
+acceptance fixtures, not complete compositing parity. CPU traversal shares BVH data.
+
+Real-context RGBA8 sharing passes ownership/pixel checks at two resolutions, about
+0.17–0.18ms median wall time per clear/blit cycle. This establishes a viable GPU-only
+handoff on this driver, not final frame overhead or long-duration portability.
+Expanded geometry exposed a host-visible allocation limit: retain GPU-local large
+buffers with bounded staging, and evaluate compact production representations.
+Initial BLAS build measured 15.25ms GPU; live update/refit remains unmeasured.
+
+Proposed next: one frozen full-image Vulkan path retaining current optics/material
+rules and an OpenGL comparison path. Require image parity and useful complete-frame
+savings before expanding to live updates, streaming and production lifecycle work.
+Keep CPU tree reuse and sparse material scheduling as alternatives. Detailed evidence,
+scope and reproduction: docs/rtx-native-feasibility-2026-09-28.md.

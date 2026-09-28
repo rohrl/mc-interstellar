@@ -1,0 +1,154 @@
+{
+  "scope": "Warm replay against standalone triangle BVH; no Minecraft FPS forecast. Interop clear/blit/ownership only; no complete backend frame.",
+  "pairedQueryComparisons": 1245368,
+  "replay": [
+    {
+      "view": "view-1790563284453",
+      "pass": "probe",
+      "alpha": 0,
+      "queries": 286235,
+      "hits": 3482,
+      "softwareMedianMs": 0.119368,
+      "hardwareMedianMs": 0.015136,
+      "speedup": 7.886363636363637,
+      "softwareRangeMs": [
+        0.118048,
+        0.121136
+      ],
+      "hardwareRangeMs": [
+        0.01484,
+        0.015348
+      ],
+      "boundaryDifferences": 0,
+      "productionDifferences": 0
+    },
+    {
+      "view": "view-1790563284453",
+      "pass": "probe",
+      "alpha": 1,
+      "queries": 286235,
+      "hits": 3482,
+      "softwareMedianMs": 0.121896,
+      "hardwareMedianMs": 0.015916,
+      "speedup": 7.6587082181452635,
+      "softwareRangeMs": [
+        0.120368,
+        0.123648
+      ],
+      "hardwareRangeMs": [
+        0.01588,
+        0.016168
+      ],
+      "boundaryDifferences": 0,
+      "productionDifferences": 0
+    },
+    {
+      "view": "view-1790563284453",
+      "pass": "mask",
+      "alpha": 0,
+      "queries": 231,
+      "hits": 29,
+      "softwareMedianMs": 0.02538,
+      "hardwareMedianMs": 0.00362,
+      "speedup": 7.011049723756906,
+      "softwareRangeMs": [
+        0.025344,
+        0.0254
+      ],
+      "hardwareRangeMs": [
+        0.003596,
+        0.003776
+      ],
+      "boundaryDifferences": 0,
+      "productionDifferences": 0
+    },
+    {
+      "view": "view-1790563284453",
+      "pass": "mask",
+      "alpha": 1,
+      "queries": 231,
+      "hits": 20,
+      "softwareMedianMs": 0.027388,
+      "hardwareMedianMs": 0.004124,
+      "speedup": 6.6411251212415126,
+      "softwareRangeMs": [
+        0.027172,
+        0.027436
+      ],
+      "hardwareRangeMs": [
+        0.0039,
+        0.00414
+      ],
+      "boundaryDifferences": 0,
+      "productionDifferences": 0
+    },
+    {
+      "view": "view-1790563310533",
+      "pass": "probe",
+      "alpha": 0,
+      "queries": 336218,
+      "hits": 2309,
+      "softwareMedianMs": 0.070704,
+      "hardwareMedianMs": 0.012068,
+      "speedup": 5.858800132582035,
+      "softwareRangeMs": [
+        0.069924,
+        0.07172
+      ],
+      "hardwareRangeMs": [
+        0.012028,
+        0.0121
+      ],
+      "boundaryDifferences": 0,
+      "productionDifferences": 0
+    },
+    {
+      "view": "view-1790563310533",
+      "pass": "probe",
+      "alpha": 1,
+      "queries": 336218,
+      "hits": 2304,
+      "softwareMedianMs": 0.071216,
+      "hardwareMedianMs": 0.012576,
+      "speedup": 5.662849872773537,
+      "softwareRangeMs": [
+        0.070452,
+        0.072256
+      ],
+      "hardwareRangeMs": [
+        0.012484,
+        0.012596
+      ],
+      "boundaryDifferences": 0,
+      "productionDifferences": 0
+    }
+  ],
+  "interop": [
+    {
+      "size": "854x480",
+      "wallMedianMs": 0.16912258064516128,
+      "wallRangeMs": [
+        0.16686451612903225,
+        0.21948064516129032
+      ],
+      "glTimelineMedianMs": 0.148928,
+      "glTimelineRangeMs": [
+        0.14222658064516128,
+        0.1542523870967742
+      ]
+    },
+    {
+      "size": "2560x1440",
+      "wallMedianMs": 0.17844193548387097,
+      "wallRangeMs": [
+        0.17323548387096774,
+        0.1832258064516129
+      ],
+      "glTimelineMedianMs": 0.15844025806451612,
+      "glTimelineRangeMs": [
+        0.15384567741935484,
+        0.16548954838709676
+      ]
+    }
+  ]
+}

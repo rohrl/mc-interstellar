@@ -1,0 +1,2 @@
+version=1; triangles=36 native floats (position/tag, UV/light, RGBA per corner); little endian
+terrain=6261506 moving=11644

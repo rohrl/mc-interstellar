@@ -1,4 +1,4 @@
-param([string]$Jdk = 'C:\Portable\jdks\temurin-21.0.12.1')
+param([string]$Jdk = 'C:\Portable\jdks\temurin-21.0.12.1',[switch]$PrepareOnly)
 $ErrorActionPreference = 'Stop'
 $repo = (Resolve-Path (Join-Path $PSScriptRoot '../..')).Path
 Set-Location -LiteralPath $repo
@@ -22,6 +22,7 @@ foreach ($dependency in $dependencies) {
 }
 & "$Jdk/bin/javac.exe" -encoding UTF-8 -cp 'run/rtx/lib/*' -d run/rtx/classes tools/rtx-probe/Probe.java
 if ($LASTEXITCODE -ne 0) { throw 'Compilation failed' }
+if ($PrepareOnly) { return }
 & "$Jdk/bin/java.exe" '-Dorg.lwjgl.system.stackSize=512' -Xmx2G -cp 'run/rtx/classes;run/rtx/lib/*' Probe
 if ($LASTEXITCODE -ne 0) { throw 'Probe failed; do not use incomplete results' }
 Write-Output 'Raw timings: run/rtx/results.jsonl'

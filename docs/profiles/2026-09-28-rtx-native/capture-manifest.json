@@ -1,0 +1,42 @@
+[
+  {
+    "path": "atlas.bin",
+    "bytes": 2097160,
+    "sha256": "d9242325c0943e4d2e222b8fac434ee6bf9f8e8060ad8868f3cceb777aefc277"
+  },
+  {
+    "path": "clouds.bin",
+    "bytes": 262152,
+    "sha256": "31c8c795b62129a7537c65f4fd94176739366e35e0a67b4eebfa9495018b6f6f"
+  },
+  {
+    "path": "entities.bin",
+    "bytes": 16777224,
+    "sha256": "caa2179170ca182225c30f7e2804de35686ca1c66a4904b619a70d5f9119ca53"
+  },
+  {
+    "path": "triangles.bin",
+    "bytes": 903333620,
+    "sha256": "5455a9091e327eca1bb3a958304b93ef8f774881da8f80486bc52d0f35ef7c6c"
+  },
+  {
+    "path": "view-1790563284453/mask.bin",
+    "bytes": 11104,
+    "sha256": "d21d752b1af575a4be6c1623cb7220edc9d07ec491dd4ab7e68dbcfdb8e20a10"
+  },
+  {
+    "path": "view-1790563284453/probe.bin",
+    "bytes": 13739296,
+    "sha256": "2f957a8245544d9aeaffcf9a6ed3ba288242e79d352d012c1b2c7ecf5b052344"
+  },
+  {
+    "path": "view-1790563310533/mask.bin",
+    "bytes": 16,
+    "sha256": "45bb6838ed8edb0b11157c6da066183771dd5e2669047cde1315a0ea118c32b9"
+  },
+  {
+    "path": "view-1790563310533/probe.bin",
+    "bytes": 16138480,
+    "sha256": "60c0769868f7ac9210c30569b16274dd256e6f8d4eb9627739ed338c6adf5c1d"
+  }
+]

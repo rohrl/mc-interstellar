@@ -51,6 +51,9 @@ public final class StreamingTerrain implements AutoCloseable {
         active=this;
     }
     boolean ready() {return ready;}
+    // Diagnostic export reads only occupied rows; normal capture retains no extra CPU geometry.
+    int[][] replaySpans() {return entries.entrySet().stream().sorted(Map.Entry.comparingByKey())
+        .filter(e->e.getValue().triangles>0).map(e->new int[]{e.getValue().vertexRow,e.getValue().triangles/2}).toArray(int[][]::new);}
     boolean hasMaterials() {return materialChunks>0;}
     int loadingPercent() {return wanted.isEmpty()?0:Math.min(100,entries.size()*100/wanted.size());}
     int triangleTexture() {return vertices.texture;}

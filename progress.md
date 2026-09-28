@@ -1,6 +1,37 @@
 # Progress
 
-## Current checkpoint — 2026-09-28, current-renderer bottleneck profile
+## Current checkpoint — 2026-09-28, native RTX feasibility milestone
+
+Completed real-scene geometry/chord replay, analytic material acceptance checks and
+Vulkan/OpenGL image sharing inside Minecraft. Main scene: 6,273,150 triangles;
+two exterior views, 1,245,368 paired query comparisons, no unexplained or boundary
+differences. Alpha-aware recorded nearest hits all match production. Capture shaders
+leave float colours unchanged. Analytic fixture adds 736 paired comparisons and
+known expected distances; all pass. CPU references share software BVH topology.
+
+Alpha-aware initial-query speedups: 7.66x down / 5.66x wall against a standalone
+triangle BVH, not the current OpenGL chunk/quad renderer. Compact warm replay excludes
+integration, cache creation and full compositing; no FPS extrapolation. Actual-context
+shared RGBA8 clear/blit/ownership cycles pass pixel checks at 854x480 and 2560x1440,
+median wall cost 0.169/0.178ms. This is not full-backend overhead. One-time hardware
+BLAS build 15.25ms GPU; live updates/refits still unmeasured. Large export uses GPU-local
+memory and bounded staging after the host-visible allocation failed.
+
+Report: docs/rtx-native-feasibility-2026-09-28.md; raw small evidence under
+docs/profiles/2026-09-28-rtx-native; standard-library analysis script and reproduction
+instructions included. Optional -PinterstellarRtxProbe enables capture/sharing only;
+normal builds exclude the Vulkan dependency and interop implementation. Production
+optics/defaults unchanged. Next proposal: frozen complete-image RTX path, matched
+pixels and total-frame timing before live-world backend expansion.
+
+Diagnostic build and clean normal build pass, 79 tests. Runtime shader/capture/interop
+checks pass; representative wall image inspected. Normal F10 reaches ready on owner
+N8 source. All eight owner player fields and original window restored, ticks running
+20tps, narrator disabled, normal client paused. No blocks or inventory changed. Final
+shortcut/metadata-only edits compiled; recordings used the earlier shortcut. Full
+optical fixtures and automated movement/flicker tests not rerun.
+
+## Previous checkpoint — 2026-09-28, current-renderer bottleneck profile
 
 Completed the requested link between the isolated RTX probe and actual renderer cost.
 Opt-in ARB_shader_clock programs separate geometry queries, nested candidate shading,

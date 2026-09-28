@@ -126,3 +126,21 @@ The geometry-search dominance supports a representative RTX experiment; conditio
 Amdahl scenarios remain inferences with explicitly assumed accelerated fractions and
 zero extra overhead. No transfer of synthetic query speedups to live FPS is claimed.
 Optical equations and scientific model remain unchanged.
+
+## Native RTX replay and GPU sharing (2026-09-28)
+
+The [native feasibility checkpoint](rtx-native-feasibility-2026-09-28.md) records actual
+production chords, tree-reuse masks and nearest-hit results, then compares Vulkan
+ray queries against a standalone triangle BVH. Alpha-aware exterior initial-query
+ratios are 5.66–7.66x; these are not whole-frame speedups. Integration, cache creation,
+full compositing and live scene updates remain outside the timed replay. The sampled
+double CPU reference shares software BVH topology; analytic material fixtures add
+known expected distances. Two-view recording leaves float colours exactly unchanged.
+
+The [GL external objects specification](https://registry.khronos.org/OpenGL/extensions/EXT/EXT_external_objects.txt)
+defines imported memory and GPU semaphore synchronization. The Windows smoke test
+uses those mechanisms in Minecraft's real context: Vulkan clear, GL blit, ownership
+return. Measured RGBA8 cycles cost about 0.17–0.18ms wall time, with pixel checks.
+This is not full-renderer transfer overhead or portability validation. Future dynamic
+geometry must respect the [Vulkan build/update rules](https://docs.vulkan.org/refpages/latest/refpages/source/VkAccelerationStructureBuildGeometryInfoKHR.html)
+and be measured separately. No new physical model or production backend is adopted.
