@@ -49,6 +49,7 @@ public final class InterstellarClient implements ClientModInitializer {
             context.register(Identifier.of("interstellar","terrain_glow_moving"),VertexFormats.POSITION,program->GlowingOutline.rays[0]=program);
             context.register(Identifier.of("interstellar","terrain_glow_body"),VertexFormats.POSITION,program->GlowingOutline.rays[1]=program);
             context.register(Identifier.of("interstellar","terrain_glow_horizon"),VertexFormats.POSITION,program->GlowingOutline.rays[2]=program);
+            context.register(Identifier.of("interstellar","terrain_glow_wormhole"),VertexFormats.POSITION,program->GlowingOutline.rays[3]=program);
             context.register(Identifier.of("interstellar","terrain_glow_edge"),VertexFormats.POSITION,program->GlowingOutline.edge=program);
         });
         StreamingTerrain.register();
@@ -83,6 +84,10 @@ public final class InterstellarClient implements ClientModInitializer {
                 context.register(Identifier.of("interstellar", "terrain_horizon_mask"), VertexFormats.POSITION, program->TerrainScreen.setHorizonShader(1,program));
                 context.register(Identifier.of("interstellar", "terrain_horizon_materials"), VertexFormats.POSITION, program->TerrainScreen.setHorizonShader(2,program));
                 context.register(Identifier.of("interstellar", "terrain_horizon_diagnostic"), VertexFormats.POSITION, program->TerrainScreen.setHorizonShader(3,program));
+                for(int pass=0;pass<4;pass++) {
+                    final int p=pass;String name=new String[]{"probe","mask","materials","diagnostic"}[pass];
+                    context.register(Identifier.of("interstellar","terrain_wormhole_"+name),VertexFormats.POSITION,program->TerrainScreen.setWormholeShader(p,program));
+                }
                 if(TerrainProfile.COUNTERS)for(int experiment=0;experiment<3;experiment++)for(int pass=0;pass<3;pass++) {
                     final int e=experiment,p=pass;
                     context.register(Identifier.of("interstellar", "terrain_profile_"+e+"_"+p),VertexFormats.POSITION,program->TerrainProfile.programs[e][p]=program);
@@ -127,7 +132,7 @@ public final class InterstellarClient implements ClientModInitializer {
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             LiveTerrain.tick(client);
             while(liveTerrain.wasPressed()) LiveTerrain.toggle(client);
-            while (terrain.wasPressed()) { LiveTerrain.stop(); if (client.world != null) client.setScreen(new TerrainScreen(SelectedSource.current())); }
+            while (terrain.wasPressed()) { LiveTerrain.stop(); if (client.world != null) client.setScreen(io.github.rohrl.interstellar.wormhole.WormholePair.active(client.world)?TerrainScreen.wormhole(false):new TerrainScreen(SelectedSource.current())); }
             while (opticalLab.wasPressed()) {
                 LiveTerrain.stop();
                 if (client.world != null) client.setScreen(new OpticalLabScreen());
@@ -180,6 +185,12 @@ public final class InterstellarClient implements ClientModInitializer {
                     selected.schwarzschildRadius(), selected.blackHoleProxy()?"F8 then S: source lab":"extended source"));
         } else if(SelectedSource.state()!=io.github.rohrl.interstellar.source.SourceState.NONE) {
             lines.add(SelectedSource.state().message());
+        }
+        if(io.github.rohrl.interstellar.wormhole.WormholePair.active(client.world)) {
+            lines.clear();lines.add("INTERSTELLAR | Ellis wormhole | Normal view");
+            lines.add("F10: curved view | F9: snapshot | F6: HUD");
+            lines.add("Mouth radius 8 | Throat areal radius 16 | No event horizon");
+            lines.add(WormholeClient.ready()?"Both destinations loaded | Fly through a mouth to cross":"Preparing both destinations...");
         }
         int width = lines.stream().mapToInt(client.textRenderer::getWidth).max().orElse(0) + 16;
         context.fill(6, 6, 6 + width, 16 + lines.size() * 12, 0xC0101824);

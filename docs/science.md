@@ -153,7 +153,7 @@ closely, with a few unresolved platform-pixel differences; this is not independe
 validation of the underlying geodesics. Explicit cross-API completion and Vulkan
 timestamps establish frozen optical-frame savings, not live-world FPS.
 
-The [wormhole feasibility study](wormholes-feasibility.md) is analysis only. Proposed
+The [wormhole feasibility study](wormholes-feasibility.md) preceded implementation. The
 stationary Ellis geometry has a smooth signed throat coordinate and a constant time
 coefficient. It permits precise light-path and observer calculations within that
 hypothetical metric; supporting matter, stability and matching two arbitrary game
@@ -161,8 +161,8 @@ regions are separate questions. Its primary sources are
 [James et al., visualizing wormholes](https://arxiv.org/abs/1502.03809),
 [Nakajima and Asada, Ellis deflection](https://arxiv.org/abs/1204.3710), and the
 [energy-condition discussion](https://arxiv.org/abs/2202.07431). No wormhole model has
-been added to the running mod.
-# Wormhole reference added 28 September 2026
+been assumed physically constructible; the implemented local metric is described below.
+## Wormhole model implemented 28 September 2026
 
 The active demo uses the symmetric ultrastatic Ellis metric. Reference null rays
 evolve signed proper radius, its conjugate momentum and a plane angle; independent
@@ -171,6 +171,11 @@ The isotropic coordinate derivation and orientation-preserving chart transfer ar
 documented in [the active implementation note](overnight-goals-2026-09-28.md).
 Primary sources: [James et al., equations1,2,16](https://arxiv.org/html/1502.03809),
 [Nakajima & Asada, exact deflection](https://arxiv.org/html/1204.3710).
-At this checkpoint the reference maths is implemented; the demo renderer/crossing
-are pending. Do not present hypothetical supporting matter or the two-mouth world
+The shared OpenGL/RTX renderer integrates these rays and queries native geometry
+at both ends. Seven CPU tests, 2,575 GPU reference rays, paired renderers and
+same-physical-camera chart comparisons provide the bounded validation described in
+[the implementation report](wormhole-demo-implementation.md). Player crossings
+transport the camera frame through the same orientation-preserving differential.
+Minecraft controls prescribe the observer's path; massive-body geodesics are not
+simulated. Do not present hypothetical supporting matter or the two-mouth world
 identification as a demonstrated physical construction.

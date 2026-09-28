@@ -7,7 +7,7 @@ import java.util.List;
 
 /** Optional backend boundary. No Vulkan types, dependency loading or update work in OpenGL-only builds. */
 public interface WorldRenderBackend extends AutoCloseable {
-    enum Optics { EXTERIOR, EXTENDED, HORIZON }
+    enum Optics { EXTERIOR, EXTENDED, HORIZON, WORMHOLE }
     record Texture(int width,int height,int minFilter,int magFilter,int wrapS,int wrapT,int format,ByteBuffer rgba) {}
     record Snapshot(Path geometry,String opticalSource,Map<String,Texture> textures,int width,int height) {}
     record Chunk(long key,long revision,int row,int quads) {}

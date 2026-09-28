@@ -60,7 +60,10 @@ final class AppearanceCapture {
         try {
             screen.checkAppearancePose(comparison==0);
             metadata.put("candidateScene",screen.appearanceScene());
-            if(comparison==15) {
+            if(comparison==16) {
+                metadata.put("reference","same-physical-camera-in-other-wormhole-chart");
+                screen.renderWormholeChartComparison(true);reference=readFramebuffer();screen.renderWormholeChartComparison(false);
+            } else if(comparison==15) {
                 screen.renderMovingComparison(true);reference=readFramebuffer();screen.renderMovingComparison(false);
             } else if(comparison==14) {
                 screen.renderOrbitComparison(true);reference=readFramebuffer();screen.renderOrbitComparison(false);

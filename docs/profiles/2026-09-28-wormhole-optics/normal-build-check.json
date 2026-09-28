@@ -1,0 +1,6 @@
+{
+  "artifact": "run\\wormhole-final-opengl.jar",
+  "forbiddenOptionalClasses": [],
+  "tests": 88,
+  "failures": 0
+}

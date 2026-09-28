@@ -1,0 +1,60 @@
+{
+  "schema": 1,
+  "reference": "same-physical-camera-in-other-wormhole-chart",
+  "candidate": "same-scene-selected-AA-scale-and-path",
+  "qualitySettings": "AA\u003d2x, scale\u003d0.5, lensing\u003dtrue, fine\u003dfalse, adaptive\u003dtrue, fastBounds\u003dtrue, fastFetch\u003dtrue, emptyCells\u003dtrue, emptyReach\u003d1024.0, angularCap\u003d0.08, curveFactor\u003d4.0, program\u003dnative-ellis-wormhole-quads",
+  "sameFrame": true,
+  "width": 2560,
+  "height": 1440,
+  "camera": [
+    8.0,
+    95.99999988555908,
+    -88.0
+  ],
+  "yaw": 0.0,
+  "pitch": 0.0,
+  "projection": [
+    0.70715946,
+    0.0,
+    -0.0,
+    -0.0,
+    0.0,
+    1.2571725,
+    -0.0,
+    -0.0,
+    0.0,
+    0.0,
+    -1.0001302,
+    -1.0,
+    0.0,
+    -0.0,
+    -0.10000651,
+    -0.0
+  ],
+  "configuredFov": 70,
+  "candidateVerticalFov": 76.99999084649325,
+  "candidateRaySlopes": {
+    "x": 1.4141082,
+    "y": 0.7954358,
+    "offsetX": 0.0,
+    "offsetY": 0.0
+  },
+  "terrainFog": {
+    "start": 172.8,
+    "end": 192.0,
+    "cylindrical": 1.0,
+    "red": 0.71164376,
+    "green": 0.81895363,
+    "blue": 1.0,
+    "alpha": 1.0
+  },
+  "gamma": 0.5,
+  "perspective": "FIRST_PERSON",
+  "dimension": "interstellar:wormholes",
+  "worldTime": 1599692,
+  "timeOfDay": 1586981,
+  "rain": 0.0,
+  "thunder": 0.0,
+  "modVersion": "0.1.0-dev",
+  "candidateScene": "Streaming terrain | 82312 triangles | 0 queued chunks; mesh\u003dtrue; streamedReference\u003dtrue; entities\u003dtrue; coverage\u003dtrue; clouds\u003dtrue; distant\u003dtrue; faceLight\u003dtrue; smoothLight\u003dtrue; origin\u003dBlockPos{x\u003d-40, y\u003d48, z\u003d-40}"
+}

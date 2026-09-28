@@ -4,6 +4,12 @@
 
 For this checkout, install a full JDK21 and run **Launch Interstellar.cmd**. It launches the current development build; do not open the same save in two clients.
 
+For the optional hardware renderer, run **Launch Interstellar RTX.cmd**, or
+`gradlew.bat runClient -PinterstellarRtx`. **Alt+F12** switches RTX/OpenGL while
+F10 is active; the HUD names the actual renderer. This covers small masses,
+near/inside-horizon views and the wormhole demo. The ordinary launcher/build keeps
+the OpenGL renderer without Vulkan dependencies.
+
 Development launches use the stable offline name `InterstellarDev`, so the saved return record remains associated with the same player across restarts. A normal Minecraft installation uses your normal account.
 
 Gameplay gravity now defaults to four times the original pull. If upgrading an existing installation, set `strengthPerBlock` to `0.2` in `config/interstellar-gravity.json` and restart. The arrow exhibit automatically relocates its original empty dispensers and uses launches calibrated for that strength and64 mass blocks. Edited or stocked stations are preserved.
@@ -18,14 +24,15 @@ Minecraft may show an experimental-settings notice because the mod registers a c
 
 ## Choose an exhibit
 
+- **Wormholes:** `/interstellar demo wormholes` connects orange and cyan scenes about 1,145 blocks apart. Lensing arms automatically; wait for **World view ready**, then fly into the sphere to cross. `/interstellar demo view mouth_a` or `mouth_b` gives an exterior view; `throat_a` or `throat_b` starts just before passage. Cross either way. Off-centre entry can rotate the camera; a named viewpoint resets it. These are hypothetical Ellis wormholes, with no event horizon or compulsory gravity pull. Player passage and remote terrain/block entities are supported; remote mob tracking and mob/projectile passage are not part of this version.
 - **New gameplay:** `/interstellar demo gameplay` builds a separate exhibit with gradual mass progression, automatic discovery and local mob/projectile gravity. A complete 4×4×4 source is at the black-hole threshold; removing blocks reduces the field, and compact 2×2×2/3×3×3 builds keep visible material with lensing. Close mobs can lift and be captured; ordinary/spectral arrows and thrown projectiles bend. Players and terrain are unaffected. Model, settings and limits: `docs/gameplay-gravity.md` in the repository or demo archive.
 - **Arrow course:** `/interstellar demo arrows` enters another separate exhibit with four automatic calibrated dispensers. Orange demonstrates a transient loop, cyan a flyby, magenta a shot pulled back, and red capture. `/interstellar demo view arrows` restores the close viewpoint; `/interstellar demo arrows on|off|once` controls firing. The scene is tuned for its original64-block source and default gravity; edits change the paths. Native arrow drag, downward gravity and collisions remain active. Your existing gameplay exhibit is preserved.
 - **Preserved optics reference:** `/interstellar demo enter` keeps the previous stronger mass calibration and passive mobs. Use this for comparison with earlier screenshots.
 
 ## Explore and return
 
-1. Run either entry command above. The first entry builds its exhibit in a separate dimension. Occupied cells that differ from the exhibit stop construction instead of being overwritten.
-2. Press **F10** to arm lensing. Nearby sources are found automatically; initial discovery/capture takes a moment. The HUD shows progress, source mass, compactness and viewing range.
+1. Run an entry command above. The first entry builds its exhibit in a separate dimension. Occupied cells that differ from the exhibit stop construction instead of being overwritten.
+2. Press **F10** to arm lensing (automatic on wormhole entry). Nearby sources are found automatically; initial discovery/capture takes a moment. The HUD shows preparation and the active optical view.
 3. Fly with **WASD**, **Space** up and **Shift** down; look with the mouse. The coloured wall, foreground pillar, terrain steps, stairs/slabs, leaves and sheep demonstrate curved images and occlusion.
 4. Run `/interstellar demo leave` to return to your saved dimension, position, view direction, game mode and flight state. This also cancels a queued entry. Your inventory is retained. Nearby sources in your original world are discovered automatically too.
 
@@ -41,6 +48,8 @@ New exhibits also contain a bed/chest, two stained-glass layers and a contained 
 | `side` | Side view and occlusion |
 | `close` | Stronger bending on approach |
 | `terrain` | Look down over the foreground terrain |
+| `mouth_a` / `mouth_b` | Wormhole exterior, orange / cyan end |
+| `throat_a` / `throat_b` | Wormhole approach, half a block before crossing |
 
 These commands work inside the exhibit. They are static demonstration viewpoints, not a claim of general teleport support.
 

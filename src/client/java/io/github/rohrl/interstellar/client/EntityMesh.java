@@ -2,6 +2,7 @@ package io.github.rohrl.interstellar.client;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import io.github.rohrl.interstellar.Interstellar;
+import io.github.rohrl.interstellar.wormhole.WormholePair;
 import io.github.rohrl.interstellar.mixin.client.*;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
 import net.minecraft.client.MinecraftClient;
@@ -59,7 +60,8 @@ final class EntityMesh implements VertexConsumerProvider,AutoCloseable {
             cameraBody=entity==client.getCameraEntity() && client.options.getPerspective().isFirstPerson();
             if(cameraBody && !WorldFeatures.body)continue;
             var box=entity.getBoundingBox();
-            if(box.maxX<minChunkX*16 || box.minX>(minChunkX+chunks)*16 || box.maxZ<minChunkZ*16 || box.minZ>(minChunkZ+chunks)*16)continue;
+            if((box.maxX<minChunkX*16 || box.minX>(minChunkX+chunks)*16 || box.maxZ<minChunkZ*16 || box.minZ>(minChunkZ+chunks)*16)
+                    && !(WormholePair.active(client.world)&&WormholePair.contains(entity.getBlockX()>>4,entity.getBlockZ()>>4)))continue;
             double px=MathHelper.lerp(delta,entity.lastRenderX,entity.getX())-origin.getX();
             double py=MathHelper.lerp(delta,entity.lastRenderY,entity.getY())-origin.getY();
             double pz=MathHelper.lerp(delta,entity.lastRenderZ,entity.getZ())-origin.getZ();
@@ -83,6 +85,11 @@ final class EntityMesh implements VertexConsumerProvider,AutoCloseable {
             blockEntityList.clear();blockEntityTick=tick;blockEntityX=minChunkX;blockEntityZ=minChunkZ;blockEntityChunks=chunks;
             for(int cx=minChunkX;cx<minChunkX+chunks;cx++)for(int cz=minChunkZ;cz<minChunkZ+chunks;cz++)
                 if(client.world.getChunkManager().isChunkLoaded(cx,cz))blockEntityList.addAll(client.world.getChunk(cx,cz).getBlockEntities().values());
+            if(WormholePair.active(client.world))for(var pos:WormholePair.CHUNKS) {
+                if(pos.x>=minChunkX&&pos.x<minChunkX+chunks&&pos.z>=minChunkZ&&pos.z<minChunkZ+chunks)continue;
+                var chunk=client.world.getChunkManager().getWorldChunk(pos.x,pos.z,false);
+                if(chunk!=null)blockEntityList.addAll(chunk.getBlockEntities().values());
+            }
         }
         var blockDispatcher=client.getBlockEntityRenderDispatcher();
         var matrices=new MatrixStack();
@@ -91,7 +98,12 @@ final class EntityMesh implements VertexConsumerProvider,AutoCloseable {
             var pos=entity.getPos();matrices.push();
             try {
                 matrices.translate(pos.getX()-origin.getX(),pos.getY()-origin.getY(),pos.getZ()-origin.getZ());
-                int before=vertices;blockDispatcher.render(entity,delta,matrices,this);
+                int before=vertices;
+                if(WormholePair.active(client.world)) {
+                    var renderer=blockDispatcher.get(entity);
+                    if(renderer!=null && entity.hasWorld() && entity.getType().supports(entity.getCachedState()))
+                        renderer.render(entity,delta,matrices,this,WorldRenderer.getLightmapCoordinates(client.world,pos),OverlayTexture.DEFAULT_UV);
+                } else blockDispatcher.render(entity,delta,matrices,this);
                 if(vertices>before)blockEntities++;
             } finally {matrices.pop();}
         }

@@ -1,0 +1,4 @@
+[m[34m[00:00:14][m [32m[Render thread/INFO][m [36m(Minecraft)[m [0m[STDOUT]: RTX live backend ready: 427x240 sharp2x, resident chunks + moving geometry, GPU appearance sharing; optics=[EXTERIOR, EXTENDED, HORIZON, WORMHOLE]
+[m[34m[00:00:14][m [32m[Render thread/INFO][m [36m(Minecraft)[m [0m[STDOUT]: RTX optics: WORMHOLE (resident geometry retained)
+[m[34m[00:00:16][m [32m[Render thread/INFO][m [36m(Minecraft)[m [0m[STDOUT]: RTX live backend ready: 640x360 sharp2x, resident chunks + moving geometry, GPU appearance sharing; optics=[EXTERIOR, EXTENDED, HORIZON, WORMHOLE]
+[m[34m[00:00:16][m [32m[Render thread/INFO][m [36m(Minecraft)[m [0m[STDOUT]: RTX optics: WORMHOLE (resident geometry retained)

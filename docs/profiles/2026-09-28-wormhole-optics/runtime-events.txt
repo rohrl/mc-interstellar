@@ -1,0 +1,45 @@
+SOURCE: run/wormhole-optics-runtime.log
+[m[34m[23:15:55][m [32m[Render thread/INFO][m [36m(Minecraft)[m [0m[STDOUT]: RTX live backend ready: 480x270 sharp2x, resident chunks + moving geometry, GPU appearance sharing; optics=[EXTERIOR, EXTENDED, HORIZON, WORMHOLE]
+[m[34m[23:15:55][m [32m[Render thread/INFO][m [36m(Minecraft)[m [0m[STDOUT]: RTX optics: WORMHOLE (resident geometry retained)
+[m[34m[23:19:28][m [32m[Server thread/INFO][m [36m(interstellar)[m [0mWormhole crossing: 0 -> 1, eye=(8.0, 96.0, 0.15254243372933846) -> (1032.0, 112.0, 528.1555076226318), yaw=7.0167096E-15, pitch=-0.0, roll=0.0
+[m[34m[23:19:28][m [32m[Render thread/INFO][m [36m(interstellar)[m [0mWormhole client crossing applied: eye=(1032.0, 112.0, 528.1555076226318), velocity=(0.0, 0.0, 0.193583237836613), roll=0.0
+[m[34m[23:19:31][m [32m[Server thread/INFO][m [36m(interstellar)[m [0mWormhole crossing: 1 -> 0, eye=(1032.0, 112.0, 527.5373291018632) -> (8.0, 96.0, -0.49107145715311873), yaw=7.0167096E-15, pitch=-0.0, roll=0.0
+[m[34m[23:19:31][m [32m[Render thread/INFO][m [36m(interstellar)[m [0mWormhole client crossing applied: eye=(8.0, 96.0, -0.49107145715311873), velocity=(0.0, 0.0, -0.49204915727471665), roll=0.0
+SOURCE: run/wormhole-optics-validation-runtime.log
+[m[34m[23:25:10][m [32m[Render thread/INFO][m [36m(Minecraft)[m [0m[STDOUT]: RTX live backend ready: 427x240 sharp2x, resident chunks + moving geometry, GPU appearance sharing; optics=[EXTERIOR, EXTENDED, HORIZON, WORMHOLE]
+[m[34m[23:25:10][m [32m[Render thread/INFO][m [36m(Minecraft)[m [0m[STDOUT]: RTX optics: WORMHOLE (resident geometry retained)
+[m[34m[23:25:34][m [32m[Render thread/INFO][m [36m(Minecraft)[m [0m[STDOUT]: RTX live backend ready: 480x270 sharp2x, resident chunks + moving geometry, GPU appearance sharing; optics=[EXTERIOR, EXTENDED, HORIZON, WORMHOLE]
+[m[34m[23:25:34][m [32m[Render thread/INFO][m [36m(Minecraft)[m [0m[STDOUT]: RTX optics: WORMHOLE (resident geometry retained)
+[m[34m[23:26:09][m [32m[Render thread/INFO][m [36m(interstellar)[m [0mEllis GPU reference: 1639 rays, 0 mismatches; max direction error=4.192913810658194E-5; elapsed=712.1049ms
+[m[34m[23:28:03][m [32m[Render thread/INFO][m [36m(Minecraft)[m [0m[STDOUT]: RTX live backend ready: 1280x720 sharp2x, resident chunks + moving geometry, GPU appearance sharing; optics=[EXTERIOR, EXTENDED, HORIZON, WORMHOLE]
+[m[34m[23:28:03][m [32m[Render thread/INFO][m [36m(Minecraft)[m [0m[STDOUT]: RTX optics: WORMHOLE (resident geometry retained)
+[m[34m[23:36:45][m [32m[Render thread/INFO][m [36m(Minecraft)[m [0m[STDOUT]: RTX live backend ready: 1280x720 sharp2x, resident chunks + moving geometry, GPU appearance sharing; optics=[EXTERIOR, EXTENDED, HORIZON, WORMHOLE]
+[m[34m[23:36:45][m [32m[Render thread/INFO][m [36m(Minecraft)[m [0m[STDOUT]: RTX optics: WORMHOLE (resident geometry retained)
+[m[34m[23:37:58][m [32m[Server thread/INFO][m [36m(interstellar)[m [0mWormhole crossing: 0 -> 1, eye=(11.0, 98.00000000476837, 0.8878136419102918) -> (1035.0196658184589, 114.01311055043881, 527.1588086800108), yaw=-48.628887, pitch=-26.578629, roll=-12.183690990226243
+[m[34m[23:37:58][m [32m[Render thread/INFO][m [36m(interstellar)[m [0mWormhole client crossing applied: eye=(1035.0196658184589, 114.01311055043881, 527.1588086800108), velocity=(0.1446304868713685, 0.09642032481079608, 0.12737938997796383), roll=-12.183690990226243
+[m[34m[23:38:01][m [32m[Render thread/INFO][m [36m(Minecraft)[m [0m[STDOUT]: RTX live backend ready: 1280x720 sharp2x, resident chunks + moving geometry, GPU appearance sharing; optics=[EXTERIOR, EXTENDED, HORIZON, WORMHOLE]
+[m[34m[23:38:01][m [32m[Render thread/INFO][m [36m(Minecraft)[m [0m[STDOUT]: RTX optics: WORMHOLE (resident geometry retained)
+[m[34m[23:38:40][m [32m[Server thread/INFO][m [36m(interstellar)[m [0mWormhole crossing: 1 -> 0, eye=(1034.7404752601055, 114.24741348245425, 526.9100276876941) -> (10.908169653118208, 98.38493657754475, 0.6671358373129088), yaw=-2.3814232, pitch=3.9589121, roll=2.4186100691790546
+[m[34m[23:38:40][m [32m[Render thread/INFO][m [36m(interstellar)[m [0mWormhole client crossing applied: eye=(10.908169653118208, 98.38493657754475, 0.6671358373129088), velocity=(-0.04990449129281074, 0.1659186263106086, -0.28800106433118977), roll=2.4186100691790546
+[m[34m[23:39:26][m [32m[Server thread/INFO][m [36m(interstellar)[m [0mWormhole crossing: 0 -> 1, eye=(11.5, 98.00000000476837, 1.1525424337293384) -> (1035.5478024729282, 114.02731570364958, 526.9409791105388), yaw=-57.413788, pitch=-25.709673, roll=-14.247222204664286
+[m[34m[23:39:26][m [32m[Render thread/INFO][m [36m(interstellar)[m [0mWormhole client crossing applied: eye=(1035.5478024729282, 114.02731570364958, 526.9409791105388), velocity=(0.1433428115960139, 0.08191017825015398, 0.09162296365366683), roll=-14.247222204664286
+SOURCE: run/wormhole-final-runtime.log
+[m[34m[23:43:22][m [32m[Render thread/INFO][m [36m(Minecraft)[m [0m[STDOUT]: RTX live backend ready: 1280x720 sharp2x, resident chunks + moving geometry, GPU appearance sharing; optics=[EXTERIOR, EXTENDED, HORIZON, WORMHOLE]
+[m[34m[23:43:22][m [32m[Render thread/INFO][m [36m(Minecraft)[m [0m[STDOUT]: RTX optics: WORMHOLE (resident geometry retained)
+[m[34m[23:43:57][m [32m[Render thread/INFO][m [36m(interstellar)[m [0mEllis GPU reference: 2575 rays, 0 mismatches; max direction error=4.192913810658194E-5; elapsed=1040.1964ms
+[m[34m[23:45:18][m [32m[Render thread/INFO][m [36m(Minecraft)[m [0m[STDOUT]: RTX live backend ready: 1280x720 sharp2x, resident chunks + moving geometry, GPU appearance sharing; optics=[EXTERIOR, EXTENDED, HORIZON, WORMHOLE]
+[m[34m[23:46:21][m [32m[Render thread/INFO][m [36m(Minecraft)[m [0m[STDOUT]: RTX optics: EXTENDED (resident geometry retained)
+[m[34m[23:46:27][m [32m[Render thread/INFO][m [36m(Minecraft)[m [0m[STDOUT]: RTX optics: EXTERIOR (resident geometry retained)
+[m[34m[23:48:25][m [32m[Render thread/INFO][m [36m(Minecraft)[m [0m[STDOUT]: RTX optics: HORIZON (resident geometry retained)
+[m[34m[23:49:08][m [32m[Render thread/INFO][m [36m(Minecraft)[m [0m[STDOUT]: RTX optics: EXTERIOR (resident geometry retained)
+[m[34m[23:49:17][m [32m[Render thread/INFO][m [36m(Minecraft)[m [0m[STDOUT]: RTX live backend ready: 1280x720 sharp2x, resident chunks + moving geometry, GPU appearance sharing; optics=[EXTERIOR, EXTENDED, HORIZON, WORMHOLE]
+[m[34m[23:49:17][m [32m[Render thread/INFO][m [36m(Minecraft)[m [0m[STDOUT]: RTX optics: WORMHOLE (resident geometry retained)
+[m[34m[23:53:07][m [32m[Render thread/INFO][m [36m(Minecraft)[m [0m[STDOUT]: RTX live backend ready: 1280x720 sharp2x, resident chunks + moving geometry, GPU appearance sharing; optics=[EXTERIOR, EXTENDED, HORIZON, WORMHOLE]
+[m[34m[23:53:07][m [32m[Render thread/INFO][m [36m(Minecraft)[m [0m[STDOUT]: RTX optics: WORMHOLE (resident geometry retained)
+[m[34m[23:53:09][m [32m[Render thread/INFO][m [36m(Minecraft)[m [0m[STDOUT]: RTX live backend ready: 640x360 sharp2x, resident chunks + moving geometry, GPU appearance sharing; optics=[EXTERIOR, EXTENDED, HORIZON, WORMHOLE]
+[m[34m[23:53:09][m [32m[Render thread/INFO][m [36m(Minecraft)[m [0m[STDOUT]: RTX optics: WORMHOLE (resident geometry retained)
+[m[34m[23:46:21][m [32m[Render thread/INFO][m [36m(interstellar)[m [0mLive source refreshed without terrain reload: N=8, r_s=0.4330127018922193
+[m[34m[23:46:27][m [32m[Render thread/INFO][m [36m(interstellar)[m [0mLive source refreshed without terrain reload: N=64, r_s=3.4641016151377544
+[m[34m[23:48:24][m [32m[Render thread/INFO][m [36m(Minecraft)[m [0m[System] [CHAT] Interstellar: N=64 | centre=(2.00, 82.00, 2.00) | R=3.464 | r_s=3.464 | C=1.000 | black-hole proxy
+[m[34m[23:48:24][m [32m[Render thread/INFO][m [36m(interstellar)[m [0mLive source refreshed without terrain reload: N=64, r_s=3.4641016151377544
+[m[34m[23:49:08][m [32m[Render thread/INFO][m [36m(interstellar)[m [0mLive source refreshed without terrain reload: N=64, r_s=3.4641016151377544

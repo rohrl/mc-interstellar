@@ -122,6 +122,7 @@ final class FullImageShader {
             case EXTERIOR -> "";
             case EXTENDED -> "#define INTERSTELLAR_EXTENDED_SOURCE\n";
             case HORIZON -> "#define INTERSTELLAR_HORIZON\n";
+            case WORMHOLE -> "#define INTERSTELLAR_WORMHOLE\n";
         };
         probe=header+"#define INTERSTELLAR_MATERIAL_PROBE\n"+source+main;
         material=header+"#define INTERSTELLAR_MATERIALS\n#define INTERSTELLAR_MATERIAL_MASK\n"+source+main;

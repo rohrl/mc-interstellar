@@ -13,7 +13,7 @@ A Minecraft Java mod for educational relativistic optics. Scientific assumptions
 - [Live RTX integration](docs/rtx-live-world-2026-09-28.md): live mobs and chunk updates, approximately 42→120 FPS in the tested heavy view, and no observed OpenGL-only regression. Launch with `gradlew.bat runClient -PinterstellarRtx`; unsupported views fall back to OpenGL.
 - [Small-mass lens correction](docs/extended-lens-artifacts-2026-09-28.md): fixes serrated silhouettes at the extended-source surface and makes Alt+F12 renderer selection explicit.
 - [RTX optical coverage](docs/rtx-optical-variants-2026-09-28.md): extended masses and horizon views now stay on RTX; matched images and 1440p live-world timing checks.
-- [Wormhole demo implementation](docs/wormhole-demo-implementation.md): distant native regions and bidirectional player transfer are implemented; optical rendering and visual/performance acceptance are still pending.
+- [Wormhole demo](docs/wormhole-demo-implementation.md): two spherical Ellis mouths connect real scenes 1,145 blocks apart, with curved remote views and two-way player passage. Shared GL/RTX optics; about 100–120 FPS in the checked 1440p RTX views. Run `/interstellar demo wormholes`.
 - [Wormhole feasibility study](docs/wormholes-feasibility.md): spherical views, physically specified lensing and passage, gameplay challenges and the original analysis.
 - [Horizon access and body-image study](docs/horizon-body-study.md): close viewing, interior block editing and why returning-body rendering now defaults off.
 - [Minecraft feature coverage](docs/minecraft-coverage.md): supported graphics/gameplay and the remaining limitations; [new world features and checks](docs/world-features.md).
@@ -39,6 +39,10 @@ Minecraft 1.21.1, Fabric, Java 21. Open this directory as a Gradle project in In
 .\gradlew.bat build
 .\gradlew.bat runClient
 ```
+
+For RTX, use **Launch Interstellar RTX.cmd** or `gradlew.bat runClient -PinterstellarRtx`.
+Alt+F12 switches RTX/OpenGL in the live optical view. The ordinary launcher and
+normal artifact keep the Vulkan-free OpenGL path.
 
 Use a disposable development world. F6 toggles the diagnostic HUD; F7 places a **virtual reference centre** 64 blocks ahead of the camera. It is a measurement aid only: nothing is placed in the world and no gravity is applied. The HUD reports camera coordinate distance divided by the configured Schwarzschild radius, not a measured proper distance in curved spacetime.
 

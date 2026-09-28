@@ -1,0 +1,11 @@
+{
+  "metricSpace": "MAE and p95: encoded RGB [0,1]; luminance: linear sRGB [0,1]",
+  "automaticAcceptance": false,
+  "regions": {
+    "full": {"rgbMAE": 0.00014118, "linearLumaMAE": 0.00013181, "p95MaxChannel": 0.00000000, "pixelsChangedOver8LevelsPercent": 0.1311},
+    "top_third": {"rgbMAE": 0.00000757, "linearLumaMAE": 0.00001288, "p95MaxChannel": 0.00000000, "pixelsChangedOver8LevelsPercent": 0.0130},
+    "bottom_half": {"rgbMAE": 0.00019360, "linearLumaMAE": 0.00016990, "p95MaxChannel": 0.00000000, "pixelsChangedOver8LevelsPercent": 0.1768},
+    "centre": {"rgbMAE": 0.00054703, "linearLumaMAE": 0.00050561, "p95MaxChannel": 0.00392157, "pixelsChangedOver8LevelsPercent": 0.5014}
+  },
+  "worst32PixelTile": {"x": 1376, "y": 608, "width": 32, "height": 32, "rgbMAE": 0.01035795}
+}

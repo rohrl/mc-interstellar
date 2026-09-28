@@ -588,3 +588,30 @@ Remote block/light edits, lifecycle and actual bidirectional centreline/oblique
 crossings were checked in a copied world. Wormhole shaders and rendered continuity/FPS
 are still pending; do not mistake the ordinary-world camera screenshots for optical
 acceptance. Evidence/limits: docs/wormhole-demo-implementation.md.
+
+## D088 — Render and validate both wormhole charts on GL/RTX (2026-09-28)
+
+Accepted implementation: one shared Ellis Hamiltonian RK4 solver, curvature-bounded
+chords split exactly at the throat, and explicit exterior ownership of geometry.
+Never query across the map gap. Native clouds and block entities are captured at
+both ends; fog accumulates traversed distance, and escaping rays retain weak sky
+bending. Camera bases consume the transported roll. The optical mode is explicit,
+without fabricating a mass-source payload; entering the exhibit arms F10 once.
+
+Reuse existing native materials, AA and the optional hardware intersection backend.
+Compile the wormhole probe/material pair beside the three existing optical models,
+retaining resident geometry. No Vulkan dependency is added to ordinary artifacts.
+Add a direct RTX launcher; preserve the original OpenGL launcher.
+
+Acceptance combines seven CPU tests, 2,575 sampled GPU reference rays, equivalent
+camera views in both charts, GL/RTX image pairs, finer far-view integration, actual
+two-way oblique crossings and live1440p timings. Exterior views measure about100FPS;
+the tested transit views about113–120FPS with the existing cap. Both builds pass88
+tests. Fresh small-mass and horizon pairs retain close visual agreement. Full
+evidence, discarded checks and limits: docs/wormhole-demo-implementation.md.
+
+This is the requested v1 two-mouth demo: terrain/light and player transit are in
+scope. Arbitrary pairing UI, remote mob tracking, non-player transit, massive-body
+geodesics, global relativistic illumination and a physical construction of the
+supporting matter remain outside this implementation. Four ray windings and the
+bounded geometry/step budgets are explicit numerical limits.

@@ -76,3 +76,19 @@ Full raw pairs remain under `run/rtx-image`, with exact coordinates in compariso
 All tests used the new `Interstellar Overnight Check 2026-09-28` save copy. Original
 Calibration and prior Visual Check saves were preserved. Client closed normally and
 original options restored before continuing implementation.
+
+## Regression after wormhole integration
+
+The final wormhole build passes 88 tests in both configurations. The shared BH fog
+expression was factored into a helper without changing its arithmetic; wormhole
+branches compile out of the existing models. Fresh 1440p same-scene GL/RTX checks
+give RGB MAE 0.000670/255 (8-block extended), 0.002131/255 (near-horizon sideways)
+and 0.000573/255 (inside-horizon sideways), with 27/106/40 pixels above 16 levels.
+The near-horizon contact sheet was inspected. Source/model changes retain resident
+geometry and the inspected horizon checks use `native-horizon-quads`.
+
+An initial pair of checks had the wrong source selected and exercised exterior
+optics; those are excluded from the horizon results. The corrected tests explicitly
+inspected the central source first. Temporary blocks in the isolated copy were
+restored afterwards. Evidence is in
+[the final regression folders](profiles/2026-09-28-wormhole-optics).

@@ -1,6 +1,7 @@
 package io.github.rohrl.interstellar.client;
 
 import io.github.rohrl.interstellar.Interstellar;
+import io.github.rohrl.interstellar.wormhole.WormholePair;
 import io.github.rohrl.interstellar.mixin.client.CloudRendererAccessor;
 import io.github.rohrl.interstellar.mixin.client.RenderLayerAccessor;
 import io.github.rohrl.interstellar.mixin.client.RenderPhasesAccessor;
@@ -18,11 +19,23 @@ final class CloudMesh {
     void capture(WorldMesh mesh,BlockPos origin) {
         texture=triangles=0;
         var client=MinecraftClient.getInstance();
+        if(WormholePair.active(client.world)) {
+            // The native cloud mesh spans -288..480 blocks around its anchor.
+            // Retain a stable mesh at each mouth; moving across the throat must
+            // not replace the destination's clouds with the departure's layout.
+            float height=client.world.getDimensionEffects().getCloudsHeight();
+            for(int end=0;end<2;end++) {
+                var centre=WormholePair.centre(end);
+                captureAt(mesh,origin,new net.minecraft.util.math.Vec3d(centre.x,height+.33f,centre.z));
+            }
+        } else captureAt(mesh,origin,client.gameRenderer.getCamera().getPos());
+    }
+    private void captureAt(WorldMesh mesh,BlockPos origin,net.minecraft.util.math.Vec3d camera) {
+        var client=MinecraftClient.getInstance();
         var mode=client.options.getCloudRenderModeValue();
         float height=client.world.getDimensionEffects().getCloudsHeight();
         if(mode==CloudRenderMode.OFF || Float.isNaN(height))return;
         var renderer=(CloudRendererAccessor)client.worldRenderer;
-        var camera=client.gameRenderer.getCamera().getPos();
         float delta=client.getRenderTickCounter().getTickDelta(false);
         // Match the pinned native caller's arithmetic, including float rounding and periodic wrapping.
         double wind=(renderer.interstellar$ticks()+delta)*.03f;

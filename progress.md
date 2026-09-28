@@ -1,10 +1,11 @@
 # Progress
 
-## Current checkpoint — 2026-09-28, RTX coverage and active wormhole goal
+## Current checkpoint — 2026-09-28, RTX coverage and rendered wormhole demo
 
 Owner authorized two overnight goals: finish RTX optical coverage, then implement a
 physics-based playable two-way spherical wormhole demo. Full scope/checks are in
-docs/overnight-goals-2026-09-28.md. The overall goal remains active.
+docs/overnight-goals-2026-09-28.md. Both implementations now have runtime acceptance
+evidence; the v1 scope and limitations are recorded in their feature reports.
 
 Goal1 is implemented and checked: shared extended/horizon equations compile into
 RTX pipelines, preloaded to retain geometry across transitions. 1440p paired images
@@ -13,13 +14,27 @@ depth bias. Running-world frame medians8.32–8.37ms at120FPS cap. Both builds/8
 pass; optional dependencies remain absent from normal jars. See
 docs/rtx-optical-variants-2026-09-28.md for evidence and limits.
 
-Goal2 now has the Ellis reference maths, two separate block-built environments1145
-blocks apart, bounded native remote chunk/light delivery, and authoritative player
-crossing. Runtime checks cover both regions/remote edits/native light, cache release
-and re-entry, W/S passage both ways and oblique camera/velocity transfer (−12.18° roll
-at the first off-centre exit). The wormhole optical renderer is still unimplemented;
-these checks do not prove rendered continuity or FPS. See
-docs/wormhole-demo-implementation.md. The full wormhole goal remains active.
+Goal2 now renders the Ellis metric through two real environments 1,145 blocks apart.
+Shared GL/RTX optics split chords at the throat, capture both native regions and
+transport the player's camera/velocity through two-way crossings. Native remote
+lighting/edits and cache lifecycle were checked earlier; rendered centreline and
+oblique crossings now pass too. Seven CPU tests and 2,575 GPU reference rays pass;
+the same physical camera agrees across charts (centreline exact, oblique RGB MAE
+0.000930). Matched 1440p GL/RTX image MAE is 0.00208–0.01036 on a 0–255 scale.
+Inspected images show curved remote geometry, parallax and occlusion.
+
+Running-world RTX medians are about 99–100 FPS at the two exteriors, 113 FPS at an
+oblique return view and 120 FPS at an off-axis exit (existing cap retained). Final
+normal and RTX builds pass 88 tests; the normal jar excludes optional backend
+classes. Fresh small-mass and near/inside-horizon pairs confirm close agreement
+after shared shader changes. See docs/wormhole-demo-implementation.md and
+docs/profiles/2026-09-28-wormhole-optics for evidence and explicit v1 limits.
+
+Launch Interstellar RTX.cmd adds a direct optional launch. Use /interstellar demo
+wormholes, wait for World view ready and fly through; Alt+F12 selects the backend.
+Ordinary launcher/build remains OpenGL-only. All testing used the isolated overnight
+copy, preserving original saves and AA work. No general placement UI, remote mob
+tracking, non-player traversal or massive-body geodesics are claimed.
 
 ## Previous checkpoint — 2026-09-28, small-mass artifacts and Alt+F12
 

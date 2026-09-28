@@ -112,6 +112,21 @@ uniform vec3 TerrainFogRange;
 uniform vec4 TerrainFogColour;
 uniform vec3 Camera,Source,Forward,Right,Up;
 uniform float Radius,PathStep;
+#ifdef INTERSTELLAR_WORMHOLE
+uniform vec3 OtherSource;
+uniform float WormholeExtent;
+bool wormholeOther=false;
+vec3 wormholeChordStart;
+float wormholeTravelled=0.0;
+#endif
+float sceneFogDistance(vec3 hit) {
+#ifdef INTERSTELLAR_WORMHOLE
+    return wormholeTravelled+length(hit-wormholeChordStart);
+#else
+    vec3 relative=hit-Camera;
+    return TerrainFogRange.z>.5?max(length(relative.xz),abs(relative.y)):length(relative);
+#endif
+}
 #ifdef INTERSTELLAR_EXTENDED_SOURCE
 #moj_import <interstellar:extended_source.glsl>
 #else
@@ -397,6 +412,12 @@ int meshSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
 #endif
             COUNT_WORK(4+min(tree,1));
             vec4 vertexA=trianglePart(tree,base,0);
+#ifdef INTERSTELLAR_WORMHOLE
+            // Each end is a separate exterior chart, even though the demo places
+            // their native geometry in one dimension/acceleration structure.
+            bool remote=dot(vertexA.xyz-.5*(Source+OtherSource),OtherSource-Source)>0.0;
+            if(remote!=wormholeOther)continue;
+#endif
             float entity=vertexA.w;
             // -4 marks native mass-block terrain; +64 marks its interaction layers.
             // All other material/texture semantics remain their original values.
@@ -469,6 +490,9 @@ int meshSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
                         trianglePart(tree,base,5)*weights.y+trianglePart(tree,base,8)*weights.z);
                 if(colour.a<.1){DETAIL_END(shadeClock,1);continue;}
                 float distance=dot(vec3(cloudFogDistance(a),cloudFogDistance(b),cloudFogDistance(c)),weights);
+#ifdef INTERSTELLAR_WORMHOLE
+                distance=sceneFogDistance(start+t*delta);
+#endif
                 float fog=TerrainFogRange.y>TerrainFogRange.x?smoothstep(TerrainFogRange.x,TerrainFogRange.y,distance):step(TerrainFogRange.y,distance);
                 colour.rgb=mix(colour.rgb,TerrainFogColour.rgb,fog*TerrainFogColour.a);
 #ifdef INTERSTELLAR_MATERIALS
@@ -536,8 +560,7 @@ vec3 surface(int value,vec3 hit,vec3 normal) {
     if(MeshMode>.5) {
         // Synthetic opaque-box fixture: report the entered cell, preserving traversal failures.
         if(Diagnostic>2.5) {if(diagnostic.w!=-2.0)diagnostic=vec4(floor(hit-normal*.001),3);return vec3(0);}
-        vec3 relative=hit-Camera;
-        float fogDistance=TerrainFogRange.z>.5?max(length(relative.xz),abs(relative.y)):length(relative);
+        float fogDistance=sceneFogDistance(hit);
         float amount=TerrainFogRange.y>TerrainFogRange.x?smoothstep(TerrainFogRange.x,TerrainFogRange.y,fogDistance):step(TerrainFogRange.y,fogDistance);
         return mix(meshColour,TerrainFogColour.rgb,amount*TerrainFogColour.a);
     }
@@ -683,15 +706,16 @@ vec3 pastSurface(vec3 hit,vec3 normal,vec3 direction) {
 }
 bool passMaterial(int value,vec3 hit,vec3 normal) {
     if(MeshMode<.5 || value<0 || meshAlpha>=.999 && !meshCloud || diagnostic.w==-2.0)return false;
+#ifndef INTERSTELLAR_WORMHOLE
     if(BodyRadius==0.0 && length(hit-Source)<Radius && Lensing>.5
 #ifdef INTERSTELLAR_HORIZON
        && !interiorCamera
 #endif
     )return false;
+#endif
     vec3 colour=meshCloud?meshColour:surface(value,hit,normal);
     if(meshBlend==1 || meshBlend==3) {
-        vec3 relative=hit-Camera;
-        float distance=TerrainFogRange.z>.5?max(length(relative.xz),abs(relative.y)):length(relative);
+        float distance=sceneFogDistance(hit);
         float fade=1.0-(TerrainFogRange.y>TerrainFogRange.x?smoothstep(TerrainFogRange.x,TerrainFogRange.y,distance):step(TerrainFogRange.y,distance));
         colour=meshColour*fade;
         materialLayers.rgb+=(meshBlend==3?colour*colour:colour)*(1.0-materialLayers.a);
@@ -702,6 +726,9 @@ bool passMaterial(int value,vec3 hit,vec3 normal) {
     return true;
 }
 #endif
+#ifdef INTERSTELLAR_WORMHOLE
+#moj_import <interstellar:wormhole.glsl>
+#else
 void trace(vec2 uv) {
 #ifdef INTERSTELLAR_GLOW
     glowHit=false;
@@ -911,6 +938,7 @@ void trace(vec2 uv) {
     diagnostic=vec4(0,0,0,-2);
     fragColor=vec4(.7,.05,.5,1);
 }
+#endif
 void main() {
 #ifdef INTERSTELLAR_MATERIAL_MASK
     if(texelFetch(PendingRays,ivec2(gl_FragCoord.xy),0).a>.5)discard;

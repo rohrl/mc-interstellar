@@ -1,0 +1,74 @@
+{
+  "backends": {
+    "mouth-a": {
+      "RGB_mean_abs_255": 0.010361237702546296,
+      "RGB_RMSE_255": 0.5052379537422148,
+      "pixelsMaxErrorAbove16": 689.0,
+      "OpenGL_wall_ms_median": 41.98475,
+      "RTX_wall_ms_median": 9.35115,
+      "RTX_Vulkan_gpu_ms_median": 8.807856
+    },
+    "mouth-b": {
+      "RGB_mean_abs_255": 0.00979835792824074,
+      "RGB_RMSE_255": 0.4619959011437343,
+      "pixelsMaxErrorAbove16": 599.0,
+      "OpenGL_wall_ms_median": 41.3357,
+      "RTX_wall_ms_median": 9.20955,
+      "RTX_Vulkan_gpu_ms_median": 8.690992000000001
+    },
+    "oblique": {
+      "RGB_mean_abs_255": 0.0020759186921296296,
+      "RGB_RMSE_255": 0.230303367764572,
+      "pixelsMaxErrorAbove16": 139.0,
+      "OpenGL_wall_ms_median": 14.6742,
+      "RTX_wall_ms_median": 6.215,
+      "RTX_Vulkan_gpu_ms_median": 5.708976
+    },
+    "bh-small": {
+      "RGB_mean_abs_255": 0.0006700303819444444,
+      "RGB_RMSE_255": 0.07220385717356616,
+      "pixelsMaxErrorAbove16": 27.0,
+      "OpenGL_wall_ms_median": 16.841549999999998,
+      "RTX_wall_ms_median": 4.1255500000000005,
+      "RTX_Vulkan_gpu_ms_median": 3.59576
+    },
+    "bh-inside": {
+      "RGB_mean_abs_255": 0.0005733687789351852,
+      "RGB_RMSE_255": 0.0786021309775566,
+      "pixelsMaxErrorAbove16": 40.0,
+      "OpenGL_wall_ms_median": 6.353,
+      "RTX_wall_ms_median": 3.0959000000000003,
+      "RTX_Vulkan_gpu_ms_median": 2.59736
+    },
+    "bh-near": {
+      "RGB_mean_abs_255": 0.0021311668113425924,
+      "RGB_RMSE_255": 0.16432408599249387,
+      "pixelsMaxErrorAbove16": 106.0,
+      "OpenGL_wall_ms_median": 20.9214,
+      "RTX_wall_ms_median": 6.9262,
+      "RTX_Vulkan_gpu_ms_median": 6.41688
+    }
+  },
+  "imageHashes": {
+    "run\\rtx-image\\compare-1790602084744\\opengl.png": "11b2041476ca8fd98fecc080f0eca73cb68a0933bc26c0c7c31ed504a220b724",
+    "run\\rtx-image\\compare-1790602084744\\rtx.png": "0d19a63dbadf66262ba1efa80f4ec5cb22d588ec836337b06f7f6fed15b5c71f",
+    "run\\rtx-image\\compare-1790602817747\\opengl.png": "1b6fb628093476b2e99d2b5c66b131aabda5336b88d943715d86618baf2d972c",
+    "run\\rtx-image\\compare-1790602817747\\rtx.png": "7fd073808371a83c97fc7270d2948d763aa5e13d757790073126d028a4533cb8",
+    "run\\rtx-image\\compare-1790602630855\\opengl.png": "00b84298b1a278342aab20c2d5014ace77544fa3e700221631d180bd487a994b",
+    "run\\rtx-image\\compare-1790602630855\\rtx.png": "62d98e9b864398688856a0bc40cb0bb6e650816ebd50adaabde207701f4dfc78",
+    "run\\rtx-image\\compare-1790603185829\\opengl.png": "4a76167f19cd97ef3c7a371b9652ff4089aa5f62934c72e751411c4ac4451485",
+    "run\\rtx-image\\compare-1790603185829\\rtx.png": "55de266830d6352f5ca09bd2cda0f62896a99025fa1436d06af0f1883a1466d6",
+    "run\\rtx-image\\compare-1790603342443\\opengl.png": "e847e9ef559cd0edb1c001200e591a2cddac01b7ff228bb6e9ef6aabb18fa4b2",
+    "run\\rtx-image\\compare-1790603342443\\rtx.png": "ef24e2d5d03756ffba0f0077f004c362c9fec72cd54b53f95530cc6f3a3511dc",
+    "run\\rtx-image\\compare-1790603345344\\opengl.png": "45ef260f11fcffc43d1f127eff557684ccae50f5ffd7f2f933dfb60fc01cbca7",
+    "run\\rtx-image\\compare-1790603345344\\rtx.png": "e24fbc6bbd3e27ea44086333498dfc216f7e58e67c4c1f5bba1eeb07d6eabe3b",
+    "run\\interstellar-captures\\pair-4688498474838632972\\reference.png": "45c92ef6617cab46ac8bdf1f38b267a78255e54ef5ad88500888a94d05a37442",
+    "run\\interstellar-captures\\pair-4688498474838632972\\candidate.png": "45c92ef6617cab46ac8bdf1f38b267a78255e54ef5ad88500888a94d05a37442",
+    "run\\interstellar-captures\\pair-1041125909209797543\\reference.png": "3f710f1a9e2f75187d5aeebfaa8f507d392d3f3dbfa81d7e2181fbf06f221c43",
+    "run\\interstellar-captures\\pair-1041125909209797543\\candidate.png": "3b0ca99f864850f307c6a5ff2ed46d948b5f85ed20682d7de644b4eb95c85c46",
+    "run\\interstellar-captures\\pair-1850528726701863234\\reference.png": "d1fd40351463675b64ad3b73e99b0cf04d2137806560608741707ec4a825b33f",
+    "run\\interstellar-captures\\pair-1850528726701863234\\candidate.png": "9fd4e2d1c7efec274e6ba85f4f33d4b87c57eaaeb1ea732c264ac027f8e9ee71",
+    "run\\interstellar-captures\\pair-3288277007786418034\\reference.png": "90fb93fbcfd8c286c54fca2f5bb25933ff40f042af6967b46bfb255d585f19e8",
+    "run\\interstellar-captures\\pair-3288277007786418034\\candidate.png": "7061fd07e12d2120a43700cf4760f22daf414cfd693ddf1358183ad6dfada47c"
+  }
+}

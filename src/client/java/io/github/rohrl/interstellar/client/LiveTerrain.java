@@ -1,6 +1,7 @@
 package io.github.rohrl.interstellar.client;
 
 import io.github.rohrl.interstellar.Interstellar;
+import io.github.rohrl.interstellar.wormhole.WormholePair;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.text.Text;
@@ -12,6 +13,7 @@ public final class LiveTerrain {
     private static TerrainScreen renderer;
     private static int width,height;
     private static ClientWorld armedWorld;
+    private static ClientWorld seenWorld;
     private static boolean worldComposited;
     private LiveTerrain() { }
     static boolean active() {return armedWorld!=null;}
@@ -33,11 +35,24 @@ public final class LiveTerrain {
             if((modifiers&GLFW.GLFW_MOD_CONTROL)!=0)renderer.compareWorldBackend();else renderer.toggleWorldBackend();
         } else renderer.keyPressed(GLFW.GLFW_KEY_B,0,(modifiers&GLFW.GLFW_MOD_CONTROL)!=0?GLFW.GLFW_MOD_SHIFT:0);
     }
-    static void tick(MinecraftClient client) {synchronize(client);}
+    static void tick(MinecraftClient client) {
+        if(client.world!=seenWorld) {
+            stop();seenWorld=client.world;
+            if(WormholePair.active(client.world))armedWorld=client.world;
+        }
+        synchronize(client);
+    }
     private static void synchronize(MinecraftClient client) {
         if(!active())return;
         if(client.world!=armedWorld) {stop();return;}
         var source=SelectedSource.current();
+        if(WormholePair.active(client.world)) {
+            if(renderer!=null && renderer.isWormhole())return;
+            if(client.player==null)return;
+            releaseRenderer();renderer=TerrainScreen.wormhole(true);
+            width=client.getWindow().getScaledWidth();height=client.getWindow().getScaledHeight();
+            renderer.init(client,width,height);Interstellar.LOGGER.info("Live Ellis wormhole view armed; preparing both regions");check(client);return;
+        }
         if(renderer!=null&&renderer.selectedSource()==source)return;
         if(source!=null&&source.count()>0) {
             if(renderer!=null) {
@@ -69,7 +84,7 @@ public final class LiveTerrain {
         try {
             synchronize(client);
             if(!active())return;
-            if(renderer==null || SelectedSource.current()==null)return;
+            if(renderer==null || !renderer.isWormhole() && SelectedSource.current()==null)return;
             int w=client.getWindow().getScaledWidth(),h=client.getWindow().getScaledHeight();
             if(w!=width || h!=height) {width=w;height=h;renderer.resize(client,w,h);}
             worldComposited=renderer.renderScene();
@@ -83,7 +98,7 @@ public final class LiveTerrain {
         if(!active())return;
         var client=MinecraftClient.getInstance();
         if(client.world==null || client.player==null || client.options.hudHidden)return;
-        if(renderer!=null && SelectedSource.current()!=null) {renderer.renderHud(context);return;}
+        if(renderer!=null && (renderer.isWormhole() || SelectedSource.current()!=null)) {renderer.renderHud(context);return;}
         context.fill(6,6,Math.min(client.getWindow().getScaledWidth()-6,440),46,0xCD101824);
         context.drawTextWithShadow(client.textRenderer,"INTERSTELLAR | PAUSED - normal view | F10: off",12,12,0xFFFFD59A);
         context.drawTextWithShadow(client.textRenderer,SelectedSource.state().message(),12,24,0xFFFFFFFF);
