@@ -1,0 +1,8 @@
+[22:58:43] [Render thread/INFO] (interstellar) Gameplay view preparing: mass=0, wormholes=true
+[22:58:51] [Render thread/INFO] (interstellar) Terrain snapshot: origin=BlockPos{x=133, y=72, z=-69}, side=96, materials=77, 132 opaque | 23925 unknown | 2506 unsupported, capture wall time=8855.0184 ms
+[22:59:05] [Render thread/INFO] (interstellar) Terrain storage grown: vertices rows 10924 -> 16386, copyMs=125.3706
+[22:59:08] [Render thread/INFO] (interstellar) Streaming terrain ready: Streaming terrain | 8310456 triangles | 30 queued chunks; initial capture=25097.8293 ms
+[22:59:09] [Render thread/INFO] (interstellar) Wormhole passage visually open: revision=2, renderer frame presented; travel acknowledged
+[22:59:14] [Render thread/INFO] (interstellar) Terrain snapshot: origin=BlockPos{x=133, y=72, z=-69}, side=96, materials=0, 0 opaque | 0 unknown | 0 unsupported, capture wall time=0.3338 ms
+[22:59:18] [Render thread/INFO] (interstellar) RTX full-image comparison completed: C:\work\code\minecraft\interstellar\interstellar\run\rtx-image\compare-1790686754496; comparison=legacy voxel/height/light versus placeholders; both OpenGL; opengl.png=legacy, rtx.png=placeholders; Vulkan timing unused
+RGB_mean_abs_255=0.0 RGB_RMSE_255=0.0 changedPixels=0 pixelsMaxErrorAbove16=0

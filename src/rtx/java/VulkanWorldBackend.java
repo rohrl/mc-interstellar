@@ -29,7 +29,7 @@ public final class VulkanWorldBackend implements WorldRenderBackend {
     private int glToVk,glToGl,glMemory,sharedTexture;
     private TextureImage output;private final int width,height,sampleCapacity;
     private boolean closed,profile,rendered;private double previousGpu=Double.NaN;
-    private LiveGeometry geometry;private long boundTop;
+    private LiveGeometry geometry;private long boundTop,boundTerrain;
     private Map<String,Image> frameImages;
     private record SharedInput(TextureImage image,int glMemory,int glTexture,Image format) {}
     private final Map<String,SharedInput> inputs=new LinkedHashMap<>();
@@ -153,7 +153,7 @@ public final class VulkanWorldBackend implements WorldRenderBackend {
             TextureImage image=textures.getOrDefault(entry.getKey(),textures.get("Atlas"));
             writes.get(entry.getValue()).pImageInfo(VkDescriptorImageInfo.calloc(1,s).imageView(image.view).sampler(image.sampler).imageLayout(VK_IMAGE_LAYOUT_GENERAL));
         }
-        vkUpdateDescriptorSets(vk.device,writes,null);boundTop=geometry.top.handle;
+        vkUpdateDescriptorSets(vk.device,writes,null);boundTop=geometry.top.handle;boundTerrain=geometry.terrain.handle();
     }}
     private long pipeline(String code,String name) throws Exception {
         long compiler=shaderc_compiler_initialize(),options=shaderc_compile_options_initialize();
@@ -179,6 +179,11 @@ public final class VulkanWorldBackend implements WorldRenderBackend {
             var write=VkWriteDescriptorSet.calloc(1,s).sType$Default().dstSet(set).dstBinding(0).descriptorCount(1).descriptorType(VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR)
                 .pNext(VkWriteDescriptorSetAccelerationStructureKHR.calloc(s).sType$Default().pAccelerationStructures(s.longs(geometry.top.handle)).address());
             vkUpdateDescriptorSets(vk.device,write,null);boundTop=geometry.top.handle;
+        }
+        if(boundTerrain!=geometry.terrain.handle())try(MemoryStack s=MemoryStack.stackPush()) {
+            var write=VkWriteDescriptorSet.calloc(1,s).sType$Default().dstSet(set).dstBinding(1).descriptorCount(1).descriptorType(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER)
+                .pBufferInfo(VkDescriptorBufferInfo.calloc(1,s).buffer(geometry.terrain.handle()).range(geometry.terrain.size()));
+            vkUpdateDescriptorSets(vk.device,write,null);boundTerrain=geometry.terrain.handle();
         }
     }
     @Override public int render(Map<String,float[]> values) {

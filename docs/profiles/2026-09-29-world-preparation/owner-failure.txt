@@ -1,0 +1,32 @@
+[21:13:52] [Render thread/INFO] (interstellar) Gameplay view preparing: mass=64, wormholes=false
+[21:13:54] [Render thread/INFO] (interstellar) Streaming terrain ready: Streaming terrain | 56694 triangles | 384 queued chunks; initial capture=2343.2544 ms
+[21:13:55] [Render thread/INFO] (interstellar) Terrain snapshot: origin=BlockPos{x=-45, y=34, z=-45}, side=96, materials=44, 11779 opaque | 0 unknown | 722 unsupported, capture wall time=3427.2495 ms
+[21:14:35] [Render thread/INFO] (interstellar) Gameplay view preparing: mass=64, wormholes=false
+[21:14:38] [Render thread/INFO] (interstellar) Terrain snapshot: origin=BlockPos{x=-45, y=34, z=-45}, side=96, materials=44, 11779 opaque | 0 unknown | 722 unsupported, capture wall time=2793.3222 ms
+[21:14:40] [Render thread/INFO] (interstellar) Streaming terrain ready: Streaming terrain | 56694 triangles | 27 queued chunks; initial capture=4857.7767 ms
+[21:16:29] [Render thread/INFO] (interstellar) Gameplay view preparing: mass=0, wormholes=true
+[21:16:36] [Render thread/INFO] (interstellar) Terrain snapshot: origin=BlockPos{x=413, y=122, z=-110}, side=96, materials=49, 1389 opaque | 190177 unknown | 0 unsupported, capture wall time=6621.385 ms
+[21:17:15] [Render thread/INFO] (interstellar) Streaming terrain ready: Streaming terrain | 4970058 triangles | 56 queued chunks; initial capture=45774.5403 ms
+[21:17:19] [Render thread/INFO] (interstellar) Wormhole passage visually open: revision=28, renderer frame presented; travel acknowledged
+[21:18:05] [Server thread/INFO] (interstellar) Wormhole crossing: 0 -> 1, eye=(466.4349082041828, 164.64694060007844, -64.74664530555052) -> (380.5270072340454, 162.60897342467428, 46.56059209059188), yaw=-151.9821, pitch=55.866547, roll=91.23535502777908
+[21:18:22] [Server thread/INFO] (interstellar) Wormhole crossing: 1 -> 0, eye=(371.2099056139128, 167.2544030763496, 37.595273283308686) -> (456.13872024242283, 169.08047455203584, -54.47570637170556), yaw=28.684181, pitch=8.666523, roll=1.781464111820154
+[21:18:36] [Server thread/INFO] (interstellar) Wormhole crossing: 1 -> 0, eye=(370.8929079369161, 168.77794964595614, 37.30826038543073) -> (456.36676781327117, 170.85618219187268, -54.91570974908915), yaw=53.61138, pitch=-9.218107, roll=4.925666563682133
+[21:18:50] [Server thread/INFO] (interstellar) Wormhole crossing: 1 -> 0, eye=(369.1869114571534, 171.08506129597103, 46.86993459345679) -> (455.0190527689935, 173.1387025266526, -65.14124481227601), yaw=37.146378, pitch=-20.670717, roll=-41.022275696917454
+[21:26:47] [Server thread/INFO] (interstellar) Wormhole crossing: 0 -> 1, eye=(454.4530081218062, 167.6131391442122, -64.23842253637575) -> (368.381866128704, 165.56970356732216, 46.07917534491882), yaw=68.0283, pitch=36.386215, roll=0.42318813411589906
+[21:26:49] [Server thread/INFO] (interstellar) Wormhole crossing: 1 -> 0, eye=(368.58473557939374, 165.34489548029342, 46.00842823574109) -> (454.4223878706103, 167.30481581516585, -64.25853032311224), yaw=-69.25374, pitch=-2.6849258, roll=-0.005458218750561151
+[21:26:51] [Server thread/INFO] (interstellar) Wormhole crossing: 0 -> 1, eye=(454.5306827605026, 167.16187346103928, -64.21294629087069) -> (368.58630156813086, 165.1612712341818, 46.004441543853645), yaw=65.71905, pitch=3.2636278, roll=2.537954757894462
+[21:27:03] [Server thread/INFO] (interstellar) Wormhole crossing: 1 -> 0, eye=(368.4060866540629, 165.14365648240863, 45.437628719994926) -> (454.33824823291843, 167.13936626888997, -63.6499334779211), yaw=15.596077, pitch=-10.732582, roll=42.27372474200371
+[21:27:08] [Server thread/INFO] (interstellar) Wormhole crossing: 0 -> 1, eye=(454.55632889623485, 166.97223117893205, -63.95061474163155) -> (368.5463274441096, 164.94297280358336, 45.76521546620198), yaw=161.14795, pitch=32.325172, roll=-7.414821144036137
+[21:27:10] [Server thread/INFO] (interstellar) Wormhole crossing: 1 -> 0, eye=(368.8667238311034, 164.86882505208263, 46.00641098935519) -> (454.5870342905873, 166.76464938024904, -64.30583708459582), yaw=1.4320194, pitch=13.757137, roll=41.16911367717741
+[21:29:35] [Render thread/INFO] (interstellar) Gameplay view preparing: mass=124, wormholes=true
+[21:29:39] [Render thread/INFO] (interstellar) Terrain snapshot: origin=BlockPos{x=413, y=122, z=-110}, side=96, materials=49, 2023 opaque | 0 unknown | 7 unsupported, capture wall time=4628.8611 ms
+[21:30:48] [Render thread/INFO] (interstellar) Streaming terrain ready: Streaming terrain | 4988510 triangles | 75 queued chunks; initial capture=73619.6702 ms
+[21:30:52] [Render thread/INFO] (interstellar) Wormhole passage visually open: revision=28, renderer frame presented; travel acknowledged
+[21:42:40] [Render thread/INFO] (interstellar) Gameplay view preparing: mass=0, wormholes=true
+[21:42:50] [Render thread/INFO] (interstellar) Terrain snapshot: origin=BlockPos{x=23, y=33, z=-16}, side=96, materials=81, 282367 opaque | 0 unknown | 24453 unsupported, capture wall time=9750.7865 ms
+[21:46:04] [Render thread/ERROR] (interstellar) Terrain preview failed: see game log.
+java.lang.IllegalStateException: Native mesh GPU arena full; lower render distance
+[21:46:20] [Render thread/INFO] (interstellar) Gameplay view preparing: mass=0, wormholes=true
+[21:46:33] [Render thread/INFO] (interstellar) Terrain snapshot: origin=BlockPos{x=94, y=27, z=-107}, side=96, materials=88, 304826 opaque | 0 unknown | 40983 unsupported, capture wall time=12529.1013 ms
+[21:47:33] [Render thread/ERROR] (interstellar) Terrain preview failed: see game log.
+java.lang.IllegalStateException: Native mesh GPU arena full; lower render distance

@@ -1,0 +1,5 @@
+[23:02:25] [Render thread/INFO] (interstellar) Gameplay view preparing: mass=0, wormholes=true
+[23:02:25] [Render thread/INFO] (interstellar) Terrain snapshot: origin=BlockPos{x=94, y=27, z=-107}, side=96, materials=0, 0 opaque | 0 unknown | 0 unsupported, capture wall time=30.7935 ms
+[23:02:54] [Render thread/INFO] (interstellar) Terrain storage grown: vertices rows 10924 -> 16386, copyMs=118.0371
+[23:02:57] [Render thread/INFO] (interstellar) Streaming terrain ready: Streaming terrain | 8458628 triangles | 355 queued chunks; initial capture=31691.2413 ms
+[23:02:58] [Render thread/INFO] (interstellar) Wormhole passage visually open: revision=2, renderer frame presented; travel acknowledged

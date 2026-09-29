@@ -22,7 +22,13 @@ final class WorldMesh implements VertexConsumer,AutoCloseable {
     private ReusableMeshTexture movingTriangles,movingNodes;
     private ReusableMeshTexture compactNodes;
     private static final int MAX_TRIANGLES=7_000_000;
+    private static final boolean SECTION_OCCLUSION=Boolean.parseBoolean(System.getProperty("interstellar.sectionOcclusion","true"));
+    private static final boolean AUDIT_ENCLOSED=Boolean.getBoolean("interstellar.auditEnclosed");
+    private static final boolean PREP_PROFILE=Boolean.getBoolean("interstellar.profilePreparation");
+    private static final java.util.Set<Class<?>> PROFILE_MODELS=new java.util.HashSet<>();
+    long modelBlocks,enclosedBlocks;
     private final ClientWorld world;
+    private final CaptureOcclusion occlusion;
     private final BlockPos origin;
     private final int minChunkX,minChunkZ,chunks,sections,total,viewDistance;
     private final MatrixStack matrices=new MatrixStack();
@@ -59,6 +65,7 @@ final class WorldMesh implements VertexConsumer,AutoCloseable {
     }
     private WorldMesh(ClientWorld world,BlockPos origin,BlockPos centre,boolean terrainOnly,boolean singleChunk,int chunkX,int chunkZ) {
         this.world=world;this.origin=origin;this.centre=centre;
+        this.occlusion=SECTION_OCCLUSION?new CaptureOcclusion(world):null;
         this.terrainOnly=terrainOnly;this.singleChunk=singleChunk;
         var client=MinecraftClient.getInstance();
         var camera=BlockPos.ofFloored(client.gameRenderer.getCamera().getPos());
@@ -116,29 +123,38 @@ final class WorldMesh implements VertexConsumer,AutoCloseable {
         var manager=MinecraftClient.getInstance().getBlockRenderManager();
         var pos=new BlockPos.Mutable();
         long deadline=System.nanoTime()+5_000_000;
+        int cachedChunk=-1;
+        net.minecraft.world.chunk.WorldChunk terrain=null;
         net.minecraft.client.render.block.BlockModelRenderer.enableBrightnessCache();
         try {
             while(cursor<total && System.nanoTime()<deadline) {
                 int section=cursor/4096,block=cursor%4096,chunk=section/sections;
                 int cx=minChunkX+chunk%chunks,cz=minChunkZ+chunk/chunks,sy=section%sections;
-                if(!world.getChunkManager().isChunkLoaded(cx,cz)) {missingSections++;cursor=(section+1)*4096;continue;}
-                var terrain=world.getChunk(cx,cz);
-                if(terrain.getSection(sy).isEmpty()) {cursor=(section+1)*4096;continue;}
+                if(chunk!=cachedChunk){cachedChunk=chunk;terrain=world.getChunkManager().isChunkLoaded(cx,cz)?world.getChunk(cx,cz):null;}
+                if(terrain==null) {missingSections++;cursor=(section+1)*4096;continue;}
+                var sectionData=terrain.getSection(sy);
+                if(sectionData.isEmpty()) {cursor=(section+1)*4096;continue;}
                 pos.set(cx*16+(block&15),world.getBottomY()+sy*16+(block>>8),cz*16+((block>>4)&15));
                 cursor++;
-                var state=world.getBlockState(pos);
+                var state=sectionData.getBlockState(block&15,block>>8,(block>>4)&15);
                 if(state.isAir())continue;
+                boolean enclosed=occlusion!=null && occlusion.enclosed(sectionData,block,pos);
+                if(enclosed){if(PREP_PROFILE){modelBlocks++;enclosedBlocks++;}if(!AUDIT_ENCLOSED)continue;}
                 if(!state.getFluidState().isEmpty()) {
                     fluids.begin(pos,origin,state.getFluidState().isIn(net.minecraft.registry.tag.FluidTags.WATER));
                     manager.renderFluid(pos,world,fluids,state,state.getFluidState());fluids.finish();
                 }
                 if(state.getRenderType()!=BlockRenderType.MODEL)continue;
+                var model=manager.getModel(state);long seed=state.getRenderingSeed(pos);
+                if(PREP_PROFILE){if(!enclosed)modelBlocks++;if(PROFILE_MODELS.add(model.getClass()))Interstellar.LOGGER.info("Preparation model class: {}",model.getClass().getName());}
                 terrainMaterial=state.getBlock() instanceof io.github.rohrl.interstellar.source.MassBlock?-4:RenderLayers.getBlockLayer(state)==RenderLayer.getTranslucent()?-3:0;
                 if(terrainMaterial==-3)materials=true;
                 matrices.push();
                 try {
                     matrices.translate(pos.getX()-origin.getX(),pos.getY()-origin.getY(),pos.getZ()-origin.getZ());
-                    manager.getModelRenderer().render(world,manager.getModel(state),state,pos,matrices,this,true,random,state.getRenderingSeed(pos),OverlayTexture.DEFAULT_UV);
+                    int before=count;
+                    manager.getModelRenderer().render(world,model,state,pos,matrices,this,true,random,seed,OverlayTexture.DEFAULT_UV);
+                    if(enclosed && count!=before)throw new IllegalStateException("Enclosed-block capture omitted native geometry at "+pos);
                 } finally {matrices.pop();}
             }
         } finally {net.minecraft.client.render.block.BlockModelRenderer.disableBrightnessCache();}

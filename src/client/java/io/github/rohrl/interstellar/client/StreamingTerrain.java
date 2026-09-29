@@ -25,6 +25,11 @@ public final class StreamingTerrain implements AutoCloseable {
     private final Map<Long,Integer> incoming=new ConcurrentHashMap<>();
     private final Map<Long,Long> editStarted=new HashMap<>();
     private static final boolean TRACE_EDITS=Boolean.getBoolean("interstellar.traceEdits");
+    private static final boolean PREP_PROFILE=Boolean.getBoolean("interstellar.profilePreparation");
+    // Opt-out reference switches are for developer A/B measurements only.
+    private static final boolean FAIR_PREPARATION=Boolean.parseBoolean(System.getProperty("interstellar.fairPreparation","true"));
+    private static final boolean COMPLETE_PREPARATION=Boolean.parseBoolean(System.getProperty("interstellar.completePreparation","true"));
+    private long captureNanos,publishNanos,abandoned,modelBlocks,enclosedBlocks;
     private final Set<Long> wanted=new HashSet<>();
     private final Set<Long> localWanted=new HashSet<>();
     private WormholePair.Layout layout;
@@ -38,6 +43,7 @@ public final class StreamingTerrain implements AutoCloseable {
     int nodeCount;
     float extent=512;
     private boolean ready,localPrepared;
+    private boolean profileCaughtUp;
     private final long started=System.nanoTime();
     public static void register() {
         ClientChunkEvents.CHUNK_LOAD.register((world,chunk)->chunkEvent(world,chunk.getPos()));
@@ -63,6 +69,7 @@ public final class StreamingTerrain implements AutoCloseable {
     }
     StreamingTerrain(ClientWorld world,BlockPos origin,BlockPos centre) {
         this.world=world;this.origin=origin;this.centre=centre;
+        if(Boolean.getBoolean("interstellar.auditArenaCopy"))MeshArena.validateCopies();
         vertices=new MeshArena(10924,false,QuadVertices.WIDTH);
         try {nodes=new MeshArena(4096,true);}catch(RuntimeException e){vertices.close();throw e;}
         active=this;
@@ -80,8 +87,15 @@ public final class StreamingTerrain implements AutoCloseable {
     }
     double openingProgress() {
         var chunks=WormholePair.chunks(world);if(chunks.isEmpty())return 0;
-        int captured=0;for(var chunk:chunks) {var entry=entries.get(chunk.toLong());if(entry!=null && entry.revision!=0)captured++;}
-        return captured/(double)chunks.size();
+        int captured=0,total=chunks.size();
+        for(var chunk:chunks) {var entry=entries.get(chunk.toLong());if(entry!=null && entry.revision!=0)captured++;}
+        // First activation needs the loaded local world too. Do not report 95% while
+        // that work is still missing. Later replacements retain the prepared local cache.
+        if(COMPLETE_PREPARATION && !localPrepared)for(long key:localWanted) {
+            if(!loaded(key) || WormholePair.contains(world,ChunkPos.getPackedX(key),ChunkPos.getPackedZ(key)))continue;
+            total++;var entry=entries.get(key);if(entry!=null && entry.revision!=0)captured++;
+        }
+        return captured/(double)total;
     }
     // Diagnostic export reads only occupied rows; normal capture retains no extra CPU geometry.
     int[][] replaySpans() {return entries.entrySet().stream().sorted(Map.Entry.comparingByKey())
@@ -89,7 +103,7 @@ public final class StreamingTerrain implements AutoCloseable {
     WorldRenderBackend.Terrain backendTerrain() {
         return new WorldRenderBackend.Terrain() {
             public long revision(){return geometryRevision;}
-            public int rows(){return 10924;}
+            public int rows(){return vertices.rows();}
             public List<WorldRenderBackend.Chunk> chunks(){return entries.entrySet().stream().filter(e->e.getValue().triangles>0).sorted(Map.Entry.comparingByKey())
                 .map(e->new WorldRenderBackend.Chunk(e.getKey(),e.getValue().revision,e.getValue().vertexRow,e.getValue().triangles/2)).toList();}
             public java.nio.ByteBuffer read(WorldRenderBackend.Chunk chunk){
@@ -98,7 +112,13 @@ public final class StreamingTerrain implements AutoCloseable {
         };
     }
     boolean hasMaterials() {return materialChunks>0;}
-    int loadingPercent() {return wanted.isEmpty()?0:Math.min(100,entries.size()*100/wanted.size());}
+    int loadingPercent() {
+        int captured=0,total=0;
+        for(long key:wanted)if(loaded(key) || WormholePair.contains(world,ChunkPos.getPackedX(key),ChunkPos.getPackedZ(key))) {
+            total++;var entry=entries.get(key);if(entry!=null && entry.revision!=0)captured++;
+        }
+        return total==0?0:captured*100/total;
+    }
     int triangleTexture() {return vertices.texture;}
     int nodeTexture() {return nodes.texture;}
     int compactNodeTexture() {return nodes.texture;}
@@ -122,6 +142,7 @@ public final class StreamingTerrain implements AutoCloseable {
             }
         }
         if(capture!=null && captureVersion!=refreshes.version(capturing)) {
+            abandoned++;
             refreshes.retry(capturing,captureEdit);capture.close();capture=null;
         }
         boolean indexChanged=false;
@@ -134,7 +155,7 @@ public final class StreamingTerrain implements AutoCloseable {
             if(capture!=null && capturing==key){capture.close();capture=null;}
         }
         if(indexChanged)index();
-        if(capture==null) {Long edit=refreshes.nextEdit(this::loaded);if(edit!=null)beginCapture(edit);}
+        if(capture==null) {Long edit=refreshes.nextEdit(key->loaded(key) && (!FAIR_PREPARATION || Math.abs(ChunkPos.getPackedX(key)-cameraX)<=1 && Math.abs(ChunkPos.getPackedZ(key)-cameraZ)<=1));if(edit!=null)beginCapture(edit);}
         if(capture==null && !queue.isEmpty()) {
             // Finish the fixed destination set before ordinary camera-window
             // churn. Moving around must not keep missing portal chunks at the tail.
@@ -144,25 +165,40 @@ public final class StreamingTerrain implements AutoCloseable {
             }
         }
         if(capture==null && !queue.isEmpty()) {
+            if(FAIR_PREPARATION)for(long key:queue) {
+                var entry=entries.get(key);
+                if((entry==null || entry.revision==0) && loaded(key)){beginCapture(key);break;}
+            }
+        }
+        if(capture==null && FAIR_PREPARATION) {Long edit=refreshes.nextEdit(this::loaded);if(edit!=null)beginCapture(edit);}
+        if(capture==null && !queue.isEmpty()) {
             for(var iterator=queue.iterator();iterator.hasNext();) {
                 long key=iterator.next();if(!loaded(key))continue;
                 iterator.remove();beginCapture(key);break;
             }
         }
         if(capture!=null) {
+            long profileStart=PREP_PROFILE?System.nanoTime():0;
             capture.advance();
+            if(PREP_PROFILE)captureNanos+=System.nanoTime()-profileStart;
             if(capture.ready()) {
                 if(wanted.contains(capturing) && loaded(capturing) && captureVersion==refreshes.version(capturing))publish(capturing,capture);
                 else if(wanted.contains(capturing)){queue.add(capturing);refreshes.retry(capturing,captureEdit);}
                 capture.close();capture=null;
             }
         }
-        if(!localPrepared && !localWanted.isEmpty() && entries.keySet().containsAll(localWanted))localPrepared=true;
-        if(!ready && entries.keySet().containsAll(wanted)) {
+        if(!localPrepared && !localWanted.isEmpty() && captured(localWanted))localPrepared=true;
+        if(!ready && captured(wanted)) {
             ready=true;
             Interstellar.LOGGER.info("Streaming terrain ready: {}; initial capture={} ms",status(),(System.nanoTime()-started)/1e6);
             Interstellar.LOGGER.info("Quad terrain ready: {} quads; vertex payload={} bytes; single retained vertex/node arenas",triangleCount/2,triangleCount/2*192L);
         }
+    }
+    private boolean captured(Set<Long> required) {
+        for(long key:required) {
+            var entry=entries.get(key);if(entry==null || COMPLETE_PREPARATION && entry.revision==0 && loaded(key))return false;
+        }
+        return true;
     }
     private void beginCapture(long key) {
         capturing=key;queue.remove(key);captureVersion=refreshes.version(key);captureEdit=refreshes.begin(key);
@@ -189,26 +225,59 @@ public final class StreamingTerrain implements AutoCloseable {
         Interstellar.LOGGER.info("Streaming window: camera chunk=({}, {}), radius={}, retained={}, queued={}",x,z,radius,entries.size(),queue.size());
     }
     private void publish(long key,WorldMesh mesh) {
+        long profileStart=PREP_PROFILE?System.nanoTime():0;
         int count=mesh.triangleCount();var old=entries.get(key);
-        if(triangleCount-(old==null?0:old.triangles)+count>7_000_000)throw new IllegalStateException("Streaming terrain exceeds seven million triangles");
         Entry next=new Entry(0,0,0,0,0,null,false,++chunkRevision);
         if(count>0) {
             var data=QuadVertices.pack(mesh.triangleData(),count);var tree=new MeshTree(data,count/2,4);var treeNodes=tree.nodes();
             int tr=(count/2+QuadVertices.PER_ROW-1)/QuadVertices.PER_ROW,nr=(tree.size()+MeshArena.NODES-1)/MeshArena.NODES;
-            int t=vertexRows.allocate(tr),n;
-            try {n=nodeRows.allocate(nr);}catch(RuntimeException e){vertexRows.release(t,tr);throw e;}
+            int t=allocate(vertexRows,vertices,0,24576,tr,old==null?-1:old.vertexRow,old==null?0:old.vertexRowCount),n;
+            try {n=allocate(nodeRows,nodes,4,6140,nr,old==null?-1:old.nodeRow,old==null?0:old.nodeRows);}
+            catch(RuntimeException e){if(old==null || t!=old.vertexRow)vertexRows.release(t,tr);throw e;}
             int base=n*MeshArena.NODES,first=t*QuadVertices.PER_ROW;
             var part=new SceneTree.Part(treeNodes[0],treeNodes[1],treeNodes[2],treeNodes[4],treeNodes[5],treeNodes[6],base);
             for(int i=0;i<tree.size();i++) {int p=i*12;treeNodes[p+3]=treeNodes[p+3]==tree.size()?-1:treeNodes[p+3]+base;treeNodes[p+7]+=first;}
             try {vertices.write(t,data,data.length);nodes.write(n,treeNodes,treeNodes.length);}
-            catch(RuntimeException e){vertexRows.release(t,tr);nodeRows.release(n,nr);throw e;}
+            catch(RuntimeException e){if(old==null || t!=old.vertexRow)vertexRows.release(t,tr);if(old==null || n!=old.nodeRow)nodeRows.release(n,nr);throw e;}
             next=new Entry(t,tr,n,nr,count,part,mesh.hasMaterials(),chunkRevision);
         }
-        entries.put(key,next);if(old!=null)release(old);triangleCount+=count;if(next.materials)materialChunks++;index();
+        entries.put(key,next);
+        if(old!=null && old.part!=null) {
+            if(next.part==null || old.vertexRow!=next.vertexRow)vertexRows.release(old.vertexRow,old.vertexRowCount);
+            if(next.part==null || old.nodeRow!=next.nodeRow)nodeRows.release(old.nodeRow,old.nodeRows);
+            triangleCount-=old.triangles;if(old.materials)materialChunks--;
+        }
+        triangleCount+=count;if(next.materials)materialChunks++;index();
+        if(PREP_PROFILE) {
+            publishNanos+=System.nanoTime()-profileStart;
+            modelBlocks+=mesh.modelBlocks;enclosedBlocks+=mesh.enclosedBlocks;
+            if(published%100==0)Interstellar.LOGGER.info("Preparation profile: unique={}, published={}, abandoned={}, triangles={}, captureMs={}, publishMs={}, vertexFree={}, vertexLargest={}, nodeFree={}, queued={}, wallMs={}",entries.size(),published+1,abandoned,triangleCount,captureNanos/1e6,publishNanos/1e6,vertexRows.freeRows(),vertexRows.largestFree(),nodeRows.freeRows(),queue.size(),(System.nanoTime()-started)/1e6);
+            if(published%100==0)Interstellar.LOGGER.info("Preparation model work: blocks={}, enclosed={}, audit={}",modelBlocks,enclosedBlocks,Boolean.getBoolean("interstellar.auditEnclosed"));
+            int missing=0,loadedCount=0;
+            for(long expected:wanted)if(loaded(expected)){loadedCount++;var entry=entries.get(expected);if(entry==null || entry.revision==0)missing++;}
+            if(missing==0 && !profileCaughtUp)Interstellar.LOGGER.info("Preparation caught up: loadedChunks={}, triangles={}, published={}, wallMs={}",loadedCount,triangleCount,published+1,(System.nanoTime()-started)/1e6);
+            profileCaughtUp=missing==0;
+        }
         Long edited=editStarted.remove(key);
         if(edited!=null)Interstellar.LOGGER.info("Terrain edit published: chunk=({}, {}), latencyMs={}, revision={}, queued={}",ChunkPos.getPackedX(key),ChunkPos.getPackedZ(key),(System.nanoTime()-edited)/1e6,next.revision,queue.size());
         if(++published<=3 || published%100==0 || ready && Math.abs(ChunkPos.getPackedX(key)-cameraX)<=1 && Math.abs(ChunkPos.getPackedZ(key)-cameraZ)<=1)
             Interstellar.LOGGER.info("Streaming chunk published: ({}, {}), triangles={}, replacement={}, pending={}",ChunkPos.getPackedX(key),ChunkPos.getPackedZ(key),count,old!=null,queue.size());
+    }
+    private int allocate(RowArena pool,MeshArena storage,int first,int limit,int rows,int oldRow,int oldRows) {
+        if(oldRows>0 && (rows<=oldRows || pool.extend(oldRow,oldRows,rows))) {
+            if(rows<oldRows)pool.release(oldRow+rows,oldRows-rows);
+            return oldRow;
+        }
+        if(pool.largestFree()<rows) {
+            int max=Math.min(limit,org.lwjgl.opengl.GL11.glGetInteger(org.lwjgl.opengl.GL11.GL_MAX_TEXTURE_SIZE)-first);
+            int capacity=Math.min(max,Math.max(pool.capacity()+rows,(pool.capacity()*3+1)/2));
+            if(capacity>pool.capacity()) {
+                long started=System.nanoTime();int before=pool.capacity();
+                storage.grow(first+capacity);pool.grow(capacity);
+                Interstellar.LOGGER.info("Terrain storage grown: {} rows {} -> {}, copyMs={}",first==0?"vertices":"nodes",before,capacity,(System.nanoTime()-started)/1e6);
+            }
+        }
+        return pool.allocate(rows);
     }
     private void index() {
         geometryRevision++;

@@ -14,6 +14,10 @@ import java.util.*;
 final class FrozenImageComparison {
     private FrozenImageComparison() {}
     static String run(TerrainScreen screen) throws Exception {
+        boolean snapshots=Boolean.getBoolean("interstellar.compareMeshSnapshots");
+        try(var comparison=snapshots?screen.compareMeshSnapshots():null) {return run(screen,snapshots);}
+    }
+    private static String run(TerrainScreen screen,boolean snapshots) throws Exception {
         var client=MinecraftClient.getInstance();int w=client.getWindow().getFramebufferWidth(),h=client.getWindow().getFramebufferHeight();
         Path path=Path.of("rtx-image","compare-"+System.currentTimeMillis());Files.createDirectories(path);
         byte[][] pixels=new byte[2][];
@@ -47,7 +51,7 @@ final class FrozenImageComparison {
                 wall[variant][i]=(System.nanoTime()-start)/1e6;gpu[variant][i]=(GL33.glGetQueryObjectui64(q1,GL15.GL_QUERY_RESULT)-GL33.glGetQueryObjectui64(q0,GL15.GL_QUERY_RESULT))/1e6;
             }
         } finally {GL15.glDeleteQueries(q0);GL15.glDeleteQueries(q1);}
-        String report="scene="+screen.appearanceScene()+"\nquality="+screen.qualitySettings()+"\nwidth="+w+" height="+h+" camera="+screen.appearanceCamera()+" yaw="+screen.appearanceYaw()+" pitch="+screen.appearancePitch()+
+        String report=(snapshots?"comparison=legacy voxel/height/light versus placeholders; both OpenGL; opengl.png=legacy, rtx.png=placeholders; Vulkan timing unused\n":"")+"scene="+screen.appearanceScene()+"\nquality="+screen.qualitySettings()+"\nwidth="+w+" height="+h+" camera="+screen.appearanceCamera()+" yaw="+screen.appearanceYaw()+" pitch="+screen.appearancePitch()+
             "\nRGB_mean_abs_255="+(double)difference/(w*h*3)+" RGB_RMSE_255="+Math.sqrt((double)squares/(w*h*3))+" changedPixels="+changed+" pixelsMaxErrorAbove16="+large+
             "\nmaxChannelErrorHistogram="+Arrays.toString(histogram)+"\nOpenGL_wall_ms="+Arrays.toString(wall[0])+"\nRTX_wall_ms="+Arrays.toString(wall[1])+"\nRTX_Vulkan_gpu_ms="+Arrays.toString(vulkan)+"\nOpenGL_GLtimeline_ms="+Arrays.toString(gpu[0])+"\nRTX_GLtimeline_ms="+Arrays.toString(gpu[1])+"\n";
         Files.writeString(path.resolve("comparison.txt"),report);Interstellar.LOGGER.info("RTX full-image comparison completed: {}; {}",path.toAbsolutePath(),report);

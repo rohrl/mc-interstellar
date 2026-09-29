@@ -1,0 +1,11 @@
+[22:04:58] [Render thread/INFO] (interstellar) Gameplay view preparing: mass=0, wormholes=true
+[22:04:59] [Render thread/INFO] (interstellar) Preparation profile: unique=518, published=1, abandoned=2, triangles=5672, captureMs=196.1512, publishMs=36.5716, vertexFree=10915, vertexLargest=10915, nodeFree=4090, queued=239, wallMs=819.2298
+[22:05:09] [Render thread/INFO] (interstellar) Preparation profile: unique=618, published=101, abandoned=3, triangles=1118318, captureMs=4147.871, publishMs=399.5972, vertexFree=9233, vertexLargest=9233, nodeFree=3756, queued=534, wallMs=11004.4521
+[22:05:14] [Render thread/INFO] (interstellar) Terrain snapshot: origin=BlockPos{x=94, y=27, z=-107}, side=96, materials=88, 300422 opaque | 4588 unknown | 41022 unsupported, capture wall time=16042.0219 ms
+[22:05:16] [Render thread/INFO] (interstellar) Preparation profile: unique=715, published=201, abandoned=4, triangles=2373268, captureMs=7916.8848, publishMs=767.6586, vertexFree=7347, vertexLargest=7345, nodeFree=3380, queued=491, wallMs=18649.8607
+[22:05:18] [Render thread/INFO] (interstellar) Streaming terrain ready: Streaming terrain | 2577892 triangles | 482 queued chunks; initial capture=19806.0503 ms
+[22:05:21] [Render thread/INFO] (interstellar) Wormhole passage visually open: revision=2, renderer frame presented; travel acknowledged
+[22:05:40] [Render thread/INFO] (interstellar) Preparation profile: unique=729, published=301, abandoned=7, triangles=3653310, captureMs=12180.2582, publishMs=1135.6811, vertexFree=5422, vertexLargest=5412, nodeFree=2999, queued=450, wallMs=41706.9308
+[22:05:58] [Render thread/INFO] (interstellar) Preparation profile: unique=729, published=401, abandoned=10, triangles=4975216, captureMs=16053.6526, publishMs=1510.6315, vertexFree=3441, vertexLargest=3411, nodeFree=2614, queued=382, wallMs=60294.5299
+[22:06:17] [Render thread/INFO] (interstellar) Preparation profile: unique=729, published=501, abandoned=13, triangles=6271704, captureMs=20073.3459, publishMs=1900.8977, vertexFree=1492, vertexLargest=1464, nodeFree=2236, queued=299, wallMs=79485.6504
+[22:06:28] [Render thread/ERROR] (interstellar) Terrain preview failed: see game log.

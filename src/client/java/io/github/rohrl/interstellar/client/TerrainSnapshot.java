@@ -28,9 +28,8 @@ final class TerrainSnapshot implements AutoCloseable {
     final ClientWorld world;
     final BlockPos origin;
     final DistantTerrain distant;
-    private final FloatBuffer cells=MemoryUtil.memAllocFloat(TOTAL);
-    private final FloatBuffer lights=MemoryUtil.memCallocFloat(TOTAL*2);
-    private final FloatBuffer smoothIds=MemoryUtil.memCallocFloat(TOTAL);
+    private final FloatBuffer cells,lights,smoothIds;
+    final boolean meshOnly;
     final SmoothLight smoothLight=new SmoothLight();
     private final HashMap<BlockState,Integer> materials=new HashMap<>();
     private final ArrayList<float[]> palette=new ArrayList<>();
@@ -42,9 +41,16 @@ final class TerrainSnapshot implements AutoCloseable {
     int voxelTexture, paletteTexture,lightTexture,smoothTexture;
     private final long started=System.nanoTime();
     TerrainSnapshot(ClientWorld world, Vec3d source,boolean captureDistant) {
+        this(world,source,captureDistant,false);
+    }
+    TerrainSnapshot(ClientWorld world, Vec3d source,boolean captureDistant,boolean meshOnly) {
         this.world=world;
+        this.meshOnly=meshOnly;
+        cells=MemoryUtil.memCallocFloat(meshOnly?1:TOTAL);
+        lights=MemoryUtil.memCallocFloat(meshOnly?2:TOTAL*2);
+        smoothIds=MemoryUtil.memCallocFloat(meshOnly?1:TOTAL);
         origin=BlockPos.ofFloored(source).add(-SIDE/2,-SIDE/2,-SIDE/2);
-        distant=captureDistant?new DistantTerrain(this):null;
+        distant=captureDistant&&!meshOnly?new DistantTerrain(this):null;
         for(int i=0;i<3;i++) palette.add(new float[72]);
     }
     boolean ready() { return voxelTexture!=0; }
@@ -56,6 +62,7 @@ final class TerrainSnapshot implements AutoCloseable {
     }
     void advance() {
         if (ready()) return;
+        if(meshOnly){upload();return;}
         net.minecraft.client.render.block.BlockModelRenderer.enableBrightnessCache();
         try {advanceCapture();}
         finally {net.minecraft.client.render.block.BlockModelRenderer.disableBrightnessCache();}
@@ -133,14 +140,15 @@ final class TerrainSnapshot implements AutoCloseable {
             GL15.glBindBuffer(GL21.GL_PIXEL_UNPACK_BUFFER,0);
             GL11.glPixelStorei(GL11.GL_UNPACK_ALIGNMENT,1);
             for(int i=1;i<names.length;i++)GL11.glPixelStorei(names[i],0);
-            if(GL11.glGetInteger(GL11.GL_MAX_TEXTURE_SIZE)<SIDE*SIDE) throw new IllegalStateException("Terrain texture size unsupported");
+            int width=meshOnly?1:SIDE*SIDE,height=meshOnly?1:SIDE;
+            if(GL11.glGetInteger(GL11.GL_MAX_TEXTURE_SIZE)<width) throw new IllegalStateException("Terrain texture size unsupported");
             voxelTexture=GL11.glGenTextures(); RenderSystem.bindTexture(voxelTexture);
             nearest();
-            GL11.glTexImage2D(GL11.GL_TEXTURE_2D,0,GL30.GL_R32F,SIDE*SIDE,SIDE,0,GL11.GL_RED,GL11.GL_FLOAT,cells);
+            GL11.glTexImage2D(GL11.GL_TEXTURE_2D,0,GL30.GL_R32F,width,height,0,GL11.GL_RED,GL11.GL_FLOAT,cells);
             lightTexture=GL11.glGenTextures();RenderSystem.bindTexture(lightTexture);nearest();
-            GL11.glTexImage2D(GL11.GL_TEXTURE_2D,0,GL30.GL_RG32F,SIDE*SIDE,SIDE,0,GL30.GL_RG,GL11.GL_FLOAT,lights);
+            GL11.glTexImage2D(GL11.GL_TEXTURE_2D,0,GL30.GL_RG32F,width,height,0,GL30.GL_RG,GL11.GL_FLOAT,lights);
             smoothTexture=GL11.glGenTextures();RenderSystem.bindTexture(smoothTexture);nearest();
-            GL11.glTexImage2D(GL11.GL_TEXTURE_2D,0,GL30.GL_R32F,SIDE*SIDE,SIDE,0,GL11.GL_RED,GL11.GL_FLOAT,smoothIds);
+            GL11.glTexImage2D(GL11.GL_TEXTURE_2D,0,GL30.GL_R32F,width,height,0,GL11.GL_RED,GL11.GL_FLOAT,smoothIds);
             var values=MemoryUtil.memAllocFloat(palette.size()*72);
             try {
             for(float[] row:palette) values.put(row); values.flip();

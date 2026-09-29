@@ -11,7 +11,8 @@ final class LiveGeometry implements AutoCloseable {
     private static final int ROW_BYTES=4092*16,MAX_MOVING=200_000;
     private final Probe vk;
     private final WorldRenderBackend.Terrain source;
-    final Probe.Buffer terrain,moving;
+    Probe.Buffer terrain;
+    final Probe.Buffer moving;
     private Probe.Buffer indices,staging,instances;
     private int indexQuads,actorCount,cloudCount;
     private long terrainRevision=-1,movingRevision=-1;
@@ -28,7 +29,7 @@ final class LiveGeometry implements AutoCloseable {
         this.vk=vk;this.source=source;
         try {
         if((long)source.rows()*ROW_BYTES>vk.maxStorageBufferRange)throw new IllegalStateException("GPU storage-buffer range cannot address the retained terrain arena");
-        terrain=vk.buffer((long)source.rows()*ROW_BYTES,VK_BUFFER_USAGE_STORAGE_BUFFER_BIT|VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR|VK_BUFFER_USAGE_TRANSFER_DST_BIT,false);
+        terrain=terrainBuffer((long)source.rows()*ROW_BYTES);
         moving=vk.buffer(MAX_MOVING*144L,VK_BUFFER_USAGE_STORAGE_BUFFER_BIT|VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR,true);
         staging=vk.buffer(16*1024*1024,VK_BUFFER_USAGE_TRANSFER_SRC_BIT,true);
         instances=vk.buffer(2048*64,VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR,true);
@@ -58,6 +59,17 @@ final class LiveGeometry implements AutoCloseable {
     }
     private void synchronizeTerrain() {
         if(terrainRevision==source.revision())return;
+        long capacity=(long)source.rows()*ROW_BYTES;
+        if(capacity>terrain.size()) {
+            var replacement=terrainBuffer(capacity);long started=System.nanoTime();
+            try(MemoryStack s=MemoryStack.stackPush()) {
+                vk.begin();vkCmdCopyBuffer(vk.command,terrain.handle(),replacement.handle(),VkBufferCopy.calloc(1,s).size(terrain.size()));
+                barrier(VK_ACCESS_TRANSFER_WRITE_BIT,VK_ACCESS_SHADER_READ_BIT|VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR);vk.finish();
+            } catch(RuntimeException e){vk.release(replacement);throw e;}
+            // Completed BLAS builds own their geometry: input vertex buffers are not retained.
+            vk.release(terrain);terrain=replacement;
+            System.out.println("RTX terrain storage grown: bytes="+capacity+" copyMs="+(System.nanoTime()-started)/1e6+" retainedChunks="+chunks.size());
+        }
         long started=System.nanoTime();
         var next=source.chunks();var keys=new HashSet<Long>();for(var chunk:next)keys.add(chunk.key());
         for(var iterator=chunks.entrySet().iterator();iterator.hasNext();) {var old=iterator.next();if(!keys.contains(old.getKey())){old.getValue().structure.close();iterator.remove();}}
@@ -94,6 +106,10 @@ final class LiveGeometry implements AutoCloseable {
         }
         terrainRevision=source.revision();movingRevision=-1;
         System.out.println("RTX terrain synchronized: residentChunks="+chunks.size()+" rebuilt="+builds+" revision="+terrainRevision+" wallMs="+(System.nanoTime()-started)/1e6);
+    }
+    private Probe.Buffer terrainBuffer(long bytes) {
+        if(bytes>vk.maxStorageBufferRange)throw new IllegalStateException("GPU storage-buffer range cannot address the retained terrain arena");
+        return vk.buffer(bytes,VK_BUFFER_USAGE_STORAGE_BUFFER_BIT|VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR|VK_BUFFER_USAGE_TRANSFER_DST_BIT|VK_BUFFER_USAGE_TRANSFER_SRC_BIT,false);
     }
     private void ensureIndices(int quads) {
         if(quads<=indexQuads)return;

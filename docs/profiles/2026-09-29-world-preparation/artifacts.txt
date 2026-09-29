@@ -1,0 +1,3 @@
+opengl: bytes=649107, sha256=c80a6332f49270bd11236a0fbfbd90a30a80beb2e1a3667ee9a97ae2ae7559ef, optional entries=[]
+rtx: bytes=754139, sha256=da3a968dc8c918b69e1bac72913b38e71b5bb4015ca71d2133a22f555a9c5f1b, optional entries=['LiveGeometry.class', 'VulkanWorldBackend$Pipelines.class', 'VulkanWorldBackend$SharedInput.class', 'VulkanWorldBackend$TextureImage.class', 'VulkanWorldBackend.class']
+Tests: 117, failures: 0

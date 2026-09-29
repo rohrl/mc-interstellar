@@ -1,5 +1,24 @@
 # Progress
 
+## 2026-09-29 — Dense-world preparation recovery and lossless capture
+
+- Diagnosed the owner's 204/73-second failures as GPU row exhaustion. A copied
+  natural world requires over 8.2M triangles, exceeding the old 7M guard/arena.
+- Reuse/shrink/extend chunk rows and grow GL/RTX storage on demand; preserve
+  completed RTX chunk acceleration structures. Near edits remain urgent, while
+  distant random ticks no longer starve missing terrain.
+- Capture-local masks skip only blocks proved to emit no native geometry. Full
+  audit passes millions of native-rendered candidates. Live mesh mode skips unused
+  voxel/height/light data; a same-frame comparison is pixel-identical.
+- Require real currently loaded geometry before initial optical drawing and count
+  that work in progress. Full copied-world capture24.52s / passage~29s; moving1440p
+  capture23.84s / passage~28s. Final regenerated-world OpenGL default launch:
+  capture31.69s / passage~33s. Below30s is not a universal bound.
+- Both builds pass117 tests; exact GPU direct/FBO copy audits pass. Native pearl
+  placement, movement while preparing, passage and prompt edits verified. Normal
+  artifact excludes optional backend dependencies; original worlds/settings/AA
+  preserved. See D099 and docs/world-preparation-2026-09-29.md for evidence and limits.
+
 
 ## 2026-09-29 — Prompt live block edits; two-minute walking potion
 

@@ -161,7 +161,7 @@ final class TerrainScreen extends Screen {
         camera=client.gameRenderer.getCamera().getPos();
         yaw=client.gameRenderer.getCamera().getYaw();pitch=client.gameRenderer.getCamera().getPitch();
         cameraRoll=WormholeClient.roll();
-        snapshot=new TerrainSnapshot(client.world,centre(),!live || hybrid);
+        snapshot=new TerrainSnapshot(client.world,centre(),!live || hybrid,live&&Boolean.parseBoolean(System.getProperty("interstellar.meshOnlyPreparation","true")));
         if(live) {
             meshMode=true;hybrid=true;
         }
@@ -448,15 +448,27 @@ final class TerrainScreen extends Screen {
             catch(Exception failure) {validationStatus="RTX image comparison failed; see log";io.github.rohrl.interstellar.Interstellar.LOGGER.error("RTX image comparison failed",failure);}
         }
     }
+    private TerrainSnapshot comparisonSnapshot;
+    AutoCloseable compareMeshSnapshots() {
+        if(!meshMode || snapshot.meshOnly)throw new IllegalStateException("Snapshot comparison requires native mesh with meshOnlyPreparation=false");
+        comparisonSnapshot=new TerrainSnapshot(client.world,centre(),false,true);
+        try {
+            comparisonSnapshot.advance();
+            if(!comparisonSnapshot.origin.equals(snapshot.origin))throw new IllegalStateException("Snapshot origin changed before comparison");
+        } catch(RuntimeException failure){comparisonSnapshot.close();comparisonSnapshot=null;throw failure;}
+        return ()->{comparisonSnapshot.close();comparisonSnapshot=null;};
+    }
     void renderFrozenComparison(boolean hardware) {
         if(frozenBackend==null)throw new IllegalStateException("RTX backend unavailable");
+        var savedSnapshot=snapshot;
+        if(comparisonSnapshot!=null){if(hardware)snapshot=comparisonSnapshot;hardware=false;}
         boolean previous=rtxActive;rtxActive=hardware;comparingBackend=true;
         try {
             renderTerrain();
             if(hardware && (frozenBackend==null || !rtxActive))throw new IllegalStateException("RTX failed during comparison; refusing fallback timings");
-        }finally{rtxActive=frozenBackend!=null && previous;comparingBackend=false;}
+        }finally{snapshot=savedSnapshot;rtxActive=frozenBackend!=null && previous;comparingBackend=false;}
     }
-    double completeFrozenGpuMillis() {return frozenBackend.completedGpuMillis();}
+    double completeFrozenGpuMillis() {return comparisonSnapshot==null?frozenBackend.completedGpuMillis():0;}
     private void closeFrozenBackend() {rtxActive=false;if(frozenBackend!=null){frozenBackend.close();frozenBackend=null;}worldBackend=false;backendBridge=null;}
     private java.util.Map<String,Integer> backendImages() {
         return java.util.Map.of("Atlas",client.getTextureManager().getTexture(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE).getGlId(),

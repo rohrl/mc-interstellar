@@ -6,6 +6,8 @@ A Minecraft Java mod for educational relativistic optics. Scientific assumptions
 
 ## Start here
 
+- [World preparation fixes and measurements](docs/world-preparation-2026-09-29.md): dense-world storage growth, fair capture scheduling and lossless capture optimizations; approximately 28–33 seconds to an open passage in the final representative checks.
+
 - [Relativistic Sight potion](docs/relativistic-sight.md): walking-triggered observer optics, current `v/c`, and independent aberration, Doppler colour and brightness controls in F4.
 
 - [Illustrated rendering guide](docs/visual-guide/interstellar-visual-guide.html): graphics basics, black-hole optics, algorithms, optimizations and discoveries; self-contained offline HTML with interactive diagrams.

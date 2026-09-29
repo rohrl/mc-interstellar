@@ -1,0 +1,34 @@
+[22:42:28] [Render thread/INFO] (interstellar) Gameplay view preparing: mass=0, wormholes=true
+[22:42:28] [Render thread/INFO] (interstellar) Terrain snapshot: origin=BlockPos{x=44, y=22, z=-69}, side=96, materials=0, 0 opaque | 0 unknown | 0 unsupported, capture wall time=5.7837 ms
+[22:42:28] [Render thread/INFO] (interstellar) Terrain storage copy audit passed: direct and framebuffer, 49140 exact floats each
+[22:42:44] [Render thread/INFO] (interstellar) Terrain storage grown: vertices rows 10924 -> 16386, copyMs=117.4564
+[22:42:46] [Render thread/INFO] (interstellar) Preparation caught up: loadedChunks=609, triangles=8299506, published=614, wallMs=17848.488
+[22:42:46] [Render thread/INFO] (interstellar) Streaming terrain ready: Streaming terrain | 8299506 triangles | 86 queued chunks; initial capture=17849.1531 ms
+[22:46:15] [Render thread/INFO] (interstellar) Wormhole passage visually open: revision=2, renderer frame presented; travel acknowledged
+[22:46:32] [Render thread/INFO] (interstellar) Gameplay view preparing: mass=0, wormholes=true
+[22:46:32] [Render thread/INFO] (interstellar) Terrain snapshot: origin=BlockPos{x=133, y=72, z=-69}, side=96, materials=0, 0 opaque | 0 unknown | 0 unsupported, capture wall time=1.4842 ms
+[22:46:32] [Render thread/INFO] (interstellar) Terrain storage copy audit passed: direct and framebuffer, 49140 exact floats each
+[22:46:54] [Render thread/INFO] (interstellar) Terrain storage grown: vertices rows 10924 -> 16386, copyMs=123.9889
+[22:46:56] [Render thread/INFO] (interstellar) Preparation caught up: loadedChunks=609, triangles=8157556, published=650, wallMs=23844.0252
+[22:46:56] [Render thread/INFO] (interstellar) Streaming terrain ready: Streaming terrain | 8157556 triangles | 238 queued chunks; initial capture=23844.3666 ms
+[22:47:00] [Render thread/INFO] (interstellar) Wormhole passage visually open: revision=2, renderer frame presented; travel acknowledged
+[22:47:56] [Server thread/INFO] (interstellar) Wormhole crossing: 1 -> 0, eye=(173.31348134462542, 120.62000000476837, -20.5897624) -> (84.28005978531354, 70.19143654226646, -20.5897624), yaw=90.0, pitch=-2.635605, roll=0.0
+[22:48:17] [Render thread/INFO] (interstellar) Preparation caught up: loadedChunks=611, triangles=8269628, published=1276, wallMs=105080.4042
+[22:42:28] [Render thread/INFO] (interstellar) Preparation profile: unique=121, published=1, abandoned=0, triangles=7428, captureMs=39.6767, publishMs=36.4871, vertexFree=10913, vertexLargest=10913, nodeFree=4090, queued=608, wallMs=121.218
+[22:42:28] [Render thread/INFO] (interstellar) Preparation model work: blocks=27016, enclosed=25151, audit=false
+[22:42:31] [Render thread/INFO] (interstellar) Preparation profile: unique=220, published=101, abandoned=1, triangles=1231106, captureMs=1344.1332, publishMs=391.678, vertexFree=9069, vertexLargest=9069, nodeFree=3732, queued=517, wallMs=2778.8978
+[22:42:31] [Render thread/INFO] (interstellar) Preparation model work: blocks=3079167, enclosed=2800050, audit=false
+[22:42:33] [Render thread/INFO] (interstellar) Preparation profile: unique=320, published=201, abandoned=2, triangles=2580748, captureMs=2626.8073, publishMs=779.5097, vertexFree=7040, vertexLargest=7040, nodeFree=3327, queued=437, wallMs=5410.8926
+[22:42:33] [Render thread/INFO] (interstellar) Preparation model work: blocks=6282559, enclosed=5731018, audit=false
+[22:42:36] [Render thread/INFO] (interstellar) Preparation profile: unique=420, published=301, abandoned=2, triangles=3864324, captureMs=3956.308, publishMs=1145.2748, vertexFree=5106, vertexLargest=5106, nodeFree=2945, queued=347, wallMs=8130.4774
+[22:42:36] [Render thread/INFO] (interstellar) Preparation model work: blocks=9447026, enclosed=8641059, audit=false
+[22:42:39] [Render thread/INFO] (interstellar) Preparation profile: unique=520, published=401, abandoned=2, triangles=5160824, captureMs=5438.4811, publishMs=1512.9313, vertexFree=3157, vertexLargest=3157, nodeFree=2561, queued=275, wallMs=11095.6032
+[22:42:39] [Render thread/INFO] (interstellar) Preparation model work: blocks=12470064, enclosed=11400950, audit=false
+[22:42:42] [Render thread/INFO] (interstellar) Preparation profile: unique=619, published=501, abandoned=2, triangles=6380218, captureMs=6853.8668, publishMs=1875.7795, vertexFree=1317, vertexLargest=1317, nodeFree=2194, queued=184, wallMs=13932.8137
+[22:42:42] [Render thread/INFO] (interstellar) Preparation model work: blocks=15577132, enclosed=14267074, audit=false
+[22:42:45] [Render thread/INFO] (interstellar) Preparation profile: unique=716, published=601, abandoned=2, triangles=8004256, captureMs=8462.4831, publishMs=2475.0225, vertexFree=4348, vertexLargest=4348, nodeFree=1741, queued=97, wallMs=17307.5473
+[22:42:45] [Render thread/INFO] (interstellar) Preparation model work: blocks=18782779, enclosed=17073775, audit=false
+[22:42:56] [Render thread/INFO] (interstellar) Preparation profile: unique=729, published=701, abandoned=3, triangles=8300248, captureMs=10097.8632, publishMs=2946.3509, vertexFree=3908, vertexLargest=3843, nodeFree=1662, queued=57, wallMs=28389.2027
+[22:42:56] [Render thread/INFO] (interstellar) Preparation model work: blocks=21917447, enclosed=19854806, audit=false
+[22:43:02] [Render thread/INFO] (interstellar) Preparation profile: unique=729, published=801, abandoned=3, triangles=8300882, captureMs=11376.5509, publishMs=3389.6049, vertexFree=3906, vertexLargest=3782, nodeFree=1662, queued=21, wallMs=34288.4882
+[22:43:02] [Render thread/INFO] (interstellar) Preparation model work: blocks=25010965, enclosed=22623429, audit=false

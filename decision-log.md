@@ -816,3 +816,33 @@ still works; movement attributes and server simulation remain unchanged.
 Expiry and W/A/S/D were exercised in-game using the interim 60-second registration;
 the final 120-second constant and UI text passed both builds. Do not claim a second
 full 120-second expiry measurement. Menus, HUD, tooltip and feature guide agree.
+
+## D099 — Accepted: complete, bounded world preparation (2026-09-29)
+
+The owner's natural-world wormhole attempt exhausted fixed GPU geometry storage
+after minutes. Over8.2M native triangles exceed the previous7M guard. D097 also
+over-prioritized distant random block changes, starving missing terrain.
+
+Preserve prompt edits within one camera chunk, prioritize missing destination and
+loaded local geometry, then distant edits/background work. Reuse existing chunk
+rows and grow the GL texture / optional Vulkan vertex buffer on demand within
+device and compact-address limits. Completed RTX BLAS survive input-buffer growth;
+queue completion and descriptor rebinding preserve synchronization.
+
+Skip native model calls only for provably fully enclosed opaque cubes whose basic
+or weighted models have no unculled quads. Masks live for one invalidatable column
+capture. Retain conservative fallback for unknown/dynamic models. Remove unused
+voxel/height/light preparation only from live native-mesh views; F9 retains it.
+
+Initial readiness requires real geometry for currently loaded local chunks, not
+old unloaded placeholders. Avoiding optical drawing during incomplete capture
+substantially shortens full completion. Progress includes this local work; later
+portal replacements retain the prepared cache. Native world and interaction remain
+available during preparation; capture retains its existing5ms slice.
+
+No lower-detail representation, reduced range/AA, frozen actors or optical changes
+are adopted. Reference switches and native omission/GPU-copy/same-frame snapshot
+audits are developer-only. Report measured outcomes separately: full capture,
+visible passage, initial generation, warm cache and moving-camera preparation.
+Sub30s is reached in representative cases, not guaranteed for all worlds. See
+docs/world-preparation-2026-09-29.md for experiments, memory cost and acceptance.

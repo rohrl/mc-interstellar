@@ -1,0 +1,6 @@
+interstellar-gravity.json: restored byte-for-byte, SHA256 456e663137b50208c148a57f869e3db58ff62c53e49ec9bebef22973113c3916
+interstellar-optics.json: restored byte-for-byte, SHA256 7701058a40253e17d9244e9dcd91c146cb2065fa2986cc4529e9aced349b9d9b
+interstellar-relativity.json: restored byte-for-byte, SHA256 2d1d82d65d69ff767174e175343e0927d945b05eae23e8a3470201c55f154be5
+interstellar-terrain.json: restored byte-for-byte, SHA256 be15db53f968b2f4460b5b6ce63aae8583ae57da1458a30fd7f58634d61338a3
+interstellar.json: restored byte-for-byte, SHA256 d29056bdce4430a01757864895d71066a908235222c83475cb38693a29d01b14
+options.txt: restored byte-for-byte
