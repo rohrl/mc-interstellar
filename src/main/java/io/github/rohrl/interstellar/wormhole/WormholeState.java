@@ -41,13 +41,6 @@ public final class WormholeState extends PersistentState {
                     WormholeTravel.reset(player);
                 }
             }
-            if(state.layout.mouths().size()==1 && server.getTicks()%10==0) {
-                var world=server.getWorld(state.layout.dimension());var c=state.layout.mouths().getFirst();
-                if(world!=null)for(int i=0;i<32;i++) {
-                    double a=i*Math.PI/16,r=WormholePair.METRIC.mouthRadius();
-                    world.spawnParticles(net.minecraft.particle.ParticleTypes.END_ROD,c.x+r*Math.cos(a),c.y,c.z+r*Math.sin(a),1,0,0,0,0);
-                }
-            }
         });
     }
     private static void resetViewer(ServerPlayerEntity player) {
@@ -63,19 +56,21 @@ public final class WormholeState extends PersistentState {
     }
     public static boolean place(ServerPlayerEntity player,Vec3d centre) {
         var world=player.getServerWorld();var state=get(player.getServer());var old=state.layout;
-        var mouths=old.mouths();double r=WormholePair.METRIC.mouthRadius();
+        // A successful throw in a different dimension starts a new local pair.
+        // Validate before replacing anything, so a miss never closes the old one.
+        boolean movedDimension=!old.mouths().isEmpty()&&!old.dimension().equals(world.getRegistryKey());
+        var mouths=movedDimension?List.<Vec3d>of():old.mouths();double r=WormholePair.METRIC.mouthRadius();
         String error=null;
-        if(!mouths.isEmpty()&&!old.dimension().equals(world.getRegistryKey()))error="Both mouths must be in "+old.dimension().getValue()+".";
-        else if(centre.y-r<world.getBottomY() || centre.y+r>=world.getTopY()
+        if(centre.y-r<world.getBottomY() || centre.y+r>=world.getTopY()
             || !world.getWorldBorder().contains(centre.x-r,centre.z-r) || !world.getWorldBorder().contains(centre.x+r,centre.z+r))error="The mouth would cross the world boundary.";
         else if(world.getPlayers().stream().anyMatch(p->p.getEyePos().distanceTo(centre)<r+4))error="Too close to a player. Aim farther away.";
         else if(!mouths.isEmpty() && mouths.getLast().distanceTo(centre)<r*2+4)error="Too close to the remaining mouth. Leave at least 20 blocks between centres.";
         if(error==null)error=clearance(world,centre,r);
-        if(error!=null){player.sendMessage(Text.literal("Wormhole: "+error+" Existing mouths kept."),true);
+        if(error!=null){player.sendMessage(Text.literal("Wormhole: "+error+(old.mouths().isEmpty()?"":" Existing mouths kept.")),true);
             Interstellar.LOGGER.info("Wormhole placement rejected: {}; centre={}",error,centre);return false;}
         var next=mouths.isEmpty()?List.of(centre):List.of(mouths.getLast(),centre);
         state.set(new WormholePair.Layout(world.getRegistryKey(),next,old.revision()+1,false));
-        player.sendMessage(Text.literal(next.size()==1?"First mouth placed. Throw again elsewhere to connect it.":
+        player.sendMessage(Text.literal(next.size()==1?(movedDimension?"Previous pair closed. ":"")+"First wormhole end placed (closed). Throw another Rift Pearl elsewhere to connect it.":
             mouths.size()==2?"Oldest mouth relocated. Preparing the new destination...":"Wormhole connected. Preparing both destinations..."),false);
         world.playSound(null,centre.x,centre.y,centre.z,net.minecraft.sound.SoundEvents.BLOCK_BEACON_ACTIVATE,net.minecraft.sound.SoundCategory.BLOCKS,1,.8f);
         return true;

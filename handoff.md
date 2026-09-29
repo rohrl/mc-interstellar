@@ -1,84 +1,81 @@
-# Handoff — settings, placed wormholes and 4×/8× AA, 2026-09-29
+# Handoff — Rift Pearl gameplay UX, 2026-09-29
 
-## Current checkpoint
+## Current state
 
-Branch `codex/rtx-wormhole-demo`; see Git for latest commit. Commits/pushes and
-runtime inputs authorized. No subagents. Preserve original saves, .idea and AA
-commit 8ad46eb. Follow AGENTS.md. No active overnight goal.
+Branch codex/rtx-wormhole-demo. See Git for latest commit. Pushes, branches and
+runtime input authorized; no subagents. Follow AGENTS.md. Preserve original worlds,
+.idea and AA WIP commit8ad46eb. No active overnight goal.
 
-Implemented F4 live settings, reusable throwable Wormhole Seed with one persistent
-pair (later throws replace oldest; sneak-use closes), and Off/Edge/2×/4×/8× AA on
-both renderers. Native AO recaptures lighting; preferences persist. RTX extra
-sample-atlas rows allocate only for selected higher modes. Default remains 2×.
-Fixed opaque-only scenes failing RTX eligibility. Normal build remains Vulkan-free.
+Previous checkpoint0510340 added F4 settings, all five GL/RTX AA modes, one saved
+throwable wormhole pair, chunk lifetime/readiness fixes and exit collision guard.
+This follow-up fixes the confusing first-mouth experience:
 
-Revisioned layouts handle chunk readiness, ticket release, overlapping regions,
-reconnect/respawn and retired client chunks. Demo pair follows the same global
-oldest-mouth rule. Confirmed lower-rim arrival could embed feet in the exit floor;
-full destination bounding-box check now rejects obstructed travel before camera
-transport, returning to the prior clear entrance position.
+- The actual rejection was an old pair in Gameplay rejecting Overworld throws.
+  A valid throw in another dimension now starts a fresh local pair and reports
+  the old pair closing. Invalid placement preserves it. Same-dimension later
+  throws still replace only the oldest end. Cross-dimension travel not added.
+- First end is a native opaque dark sphere with a cyan rim. No wormhole ray tracing,
+  remote preparation or gravity for an unpaired end. Crosshair says Closed and
+  prompts a second throw. Connected/loading states also labelled; terrain occludes
+  the hint. Closed mesh can join existing BH entity capture if already active.
+- Item is now Rift Pearl, custom64×64 sprite (source/prompt in docs/artwork).
+  ID remains interstellar:wormhole_seed for existing stacks/recipe compatibility.
+  Creative Tools & Utilities; /give @s interstellar:wormhole_seed; sneak-use clears.
+- RTX already defaulted on for connected wormholes in an RTX launch. Verified
+  actual automatic activation. Preserve explicit saved OpenGL choice and fallback.
+- Native closed-mouth F12 timing reuses LabBenchmark only when requested.
 
-## Read next / evidence
+Read docs/settings-and-wormhole-seed.md and docs/profiles/2026-09-29-rift-pearl/.
+Physics/background: docs/wormhole-demo-implementation.md; RTX optical coverage:
+docs/rtx-optical-variants-2026-09-28.md. Controls: docs/demo-quickstart.md.
 
-- docs/settings-and-wormhole-seed.md: implementation, usage, results and limits.
-- docs/profiles/2026-09-29-settings-portals/: compact evidence and screenshots.
-- docs/wormhole-demo-implementation.md: original Ellis physics/GPU validation.
-- docs/rtx-optical-variants-2026-09-28.md: BH/extended/horizon RTX coverage.
-- docs/demo-quickstart.md: launch and controls.
+## Verification
 
-Both builds pass 88 tests, zero failures/errors. Normal artifact checked for no
-optional/Vulkan/shaderc classes before the final common-code collision guard;
-both builds passed again afterwards. Logs: run/settings-portals-collision-build.log,
-run/settings-portals-collision-rtx-build.log; earlier artifact verification in
-run/settings-item-artifact-check.txt.
+Normal and RTX builds pass88 tests. Normal jar contains zero optional/Vulkan/
+shaderc entries. Logs: run/rift-pearl-normal-build.log, run/rift-pearl-final-build.log,
+run/rift-pearl-artifact-check.txt. No optical equations/shaders changed.
 
-Runtime checked menu, AO recapture, settings persistence, renderer selection,
-actual throws/replacement/rejection, reload, retired-mouth inactivity and two-way
-passage. Native shader compilation and inspected GL/RTX comparisons passed.
-1280×720 full/fine MAE on 0–255: 2× .00304, 4× .00326, 8× .00293. RTX frame medians:
-2× 15.95ms, 4× 26.45ms, 8× 48.36ms. Default 2× within about 1% of earlier timing.
-Opaque item course MAE .00776 at half/2×. These are scene-specific checks.
+Actual empty-pair first throw, dimension move, invalid-placement preservation,
+closed-end restart, second-end connection, custom sprite and depth/label occlusion
+passed. Closed-sphere fixed-view GPU draw p50 .009344ms; frame p50 8.3452ms at120FPS
+cap,1280×720,300 samples after120 warmup. Earlier falling-player timing excluded.
+Connected full/fine2× GL/RTX same-frame RGB MAE .0020613/255. Screenshot shows RTX
+and Connected. Closed-marker capture alongside a BH was not separately compared.
+Broad movement/flicker remains owner-deferred.
 
-Collision regression: old arrival feet Y100.39 inside floor ending Y101; fixed
-attempt retained entrance feet Y101, then clear centre crossings passed both ways.
-Optical equations unchanged; no redundant Ellis solver rerun. Broad movement and
-flicker testing remains owner-deferred.
+## Current runtime and preserved state
 
-## Current runtime / owner state
+One RTX client is paused in `Interstellar Rift Pearl QA 2026-09-29`,1280×720.
+PID27952; VERIFY first. Gradle session20538. Log run/rift-pearl-reload-runtime.log.
+No active input helpers. Close identified client normally; wait for exit before
+another launch. Do not run two clients against the same save.
 
-One RTX client, isolated save `Interstellar Overnight Check 2026-09-28`, 1280×720,
-paused safely. PID 23144; VERIFY first. Gradle session 81370. Runtime log:
-run/settings-portals-collision-runtime.log. No active input helpers. Close the
-identified client normally and wait for actual exit before relaunching.
+QA pair revision15 in Overworld: (200.5,298,218.87673861773072) and
+(280.5,298,218.87673861773072). Player on glass podium at feet(200.5,296,195.5),
+yaw0/pitch0, creative but NOT flying. Main hand holds pearl. Temporary wall removed.
+Quality remains owner's full resolution/fine paths/2×/RTX/weather on/body off;
+config hash equals run/rift-pearl-owner-options.json. Do not reset these casually.
 
-Owner pair revision 8 restored and verified, dimension interstellar:gameplay:
-A(250.5,110,243.67978012696636), B(243.75889273363606,110,212.71281489326503).
-Do not replace it with the fixed exhibit merely for convenience. Owner quality
-restored: full resolution, fine paths, 2×, RTX preferred, weather on, body off.
-Backups: run/aa8-owner-wormhole.dat and run/aa8-owner-terrain.json.
-Owner had fallen into the void before restart; respawned and restored creative
-flight with one seed. Final safe feet(250.5,108.38,275.7), yaw180, pitch0, roll0.
-Original Calibration and previous Visual Check saves untouched.
+The owner explored `Interstellar Rift Pearl Check 2026-09-29` during the first
+checks, creating revision12: (200.5,298,223.67978012696622) and
+(273.78536059994,298,203.69964719214747). That world is preserved separately.
+The preceding `Interstellar Overnight Check 2026-09-28` was copied at09:47:03 and
+not modified in this iteration. Original Calibration/Visual Check untouched.
+An optional idle question was sent after noticing movement; no answer was needed
+because subsequent tests used another disposable copy. New owner changes supersede
+recorded poses. Do not restore old revision8 over their later exploration.
 
-Test course floor in Gameplay: Y100, X238–342/Z210–260 plus two approach pads.
-Temporary placement blocker removed. New owner exploration supersedes saved poses.
-
-Launch `Launch Interstellar RTX.cmd` / `gradlew.bat runClient -PinterstellarRtx`.
-Ordinary launcher remains OpenGL-only. Test init `-I run/overnight-init.gradle`
-selects the isolated save. JDK: C:/Portable/jdks/temurin-21.0.12.1.
+Launch normally: Launch Interstellar RTX.cmd / gradlew.bat runClient -PinterstellarRtx.
+Ordinary launcher remains OpenGL-only. QA launch adds -I run/rift-pearl-qa-init.gradle;
+run/rift-pearl-init.gradle selects the owner's separate Rift Pearl Check copy.
+JDK C:/Portable/jdks/temurin-21.0.12.1. Reliable helpers in run/: menu-click.ps1,
+control-short.ps1, send-safe-command.ps1 (clipboard preserved), rtx-live-pair.ps1.
 F4 settings; R upright; Alt+F12 renderer; F10 optics; F12 timing.
-Seed: Creative Tools & Utilities or `/give @s interstellar:wormhole_seed`.
-
-Ignored run/ helpers: menu-click.ps1 uses reliable held clicks (old click helper
-can miss); control-short.ps1 uses held keys; send-safe-command.ps1 preserves the
-clipboard; rtx-live-pair.ps1 and rtx-live-timings.ps1 gate on log completion.
-Use screenshots for meaningful visual changes and compact logs for routine checks.
 
 ## Limits
 
-One same-dimension pair, radius 8, open volume required. Capture remains five chunks
-around each mouth. Nearest-mouth chart approximation is not a global two-mouth
-Einstein solution. Player passage only; no remote mob tracking, vehicle/projectile
-transit, remote block interaction or persistent roll on reconnect. Supporting
-exotic matter and massive-body geodesics are not simulated. 8× is expensive and
-optional; do not silently raise defaults.
+One same-dimension pair, radius8, open volume required. Remote capture remains
+five chunks at each end; nearest-mouth chart is not a global spacetime solution.
+Player transit only; no remote mob tracking, vehicles/projectile passage or remote
+block interaction. Camera roll not persisted on reconnect.8× remains expensive
+and optional. Collision guard rejects obstructed exits instead of embedding feet.

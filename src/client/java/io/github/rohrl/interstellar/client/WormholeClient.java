@@ -23,12 +23,15 @@ public final class WormholeClient {
     private record Transit(WormholeTransitPayload payload,Vec3d velocity,Vec3d previousEye,long tick) {}
     private WormholeClient() {}
     public static void register() {
+        WormholeAppearance.register();
         net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents.DISCONNECT.register((handler,client)-> {
+            WormholeAppearance.changed();
             WormholePair.clientLayout(null,WormholePair.EMPTY);readyWorld=null;cameraWorld=null;transit=null;roll=0;
         });
         net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry.register(io.github.rohrl.interstellar.wormhole.WormholeSeed.ENTITY,
             net.minecraft.client.render.entity.FlyingItemEntityRenderer::new);
         ClientPlayNetworking.registerGlobalReceiver(io.github.rohrl.interstellar.wormhole.WormholeLayoutPayload.ID,(payload,context)-> {
+            WormholeAppearance.changed();
             var world=context.client().world;if(world==null)return;
             WormholePair.clientLayout(world,payload.layout());readyWorld=null;transit=null;roll=0;cameraWorld=world;
             if(context.client().currentScreen instanceof TerrainScreen screen && screen.isWormhole())context.client().setScreen(null);

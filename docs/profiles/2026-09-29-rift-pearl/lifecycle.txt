@@ -1,0 +1,29 @@
+LOG: run/rift-pearl-runtime.log
+[m[34m[09:58:46][m [32m[Render thread/INFO][m [36m(interstellar)[m [0mWormhole client layout: revision=10, mouths=[(339.0089283423492, 110.0, 216.32431956995734), (277.60193402283346, 110.0, 258.14182144935086)]
+[m[34m[10:00:12][m [32m[Server thread/INFO][m [36m(interstellar)[m [0mWormhole placement rejected: Too close to a player. Aim farther away.; centre=(200.5, 298.0, 200.5)
+[m[34m[10:00:16][m [32m[Server thread/INFO][m [36m(interstellar)[m [0mWormhole layout changed: dimension=minecraft:overworld, revision=11, demo=false, mouths=[(200.5, 298.0, 223.67978012696622)]
+[m[34m[10:00:16][m [32m[Render thread/INFO][m [36m(Minecraft)[m [0m[System] [CHAT] Previous pair closed. First wormhole end placed (closed). Throw another Rift Pearl elsewhere to connect it.
+[m[34m[10:00:16][m [32m[Render thread/INFO][m [36m(interstellar)[m [0mWormhole client layout: revision=11, mouths=[(200.5, 298.0, 223.67978012696622)]
+[m[34m[10:02:18][m [32m[Server thread/INFO][m [36m(interstellar)[m [0mWormhole layout changed: dimension=minecraft:overworld, revision=12, demo=false, mouths=[(200.5, 298.0, 223.67978012696622), (273.78536059994, 298.0, 203.69964719214747)]
+[m[34m[10:02:18][m [32m[Render thread/INFO][m [36m(interstellar)[m [0mWormhole client layout: revision=12, mouths=[(200.5, 298.0, 223.67978012696622), (273.78536059994, 298.0, 203.69964719214747)]
+[m[34m[10:02:23][m [32m[Render thread/INFO][m [36m(interstellar)[m [0mWormhole native regions ready: 182 chunks with light data applied
+LOG: run/rift-pearl-final-runtime.log
+[m[34m[10:04:05][m [32m[Render thread/INFO][m [36m(interstellar)[m [0mWormhole client layout: revision=12, mouths=[(200.5, 298.0, 223.67978012696622), (273.78536059994, 298.0, 203.69964719214747)]
+[m[34m[10:04:10][m [32m[Render thread/INFO][m [36m(interstellar)[m [0mWormhole native regions ready: 182 chunks with light data applied
+[m[34m[10:04:24][m [32m[Render thread/INFO][m [36m(Minecraft)[m [0m[STDOUT]: RTX live backend ready: 1280x720 dynamic AA, resident chunks + moving geometry, GPU appearance sharing; optics=[EXTERIOR, EXTENDED, HORIZON, WORMHOLE]
+LOG: run/rift-pearl-qa-runtime.log
+[m[34m[10:08:33][m [32m[Render thread/INFO][m [36m(interstellar)[m [0mWormhole client layout: revision=12, mouths=[(200.5, 298.0, 223.67978012696622), (273.78536059994, 298.0, 203.69964719214747)]
+[m[34m[10:08:38][m [32m[Render thread/INFO][m [36m(interstellar)[m [0mWormhole native regions ready: 182 chunks with light data applied
+[m[34m[10:08:45][m [32m[Server thread/INFO][m [36m(interstellar)[m [0mWormhole layout changed: dimension=minecraft:overworld, revision=13, demo=false, mouths=[]
+[m[34m[10:08:45][m [32m[Render thread/INFO][m [36m(interstellar)[m [0mWormhole client layout: revision=13, mouths=[]
+[m[34m[10:08:49][m [32m[Server thread/INFO][m [36m(interstellar)[m [0mWormhole layout changed: dimension=minecraft:overworld, revision=14, demo=false, mouths=[(200.5, 298.0, 218.87673861773072)]
+[m[34m[10:08:49][m [32m[Render thread/INFO][m [36m(Minecraft)[m [0m[System] [CHAT] First wormhole end placed (closed). Throw another Rift Pearl elsewhere to connect it.
+[m[34m[10:08:49][m [32m[Render thread/INFO][m [36m(interstellar)[m [0mWormhole client layout: revision=14, mouths=[(200.5, 298.0, 218.87673861773072)]
+[m[34m[10:08:57][m [32m[Render thread/INFO][m [36m(interstellar)[m [0mOptical benchmark completed: Closed wormhole mouth, native sphere draw only; 120 warmup frames; 300 samples; GPU pass p50=0.010336 p95=0.010496 p99=0.016864 ms; sampled frame intervals p50=8.3417 p95=9.4456 p99=10.1169 ms (includes cap/vsync; not full-frame GPU time)
+[m[34m[10:10:45][m [32m[Render thread/INFO][m [36m(interstellar)[m [0mOptical benchmark completed: Closed wormhole mouth, native sphere draw only; 120 warmup frames; 300 samples; GPU pass p50=0.009344 p95=0.009504 p99=0.011072 ms; sampled frame intervals p50=8.3452 p95=9.3566 p99=9.4956 ms (includes cap/vsync; not full-frame GPU time)
+LOG: run/rift-pearl-reload-runtime.log
+[m[34m[10:11:39][m [32m[Render thread/INFO][m [36m(interstellar)[m [0mWormhole client layout: revision=14, mouths=[(200.5, 298.0, 218.87673861773072)]
+[m[34m[10:11:50][m [32m[Server thread/INFO][m [36m(interstellar)[m [0mWormhole layout changed: dimension=minecraft:overworld, revision=15, demo=false, mouths=[(200.5, 298.0, 218.87673861773072), (280.5, 298.0, 218.87673861773072)]
+[m[34m[10:11:50][m [32m[Render thread/INFO][m [36m(interstellar)[m [0mWormhole client layout: revision=15, mouths=[(200.5, 298.0, 218.87673861773072), (280.5, 298.0, 218.87673861773072)]
+[m[34m[10:11:54][m [32m[Render thread/INFO][m [36m(interstellar)[m [0mWormhole native regions ready: 176 chunks with light data applied
+[m[34m[10:12:29][m [32m[Render thread/INFO][m [36m(Minecraft)[m [0m[STDOUT]: RTX live backend ready: 1280x720 dynamic AA, resident chunks + moving geometry, GPU appearance sharing; optics=[EXTERIOR, EXTENDED, HORIZON, WORMHOLE]

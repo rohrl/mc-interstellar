@@ -1,5 +1,29 @@
 # Progress
 
+## 2026-09-29 — Rift Pearl and a visible closed first mouth
+
+The owner's placement error came from an existing pair in the Gameplay dimension
+rejecting Overworld throws. A valid throw in another dimension now starts a new
+local first end and reports the old pair closing; invalid throws preserve it.
+An empty pair accepts its first throw without requiring a destination.
+
+Unpaired mouths use a dark native sphere with a cyan rim, plus an occlusion-aware
+crosshair status/reminder. Connected mouths report loading/connected state and
+prefer RTX in an RTX launch. The renamed Rift Pearl has a custom sprite and keeps
+its Creative entry, recipe and original registry ID for inventory compatibility.
+
+Both builds pass 88 tests; normal artifact has no optional backend classes.
+In-game first placement from empty and dimension change pass; default connected
+RTX verified. Native closed-sphere draw GPU p50 0.00934 ms, frame p50 8.35 ms at the
+120 FPS cap (1280×720, 300 samples after 120 warmup). See
+[implementation and usage](docs/settings-and-wormhole-seed.md) and
+[artwork provenance](docs/artwork/README.md).
+
+The unpaired end survives a full restart and then connects on the second throw.
+A solid foreground block hides the aiming hint and correctly occludes the sphere;
+the temporary test wall was removed. The owner's latest explored worlds remain
+separate from the disposable QA copy.
+
 ## 2026-09-29 — Live settings and throwable wormhole pair
 
 F4 now consolidates quality, renderer, lensing, upright reset and optional visuals;

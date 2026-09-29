@@ -38,10 +38,12 @@ public final class WormholeSeed extends Item {
         user.incrementStat(net.minecraft.stat.Stats.USED.getOrCreateStat(this));return TypedActionResult.success(stack,world.isClient);
     }
     @Override public void appendTooltip(ItemStack stack,TooltipContext context,java.util.List<Text> tooltip,net.minecraft.item.tooltip.TooltipType type) {
-        tooltip.add(Text.literal("Throw onto a surface to place a mouth."));
-        tooltip.add(Text.literal("First two connect; later throws move the oldest."));
+        tooltip.add(Text.literal("Wormhole anchor — throw onto a distant surface."));
+        tooltip.add(Text.literal("First end stays closed until you place the second."));
+        tooltip.add(Text.literal("Later throws move the oldest end."));
         tooltip.add(Text.literal("Reusable. Aim far away; mouth radius: 8 blocks."));
         tooltip.add(Text.literal("Sneak + use closes the pair."));
+        tooltip.add(Text.literal("Throwing in another dimension starts a new pair."));
     }
     public static final class SeedEntity extends ThrownItemEntity {
         public SeedEntity(EntityType<? extends SeedEntity> type,World world){super(type,world);}

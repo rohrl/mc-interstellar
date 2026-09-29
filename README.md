@@ -45,7 +45,7 @@ Alt+F12 switches RTX/OpenGL in the live optical view. The ordinary launcher and
 normal artifact keep the Vulkan-free OpenGL path.
 
 **F4** opens live graphics settings: quality, RTX/OpenGL, lensing, camera upright,
-weather and returning body images. **Wormhole Seed** places a saved pair with
+weather and returning body images. **Rift Pearl** places a saved pair with
 throws; later throws relocate the oldest mouth. [Controls and implementation](docs/settings-and-wormhole-seed.md).
 
 Use a disposable development world. F6 toggles the diagnostic HUD; F7 places a **virtual reference centre** 64 blocks ahead of the camera. It is a measurement aid only: nothing is placed in the world and no gravity is applied. The HUD reports camera coordinate distance divided by the configured Schwarzschild radius, not a measured proper distance in curved spacetime.

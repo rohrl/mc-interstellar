@@ -662,3 +662,23 @@ in the destination floor. Check the full destination bounding box before travel;
 on obstruction, return to the preceding clear entrance pose and preserve the
 camera frame. Do not move blocks or silently shift the mapped arrival upward.
 This is a bounded gameplay collision guard, independent of the optical equations.
+
+## D092 — Closed first mouth and Rift Pearl (2026-09-29)
+
+Owner testing exposed confusing cross-dimension rejection: the pair still existed
+in Gameplay when a pearl was thrown in the Overworld. A valid throw in another
+dimension now closes the old pair and starts a new local first end, with explicit
+feedback. Failed placement preserves the old pair. Cross-dimension travel itself
+remains unsupported. One-pair semantics and oldest replacement within a dimension
+are unchanged.
+
+An unpaired end now has an opaque dark sphere with a cyan rim and an aiming hint;
+it does not need a second end to exist. Use native depth-tested geometry until
+connection; no wormhole ray tracing or remote-region preparation for a lone end.
+Reuse that mesh in existing BH entity capture if optical rendering is already
+active. The closed appearance is a gameplay marker, not a physical black hole.
+
+Rename the item Rift Pearl and supply custom pixel artwork. Keep its registry ID
+for old inventories/recipes; Creative Tools registration remains. Connected
+wormholes prefer RTX by default in an RTX launch; preserve explicit OpenGL choice
+and the separate Vulkan-free build. Artwork provenance: docs/artwork/README.md.

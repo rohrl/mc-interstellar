@@ -1,6 +1,10 @@
 {
-  "item.interstellar.wormhole_seed": "Wormhole Seed",
-  "entity.interstellar.wormhole_seed": "Wormhole Seed",
+  "item.interstellar.wormhole_seed": "Rift Pearl",
+  "entity.interstellar.wormhole_seed": "Rift Pearl",
+  "message.interstellar.wormhole_closed": "Wormhole end · Closed",
+  "message.interstellar.wormhole_place_second": "Throw another Rift Pearl elsewhere to connect",
+  "message.interstellar.wormhole_open": "Wormhole end · Connected",
+  "message.interstellar.wormhole_preparing": "Wormhole end · Preparing destination",
   "key.interstellar.settings": "Interstellar settings",
   "key.interstellar.live_terrain": "Toggle live terrain lensing",
   "key.interstellar.live_timing": "Benchmark live terrain",

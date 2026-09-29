@@ -108,6 +108,8 @@ final class EntityMesh implements VertexConsumerProvider,AutoCloseable {
             } finally {matrices.pop();}
         }
         try {InteractionMesh.capture(this,origin);} finally {massOverlay=false;}
+        cameraBody=false;captureCue=0;glowColour=-1;
+        WormholeAppearance.capture(this,origin);
         for(var strip:strips)strip.finish();
         for(var collector:collectors.values())collector.finish();
         glowing.upload();

@@ -21,8 +21,9 @@ public final class LiveTerrain {
     static void applyPreferences(TerrainOptions options) {if(renderer!=null)renderer.applyPreferences(options);}
     static void refreshLighting() {releaseRenderer();synchronize(MinecraftClient.getInstance());}
     static void wormholeChanged() {
-        var client=MinecraftClient.getInstance();releaseRenderer();
+        var client=MinecraftClient.getInstance();boolean wasWormhole=renderer!=null && renderer.isWormhole();releaseRenderer();
         if(WormholePair.active(client.world))armedWorld=client.world;
+        else if(wasWormhole && SelectedSource.current()==null)armedWorld=null;
         synchronize(client);
     }
     static void setEnabled(boolean enabled) {
@@ -37,6 +38,7 @@ public final class LiveTerrain {
     }
     // Ctrl avoids the crouch/descent side effect of holding Shift in a live world.
     static void benchmark(int modifiers) {
+        if(renderer==null && WormholeAppearance.pending() && modifiers==0){WormholeAppearance.benchmark();return;}
         if(renderer==null)return;
         if((modifiers&GLFW.GLFW_MOD_ALT)!=0) {
             if(!WorldBackendBridge.ENABLED) {

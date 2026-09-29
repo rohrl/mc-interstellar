@@ -34,17 +34,20 @@ independent four-sample diagnostic reference explicitly stays on OpenGL.
 An eligibility bug found in the item test also kept completely opaque scenes on
 OpenGL. RTX no longer requires a scene to contain transparent/special materials.
 The normal artifact still excludes the optional Vulkan/backend classes.
+An RTX-enabled launch defaults to preferring RTX for connected wormholes too;
+only an explicit saved OpenGL preference or unavailable backend selects fallback.
 
-## Wormhole Seed
+## Rift Pearl (formerly Wormhole Seed)
 
-Find **Wormhole Seed** in Creative → Tools & Utilities (or search), or use
+Find **Rift Pearl** in Creative → Tools & Utilities (or search), or use
 `/give @s interstellar:wormhole_seed`. Craft one with a Heart of the Sea surrounded
 by eight Ender Pearls. The item is reusable, with a one-second throw cooldown.
 
 1. **Use/right-click** throws a seed in your aiming direction.
 2. It follows a ballistic path and opens a mouth after hitting a block surface.
    The centre sits nine blocks out from that surface; the mouth radius is eight.
-3. The first placement shows a particle ring while waiting for a second mouth.
+3. The first placement shows an opaque dark sphere with a cyan rim. Aim at it for
+   “Wormhole end · Closed” and a reminder to throw a second pearl elsewhere.
 4. The second connects the pair and automatically enables nearby optical rendering.
 5. Every subsequent successful throw keeps the newer mouth and relocates the oldest.
 6. **Sneak + use** closes the pair, allowing a fresh start, including another dimension.
@@ -53,7 +56,29 @@ There is one pair per saved game/server, shared by players and item copies. Both
 mouths must be in the same dimension. The pair and its age order survive reloads.
 The demo command installs the exhibit as this same global pair; it does not create
 an additional wormhole. Using the seed on an existing demo pair relocates its oldest
-mouth under the same rules. To start elsewhere, close that pair first.
+mouth under the same rules. A successful throw in another dimension closes the
+old pair and starts a new, closed first mouth there. Validation runs first: rejected
+throws leave the existing pair intact. The placement message explains the move.
+
+The item keeps its original `interstellar:wormhole_seed` registry ID so existing
+stacks and recipes continue working. Its custom 64×64 alpha sprite is used in the
+inventory, in hand and in flight. [Artwork source and prompt](artwork/README.md).
+
+### Closed appearance and aiming hint
+
+The unpaired sphere is a visual placeholder: no black-hole gravity, light bending
+or teleportation. A fixed sphere mesh renders against Minecraft's normal depth
+buffer; its dark surface has a narrow cyan rim. This replaces repeated server
+particle packets and does not start remote chunk preparation or an optical capture.
+If a nearby mass already has live optics, the same mesh joins the existing entity
+capture and therefore participates in that view's GL/RTX ray queries.
+
+The crosshair intersects the mouth sphere out to 96 blocks. A native block raycast
+suppresses the label when the entrance surface is hidden behind solid terrain.
+The label distinguishes Closed, Preparing destination and Connected. It disappears
+when looking away or opening a screen. F12 can time the native closed-sphere draw
+when no live optical renderer is running; this uses the existing asynchronous GPU
+timer, with no profiling work until requested.
 
 Aim well away from yourself. A placement is rejected if its centre is within
 12 blocks of any player, within 20 blocks of the remaining mouth, outside world
@@ -140,3 +165,9 @@ at the checked oblique demo pose. These are scene-specific checks, not an uncapp
 universal FPS claim or a broad before/after regression study.
 
 Evidence and screenshots: [settings/portal checks](profiles/2026-09-29-settings-portals).
+
+Follow-up: [Rift Pearl UX acceptance](profiles/2026-09-29-rift-pearl) checks the empty
+first-end flow, dimension move, closed-end reload, depth/label occlusion, custom
+sprite and automatic RTX connection. Native closed-sphere draw GPU p50 was
+0.00934ms at1280×720; connected GL/RTX MAE was0.00206/255. The original per-save
+item ID and the owner's existing saves/settings were preserved.
