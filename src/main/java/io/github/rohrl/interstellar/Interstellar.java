@@ -17,6 +17,7 @@ public final class Interstellar implements ModInitializer {
         io.github.rohrl.interstellar.wormhole.WormholeState.register();
         io.github.rohrl.interstellar.wormhole.WormholeChunks.register();
         io.github.rohrl.interstellar.wormhole.WormholeTravel.register();
+        io.github.rohrl.interstellar.relativity.RelativisticPotion.register();
         LOGGER.info("Interstellar loaded. F8 opens the optical lab in a development world.");
     }
 }

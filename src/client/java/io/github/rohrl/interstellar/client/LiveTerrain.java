@@ -71,7 +71,7 @@ public final class LiveTerrain {
         if(client.world!=armedWorld) {stop();return;}
         var source=options.massLensing()?SelectedSource.current():null;
         boolean portals=options.wormholes() && WormholeClient.nearby();
-        if(source==null && !portals){releaseRenderer();return;}
+        if(source==null && !portals && !RelativisticVision.wanted()){releaseRenderer();return;}
         if(renderer!=null){renderer.sources(source,portals);return;}
         if(client.player==null)return;
         renderer=new TerrainScreen(source,true,portals);
@@ -80,7 +80,7 @@ public final class LiveTerrain {
         Interstellar.LOGGER.info("Gameplay view preparing: mass={}, wormholes={}",source==null?0:source.count(),portals);
         check(client);
     }
-    private static void releaseRenderer() {if(renderer!=null) {WormholeClient.suspendView();options=renderer.preferences();renderer.removed();renderer=null;}}
+    private static void releaseRenderer() {RelativisticVision.prepared=false;if(renderer!=null) {WormholeClient.suspendView();options=renderer.preferences();renderer.removed();renderer=null;}}
     static void stop() {WormholeClient.suspendView();releaseRenderer();armedWorld=null;worldComposited=false;}
     public static boolean worldComposited() {return worldComposited;}
     private static void message(MinecraftClient client,String message) {
@@ -98,7 +98,7 @@ public final class LiveTerrain {
         try {
             synchronize(client);
             if(!active())return;
-            if(renderer==null || !renderer.isWormhole() && SelectedSource.current()==null)return;
+            if(renderer==null)return;
             int w=client.getWindow().getScaledWidth(),h=client.getWindow().getScaledHeight();
             if(w!=width || h!=height) {width=w;height=h;renderer.resize(client,w,h);}
             worldComposited=renderer.renderScene();
@@ -114,7 +114,7 @@ public final class LiveTerrain {
         if(!active()) {
             context.drawTextWithShadow(client.textRenderer,"INTERSTELLAR | World effects OFF | F4: settings | F10: on",12,12,0xFFFFD59A);return;
         }
-        if(renderer!=null && (renderer.isWormhole() || SelectedSource.current()!=null)) {renderer.renderHud(context);return;}
+        if(renderer!=null) {renderer.renderHud(context);return;}
         context.fill(6,6,Math.min(client.getWindow().getScaledWidth()-6,440),46,0xCD101824);
         context.drawTextWithShadow(client.textRenderer,"INTERSTELLAR | World effects ON | F4: settings",12,12,0xFF88D8FF);
         context.drawTextWithShadow(client.textRenderer,SelectedSource.state().message(),12,24,0xFFFFFFFF);

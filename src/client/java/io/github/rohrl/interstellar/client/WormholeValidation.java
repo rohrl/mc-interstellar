@@ -13,6 +13,7 @@ import org.lwjgl.opengl.*;
 final class WormholeValidation {
     private static final int W=13,H=9;
     static String run(ShaderProgram shader,Runnable draw) {
+        shader.getUniformOrDefault("ObserverVelocity").set(0f,0f,0f);
         int framebuffer=GL30.glGenFramebuffers(),colour=GL30.glGenRenderbuffers();
         int oldDraw=GL11.glGetInteger(GL30.GL_DRAW_FRAMEBUFFER_BINDING),oldRead=GL11.glGetInteger(GL30.GL_READ_FRAMEBUFFER_BINDING);
         int oldRenderbuffer=GL11.glGetInteger(GL30.GL_RENDERBUFFER_BINDING);

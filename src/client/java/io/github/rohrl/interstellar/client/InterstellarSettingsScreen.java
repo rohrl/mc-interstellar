@@ -19,12 +19,12 @@ final class InterstellarSettingsScreen extends Screen {
         preferences=LiveTerrain.preferences().features(WorldFeatures.weather,WorldFeatures.body);
         lastGravity=WorldFeatures.gravityEnabled;lastCapture=WorldFeatures.gravityCapture;lastStrength=WorldFeatures.gravityStrength;
         int total=Math.min(420,width-24);left=(width-total)/2;column=(total-8)/2;top=Math.max(38,(height-210)/2);
-        String[] tabs={"Gameplay","Graphics","Tools"};int tabWidth=(total-8)/3;
-        for(int i=0;i<3;i++) {final int p=i;
+        String[] tabs={"Gameplay","Graphics","Relativity","Tools"};int tabWidth=(total-12)/4;
+        for(int i=0;i<4;i++) {final int p=i;
             var tab=addDrawableChild(ButtonWidget.builder(Text.literal(tabs[i]),b->{page=p;clearAndInit();})
                 .dimensions(left+i*(tabWidth+4),top,tabWidth,20).build());tab.active=i!=page;
         }
-        if(page==0)gameplay();else if(page==1)graphics();else tools();
+        if(page==0)gameplay();else if(page==1)graphics();else if(page==2)relativity();else tools();
         addDrawableChild(ButtonWidget.builder(Text.literal("Done"),b->close()).dimensions(width/2-70,top+154,140,20).build());
     }
     private void gameplay() {
@@ -73,6 +73,22 @@ final class InterstellarSettingsScreen extends Screen {
             LiveTerrain.stop();client.setScreen(io.github.rohrl.interstellar.wormhole.WormholePair.active(client.world)?TerrainScreen.wormhole(false):new TerrainScreen(SelectedSource.current()));
         });
         button(1,2,"Optical lab (F8)","Separate educational sky/reference laboratory. Esc returns to gameplay and restores your visual settings.",()->{LiveTerrain.stop();client.setScreen(new OpticalLabScreen());});
+    }
+    private void relativity() {
+        var s=RelativisticVision.options();
+        button(0,0,"Potion visuals: "+on(s.enabled()),"Drink Relativistic Sight, then sprint on foot. Normal movement speed. F10 is still the master visual switch.",()->sr(new RelativityOptions(!s.enabled(),s.aberration(),s.colour(),s.brightness(),s.cap(),s.rampSeconds())));
+        button(1,0,"Aberration: "+on(s.aberration()),"Relativistic changes in viewing direction. Follow actual horizontal running direction, even when looking sideways. Independent of colour and brightness.",()->sr(new RelativityOptions(s.enabled(),!s.aberration(),s.colour(),s.brightness(),s.cap(),s.rampSeconds())));
+        button(0,1,"Doppler colour: "+s.colourName(),"Off / Gentle / Full shift. Gentle compresses frequency shifts for legibility. Both colour modes assume a spectrum from Minecraft RGB; Full may shift light out of the visible range.",()->sr(new RelativityOptions(s.enabled(),s.aberration(),(s.colour()+1)%3,s.brightness(),s.cap(),s.rampSeconds())));
+        button(1,1,"Brightness / dimming: "+on(s.brightness()),"Directional brightening/dimming from the Doppler factor, with compressed exposure so the view stays playable. Independent of colour and aberration.",()->sr(new RelativityOptions(s.enabled(),s.aberration(),s.colour(),!s.brightness(),s.cap(),s.rampSeconds())));
+        button(0,2,"Speed cap: "+String.format(java.util.Locale.ROOT,"%.2fc",s.cap()),"Cycle 0.50c / 0.90c / 0.99c. This is the simulated observer speed, not blocks travelled per second.",()->sr(new RelativityOptions(s.enabled(),s.aberration(),s.colour(),s.brightness(),s.cap()<.5?.5:s.cap()<.9?.9:s.cap()<.99?.99:.5,s.rampSeconds())));
+        button(1,2,"Sprint ramp: "+s.rampSeconds()+" seconds","Cycle 10 / 15 / 25 seconds of uninterrupted sprinting to reach the cap. Sprint-jumping continues; stopping or a wall releases the effect in at most a third of a second.",()->sr(new RelativityOptions(s.enabled(),s.aberration(),s.colour(),s.brightness(),s.cap(),s.rampSeconds()<10?10:s.rampSeconds()<15?15:s.rampSeconds()<25?25:10)));
+        serverButton(0,3,"Get sight potion","Operator convenience. Also available in Creative Food & Drinks. Survival: Awkward Potion + Amethyst Shard. Lasts 8 minutes; milk removes it.","relativity potion");
+        button(1,3,"Relativity defaults","All three effects on, gentle colours, 0.99c cap and 15-second ramp. Does not change graphics quality or activate the potion.",()->sr(RelativityOptions.defaults()));
+    }
+    private void sr(RelativityOptions next) {
+        try {RelativisticVision.apply(next);status="Relativity controls saved. Movement speed stays normal.";}
+        catch(Exception e){status="Could not save relativity controls; see log.";Interstellar.LOGGER.error(status,e);}
+        clearAndInit();
     }
     private void upright(int x,int y) {
         var b=button(x,y,"Reset camera upright","Clear wormhole tilt, preserving position and aim. R is the dedicated shortcut.",()->{WormholeClient.resetOrientation();status="Camera reset requested.";});b.active=WormholeClient.canResetOrientation();

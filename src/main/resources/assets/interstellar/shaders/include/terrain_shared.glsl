@@ -733,6 +733,7 @@ bool passMaterial(int value,vec3 hit,vec3 normal) {
     return true;
 }
 #endif
+#moj_import <interstellar:observer.glsl>
 #ifdef INTERSTELLAR_WORMHOLE
 #moj_import <interstellar:wormhole.glsl>
 #else
@@ -747,7 +748,7 @@ void trace(vec2 uv) {
     materialLayers=vec4(0);cloudSeen=false;
 #endif
     vec2 xy=(uv*2.0-1.0)*ViewSlopes.xy;
-    vec3 direction=normalize(Forward+(xy.x+ViewSlopes.z)*Right+(-xy.y+ViewSlopes.w)*Up);
+    vec3 direction=observerRay(normalize(Forward+(xy.x+ViewSlopes.z)*Right+(-xy.y+ViewSlopes.w)*Up));
     vec3 hit,normal;
     float r=length(Camera-Source);
     vec3 radialAxis=r>0.0?(Camera-Source)/r:vec3(0,1,0);
@@ -790,9 +791,9 @@ void trace(vec2 uv) {
         fallMu+flow>0.0 && impact<2.598076211);
     if(Lensing>.5 && tangent<1e-5 && !skyConnected) {fragColor=vec4(dark(),1);return;}
 #endif
-    if(Lensing<.5 || tangent<1e-5 || r<.0001) {
+    if(Radius<=0.0 || Lensing<.5 || tangent<1e-5 || r<.0001) {
         float distance=Hybrid>.5 && (Diagnostic<.5 || Diagnostic>2.5)?1024.0:400.0;
-        bool horizon=BodyRadius==0.0 && Lensing>.5 && mu<0.0;
+        bool horizon=Radius>0.0 && BodyRadius==0.0 && Lensing>.5 && mu<0.0;
         if(horizon) distance=r-Radius;
         vec3 start=Camera,end=Camera+direction*distance;
 #ifdef INTERSTELLAR_MATERIALS
@@ -958,6 +959,11 @@ vec2 aaOffset(int samples,int index) {
     return vec2(0);
 }
 void main() {
+    if(Diagnostic>4.5) {
+        vec2 xy=(screenUv*2.0-1.0)*ViewSlopes.xy;
+        vec3 sight=normalize(Forward+(xy.x+ViewSlopes.z)*Right+(-xy.y+ViewSlopes.w)*Up);
+        fragColor=vec4(observerRay(sight),observerDoppler(sight));return;
+    }
 #ifdef INTERSTELLAR_MATERIAL_MASK
     if(texelFetch(PendingRays,ivec2(gl_FragCoord.xy),0).a>.5)discard;
 #endif
@@ -966,14 +972,18 @@ void main() {
     // before the original RGBA8 target and bounded cubic reconstruction.
     CLOCK_BEGIN(totalClock);
 #ifdef INTERSTELLAR_RTX_AA
-    trace(screenUv+rtxSampleOffset/Viewport);
+    vec2 sampleUv=screenUv+rtxSampleOffset/Viewport;
 #else
-    trace(screenUv+vec2(SampleOffset)/Viewport);
+    vec2 sampleUv=screenUv+vec2(SampleOffset)/Viewport;
 #endif
+    trace(sampleUv);
 #ifdef INTERSTELLAR_MATERIALS
     fragColor.rgb=materialLayers.rgb+(1.0-materialLayers.a)*fragColor.rgb;
 #else
     fragColor.rgb=mix(fragColor.rgb,cloudLayer.rgb,cloudLayer.a);
+#endif
+#ifndef INTERSTELLAR_GLOW
+    if(Diagnostic<.5)fragColor.rgb=observerRadiance(fragColor.rgb,sampleUv);
 #endif
 #ifdef INTERSTELLAR_MATERIAL_PROBE
     fragColor.a=meshAlpha<.999?0.0:1.0;
@@ -1000,6 +1010,9 @@ void main() {
         fragColor.rgb=materialLayers.rgb+(1.0-materialLayers.a)*fragColor.rgb;
 #else
         if(MeshMode>.5 && MeshClouds>.5)fragColor.rgb=mix(fragColor.rgb,cloudLayer.rgb,cloudLayer.a);
+#endif
+#ifndef INTERSTELLAR_GLOW
+        if(Diagnostic<.5)fragColor.rgb=observerRadiance(fragColor.rgb,screenUv+offset/Viewport);
 #endif
         sum+=fragColor;
     }

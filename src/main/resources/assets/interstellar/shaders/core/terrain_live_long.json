@@ -34,6 +34,8 @@
     }
   ],
   "uniforms": [
+    {"name":"ObserverVelocity","type":"float","count":3,"values":[0,0,0]},
+    {"name":"ObserverEffects","type":"float","count":3,"values":[1,0.15,1]},
     {"name":"CurveFactor","type":"float","count":1,"values":[1]},
     {"name":"OrbitStep","type":"float","count":1,"values":[0.02]},
     {"name":"MaterialLimit","type":"float","count":1,"values":[32]},

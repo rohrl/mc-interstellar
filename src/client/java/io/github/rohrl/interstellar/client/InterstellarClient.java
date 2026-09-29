@@ -44,6 +44,13 @@ public final class InterstellarClient implements ClientModInitializer {
         SelectedSource.register();
         WormholeClient.register();
         WorldFeatures.register();
+        net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback.EVENT.register((stack,context,type,lines)->{
+            var contents=stack.get(net.minecraft.component.DataComponentTypes.POTION_CONTENTS);
+            if(contents!=null && contents.potion().filter(io.github.rohrl.interstellar.relativity.RelativisticPotion.POTION::equals).isPresent()) {
+                lines.add(Text.literal("Sprint to see near-light-speed optics.").formatted(net.minecraft.util.Formatting.LIGHT_PURPLE));
+                lines.add(Text.literal("Normal movement speed. F4: Relativity.").formatted(net.minecraft.util.Formatting.GRAY));
+            }
+        });
         CoreShaderRegistrationCallback.EVENT.register(context -> {
             if(!org.lwjgl.opengl.GL.getCapabilities().GL_ARB_shader_bit_encoding)return;
             context.register(Identifier.of("interstellar","terrain_glow_moving"),VertexFormats.POSITION,program->GlowingOutline.rays[0]=program);
@@ -132,10 +139,15 @@ public final class InterstellarClient implements ClientModInitializer {
                 "key.categories.interstellar"));
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            RelativisticVision.tick(client);
             LiveTerrain.tick(client);
             while(menu.wasPressed())if(client.player!=null && client.currentScreen==null)client.setScreen(new InterstellarSettingsScreen());
             while(liveTerrain.wasPressed()) LiveTerrain.toggle(client);
-            while (terrain.wasPressed()) { LiveTerrain.stop(); if (client.world != null) client.setScreen(io.github.rohrl.interstellar.wormhole.WormholePair.active(client.world)?TerrainScreen.wormhole(false):new TerrainScreen(SelectedSource.current())); }
+            while (terrain.wasPressed()) {
+                var preferences=LiveTerrain.preferences();boolean portals=preferences.wormholes()&&WormholeClient.nearby();
+                var source=preferences.massLensing()?SelectedSource.current():null;
+                LiveTerrain.stop();if(client.world!=null)client.setScreen(portals?TerrainScreen.wormhole(false):new TerrainScreen(source));
+            }
             while (opticalLab.wasPressed()) {
                 LiveTerrain.stop();
                 if (client.world != null) client.setScreen(new OpticalLabScreen());
@@ -158,6 +170,7 @@ public final class InterstellarClient implements ClientModInitializer {
             }
         });
         HudRenderCallback.EVENT.register((context, tickCounter) -> drawHud(context));
+        HudRenderCallback.EVENT.register((context, tickCounter) -> RelativisticVision.hud(context));
     }
 
     private void drawHud(DrawContext context) {

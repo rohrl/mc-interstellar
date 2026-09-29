@@ -1,5 +1,11 @@
 # Interstellar demo
 
+**Relativistic Sight:** drink the new purple potion, then sprint for near-light-speed
+visuals while retaining normal movement. F4 → Relativity has independent aberration,
+Doppler colour and brightness switches, speed cap and ramp duration. Creative:
+Food & Drinks; survival: Awkward Potion + Amethyst Shard. See
+[the potion guide](relativistic-sight.md).
+
 ## Install or launch
 
 For this checkout, install a full JDK21 and run **Launch Interstellar.cmd**. It launches the current development build; do not open the same save in two clients.

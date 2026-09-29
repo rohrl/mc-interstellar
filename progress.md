@@ -1,5 +1,32 @@
 # Progress
 
+
+## 2026-09-29 — Relativistic Sight potion and independent optical controls
+
+- Added an eight-minute vanilla potion/status effect: Creative Food & Drinks,
+  Awkward + Amethyst brewing, operator shortcut and tooltip. On-foot sprint ramps
+  a separate optical observer from ~0.1c to0.99c over15s; no movement/server-clock
+  changes. Actual horizontal travel sets the direction; stopping/walls release it.
+- F4 Relativity tab independently controls aberration, Doppler colour and
+  brightness, plus speed cap, ramp and potion activation. Persistent settings,
+  preparation state and current v/c bar are integrated into ordinary gameplay.
+- Shared OpenGL/RTX inverse local Lorentz boost precedes existing GR ray mapping.
+  Colour uses an explicit RGB-spectrum approximation; gentle default D^0.06 and
+  compressed brightness preserve readability. Full shift remains available.
+- Works without a mass source, and alongside the selected mass and wormhole pair.
+  Idle potion-only views skip ray drawing and dynamic capture. Fixed zero-radius
+  horizon classification, a compiler issue in the legacy voxel variant, reversal
+  interpolation and frozen-preview source gating found during acceptance.
+- Both builds pass109 CPU tests; ordinary jar excludes Vulkan/shaderc/backend.
+  GPU fixture:50 rays, max error1.6369261e-6. Final gentle and mixed backend pairs
+  have mean RGB errors0.000686/255 and0.000110/255, no pixels over16/255.
+  Frozen simple-course frame p50=8.352ms (120 FPS cap); no heavy-scene performance
+  regression bound claimed. Evidence and exact scope: docs/profiles/2026-09-29-relativistic-sight/.
+- Only a new QA copy was edited; client saved/closed and prior graphics preferences
+  restored. Original saves, .idea and preserved AA work remain untouched.
+
+
+
 ## 2026-09-29 — Unified mass and wormhole gameplay
 
 Mass lensing and both wormhole mouths now share one gameplay view and geometry

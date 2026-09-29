@@ -763,3 +763,26 @@ Preserve the OpenGL-only artifact; both backends use the same combined optics.
 No multi-cluster optics, cross-dimension transport or extra entity transit is
 introduced by this consolidation. Measure combined views separately from the
 unchanged single-effect paths; do not infer a universal FPS cost from one pose.
+
+## D096 — Accepted: sprint-driven local observer optics (2026-09-29)
+
+The owner chose normal Minecraft movement with potion-enabled optical speed,
+independent aberration/Doppler/brightness switches, F4 integration and a v/c HUD.
+Relativistic Sight lasts eight minutes; default sustained on-foot sprint ramps
+from approximately 0.1c to 0.99c over 15 seconds, then releases within 0.34 seconds.
+A linear rapidity ramp makes the final approach to the cap less abrupt. Actual
+horizontal travel sets the boost direction; walls, swimming and flight do not
+charge it. No movement attribute or server simulation clock is modified.
+
+The shared GLSL shader inversely boosts each sight ray in the existing baseline
+local observer frame, before GR coordinate mapping. OpenGL and RTX share this
+calculation. Independent CPU four-vector tests and a float GPU fixture check its
+sign, inverse, directional frequency and high-speed behaviour. Colour is an
+explicit RGB-derived spectrum approximation, with gentle/full choices; exposure
+is compressed and bounded. No exact spectral, causal-history or gravitational
+redshift claim is made. See docs/relativistic-sight.md for assumptions and controls.
+
+A source-free renderer allows the potion to work without mass blocks or portals.
+It primes the GPU before charging, reuses bounded streaming, and skips the extra
+ray draw/dynamic capture when idle. Existing F10 master and independent gameplay
+gravity remain. The normal artifact keeps the optional Vulkan backend excluded.

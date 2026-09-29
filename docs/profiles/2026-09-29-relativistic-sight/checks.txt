@@ -1,0 +1,26 @@
+[15:46:15] [Render thread/INFO] (interstellar) Relativistic sprint started: beta=0.07500000000000001, direction=(0.0, 0.0, 1.0), prepared=true
+[15:46:30] [Render thread/INFO] (interstellar) Relativistic sprint reached 0.99c
+[15:47:25] [Render thread/INFO] (interstellar) Observer fixture: 50 rays passed; maximum direction/relative Doppler error=1.6369260935459143E-6
+[15:48:12] [Render thread/INFO] (interstellar) RTX live benchmark completed: TERRAIN 640x360, scale=0.50, r/rs=100.00000, lensing=true, fine=true, snapshot=Streaming terrain | 5801458 triangles | 0 queued chunks, hybrid=true, live=false, mesh=true, entities=true, nativeLight=true, coverage=true, clouds=true; yaw=0.0; pitch=0.0; AA=2x; observer=(0.0, 0.0, 0.99); adaptive=true; fastBounds=true; fastFetch=true; emptyCells=true; emptyReach=1024.0; program=native-quads-selective-16.0; separateMoving=true; profileExperiment=0; movingContents=0; angularCap=0.08; curveFactor=4.0; includes resolve; 120 warmup frames; 300 samples; Vulkan update/render GPU p50=0.123136 p95=0.125536 p99=0.126752 ms; sampled frame intervals p50=8.352001 p95=8.7798 p99=9.078799 ms (includes cap/vsync; Vulkan timing excludes GL appearance copies and resolve)
+[15:48:14] [Render thread/INFO] (interstellar) Relativistic sprint stopped: beta=0.0, direction=(0.0, 0.0, 1.0), prepared=false
+[15:48:16] [Render thread/INFO] (interstellar) Relativity settings saved: RelativityOptions[enabled=true, aberration=true, colour=1, brightness=true, cap=0.99, rampSeconds=15]
+[15:50:08] [Render thread/INFO] (interstellar) Relativistic sprint started: beta=0.07500000000000001, direction=(0.0, 0.0, 1.0), prepared=true
+[15:50:23] [Render thread/INFO] (interstellar) Relativistic sprint reached 0.99c
+[15:50:27] [Render thread/INFO] (interstellar) Relativistic sprint stopped: beta=0.84, direction=(0.0, 0.0, 1.0), prepared=true
+[15:52:02] [Render thread/INFO] (interstellar) Relativity settings saved: RelativityOptions[enabled=true, aberration=false, colour=1, brightness=true, cap=0.99, rampSeconds=15]
+[15:56:45] [Render thread/INFO] (interstellar) Relativistic sprint started: beta=0.07500000000000001, direction=(0.0, 0.0, 1.0), prepared=true
+[15:57:00] [Render thread/INFO] (interstellar) Relativistic sprint reached 0.99c
+[15:57:04] [Render thread/INFO] (interstellar) Relativistic sprint stopped: beta=0.84, direction=(0.0, 0.0, 1.0), prepared=true
+[15:57:34] [Render thread/INFO] (interstellar) Relativity settings saved: RelativityOptions[enabled=true, aberration=false, colour=1, brightness=true, cap=0.99, rampSeconds=15]
+[15:57:36] [Render thread/INFO] (interstellar) Relativistic sprint started: beta=0.07500000000000001, direction=(0.0, 0.0, 1.0), prepared=true
+[15:57:42] [Render thread/INFO] (interstellar) Relativistic sprint stopped: beta=0.6658654439528735, direction=(0.0, 0.0, 1.0), prepared=true
+[15:58:52] [Render thread/INFO] (interstellar) Relativity settings saved: RelativityOptions[enabled=true, aberration=true, colour=1, brightness=true, cap=0.99, rampSeconds=15]
+[15:58:55] [Render thread/INFO] (interstellar) Gameplay sources updated without recapture: mass=64, wormholes=false
+[15:58:56] [Render thread/INFO] (interstellar) Gameplay sources updated without recapture: mass=64, wormholes=true
+[15:58:56] [Render thread/INFO] (Minecraft) [STDOUT]: RTX optics: WORMHOLE (resident geometry retained)
+[15:59:26] [Render thread/INFO] (interstellar) Relativistic sprint started: beta=0.07500000000000001, direction=(0.0, 0.0, 1.0), prepared=true
+[15:59:34] [Render thread/INFO] (interstellar) Relativistic sprint stopped: beta=0.7439783311814736, direction=(0.0, 0.0, 1.0), prepared=true
+[16:00:40] [Render thread/INFO] (interstellar) Relativistic sprint started: beta=0.07500000000000001, direction=(0.0, 0.0, 1.0), prepared=true
+[16:00:40] [Render thread/INFO] (interstellar) Relativistic sprint stopped: beta=0.08986102444418845, direction=(0.0, 0.0, 1.0), prepared=true
+[16:00:44] [Render thread/INFO] (Minecraft) [System] [CHAT] InterstellarDev has the following entity data: [452.5d, 211.0d, -5.300000011920929d]
+[16:00:47] [Render thread/INFO] (Minecraft) [System] [CHAT] Relativistic Sight: drink, wait for the view to prepare, then sprint. Normal movement speed. F4: Relativity.

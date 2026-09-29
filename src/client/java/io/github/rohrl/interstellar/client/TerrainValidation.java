@@ -16,6 +16,7 @@ final class TerrainValidation {
     static String run(ShaderProgram shader,TerrainSnapshot scene,Vec3d camera,Vec3d forward,Vec3d right,Vec3d up,
                       WorldProjection projection,boolean lensing,Vec3d source,double radius,boolean curved,Runnable draw) {
         long started=System.nanoTime();
+        shader.getUniformOrDefault("ObserverVelocity").set(0f,0f,0f);
         int rayBudget=Math.min(1536,12_000_000/Math.max(1,scene.occupied.size()));
         final int w=curved?12:Math.min(48,Math.max(1,(int)Math.sqrt(rayBudget*1.5)));
         final int h=curved?8:Math.min(32,Math.max(1,rayBudget/w));

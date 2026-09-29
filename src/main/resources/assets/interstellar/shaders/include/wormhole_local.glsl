@@ -58,7 +58,7 @@ void traceLocalWormholes(vec2 uv) {
     materialLayers=vec4(0);cloudSeen=false;
 #endif
     vec2 xy=(uv*2.0-1.0)*ViewSlopes.xy;
-    vec3 direction=normalize(Forward+(xy.x+ViewSlopes.z)*Right+(-xy.y+ViewSlopes.w)*Up),p=Camera;
+    vec3 direction=observerRay(normalize(Forward+(xy.x+ViewSlopes.z)*Right+(-xy.y+ViewSlopes.w)*Up)),p=Camera;
     int layers=0,passages=0,mouthIndex=-1;float mouth=Radius*.5,angle=0.0;
     if(Lensing<.5) {
         if(!localSceneChord(p,p+direction*WormholeExtent,layers))fragColor=vec4(missing(direction),1);return;

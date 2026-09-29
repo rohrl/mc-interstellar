@@ -62,7 +62,7 @@ void traceMixedWorld(vec2 uv) {
     materialLayers=vec4(0);cloudSeen=false;
 #endif
     vec2 xy=(uv*2.0-1.0)*ViewSlopes.xy;
-    vec3 d=normalize(Forward+(xy.x+ViewSlopes.z)*Right+(-xy.y+ViewSlopes.w)*Up),p=Camera;
+    vec3 d=observerRay(normalize(Forward+(xy.x+ViewSlopes.z)*Right+(-xy.y+ViewSlopes.w)*Up)),p=Camera;
     int layers=0,passages=0;float turn=0.0,mouth=Radius*.5;bool skyAllowed=true;
     if(Lensing<.5) {if(!localSceneChord(p,p+d*WormholeExtent,layers))fragColor=vec4(missing(d),1);return;}
     if(PortalOpen>.5)for(int i=0;i<2;i++) {

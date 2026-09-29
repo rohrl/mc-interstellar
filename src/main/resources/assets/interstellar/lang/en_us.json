@@ -17,5 +17,10 @@
   "key.categories.interstellar": "Interstellar",
   "key.interstellar.optical_lab": "Open exterior optical lab",
   "key.interstellar.toggle_hud": "Toggle calibration HUD",
-  "key.interstellar.place_reference": "Place virtual reference centre"
+  "key.interstellar.place_reference": "Place virtual reference centre",
+  "effect.interstellar.relativistic_sight": "Relativistic Sight",
+  "item.minecraft.potion.effect.relativistic_sight": "Potion of Relativistic Sight",
+  "item.minecraft.splash_potion.effect.relativistic_sight": "Splash Potion of Relativistic Sight",
+  "item.minecraft.lingering_potion.effect.relativistic_sight": "Lingering Potion of Relativistic Sight",
+  "item.minecraft.tipped_arrow.effect.relativistic_sight": "Arrow of Relativistic Sight"
 }

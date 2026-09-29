@@ -282,3 +282,23 @@ queries remain available. The near-horizon mixed observer and overlapping closed
 previews have visual checks rather than a new independent spacetime reference.
 Server entity gravity remains its bounded dominant-source gameplay model; it does
 not use this optical curvature sum or simulate wormhole gravity on mobs.
+
+## Sprint observer frame (D096)
+
+Relativistic Sight adds a prescribed horizontal local observer velocity before
+baseline camera-to-GR ray mapping. In flat space this is inverse Lorentz
+aberration and the associated directional frequency ratio; the independent CPU
+reference boosts a null photon four-vector. Baseline GR frames and mixed-metric
+approximations remain unchanged. Optical speed is separate from Minecraft
+movement; there is no retarded dynamic-entity history, server-clock modification,
+or combined gravitational spectral transport in this feature.
+
+RGB colour assumes linear spectral samples at 450/550/650 nm and zero at 380/780 nm.
+Full mode uses Doppler D; gentle mode uses D^0.06. The independent exposure cue
+uses a compressed bolometric exponent 1.4, bounded log gain, and a highlight
+shoulder. These are explicit display approximations, not exact spectra or
+calibrated radiometry. See [controls and limitations](relativistic-sight.md).
+
+Primary background: https://www.spacetimetravel.org/aur ;
+https://www.einstein-online.info/en/spotlight/doppler/ ;
+https://github.com/MITGameLab/OpenRelativity . No third-party shader is copied.

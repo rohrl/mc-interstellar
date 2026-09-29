@@ -14,6 +14,7 @@ final class MeshValidation {
     private static final int W=9,H=5;
     static String run(ShaderProgram shader,Runnable draw,float angularCap,float curveFactor,boolean quads,boolean splitMoving,boolean horizon) {
         long started=System.nanoTime();var fixture=new MeshRayFixture();
+        shader.getUniformOrDefault("ObserverVelocity").set(0f,0f,0f);
         int framebuffer=GL30.glGenFramebuffers(),colour=GL30.glGenRenderbuffers();
         int oldDraw=GL11.glGetInteger(GL30.GL_DRAW_FRAMEBUFFER_BINDING),oldRead=GL11.glGetInteger(GL30.GL_READ_FRAMEBUFFER_BINDING);
         int oldRenderbuffer=GL11.glGetInteger(GL30.GL_RENDERBUFFER_BINDING),pbo=GL11.glGetInteger(GL21.GL_PIXEL_PACK_BUFFER_BINDING);
