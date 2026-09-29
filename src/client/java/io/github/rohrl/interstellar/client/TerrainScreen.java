@@ -114,7 +114,7 @@ final class TerrainScreen extends Screen {
     boolean isWormhole() {return wormhole;}
     boolean retainWormhole() {return wormhole && error==null && snapshot!=null && snapshot.world==net.minecraft.client.MinecraftClient.getInstance().world && capturedVersion==resourceVersion;}
     void wormholeChanged() {passage=false;reveal.close();cancelBenchmark();}
-    private boolean geometryReady() {return mesh!=null && (wormhole && !passage?mesh.localReady():mesh.ready());}
+    private boolean geometryReady() {return mesh!=null && (wormhole?mesh.localReady():mesh.ready());}
     String problem() {return error;}
     SourcePayload selectedSource() {return source;}
     void adoptSource(SourcePayload next) {source=next;cancelBenchmark();}
@@ -204,7 +204,7 @@ final class TerrainScreen extends Screen {
                 if(live && !meshMode && snapshot.ready() && !client.isPaused()) refresh();
                 if(meshMode && mesh!=null)mesh.advance();
                 if(wormhole && live) {
-                    WormholeClient.progress(mesh==null?0:mesh.loadingProgress());
+                    WormholeClient.progress(mesh==null?0:mesh.openingProgress());
                     if(!passage && WormholeClient.opening.canReveal(mesh!=null && mesh.complete() && WormholeClient.ready() && snapshot.ready())) {
                         passage=true;WormholeClient.opening.beginReveal();reveal.hold(target);target=null;
                         Interstellar.LOGGER.info("Wormhole reveal started: regions and geometry complete; preview frame ready");
@@ -229,7 +229,7 @@ final class TerrainScreen extends Screen {
             if(paused!=null) {renderPaused(context);return;}
             context.fill(6,6,Math.min(width-6,410),46,0xCD101824);
             context.drawTextWithShadow(textRenderer,"INTERSTELLAR | F4: settings | F10: off | F12: timing",12,12,0xFF88D8FF);
-            String age=meshMode && mesh!=null?mesh.viewStatus()+(wormhole?(passage?" | Ellis wormhole":" | Closed mouth"):" | Mass blocks: "+source.count()):"Preparing world view...";
+            String age=meshMode && mesh!=null?mesh.viewStatus()+(wormhole?(passage?" | Two-mouth wormhole":" | Closed mouth"):" | Mass blocks: "+source.count()):"Preparing world view...";
             age+=" | "+(rtxActive?"RTX":"OpenGL");
             if(WorldBackendBridge.ENABLED)age+=" (Alt+F12)";
             context.drawTextWithShadow(textRenderer,age,12,24,0xFFFFFFFF);
@@ -456,7 +456,11 @@ final class TerrainScreen extends Screen {
         var up=right.crossProduct(forward);
         if(wormhole) {var oldRight=right;right=right.multiply(Math.cos(cameraRoll)).subtract(up.multiply(Math.sin(cameraRoll)));up=up.multiply(Math.cos(cameraRoll)).add(oldRight.multiply(Math.sin(cameraRoll)));}
         setVector("Forward",forward);setVector("Right",right);setVector("Up",up);
-        if(passage) {setVector("OtherSource",WormholePair.centre(client.world,1-WormholePair.nearest(client.world,camera)).subtract(Vec3d.of(snapshot.origin)));shader.getUniformOrDefault("WormholeExtent").set(768f);}
+        if(passage) {
+            var other=WormholePair.centre(client.world,1-WormholePair.nearest(client.world,camera));
+            setVector("OtherSource",other.subtract(Vec3d.of(snapshot.origin)));shader.getUniformOrDefault("WormholeExtent").set(768f);
+            shader.getUniformOrDefault("WormholeInfluence").set((float)io.github.rohrl.interstellar.science.LocalWormhole.influence(WormholePair.METRIC.mouthRadius(),other.distanceTo(centre())));
+        }
         shader.getUniformOrDefault("Radius").set((float)opticalRadius());
         shader.getUniformOrDefault("BodyRadius").set(extendedSource()?(float)source.enclosingRadius():0f);
         shader.getUniformOrDefault("Lensing").set(lensing?1f:0f);
@@ -589,7 +593,7 @@ final class TerrainScreen extends Screen {
         return meshShader;
     }
     private String programName() {
-        if(wormhole)return passage?"native-ellis-wormhole-quads":"closed-mouth-schwarzschild-preview";
+        if(wormhole)return passage?"native-local-wormhole-quads":"closed-mouth-schwarzschild-preview";
         if(horizonView())return "native-horizon-quads";
         if(useQuads())return (extendedSource()?"native-body-quads-":"native-quads-")+(!useLayoutShader()?"general-":useSelectiveMaterials()?"selective-":"full-")+meshStepLimit+"; separateMoving="+useSeparateMoving()+"; profileExperiment="+profileExperiment;
         if(useLayoutShader())return (useMaterials()?(useSelectiveMaterials()?"native-live-selective-materials-":"native-live-materials-"):orbitStep>.02f && materialProbeShader!=null?"native-live-curvature-probe-":"native-live-layout-")+meshStepLimit;

@@ -14,7 +14,8 @@ final class FrozenBackendCapture {
     private FrozenBackendCapture() {}
     static String source() throws Exception {
         return include("terrain_shared.glsl").replace("#moj_import <interstellar:extended_source.glsl>",include("extended_source.glsl"))
-            .replace("#moj_import <interstellar:wormhole.glsl>",include("wormhole.glsl"));
+            .replace("#moj_import <interstellar:wormhole.glsl>",include("wormhole.glsl"))
+            .replace("#moj_import <interstellar:wormhole_local.glsl>",include("wormhole_local.glsl"));
     }
     private static String include(String name) throws Exception {
         try(var in=FrozenBackendCapture.class.getResourceAsStream("/assets/interstellar/shaders/include/"+name)) {

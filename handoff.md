@@ -1,84 +1,75 @@
-# Handoff — Growing wormhole mouths, 2026-09-29
+# Handoff — Continuous wormhole exterior, 2026-09-29
 
 ## Current state
 
 Branch codex/rtx-wormhole-demo. See Git for current commit. Branches/pushes and
-runtime input authorized; no subagents. Follow AGENTS.md and the token-efficient
+runtime input authorized; no subagents. Follow AGENTS.md and token-efficient
 workflow. Preserve original worlds, .idea and AA WIP8ad46eb. No active goal.
 
-This iteration implements the owner's approved opening sequence:
+Owner reported nearby open mouths splitting the world and a long 97% wait.
+Implemented two localized optical regions in one shared native scene, removing
+all midpoint-plane geometry filtering. Both entrances can appear in one view.
+Ellis spatial rays near each throat blend smoothly into straight exterior rays;
+this is an engineered metric, not an exact global isolated Ellis solution.
+Four throat passages per ray bound repeated views; no recursive full-frame draws.
+Fog accumulates the native metric along chords, continuous at the region boundary.
 
-- First pearl grows a small radius0.8 closed core. Native sphere initially; local
-  capture then enables Schwarzschild lensing. No server gravity or destruction.
-- Second end/replacement: hover Opening N%, smooth radius growth toward8; BH optics
-  until destinations are prepared, then0.35s reveal into Ellis optics. Nearest mouth
-  drives lensing; another closed mouth in view remains a sphere marker.
-- Renderer ownership separated from optical mode. Local mesh survives layout
-  changes and continues during remote preparation. Unloaded empty placeholders
-  cannot qualify as captured remote geometry. No new geodesic equations.
--100% and travel acknowledgement require the completed passage image. Starting
-  inside a growing mouth, or admin teleporting inside, does not cause transit;
-  step outside and re-enter. Hover hint explains this.
-- R already was the dedicated rebindable upright key, independent of F4. Verified
-  resetting -10.86466 degrees of roll to0 without changing position/aim.
-- GL/RTX share lifecycle and growth. Ordinary builds stay Vulkan-free.
+Opening completion/progress now uses fixed destination geometry, prioritized ahead
+of ordinary moving-camera capture. Chunk/light and presented-frame travel barriers
+remain. CPU exact Ellis reference and OpenGL-only build remain available.
 
-Implementation/usage: docs/settings-and-wormhole-seed.md. Decision D093.
-Evidence and screenshots: docs/profiles/2026-09-29-wormhole-opening/.
+See docs/science.md, docs/settings-and-wormhole-seed.md, decision D094 and
+**docs/profiles/2026-09-29-continuous-wormholes/README.md** for assumptions, evidence,
+measured timings and limits. Previous opening-animation work is recorded in D093
+and docs/profiles/2026-09-29-wormhole-opening/; it remains intact.
 
-## Verification
+## Checks
 
-Normal and RTX builds pass95 tests (seven new progress/entry tests). Normal jar
-has zero optional Vulkan/shaderc/backend entries. Logs:
-run/wormhole-opening-final-normal-build.log, wormhole-opening-final-rtx-build.log,
-wormhole-opening-artifact-check.txt. The actual artifact name includes -dev.jar.
+Both final builds pass101 CPU tests; normal jar has zero optional backend entries.
+Logs: run/wormhole-continuous-final-normal-build.log and -final-rtx-build.log.
+Actual jar: build/libs/interstellar-0.1.0-dev.jar. Final build flavour is RTX.
 
-Runtime new shader compilation, actual first/second/replacement throws, native
-marker, BH growth, reveal, inside-on-open guard, deliberate crossing and R pass.
-Same-frame GL/RTX RGB MAE .0004174/255 closed, .0011306/255 connected.
-Settled1280x720/full/fine/2x RTX: GPU p50 13.579ms, frame p50 15.622ms (~64FPS),
-6.247M triangles and0 queued chunks,120 warmup +300 measured frames. No matched
-before/after regression claim. Earlier216-queued-chunk timing excluded.
-Broad movement/flicker remains owner-deferred. Final text-only step-out hint built
-after visual checks; final client restarted to include it, no extra screenshot pass.
+37 GPU rays against independent Cartesian reference pass (max direction error
+0.000026155), including grazing rays and repeated passages. Both entrances visible
+with either nearest; paired GL/RTX MAE0.000897 and0.001181/255. A grazing Newton
+root loop and Vulkan-reserved identifier were caught and fixed during development.
+Final fog-only adjustment follows those optical checks; see evidence for its final
+image/timing acceptance: final GL/RTX MAE0.008638/255; GPU p50 11.55ms, frame p50
+15.03ms (~67FPS), zero queued chunks at1280/full/fine/2x. No runtime errors in the
+final log. Broad movement/flicker testing stays owner-deferred.
 
-Acceptance logs: run/wormhole-opening-acceptance.log and
-run/wormhole-opening-first-pass.log. Earlier first-pass screenshots involved owner
-movement; then owner explicitly agreed to leave idle for controlled final checks.
-Tests only modified the copied Opening QA world. Terrain options hash still matches
-run/rift-pearl-owner-options.json (full/fine/2x/RTX/weather on/body off).
+Cold cached-shader load opened in24s. Actual replacement while moving opened in5s
+with overlapping cached terrain; no universal speedup claim. Initial cold shader
+compilation can take several minutes after changes to shared includes. Percentages
+count preparation work, not expected seconds remaining.
 
-## Runtime and preserved saves
+## Runtime and preservation
 
-Final RTX client uses Interstellar Opening QA 2026-09-29,1280x720, PID8248
-(VERIFY first), Gradle session46550, log run/wormhole-opening-release-runtime.log.
-Uses run/wormhole-opening-init.gradle for quick play. Leave paused after capture.
-Close identified client normally and wait before another launch; never run two
-clients against the same save.
+Owner explicitly agreed to leave the client idle. Original latest save
+Interstellar Opening QA 2026-09-29 was saved normally, then copied to
+Interstellar Continuous QA 2026-09-29. ONLY this new copy received test commands.
+Original revision26: A(375.5098,168,43.4984), B(547.1056,143,61.0946).
+QA replacement revision27: A(547.1056,143,61.0946), B(461.5,170,-61.5).
+One QA landing block at(461,160,-62). Owner's full/fine/2x/RTX/weather-on/body-off
+options still hash-identical to run/rift-pearl-owner-options.json.
 
-QA pair revision23, Overworld:
- A (231.078557,298,200.31241433424492)
- B (280.5,298,236.65499433424492)
-Last controlled pose: feet(280.5,296.38,195.5), yaw0/pitch0, creative FLYING,
-Rift Pearl in main hand. Owner exploration can supersede this; verify logs/state.
+Final client: run/wormhole-continuous-release-runtime.log, Gradle session60695,
+quick-play init run/wormhole-continuous-init.gradle, PID8840 (verify first). Left
+paused at(475.5,190,-139.5), yaw0/pitch16, with both mouths in view.
+Final archived log: run/wormhole-continuous-final-acceptance.log.
+Earlier acceptance: run/wormhole-continuous-acceptance1.log. First-pass failures
+are archived separately; do not mistake them for the final build.
 
-The source copy Interstellar Rift Pearl QA 2026-09-29 was already owner-revision16
-at this session's start, not the old handoff's15. It remains untouched. Separate
-Rift Pearl Check, Overnight Check, Calibration and Visual Check are preserved.
-Do not restore old saved snapshots over owner exploration.
+GUI helpers: run/control-short.ps1 for held keys; run/send-safe-command.ps1 for
+commands; run/rtx-live-pair.ps1 for same-frame comparison; run/rtx-live-timings.ps1
+for120 warmup+300 measured frames. F9 then C runs the GPU fixture after capture;
+F9 releases live terrain, so returning to F10 recaptures it. R resets roll.
 
-Normal launch: Launch Interstellar RTX.cmd / gradlew.bat runClient -PinterstellarRtx.
-Ordinary launcher remains GL-only. JDK C:/Portable/jdks/temurin-21.0.12.1.
-Helpers: run/control-short.ps1, menu-click.ps1, send-safe-command.ps1 (clipboard
-preserved), rtx-live-pair.ps1 and rtx-live-timings.ps1. Named PowerShell parameters
-are required for Select-String -Path/-Pattern to avoid accidental positional reversal.
-F4 settings; R upright; Alt+F12 renderer; F10 optics; F12 timing.
+## Remaining limits
 
-## Limits / future work
-
-One same-dimension pair, radius8, open volume required. Five chunks around each
-remote end, nearest-mouth chart approximation. Progress is a smoothed work estimate,
-not ETA;99% can wait for geometry/image readiness. Per-client visual readiness.
-Player transit only; no remote entity tracking, vehicles/projectile passage or
-remote interaction.8x remains costly and optional. No unrelated feature work queued
-by this request. Current implementation is complete; continue from owner feedback.
+Remote capture remains five chunks around each mouth outside the local camera
+window. Remote mobs/interactions, other entity transit and cross-dimension passage
+remain unsupported. Deep repeated images can end at the dark limit. This iteration
+checks nearby mouths in the owner's ice landscape; extreme separations/coordinates
+and a broad biome survey were not tested. Initial/local capture and per-chunk
+rebuild cost remain opportunities, separate from the corrected opening condition.

@@ -164,7 +164,9 @@ regions are separate questions. Its primary sources are
 been assumed physically constructible; the implemented local metric is described below.
 ## Wormhole model implemented 28 September 2026
 
-The active demo uses the symmetric ultrastatic Ellis metric. Reference null rays
+The original demo used the symmetric ultrastatic Ellis metric. Its CPU reference
+remains available; gameplay now uses the localized model in the next section.
+Reference null rays
 evolve signed proper radius, its conjugate momentum and a plane angle; independent
 elliptic-integral deflections, reversal and invariant tests are in EllisWormholeTest.
 The isotropic coordinate derivation and orientation-preserving chart transfer are
@@ -179,3 +181,51 @@ transport the camera frame through the same orientation-preserving differential.
 Minecraft controls prescribe the observer's path; massive-body geodesics are not
 simulated. Do not present hypothetical supporting matter or the two-mouth world
 identification as a demonstrated physical construction.
+
+## Two mouths in a continuous Minecraft exterior (2026-09-29)
+
+The isolated Ellis solution describes two separate asymptotic exteriors. The
+previous renderer assigned native triangles to opposite halves of the Minecraft
+world to approximate those charts. This is unsuitable for nearby entrances in one
+world: it deletes otherwise visible geometry and only lenses the nearest mouth.
+
+Gameplay now uses two disjoint, finite optical regions in a shared exterior. This
+is an engineered metric, not the unmodified isolated Ellis solution or a claim
+about physically realizable supporting matter. The original solver remains as a
+diagnostic reference. The source for the isolated metric and ray construction is
+[James et al.](https://arxiv.org/abs/1502.03809); the matching profile below is our
+own construction and is not taken from that paper.
+
+In isotropic coordinates Ellis has Fermat index n=1+b²/r², where b=8 is the
+coordinate mouth radius. We specify the derivative of log n: the Ellis derivative
+-2b²/[r(r²+b²)], multiplied by a smooth window. That window is one up to halfway
+between the throat and the outer boundary, then smoothly falls to zero. Set n=1
+outside and integrate this derivative inward to define a positive optical metric.
+Near the throat n is a constant multiple of the Ellis index, so the unparameterized
+spatial light paths and throat matching are unchanged there. The distant deflection
+and physical areal scale do change; do not label the complete scene exact Ellis.
+
+The outer radius is min(12b,0.45 times mouth separation). The regions never overlap,
+including the minimum allowed separation. The profile has 1+r*d(log n)/dr>0
+outside the throat, avoiding artificial extra circular photon orbits in its blend.
+Both n and its first derivative join flat space continuously. No midpoint plane
+clips geometry; a ray may visit either region, in either order, and query the same
+native scene before and after a throat transfer.
+
+The GPU integrates radius, radial direction cosine and plane angle using RK4 and
+the existing chord-error budget. Between regions, one straight ray query suffices.
+A separate fine Cartesian RK4 reference evolves direction via the Fermat gradient
+and locates boundaries by bisection. The throat still uses inversion plus z reflection
+and its differential for position/direction, consistent with player crossings.
+
+Fog accumulates Minecraft's distance measure along each chord: Euclidean for
+spherical fog, max(horizontal length, absolute vertical displacement) for cylindrical
+fog. Summing that measure along a straight ray reproduces native fog, with no
+formula switch at the optical boundary. Throat transfers add no fictitious fog
+distance between the mouths' Minecraft coordinates. This is an appearance rule,
+not a model of relativistic radiative transfer.
+
+Work is bounded to four throat passages per ray, eight pi of total orbital angle,
+and 2048 solver iterations. Rays still circulating beyond a passage/angle limit
+return dark; iteration exhaustion stays diagnostic magenta. Most rays use zero or
+one passage. This is bounded higher-order visibility, not unlimited recursive images.

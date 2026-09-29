@@ -1,5 +1,25 @@
 # Progress
 
+## 2026-09-29 — Continuous exterior for both wormhole mouths
+
+Removed the midpoint-plane geometry partition that deleted half the world when
+nearby mouths opened. Both entrances now render in one exterior. Two localized
+optical regions keep Ellis paths near their throats and smoothly join straight
+rays outside; this changes the far-field metric and is documented explicitly.
+Four passages per ray bound repeated views without recursive full-frame renders.
+Native fog accumulates continuously along the traced chords.
+
+Opening progress/completion now tracks fixed destination geometry and prioritizes
+missing destination chunks. Moving-camera capture can continue after opening.
+Observed24s cold geometry preparation and5s warm replacement while moving; these
+are separate cache conditions, not a universal speedup claim.
+
+Both build flavours pass101 tests; normal jar stays Vulkan-free. All37 GPU
+reference rays pass, including grazing boundaries, source-order swaps and loops.
+Both mouths stay visible with either nearest; GL/RTX image differences are tiny.
+Final checked full-resolution/fine/2x RTX view: frame median15.03ms (about67FPS),
+zero queued chunks. [Evidence, final checks and limits](docs/profiles/2026-09-29-continuous-wormholes/).
+
 ## 2026-09-29 — Growing closed mouths and visible passage readiness
 
 Closed/loading mouths now start small and grow with the hover percentage. Local

@@ -58,13 +58,18 @@ public final class StreamingTerrain implements AutoCloseable {
     boolean ready() {return ready;}
     boolean localReady() {return localPrepared;}
     boolean complete() {
-        if(wanted.isEmpty() || !entries.keySet().containsAll(wanted))return false;
+        if(!WormholePair.active(world))return ready;
         // A previously unloaded local slot can become a remote destination. Its
         // empty placeholder is not captured geometry, even after packets arrive.
         for(var chunk:WormholePair.chunks(world)) {
             var entry=entries.get(chunk.toLong());if(entry==null || entry.revision==0)return false;
         }
         return true;
+    }
+    double openingProgress() {
+        var chunks=WormholePair.chunks(world);if(chunks.isEmpty())return 0;
+        int captured=0;for(var chunk:chunks) {var entry=entries.get(chunk.toLong());if(entry!=null && entry.revision!=0)captured++;}
+        return captured/(double)chunks.size();
     }
     // Diagnostic export reads only occupied rows; normal capture retains no extra CPU geometry.
     int[][] replaySpans() {return entries.entrySet().stream().sorted(Map.Entry.comparingByKey())
@@ -107,10 +112,17 @@ public final class StreamingTerrain implements AutoCloseable {
         }
         if(indexChanged)index();
         if(capture==null && !queue.isEmpty()) {
+            // Finish the fixed destination set before ordinary camera-window
+            // churn. Moving around must not keep missing portal chunks at the tail.
+            for(var chunk:WormholePair.chunks(world)) {
+                long key=chunk.toLong();var entry=entries.get(key);
+                if((entry==null || entry.revision==0) && loaded(key)) {beginCapture(key);break;}
+            }
+        }
+        if(capture==null && !queue.isEmpty()) {
             for(var iterator=queue.iterator();iterator.hasNext();) {
                 long key=iterator.next();if(!loaded(key))continue;
-                capturing=key;iterator.remove();captureVersion=versions.getOrDefault(capturing,0L);
-                capture=WorldMesh.chunk(world,origin,centre,ChunkPos.getPackedX(capturing),ChunkPos.getPackedZ(capturing));break;
+                iterator.remove();beginCapture(key);break;
             }
         }
         if(capture!=null) {
@@ -127,6 +139,10 @@ public final class StreamingTerrain implements AutoCloseable {
             Interstellar.LOGGER.info("Streaming terrain ready: {}; initial capture={} ms",status(),(System.nanoTime()-started)/1e6);
             Interstellar.LOGGER.info("Quad terrain ready: {} quads; vertex payload={} bytes; single retained vertex/node arenas",triangleCount/2,triangleCount/2*192L);
         }
+    }
+    private void beginCapture(long key) {
+        capturing=key;queue.remove(key);captureVersion=versions.getOrDefault(key,0L);
+        capture=WorldMesh.chunk(world,origin,centre,ChunkPos.getPackedX(key),ChunkPos.getPackedZ(key));
     }
     private boolean loaded(long key) {return world.getChunkManager().isChunkLoaded(ChunkPos.getPackedX(key),ChunkPos.getPackedZ(key));}
     private void window(int x,int z,int range) {

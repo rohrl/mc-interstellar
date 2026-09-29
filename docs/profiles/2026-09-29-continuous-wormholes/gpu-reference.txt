@@ -1,0 +1,2 @@
+[12:45:26] [Render thread/INFO] (interstellar) Local wormhole Cartesian reference: 37 rays, 0 mismatches; max direction error=2.615476115044177E-5
+[12:45:26] [Render thread/INFO] (interstellar) Local wormhole GPU reference: 37 rays, 0 mismatches; max direction error=2.615476115044177E-5; elapsed=194.0726ms

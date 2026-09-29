@@ -1,5 +1,11 @@
 # Wormhole demo implementation — 28 September 2026
 
+**Historical implementation report.** Gameplay now uses two localized mouths in
+one continuous exterior, replacing the nearest-chart terrain partition described
+here. See [current controls and limits](settings-and-wormhole-seed.md),
+[the optical model](science.md#two-mouths-in-a-continuous-minecraft-exterior-2026-09-29)
+and [new acceptance checks](profiles/2026-09-29-continuous-wormholes/).
+
 ## Status
 
 The two-mouth demo now renders Ellis light paths through real distant geometry on

@@ -140,9 +140,23 @@ their lighting and block entities. Nearby chunks remain usable until vanilla
 refreshes or unloads them; their initial packets bypassed vanilla's moving cache.
 Dropping them immediately would leave holes around a closed mouth.
 
-This generalizes the existing Ellis renderer and player transfer; it does not
-change the geodesic equations. The current model uses the nearest mouth's chart,
-not a global spacetime solution for two nearby mouths and other gravity sources.
+Connected mouths now share one continuous exterior. Either entrance can appear
+in the same view; switching which entrance is nearer no longer deletes half the
+terrain. Rays bend inside two finite regions, with Ellis spatial paths near each
+throat and a smooth transition to straight rays farther away. This is an engineered
+optical metric, not the exact isolated Ellis spacetime; see [the model](science.md#two-mouths-in-a-continuous-minecraft-exterior-2026-09-29).
+Player transfer keeps the same throat mapping.
+
+Repeated views through the pair are bounded to four throat passages per ray.
+The renderer follows that ray through the existing scene rather than rendering a
+new full image for every nested view. Rays still circulating at the limit return
+dark; very small higher-order images can therefore end in darkness.
+
+Opening progress measures capture of the fixed regions around the two mouths.
+Missing destination chunks take priority over ordinary camera-window updates;
+walking around cannot keep adding work to the opening requirement. Other nearby
+terrain continues streaming after opening. Cold startup still needs local geometry
+and shader/backend preparation, and percentages are work counts, not time estimates.
 Remote capture remains five chunks around each mouth. Arbitrary remote landscapes
 can expose that capture boundary. Remote mob tracking, remote block interaction,
 vehicles and mob/projectile transit remain outside this version. Optics activate

@@ -2,7 +2,8 @@ package io.github.rohrl.interstellar.client;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import io.github.rohrl.interstellar.Interstellar;
-import io.github.rohrl.interstellar.science.EllisWormhole;
+import io.github.rohrl.interstellar.science.LocalWormhole;
+import io.github.rohrl.interstellar.science.FiniteTerrainRay.Point;
 import net.minecraft.client.gl.ShaderProgram;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.*;
@@ -27,52 +28,54 @@ final class WormholeValidation {
             if(GL30.glCheckFramebufferStatus(GL30.GL_FRAMEBUFFER)!=GL30.GL_FRAMEBUFFER_COMPLETE)throw new IllegalStateException("Wormhole fixture framebuffer incomplete");
             RenderSystem.viewport(0,0,W,H);RenderSystem.disableDepthTest();RenderSystem.disableBlend();RenderSystem.setShader(()->shader);
             set(shader,"Diagnostic",4);set(shader,"Lensing",1);set(shader,"Radius",16);set(shader,"WormholeExtent",768);
+            set(shader,"WormholeInfluence",0);
             set(shader,"MeshNodeCount",0);set(shader,"MovingNodeCount",0);set(shader,"CloudNodeCount",0);
             set(shader,"MeshClouds",0);set(shader,"PathStep",.45f);set(shader,"MeshStepLimit",16);
             vector(shader,"Source",0,0,0);vector(shader,"OtherSource",1024,16,512);
             vector(shader,"Right",1,0,0);vector(shader,"Up",0,1,0);shader.getUniformOrDefault("ViewSlopes").set(2.3f,1.3f,0f,0f);
             var pixels=BufferUtils.createFloatBuffer(W*H*4);
-            for(float radius:new float[]{.25f,.5f,1,4,7.99f,8,8.01f,12,32,96,256})for(int facing:new int[]{-1,1}) {
-                vector(shader,"Camera",0,0,-radius);vector(shader,"Forward",0,0,facing);
-                TerrainScreen.setPathQuality(shader,.08f,4,Math.max(radius,64/radius)/16.0);
-                draw.run();pixels.clear();GL11.glReadPixels(0,0,W,H,GL11.GL_RGBA,GL11.GL_FLOAT,pixels);
-                for(int y=0;y<H;y++)for(int x=0;x<W;x++) {
-                    double dx=((x+.5)/W*2-1)*2.3f,dy=((y+.5)/H*2-1)*1.3f;
-                    var reference=reference(radius,dx,dy,facing);int at=(x+y*W)*4;
-                    double error=0;boolean bad=pixels.get(at+3)!=reference[3];
-                    for(int c=0;c<3;c++) {double d=pixels.get(at+c)-reference[c];error+=d*d;bad|=!Float.isFinite(pixels.get(at+c));}
-                    error=Math.sqrt(error);maximum=Math.max(maximum,error);bad|=error>.001;
-                    total++;if(bad) {wrong++;if(wrong<=8)Interstellar.LOGGER.warn("Ellis GPU mismatch R={} facing={} pixel={},{} CPU={} GPU={},{},{},{} error={}",radius,facing,x,y,java.util.Arrays.toString(reference),pixels.get(at),pixels.get(at+1),pixels.get(at+2),pixels.get(at+3),error);}
-                }
-            }
-            // Exact unstable circular null orbit on the throat.
-            vector(shader,"Camera",0,0,-8);vector(shader,"Forward",1,0,0);shader.getUniformOrDefault("ViewSlopes").set(0f,0f,0f,0f);
-            draw.run();pixels.clear();GL11.glReadPixels(0,0,W,H,GL11.GL_RGBA,GL11.GL_FLOAT,pixels);
-            total++;if(pixels.get(3)!=2)wrong++;
+            var local=local(shader,draw,pixels);total+=(int)local[0];wrong+=(int)local[1];maximum=Math.max(maximum,local[2]);
         } finally {
             set(shader,"Diagnostic",0);
             GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER,oldDraw);GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER,oldRead);
             GL30.glBindRenderbuffer(GL30.GL_RENDERBUFFER,oldRenderbuffer);RenderSystem.viewport(viewport[0],viewport[1],viewport[2],viewport[3]);
             GL30.glDeleteRenderbuffers(colour);GL30.glDeleteFramebuffers(framebuffer);
         }
-        String result="Ellis GPU reference: "+total+" rays, "+wrong+" mismatches; max direction error="+maximum;
+        String result="Local wormhole GPU reference: "+total+" rays, "+wrong+" mismatches; max direction error="+maximum;
         Interstellar.LOGGER.info("{}; elapsed={}ms",result,(System.nanoTime()-started)/1e6);
         if(wrong>0)throw new IllegalStateException(result);return result;
     }
-    private static double[] reference(double radius,double dx,double dy,int facing) {
-        var metric=new EllisWormhole(1);double r=radius/16,ell=r-.25/r;
-        double length=Math.sqrt(dx*dx+dy*dy+1),mu=-facing/length,sine=Math.hypot(dx,dy)/length;
-        double impact=Math.sqrt(1+ell*ell)*sine;var q=new EllisWormhole.Ray(ell,mu,0);
-        boolean escaped=false;
-        for(int i=0;i<200000;i++) {
-            q=metric.step(q,impact,.0005*Math.max(1,Math.abs(q.ell())));
-            if(Math.abs(q.ell())>2048 && q.ell()*q.radialMomentum()>0) {escaped=true;break;}
+    private static double[] local(ShaderProgram shader,Runnable draw,java.nio.FloatBuffer pixels) {
+        var a=new Point(0,0,0);var b=new Point(128,0,0);int total=0,wrong=0;double max=0;
+        var eyes=new java.util.ArrayList<Point>();var looks=new java.util.ArrayList<Point>();
+        for(double x:new double[]{0,2,8,12,20,40,128}) {eyes.add(new Point(x,2,-100));looks.add(new Point(0,0,1));}
+        for(double x:new double[]{57,57.5,57.59,57.599,57.601}) {eyes.add(new Point(x,0,-100));looks.add(new Point(0,0,1));}
+        for(double x:new double[]{63.99,64,64.01}) {eyes.add(new Point(x,0,-100));looks.add(new Point(0,0,-1));}
+        for(double x:new double[]{-64,64}) {eyes.add(new Point(64,0,-100));looks.add(new Point(x,0,100));}
+        eyes.add(new Point(1,1,-6));looks.add(new Point(0,0,1));
+        shader.getUniformOrDefault("ViewSlopes").set(0f,0f,0f,0f);
+        TerrainScreen.setPathQuality(shader,.08f,4,2);
+        for(int swap=0;swap<2;swap++)for(int i=0;i<eyes.size();i++) {
+            var first=swap==0?a:b;var second=swap==0?b:a;
+            vector(shader,"Source",first);vector(shader,"OtherSource",second);
+            set(shader,"WormholeInfluence",(float)LocalWormhole.influence(8,128));
+            var eye=eyes.get(i);var look=looks.get(i).unit();
+            vector(shader,"Camera",eye);vector(shader,"Forward",look);
+            var reference=LocalWormhole.reference(first,second,eye,look,8,.02);
+            draw.run();pixels.clear();GL11.glReadPixels(0,0,W,H,GL11.GL_RGBA,GL11.GL_FLOAT,pixels);
+            double error=new Point(pixels.get(0),pixels.get(1),pixels.get(2)).subtract(reference.direction()).length();
+            boolean bad=!Double.isFinite(error) || error>.001 || pixels.get(3)!=(reference.limited()?-3:reference.passages());
+            total++;max=Math.max(max,error);
+            if(bad){wrong++;Interstellar.LOGGER.warn("Local wormhole GPU mismatch swap={} ray={} CPU={} GPU={},{},{},{} error={}",swap,i,reference,pixels.get(0),pixels.get(1),pixels.get(2),pixels.get(3),error);}
         }
-        if(!escaped)throw new IllegalStateException("Ellis CPU reference did not escape");
-        double angle=q.angle()+impact/Math.abs(q.ell()),transverse=Math.hypot(dx,dy);
-        return new double[]{transverse==0?0:Math.sin(angle)*dx/transverse,transverse==0?0:Math.sin(angle)*dy/transverse,
-            (q.ell()<0?1:-1)*Math.cos(angle),q.ell()<0?1:0};
+        vector(shader,"Source",a);vector(shader,"OtherSource",0,0,-128);
+        vector(shader,"Camera",0,0,-64);vector(shader,"Forward",0,0,1);
+        draw.run();pixels.clear();GL11.glReadPixels(0,0,W,H,GL11.GL_RGBA,GL11.GL_FLOAT,pixels);
+        total++;if(pixels.get(3)!=-3){wrong++;Interstellar.LOGGER.warn("Local wormhole loop budget: GPU={},{},{},{}",pixels.get(0),pixels.get(1),pixels.get(2),pixels.get(3));}
+        Interstellar.LOGGER.info("Local wormhole Cartesian reference: {} rays, {} mismatches; max direction error={}",total,wrong,max);
+        return new double[]{total,wrong,max};
     }
     private static void set(ShaderProgram s,String name,float v) {s.getUniformOrDefault(name).set(v);}
     private static void vector(ShaderProgram s,String name,float x,float y,float z) {s.getUniformOrDefault(name).set(x,y,z);}
+    private static void vector(ShaderProgram s,String name,Point p) {vector(s,name,(float)p.x(),(float)p.y(),(float)p.z());}
 }

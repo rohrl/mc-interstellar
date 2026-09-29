@@ -4,6 +4,7 @@
   "samplers":[{"name":"Voxels"},{"name":"CompactNodes"},{"name":"Atlas"},{"name":"Distant"},{"name":"DistantAppearance"},{"name":"SkyAtlas"},{"name":"Lightmap"},{"name":"LocalLight"},{"name":"CompactMovingNodes"}],
   "uniforms":[
     {"name":"OtherSource","type":"float","count":3,"values":[1072,64,560]},
+    {"name":"WormholeInfluence","type":"float","count":1,"values":[0]},
     {"name":"WormholeExtent","type":"float","count":1,"values":[768]},
     {"name":"CloudNodeCount","type":"float","count":1,"values":[0]},
     {"name":"CurveFactor","type":"float","count":1,"values":[1]},

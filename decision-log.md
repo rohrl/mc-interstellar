@@ -707,3 +707,32 @@ Arm entry only after readiness and an outside pose; growing around the player or
 admin teleporting them inside must not cause transit on the following tick. Keep
 the existing R shortcut separate from F4, rebindable through Minecraft Controls.
 Evidence: docs/profiles/2026-09-29-wormhole-opening/.
+
+## D094 — Two localized mouths in a shared exterior (2026-09-29) — accepted
+
+The owner found a world-splitting seam when nearby mouths opened. The old renderer
+assigned triangles to opposite sides of the pair's midpoint plane to represent two
+Ellis exteriors. That model cannot display two entrances in one continuous native
+world. Remove the plane filter and follow rays through both mouths in one scene.
+
+Use disjoint optical regions, radius min(12 mouth radii, 0.45 mouth separation).
+The Fermat gradient matches Ellis near the throat and smoothly vanishes at the
+outer boundary. Straight segments connect the regions. This deliberately changes
+the far-field metric; it is not an exact global Ellis solution or a demonstrated
+matter configuration. Near-throat inversion and its differential still match the
+existing player transport. Details and independent reference: docs/science.md.
+
+Reuse one optical solver for GL and RTX. Keep the exact isolated Ellis CPU solver
+as a scientific reference; do not compile two alternative GPU solvers into every
+gameplay program. Validate the new polar GPU integration against a finer Cartesian
+CPU integration, including grazing boundaries, mouth-order invariance and loops.
+
+Bound every ray to four throat passages, eight pi of orbital angle and 2048
+iterations. Passage/angle limits return dark; iteration exhaustion remains magenta
+for diagnosis. This permits repeated images without recursive full-frame renders.
+
+The reported 97% wait also exposed a moving completion target: camera movement
+expanded the geometry set needed to open. Prioritize the fixed destination chunks,
+measure opening progress against that set, and keep local capture usable while
+ordinary terrain expands. Native chunk/light and visual presentation barriers stay
+mandatory for player travel. Cold setup and uneven chunk costs remain visible.

@@ -115,16 +115,20 @@ uniform float Radius,PathStep;
 #ifdef INTERSTELLAR_WORMHOLE
 uniform vec3 OtherSource;
 uniform float WormholeExtent;
-bool wormholeOther=false;
+uniform float WormholeInfluence;
 vec3 wormholeChordStart;
 float wormholeTravelled=0.0;
 #endif
+float sceneFogLength(vec3 delta) {
+    return TerrainFogRange.z>.5?max(length(delta.xz),abs(delta.y)):length(delta);
+}
 float sceneFogDistance(vec3 hit) {
 #ifdef INTERSTELLAR_WORMHOLE
-    return wormholeTravelled+length(hit-wormholeChordStart);
+    // Integrate the native fog metric along the chords. On a straight ray this
+    // equals vanilla fog, continuously even for a ray grazing a lensing region.
+    return wormholeTravelled+sceneFogLength(hit-wormholeChordStart);
 #else
-    vec3 relative=hit-Camera;
-    return TerrainFogRange.z>.5?max(length(relative.xz),abs(relative.y)):length(relative);
+    return sceneFogLength(hit-Camera);
 #endif
 }
 #ifdef INTERSTELLAR_EXTENDED_SOURCE
@@ -412,12 +416,6 @@ int meshSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
 #endif
             COUNT_WORK(4+min(tree,1));
             vec4 vertexA=trianglePart(tree,base,0);
-#ifdef INTERSTELLAR_WORMHOLE
-            // Each end is a separate exterior chart, even though the demo places
-            // their native geometry in one dimension/acceleration structure.
-            bool remote=dot(vertexA.xyz-.5*(Source+OtherSource),OtherSource-Source)>0.0;
-            if(remote!=wormholeOther)continue;
-#endif
             float entity=vertexA.w;
             // -4 marks native mass-block terrain; +64 marks its interaction layers.
             // All other material/texture semantics remain their original values.
