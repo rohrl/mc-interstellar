@@ -13,6 +13,7 @@ final class WorldBackendBridge {
         var result=new LinkedHashMap<String,WorldRenderBackend.Image>();
         try(var state=new TerrainReplay.PackState()) {
             for(var entry:ids.entrySet()) {
+                if(entry.getValue()<=0)throw new IllegalStateException("Missing appearance texture: "+entry.getKey());
                 GL11.glBindTexture(GL11.GL_TEXTURE_2D,entry.getValue());
                 int format=GL11.glGetTexLevelParameteri(GL11.GL_TEXTURE_2D,0,GL11.GL_TEXTURE_INTERNAL_FORMAT);
                 // Minecraft also allocates unsized GL_RGBA. Normalize only after verifying

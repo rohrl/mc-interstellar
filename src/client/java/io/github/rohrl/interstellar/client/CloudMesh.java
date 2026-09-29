@@ -17,8 +17,11 @@ final class CloudMesh {
     int texture,triangles;
     private boolean logged;
     void capture(WorldMesh mesh,BlockPos origin) {
-        texture=triangles=0;
+        triangles=0;
         var client=MinecraftClient.getInstance();
+        // RTX still binds every appearance sampler when this dimension has no clouds.
+        // Keep the native texture valid even when captureAt emits no geometry.
+        texture=client.getTextureManager().getTexture(Identifier.ofVanilla("textures/environment/clouds.png")).getGlId();
         if(WormholePair.active(client.world)) {
             // The native cloud mesh spans -288..480 blocks around its anchor.
             // Retain a stable mesh at each mouth; moving across the throat must
@@ -65,7 +68,6 @@ final class CloudMesh {
                 mesh.entityQuad(quad,false);triangles+=2;
             }
         }
-        texture=client.getTextureManager().getTexture(Identifier.ofVanilla("textures/environment/clouds.png")).getGlId();
         if(!mesh.dynamic() || !logged)Interstellar.LOGGER.info("Cloud mesh: {} triangles, mode={}, cloud height={}, cull={}",triangles,mode,height,kind==5);
         logged=true;
     }

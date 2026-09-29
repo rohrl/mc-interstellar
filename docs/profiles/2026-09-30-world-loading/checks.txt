@@ -1,0 +1,146 @@
+
+## runtime-1
+[08:15:18] [Render thread/INFO] (interstellar) Wormhole client layout: revision=0, mouths=[]
+[08:15:19] [Render thread/INFO] (interstellar) Gameplay view preparing: mass=0, wormholes=false
+[08:15:38] [Render thread/INFO] (interstellar) World preparation loading screen closed: ready=true, progress=100%, elapsed=19496.9739 ms
+[08:17:08] [Render thread/INFO] (interstellar) Gameplay sources updated without recapture: mass=8, wormholes=false
+
+## runtime-gl
+[08:19:37] [Render thread/INFO] (interstellar) Wormhole client layout: revision=0, mouths=[]
+[08:19:37] [Render thread/INFO] (interstellar) World preparation loading screen started: minecraft:overworld
+[08:19:37] [Render thread/INFO] (interstellar) Gameplay view preparing: mass=8, wormholes=false
+[08:19:51] [Render thread/INFO] (interstellar) World preparation loading screen closed: ready=true, progress=100%, elapsed=13602.6796 ms; Streaming terrain | 4432984 triangles | 19 queued chunks
+[08:20:05] [Render thread/INFO] (interstellar) Gameplay sources updated without recapture: mass=64, wormholes=false
+[08:20:55] [Render thread/INFO] (interstellar) Optical benchmark completed: TERRAIN 640x360, scale=0.50, r/rs=4.20718, lensing=true, fine=true, snapshot=Streaming terrain | 4432732 triangles | 0 queued chunks, hybrid=true, live=true, mesh=true, entities=true, nativeLight=true, coverage=true, clouds=true; yaw=0.0; pitch=0.0; AA=4x; observer=(0.0, 0.0, 0.0); adaptive=true; fastBounds=true; fastFetch=true; emptyCells=true; emptyReach=1024.0; program=native-quads-general-16.0; separateMoving=true; profileExperiment=0; movingContents=0; angularCap=0.08; curveFactor=4.0; includes resolve; 120 warmup frames; 300 samples; GPU pass p50=39.63664 p95=40.601472 p99=40.724192 ms; sampled frame intervals p50=40.1747 p95=43.4254 p99=46.6905 ms (includes cap/vsync; not full-frame GPU time)
+[08:21:36] [Render thread/INFO] (interstellar) Gameplay sources updated without recapture: mass=63, wormholes=false
+[08:21:37] [Render thread/INFO] (interstellar) Gameplay sources updated without recapture: mass=64, wormholes=false
+
+## runtime-rtx
+[08:22:44] [Render thread/INFO] (interstellar) Wormhole client layout: revision=0, mouths=[]
+[08:22:44] [Render thread/INFO] (interstellar) World preparation loading screen started: minecraft:overworld
+[08:22:44] [Render thread/INFO] (interstellar) Gameplay view preparing: mass=64, wormholes=false
+[08:23:01] [Render thread/INFO] (interstellar) World preparation loading screen closed: ready=true, progress=100%, elapsed=16537.5208 ms; Streaming terrain | 4432600 triangles | 4 queued chunks
+[08:23:38] [Render thread/INFO] (interstellar) RTX live benchmark completed: TERRAIN 640x360, scale=0.50, r/rs=4.21431, lensing=true, fine=true, snapshot=Streaming terrain | 4432594 triangles | 0 queued chunks, hybrid=true, live=true, mesh=true, entities=true, nativeLight=true, coverage=true, clouds=true; yaw=0.0; pitch=0.0; AA=4x; observer=(0.0, 0.0, 0.0); adaptive=true; fastBounds=true; fastFetch=true; emptyCells=true; emptyReach=1024.0; program=native-quads-general-16.0; separateMoving=true; profileExperiment=0; movingContents=0; angularCap=0.08; curveFactor=4.0; includes resolve; 120 warmup frames; 300 samples; Vulkan update/render GPU p50=5.001152 p95=6.247104 p99=6.61328 ms; sampled frame intervals p50=13.5996 p95=16.624 p99=20.2273 ms (includes cap/vsync; Vulkan timing excludes GL appearance copies and resolve)
+RGB_mean_abs_255=0.007155671296296296 RGB_RMSE_255=0.19201357494448917 changedPixels=6171 pixelsMaxErrorAbove16=29
+[08:23:44] [Server thread/INFO] (interstellar) Wormhole placement rejected: The mouth needs more open space around the landing surface.; centre=(21.0, 67.18874544629509, 3.9771885053479417)
+[08:24:35] [Render thread/INFO] (interstellar) Gameplay sources updated without recapture: mass=64, wormholes=true
+[08:24:35] [Render thread/INFO] (interstellar) Wormhole client layout: revision=1, mouths=[(41.0, 93.0280579257972, 0.5)]
+[08:25:01] [Render thread/INFO] (interstellar) Wormhole client layout: revision=2, mouths=[(41.0, 93.0280579257972, 0.5), (161.0, 93.0280579257972, 0.5)]
+[08:25:01] [Render thread/INFO] (interstellar) Wormhole camera upright: roll=0.0 -> 0, eye=(120.5, 106.62000000476837, 0.5), yaw=-90.0, pitch=0.0
+[08:25:07] [Render thread/INFO] (interstellar) Wormhole passage visually open: revision=2, renderer frame presented; travel acknowledged
+RGB_mean_abs_255=0.005617404513888889 RGB_RMSE_255=0.19713937275863153 changedPixels=4342 pixelsMaxErrorAbove16=67
+[08:25:55] [Render thread/INFO] (interstellar) Wormhole client crossing applied: eye=(152.82769991509727, 93.02799748295132, 0.5), velocity=(-0.4892322043935535, -7.236784362463218E-6, -0.0), roll=0.0
+[08:25:56] [Render thread/INFO] (interstellar) Wormhole camera upright: roll=0.0 -> 0, eye=(139.07912639220254, 93.02799748295132, 0.5), yaw=90.0, pitch=8.4752636E-4
+[08:26:02] [Render thread/INFO] (interstellar) Wormhole camera upright: roll=0.0 -> 0, eye=(110.78094298117432, 93.02799748295132, 0.5), yaw=90.0, pitch=0.0
+[08:26:47] [Render thread/INFO] (interstellar) Wormhole client crossing applied: eye=(33.509460760875584, 93.02799860276313, -2.572616384939797), velocity=(-0.3435993258986735, -6.543452150662539E-6, -0.3389158799437954), roll=-3.186206178563314E-4
+[08:26:48] [Render thread/INFO] (interstellar) Wormhole camera upright: roll=-3.186206178563314E-4 -> 0, eye=(24.156049496661964, 93.02799860276313, -11.798061478324996), yaw=134.60684, pitch=7.7682285E-4
+[08:26:51] [Render thread/INFO] (interstellar) Wormhole client layout: revision=3, mouths=[(161.0, 93.0280579257972, 0.5), (180.0, 102.2551570825417, 0.500000000000004)]
+[08:26:51] [Render thread/INFO] (interstellar) Wormhole camera upright: roll=0.0 -> 0, eye=(200.5, 106.62000000476837, 0.5), yaw=90.0, pitch=0.0
+[08:26:55] [Render thread/INFO] (interstellar) Wormhole passage visually open: revision=3, renderer frame presented; travel acknowledged
+[08:26:56] [Render thread/INFO] (interstellar) Wormhole client layout: revision=4, mouths=[(180.0, 102.2551570825417, 0.500000000000004), (271.0, 93.02805792579723, 0.5)]
+[08:26:56] [Render thread/INFO] (interstellar) Wormhole camera upright: roll=0.0 -> 0, eye=(230.5, 106.62000000476837, 0.5), yaw=-90.0, pitch=0.0
+[08:27:02] [Render thread/INFO] (interstellar) Wormhole passage visually open: revision=4, renderer frame presented; travel acknowledged
+[08:27:45] [Server thread/INFO] (interstellar) Wormhole placement rejected: Too close to the remaining mouth. Leave at least 20 blocks between centres.; centre=(271.0, 93.02805792579723, 0.5)
+[08:27:46] [Render thread/INFO] (interstellar) Gameplay sources updated without recapture: mass=64, wormholes=false
+[08:27:47] [Render thread/INFO] (interstellar) Gameplay sources updated without recapture: mass=0, wormholes=false
+[08:27:53] [Render thread/INFO] (interstellar) Gameplay sources updated without recapture: mass=0, wormholes=true
+[08:27:53] [Render thread/INFO] (interstellar) Wormhole client layout: revision=5, mouths=[(271.0, 93.02805792579723, 0.5), (641.0, 93.02805792579706, 0.5)]
+[08:27:53] [Render thread/INFO] (interstellar) Wormhole camera upright: roll=0.0 -> 0, eye=(600.5, 106.62000000476837, 0.5), yaw=-90.0, pitch=0.0
+[08:28:01] [Render thread/INFO] (interstellar) Wormhole passage visually open: revision=5, renderer frame presented; travel acknowledged
+[08:28:49] [Render thread/INFO] (interstellar) Wormhole client crossing applied: eye=(262.82769991509707, 93.0279974829515, 0.5), velocity=(-0.4892322043935758, -7.236784344708349E-6, -0.0), roll=0.0
+[08:28:50] [Render thread/INFO] (interstellar) Gameplay sources updated without recapture: mass=64, wormholes=true
+[08:28:51] [Render thread/INFO] (interstellar) Wormhole camera upright: roll=0.0 -> 0, eye=(248.84385518402115, 93.0279974829515, 0.5), yaw=90.0, pitch=8.4752636E-4
+[08:29:16] [Render thread/INFO] (interstellar) Gameplay sources updated without recapture: mass=64, wormholes=false
+[08:29:16] [Render thread/INFO] (interstellar) Interstellar settings saved: TerrainOptions[enabled=true, renderScale=0.5, distantPrototype=true, antialiasing=4, finePaths=true, preferRtx=true, weather=true, bodyImages=false, massLensing=true, wormholes=false, statusHud=true]
+[08:29:17] [Render thread/INFO] (interstellar) Gameplay sources updated without recapture: mass=64, wormholes=true
+[08:29:17] [Render thread/INFO] (interstellar) Interstellar settings saved: TerrainOptions[enabled=true, renderScale=0.5, distantPrototype=true, antialiasing=4, finePaths=true, preferRtx=true, weather=true, bodyImages=false, massLensing=true, wormholes=true, statusHud=true]
+[08:29:17] [Render thread/INFO] (interstellar) Wormhole passage visually open: revision=5, renderer frame presented; travel acknowledged
+[08:29:19] [Render thread/INFO] (interstellar) Gameplay sources updated without recapture: mass=0, wormholes=true
+[08:29:19] [Render thread/INFO] (interstellar) Interstellar settings saved: TerrainOptions[enabled=true, renderScale=0.5, distantPrototype=true, antialiasing=4, finePaths=true, preferRtx=true, weather=true, bodyImages=false, massLensing=false, wormholes=true, statusHud=true]
+[08:29:20] [Render thread/INFO] (interstellar) Gameplay sources updated without recapture: mass=64, wormholes=true
+[08:29:20] [Render thread/INFO] (interstellar) Interstellar settings saved: TerrainOptions[enabled=true, renderScale=0.5, distantPrototype=true, antialiasing=4, finePaths=true, preferRtx=true, weather=true, bodyImages=false, massLensing=true, wormholes=true, statusHud=true]
+[08:29:23] [Render thread/INFO] (interstellar) Interstellar settings saved: TerrainOptions[enabled=true, renderScale=0.5, distantPrototype=true, antialiasing=8, finePaths=true, preferRtx=true, weather=true, bodyImages=false, massLensing=true, wormholes=true, statusHud=true]
+[08:29:27] [Render thread/INFO] (interstellar) Interstellar settings saved: TerrainOptions[enabled=true, renderScale=0.5, distantPrototype=true, antialiasing=0, finePaths=true, preferRtx=true, weather=true, bodyImages=false, massLensing=true, wormholes=true, statusHud=true]
+[08:29:30] [Render thread/INFO] (interstellar) Interstellar settings saved: TerrainOptions[enabled=true, renderScale=0.5, distantPrototype=true, antialiasing=1, finePaths=true, preferRtx=true, weather=true, bodyImages=false, massLensing=true, wormholes=true, statusHud=true]
+[08:29:30] [Render thread/INFO] (interstellar) Interstellar settings saved: TerrainOptions[enabled=true, renderScale=0.5, distantPrototype=true, antialiasing=2, finePaths=true, preferRtx=true, weather=true, bodyImages=false, massLensing=true, wormholes=true, statusHud=true]
+[08:29:31] [Render thread/INFO] (interstellar) Interstellar settings saved: TerrainOptions[enabled=true, renderScale=0.5, distantPrototype=true, antialiasing=4, finePaths=true, preferRtx=true, weather=true, bodyImages=false, massLensing=true, wormholes=true, statusHud=true]
+[08:29:35] [Render thread/INFO] (interstellar) Interstellar settings saved: TerrainOptions[enabled=true, renderScale=0.5, distantPrototype=true, antialiasing=4, finePaths=true, preferRtx=false, weather=true, bodyImages=false, massLensing=true, wormholes=true, statusHud=true]
+[08:29:36] [Render thread/INFO] (interstellar) Interstellar settings saved: TerrainOptions[enabled=true, renderScale=0.5, distantPrototype=true, antialiasing=4, finePaths=true, preferRtx=true, weather=true, bodyImages=false, massLensing=true, wormholes=true, statusHud=true]
+[08:30:09] [Render thread/INFO] (interstellar) Gameplay sources updated without recapture: mass=64, wormholes=false
+[08:31:23] [Render thread/INFO] (Minecraft) [System] [CHAT] Sheep has the following entity data: [6.915009170882265d, 70.83322823764186d, 17.55000001192093d]
+[08:31:24] [Render thread/INFO] (Minecraft) [System] [CHAT] Sheep has the following entity data: [0.013813869946991188d, -0.8203276288271188d, 0.0d]
+[08:31:26] [Render thread/INFO] (Minecraft) [System] [CHAT] Arrow has the following entity data: [-0.0919617130222152d, -0.2586661866141251d, 0.03980346687654068d]
+[08:31:36] [Render thread/INFO] (interstellar) Relativistic walk started: beta=0.07500000000000001, direction=(1.0, 0.0, 0.0), prepared=true
+[08:31:36] [Render thread/INFO] (interstellar) Relativistic walk stopped: beta=0.0, direction=(1.0, 0.0, 0.0), prepared=true
+[08:31:40] [Render thread/INFO] (Minecraft) [System] [CHAT] InterstellarDev has the following entity data: [{duration: 2308, show_icon: 1b, id: "interstellar:relativistic_sight", show_particles: 0b}]
+[08:31:44] [Server thread/INFO] (Minecraft) InterstellarDev suffocated in a wall
+[08:31:44] [Render thread/INFO] (Minecraft) [System] [CHAT] InterstellarDev suffocated in a wall
+[08:34:51] [Render thread/INFO] (interstellar) Wormhole client layout: revision=5, mouths=[(271.0, 93.02805792579723, 0.5), (641.0, 93.02805792579706, 0.5)]
+[08:34:51] [Render thread/INFO] (interstellar) Wormhole camera upright: roll=0.0 -> 0, eye=(-6.5, 67.62000000476837, 5.5), yaw=0.0, pitch=0.0
+[08:34:51] [Render thread/INFO] (interstellar) Gameplay sources updated without recapture: mass=64, wormholes=false
+[08:34:59] [Render thread/INFO] (interstellar) Gameplay view preparing: mass=64, wormholes=false
+[08:36:09] [Render thread/INFO] (Minecraft) [System] [CHAT] Found no elements matching active_effects
+[08:38:36] [Render thread/INFO] (Minecraft) [System] [CHAT] InterstellarDev has the following entity data: [{duration: 2378, show_icon: 1b, id: "interstellar:relativistic_sight", show_particles: 0b}]
+[08:38:36] [Render thread/INFO] (interstellar) Relativistic walk started: beta=0.07500000000000001, direction=(0.0, 0.0, 1.0), prepared=true
+[08:38:51] [Render thread/INFO] (interstellar) Relativistic walk reached 0.99c
+[08:38:53] [Render thread/INFO] (interstellar) Relativistic walk stopped: beta=0.84, direction=(0.0, 0.0, 1.0), prepared=true
+[08:38:54] [Render thread/INFO] (interstellar) Relativistic walk started: beta=0.10839551882151792, direction=(0.0, 0.0, -1.0), prepared=true
+[08:38:56] [Render thread/INFO] (interstellar) Relativistic walk stopped: beta=0.26351536586039515, direction=(0.0, 0.0, -1.0), prepared=true
+[08:38:56] [Render thread/INFO] (interstellar) Relativistic walk started: beta=0.07500000000000001, direction=(0.9983015093033214, 0.0, -0.058258875055311396), prepared=true
+[08:38:58] [Render thread/INFO] (interstellar) Relativistic walk stopped: beta=0.26351536586039515, direction=(1.0, 0.0, -5.6246857225455704E-12), prepared=true
+[08:38:58] [Render thread/INFO] (interstellar) Relativistic walk started: beta=0.07500000000000001, direction=(-1.0, 0.0, 0.0), prepared=true
+[08:39:00] [Render thread/INFO] (interstellar) Relativistic walk stopped: beta=0.2564543871498345, direction=(-1.0, 0.0, 0.0), prepared=true
+[08:39:01] [Render thread/INFO] (Minecraft) [System] [CHAT] InterstellarDev has the following entity data: [{duration: 1876, show_icon: 1b, id: "interstellar:relativistic_sight", show_particles: 0b}]
+[08:39:59] [Render thread/INFO] (interstellar) Gameplay view preparing: mass=64, wormholes=false
+[08:40:02] [Render thread/INFO] (interstellar) Relativity settings saved: RelativityOptions[enabled=true, aberration=false, colour=2, brightness=true, cap=0.99, rampSeconds=15]
+[08:40:03] [Render thread/INFO] (interstellar) Relativity settings saved: RelativityOptions[enabled=true, aberration=false, colour=0, brightness=true, cap=0.99, rampSeconds=15]
+[08:40:05] [Render thread/INFO] (interstellar) Relativity settings saved: RelativityOptions[enabled=true, aberration=false, colour=0, brightness=false, cap=0.99, rampSeconds=15]
+[08:40:06] [Render thread/INFO] (interstellar) Relativity settings saved: RelativityOptions[enabled=true, aberration=true, colour=0, brightness=false, cap=0.99, rampSeconds=15]
+[08:40:08] [Render thread/INFO] (interstellar) Relativity settings saved: RelativityOptions[enabled=true, aberration=true, colour=1, brightness=false, cap=0.99, rampSeconds=15]
+[08:40:09] [Render thread/INFO] (interstellar) Relativity settings saved: RelativityOptions[enabled=true, aberration=true, colour=2, brightness=false, cap=0.99, rampSeconds=15]
+[08:40:11] [Render thread/INFO] (interstellar) Relativity settings saved: RelativityOptions[enabled=true, aberration=true, colour=2, brightness=true, cap=0.99, rampSeconds=15]
+[08:40:13] [Render thread/INFO] (Minecraft) [System] [CHAT] InterstellarDev has the following entity data: [{duration: 425, show_icon: 1b, id: "interstellar:relativistic_sight", show_particles: 0b}]
+[08:41:07] [Render thread/INFO] (Minecraft) [System] [CHAT] Found no elements matching active_effects
+[08:41:11] [Render thread/INFO] (interstellar) Wormhole client layout: revision=5, mouths=[(271.0, 93.02805792579723, 0.5), (641.0, 93.02805792579706, 0.5)]
+[08:41:11] [Render thread/INFO] (interstellar) World preparation loading screen started: minecraft:the_nether
+[08:41:11] [Render thread/INFO] (interstellar) Gameplay view preparing: mass=0, wormholes=false
+[08:41:12] [Render thread/INFO] (interstellar) World preparation loading screen closed: ready=false, progress=5%, elapsed=1081.4653 ms; Loading terrain: 729/729 chunks
+[08:41:26] [Render thread/ERROR] (interstellar) RTX setup failed; retaining OpenGL
+[08:42:09] [Render thread/INFO] (interstellar) Wormhole client layout: revision=5, mouths=[(271.0, 93.02805792579723, 0.5), (641.0, 93.02805792579706, 0.5)]
+[08:42:09] [Render thread/INFO] (interstellar) Wormhole camera upright: roll=0.0 -> 0, eye=(0.5, 67.5416000032425, -30.5), yaw=0.0, pitch=0.0
+[08:42:14] [Render thread/INFO] (interstellar) Gameplay view preparing: mass=64, wormholes=false
+
+## runtime-final-rtx
+[08:44:34] [Render thread/INFO] (interstellar) Wormhole client layout: revision=5, mouths=[(271.0, 93.02805792579723, 0.5), (641.0, 93.02805792579706, 0.5)]
+[08:44:34] [Render thread/INFO] (interstellar) Wormhole camera upright: roll=0.0 -> 0, eye=(0.5, 67.62000000476837, -30.5), yaw=0.0, pitch=0.0
+[08:44:34] [Render thread/INFO] (interstellar) World preparation loading screen started: minecraft:overworld
+[08:44:34] [Render thread/INFO] (interstellar) Gameplay view preparing: mass=64, wormholes=false
+[08:44:52] [Render thread/INFO] (interstellar) World preparation loading screen closed: ready=true, progress=100%, elapsed=17795.7363 ms; Loading terrain: 729/938 chunks
+[08:45:43] [Render thread/INFO] (interstellar) Wormhole client layout: revision=5, mouths=[(271.0, 93.02805792579723, 0.5), (641.0, 93.02805792579706, 0.5)]
+[08:45:43] [Render thread/INFO] (interstellar) World preparation loading screen started: minecraft:the_nether
+[08:45:43] [Render thread/INFO] (interstellar) Gameplay view preparing: mass=0, wormholes=false
+[08:45:59] [Render thread/INFO] (interstellar) World preparation loading screen closed: ready=true, progress=100%, elapsed=15825.8859 ms; Streaming terrain | 5704706 triangles | 93 queued chunks
+[08:46:01] [Render thread/INFO] (interstellar) Gameplay sources updated without recapture: mass=64, wormholes=false
+RGB_mean_abs_255=0.003340205439814815 RGB_RMSE_255=0.09053315908283836 changedPixels=3010 pixelsMaxErrorAbove16=0
+[08:47:01] [Render thread/INFO] (interstellar) RTX live benchmark completed: TERRAIN 640x360, scale=0.50, r/rs=4.73853, lensing=true, fine=true, snapshot=Streaming terrain | 5707390 triangles | 5 queued chunks, hybrid=true, live=true, mesh=true, entities=true, nativeLight=true, coverage=true, clouds=true; yaw=0.0; pitch=-15.0; AA=4x; observer=(0.0, 0.0, 0.0); adaptive=true; fastBounds=true; fastFetch=true; emptyCells=true; emptyReach=1024.0; program=native-quads-general-16.0; separateMoving=true; profileExperiment=0; movingContents=0; angularCap=0.08; curveFactor=4.0; includes resolve; 120 warmup frames; 300 samples; Vulkan update/render GPU p50=3.973728 p95=5.004128 p99=5.521952 ms; sampled frame intervals p50=12.1073 p95=19.1451 p99=20.3157 ms (includes cap/vsync; Vulkan timing excludes GL appearance copies and resolve)
+[08:47:03] [Render thread/INFO] (interstellar) Wormhole client layout: revision=5, mouths=[(271.0, 93.02805792579723, 0.5), (641.0, 93.02805792579706, 0.5)]
+[08:47:03] [Render thread/INFO] (interstellar) Wormhole camera upright: roll=0.0 -> 0, eye=(0.5, 76.62000000476837, -12.5), yaw=0.0, pitch=0.0
+[08:47:03] [Render thread/INFO] (interstellar) World preparation loading screen started: minecraft:overworld
+[08:47:03] [Render thread/INFO] (interstellar) Gameplay view preparing: mass=64, wormholes=false
+[08:47:19] [Render thread/INFO] (interstellar) World preparation loading screen closed: ready=true, progress=100%, elapsed=15919.3438 ms; Loading terrain: 729/938 chunks
+
+## runtime-empty-gl
+[08:50:02] [Render thread/INFO] (interstellar) Wormhole client layout: revision=0, mouths=[]
+[08:50:02] [Render thread/INFO] (interstellar) World preparation loading screen started: minecraft:overworld
+[08:50:02] [Render thread/INFO] (interstellar) Gameplay view preparing: mass=0, wormholes=false
+[08:50:24] [Render thread/INFO] (interstellar) World preparation loading screen closed: ready=true, progress=100%, elapsed=21853.1743 ms; Streaming terrain | 5769572 triangles | 383 queued chunks
+[08:51:01] [Render thread/INFO] (Minecraft) [System] [CHAT] Seed: [4087341643980156325]
+[08:51:02] [Render thread/INFO] (Minecraft) [System] [CHAT] InterstellarDev has the following entity data: []
+[08:51:04] [Render thread/INFO] (Minecraft) [System] [CHAT] InterstellarDev has the following entity data: 20.0f
+[08:51:05] [Render thread/INFO] (Minecraft) [System] [CHAT] Found no elements matching active_effects
+
+## Final artifacts and preservation
+run/loading-study/accepted-opengl.jar SHA256 b6f56adf6793f072563f1cda4c7171cf1d3fe5a55a31a949a92b86e4fc5b901a
+build/libs/interstellar-0.1.0-dev.jar SHA256 ec5cc1af671a8dca50490330b171fd3d8001ff230d9bcb4a349ac3a26368bbbf
+Final normal and RTX builds:117 tests,0 failures,0 skipped. Normal optional backend/Vulkan/shaderc entries:0. Final RTX and empty-world logs:0 ERROR records.
+Owner options.txt and all five interstellar*.json restored byte-for-byte. Original New World timestamps unchanged: level.dat2026-09-29 21:47:39; wormhole data21:47:06. Client saved/closed.
