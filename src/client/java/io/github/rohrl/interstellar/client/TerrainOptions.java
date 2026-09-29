@@ -8,14 +8,18 @@ import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 
 record TerrainOptions(boolean enabled,float renderScale,boolean distantPrototype,int antialiasing,
-                      boolean finePaths,boolean preferRtx,boolean weather,boolean bodyImages) {
+                      boolean finePaths,boolean preferRtx,boolean weather,boolean bodyImages,
+                      boolean massLensing,boolean wormholes,boolean statusHud) {
     static String aaLabel(int aa) {return aa==0?"Off":aa==1?"Edge":aa+"x";}
     static int nextAa(int aa) {return switch(aa){case 0->1;case 1->2;case 2->4;case 4->8;default->0;};}
     TerrainOptions quality(float scale,int aa,boolean fine,boolean rtx) {
-        return new TerrainOptions(enabled,scale,distantPrototype,aa,fine,rtx,weather,bodyImages);
+        return new TerrainOptions(enabled,scale,distantPrototype,aa,fine,rtx,weather,bodyImages,massLensing,wormholes,statusHud);
     }
     TerrainOptions features(boolean rain,boolean body) {
-        return new TerrainOptions(enabled,renderScale,distantPrototype,antialiasing,finePaths,preferRtx,rain,body);
+        return new TerrainOptions(enabled,renderScale,distantPrototype,antialiasing,finePaths,preferRtx,rain,body,massLensing,wormholes,statusHud);
+    }
+    TerrainOptions effects(boolean master,boolean mass,boolean portals,boolean hud) {
+        return new TerrainOptions(master,renderScale,distantPrototype,antialiasing,finePaths,preferRtx,weather,bodyImages,mass,portals,hud);
     }
     void save() throws java.io.IOException {
         var path=FabricLoader.getInstance().getConfigDir().resolve("interstellar-terrain.json");
@@ -26,6 +30,7 @@ record TerrainOptions(boolean enabled,float renderScale,boolean distantPrototype
         json.addProperty("antialiasing",aaLabel(antialiasing).toLowerCase(java.util.Locale.ROOT));
         json.addProperty("finePaths",finePaths);json.addProperty("preferRtx",preferRtx);
         json.addProperty("weather",weather);json.addProperty("bodyImages",bodyImages);
+        json.addProperty("massLensing",massLensing);json.addProperty("wormholes",wormholes);json.addProperty("statusHud",statusHud);
         Files.writeString(path,new GsonBuilder().setPrettyPrinting().create().toJson(json)+"\n");
     }
     static TerrainOptions load() {
@@ -60,8 +65,8 @@ record TerrainOptions(boolean enabled,float renderScale,boolean distantPrototype
                 };
             }
             return new TerrainOptions(enabled,scale,distant,aa,bool(json,"finePaths",false),bool(json,"preferRtx",true),
-                bool(json,"weather",true),bool(json,"bodyImages",false));
-        } catch(Exception failure) {Interstellar.LOGGER.error("Cannot load {}; defaults used, file preserved",path,failure);return new TerrainOptions(true,.5f,false,2,false,true,true,false);}
+                bool(json,"weather",true),bool(json,"bodyImages",false),bool(json,"massLensing",true),bool(json,"wormholes",true),bool(json,"statusHud",true));
+        } catch(Exception failure) {Interstellar.LOGGER.error("Cannot load {}; defaults used, file preserved",path,failure);return new TerrainOptions(true,.5f,false,2,false,true,true,false,true,true,true);}
     }
     private static boolean bool(com.google.gson.JsonObject json,String key,boolean fallback) {
         if(!json.has(key))return fallback;

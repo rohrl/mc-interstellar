@@ -36,7 +36,13 @@ public final class GravityControl {
                         })))
                         .then(literal("capture").then(argument("value",BoolArgumentType.bool()).executes(context->{
                             GravitySources.config.capture=BoolArgumentType.getBool(context,"value");
+                            for(var player:context.getSource().getServer().getPlayerManager().getPlayerList())GravityVisualPayload.send(player);
                             context.getSource().sendFeedback(()->Text.literal("Horizon capture: "+GravitySources.config.capture+" (this server session)"),true);return 1;
+                        })))
+                        .then(literal("strength").then(argument("value",com.mojang.brigadier.arguments.DoubleArgumentType.doubleArg(0,.2)).executes(context->{
+                            GravitySources.config.strengthPerBlock=com.mojang.brigadier.arguments.DoubleArgumentType.getDouble(context,"value");
+                            for(var player:context.getSource().getServer().getPlayerManager().getPlayerList())GravityVisualPayload.send(player);
+                            context.getSource().sendFeedback(()->Text.literal("Gravity strength per block: "+GravitySources.config.strengthPerBlock+" (this server session)"),true);return 1;
                         })))
                         .then(literal("profile")
                                 .then(literal("start").executes(context->{

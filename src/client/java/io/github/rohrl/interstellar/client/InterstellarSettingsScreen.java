@@ -7,68 +7,97 @@ import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.text.Text;
 
-/** Live product controls; diagnostic and benchmark switches stay in the F9 lab. */
+/** One settings entry point for ordinary gameplay, appearance and diagnostics. */
 final class InterstellarSettingsScreen extends Screen {
     private TerrainOptions preferences;
-    private String status="Changes apply immediately and are saved.";
-    private int left,column,top;
+    private String status="Visual settings are saved. Gravity controls affect this server session.";
+    private int left,column,top,page;
+    private boolean lastGravity,lastCapture;
+    private double lastStrength;
     InterstellarSettingsScreen() {super(Text.literal("Interstellar settings"));}
-
     @Override protected void init() {
         preferences=LiveTerrain.preferences().features(WorldFeatures.weather,WorldFeatures.body);
-        int total=Math.min(420,width-24);left=(width-total)/2;column=(total-8)/2;top=Math.max(32,(height-190)/2);
-        button(0,0,"Resolution: "+(preferences.renderScale()==1?"100%":"50%"),
-            "50% traces at half width and height. 100% gives finer detail and costs roughly four times as many rays.",()->
-                quality(preferences.renderScale()==1?.5f:1,preferences.antialiasing(),preferences.finePaths(),preferences.preferRtx()));
-        button(1,0,"Antialiasing: "+TerrainOptions.aaLabel(preferences.antialiasing()),
-            "Off / Edge / 2x / 4x / 8x. More rays smooth silhouettes and fine detail. 4x traces twice as many rays as 2x; 8x traces four times as many. Both renderers support every mode.",()->
-                quality(preferences.renderScale(),TerrainOptions.nextAa(preferences.antialiasing()),preferences.finePaths(),preferences.preferRtx()));
-        button(0,1,"Smooth lighting: "+on(client.options.getAo().getValue()),
-            "Minecraft's ambient occlusion. Changing this rebuilds captured terrain lighting; preparing the view can take a while.",()-> {
-                client.options.getAo().setValue(!client.options.getAo().getValue());client.options.write();
-                LiveTerrain.refreshLighting();status="Rebuilding terrain lighting...";clearAndInit();
-            });
-        button(1,1,"Fine light paths: "+on(preferences.finePaths()),
-            "Smaller steps along curved light paths. More accurate near strong bends, with a performance cost.",()->
-                quality(preferences.renderScale(),preferences.antialiasing(),!preferences.finePaths(),preferences.preferRtx()));
-        var renderer=button(0,2,"Renderer: "+(WorldBackendBridge.ENABLED&&preferences.preferRtx()?"RTX (auto fallback)":"OpenGL"),
-            WorldBackendBridge.ENABLED?"Prefer hardware ray queries or force OpenGL. RTX falls back if unavailable. Alt+F12 also switches.":
-                "This is an OpenGL-only launch. Use Launch Interstellar RTX.cmd to make RTX available.",()->
-                quality(preferences.renderScale(),preferences.antialiasing(),preferences.finePaths(),!preferences.preferRtx()));
-        renderer.active=WorldBackendBridge.ENABLED;
-        button(1,2,"Live lensing: "+on(LiveTerrain.active()),"F10 also toggles live lensing. Without a ready source, the normal world remains visible.",()-> {
-            LiveTerrain.setEnabled(!LiveTerrain.active());clearAndInit();
+        lastGravity=WorldFeatures.gravityEnabled;lastCapture=WorldFeatures.gravityCapture;lastStrength=WorldFeatures.gravityStrength;
+        int total=Math.min(420,width-24);left=(width-total)/2;column=(total-8)/2;top=Math.max(38,(height-210)/2);
+        String[] tabs={"Gameplay","Graphics","Tools"};int tabWidth=(total-8)/3;
+        for(int i=0;i<3;i++) {final int p=i;
+            var tab=addDrawableChild(ButtonWidget.builder(Text.literal(tabs[i]),b->{page=p;clearAndInit();})
+                .dimensions(left+i*(tabWidth+4),top,tabWidth,20).build());tab.active=i!=page;
+        }
+        if(page==0)gameplay();else if(page==1)graphics();else tools();
+        addDrawableChild(ButtonWidget.builder(Text.literal("Done"),b->close()).dimensions(width/2-70,top+154,140,20).build());
+    }
+    private void gameplay() {
+        button(0,0,"World effects: "+on(LiveTerrain.active()),"Master visual switch; F10 does the same. Enabled by default in every world. Server gravity has its own controls below.",()->
+            save(preferences.effects(!LiveTerrain.active(),preferences.massLensing(),preferences.wormholes(),preferences.statusHud())));
+        button(1,0,"Mass lensing: "+on(preferences.massLensing()),"Render the automatically tracked mass cluster, including weak lensing and black holes. Works together with portals. Does not change entity gravity.",()->
+            save(preferences.effects(preferences.enabled(),!preferences.massLensing(),preferences.wormholes(),preferences.statusHud())));
+        button(0,1,"Portal views: "+on(preferences.wormholes()),"Render and prepare wormhole passages. Off keeps visible markers and suspends your travel; the pair stays placed.",()->
+            save(preferences.effects(preferences.enabled(),preferences.massLensing(),!preferences.wormholes(),preferences.statusHud())));
+        button(1,1,"Status overlay: "+on(preferences.statusHud()),"Show which effects are active and whether terrain or portals are preparing.",()->
+            save(preferences.effects(preferences.enabled(),preferences.massLensing(),preferences.wormholes(),!preferences.statusHud())));
+        serverButton(0,2,"Entity gravity: "+on(lastGravity),"Pull mobs, projectiles and supported tethered entities. Affects all players in this server session; requires operator permission.","gravity enabled "+!lastGravity);
+        serverButton(1,2,"Horizon capture: "+on(lastCapture),"Allow a black hole to consume nearby mobs/projectiles. Server-wide session setting; independent of visual effects.","gravity capture "+!lastCapture);
+        int strength=(int)Math.round(lastStrength/.2*100);
+        double next=lastStrength<.049?.05:lastStrength<.099?.1:lastStrength<.199?.2:.05;
+        serverButton(0,3,"Gravity strength: "+strength+"%","Cycle 25%, 50%, 100% of the current strong-gravity default. Does not change mass or optical lensing. Server session only.","gravity strength "+next);
+        upright(1,3);
+    }
+    private void graphics() {
+        button(0,0,"Resolution: "+(preferences.renderScale()==1?"100%":"50%"),"50% uses half width and height. 100% gives finer detail and traces four times as many pixels.",()->
+            quality(preferences.renderScale()==1?.5f:1,preferences.antialiasing(),preferences.finePaths(),preferences.preferRtx()));
+        button(1,0,"Antialiasing: "+TerrainOptions.aaLabel(preferences.antialiasing()),"Off / Edge / 2x / 4x / 8x. Every mode works with RTX and OpenGL; more samples cost more GPU time.",()->
+            quality(preferences.renderScale(),TerrainOptions.nextAa(preferences.antialiasing()),preferences.finePaths(),preferences.preferRtx()));
+        button(0,1,"Fine light paths: "+on(preferences.finePaths()),"Smaller steps along curved light paths. More accuracy at a performance cost.",()->
+            quality(preferences.renderScale(),preferences.antialiasing(),!preferences.finePaths(),preferences.preferRtx()));
+        button(1,1,"Smooth lighting: "+on(client.options.getAo().getValue()),"Minecraft ambient occlusion. Rebuilds captured lighting; preparation can take a while.",()-> {
+            client.options.getAo().setValue(!client.options.getAo().getValue());client.options.write();LiveTerrain.refreshLighting();status="Rebuilding terrain lighting...";clearAndInit();
         });
-        button(0,3,"Weather: "+on(WorldFeatures.weather),"Local foreground rain and snow. This approximation does not bend precipitation around the source.",()-> {
+        var renderer=button(0,2,"Renderer: "+(WorldBackendBridge.ENABLED&&preferences.preferRtx()?"RTX (auto fallback)":"OpenGL"),
+            WorldBackendBridge.ENABLED?"Prefer RTX or force OpenGL for all effects. Alt+F12 also switches.":"Use Launch Interstellar RTX.cmd to make RTX available.",()->
+                quality(preferences.renderScale(),preferences.antialiasing(),preferences.finePaths(),!preferences.preferRtx()));renderer.active=WorldBackendBridge.ENABLED;
+        button(1,2,"Weather: "+on(WorldFeatures.weather),"Local foreground rain/snow. Precipitation is not lensed.",()-> {
             WorldFeatures.weather=!WorldFeatures.weather;save(preferences.features(WorldFeatures.weather,WorldFeatures.body));
         });
-        button(1,3,"Returning body: "+on(WorldFeatures.body),"Experimental images of your actual body along returning light paths. Often small and distorted; adds rendering work.",()-> {
+        button(0,3,"Returning body: "+on(WorldFeatures.body),"Experimental images of your actual body along returning rays; often very small. Adds rendering work.",()-> {
             WorldFeatures.body=!WorldFeatures.body;save(preferences.features(WorldFeatures.weather,WorldFeatures.body));
         });
-        var upright=button(0,4,"Reset camera upright","Removes tilt from wormhole travel. Keeps position and viewing direction. R also resets it.",()-> {
-            WormholeClient.resetOrientation();status="Camera reset requested.";
-        });upright.active=WormholeClient.canResetOrientation();
-        button(1,4,"Quality defaults","50% resolution, 2x AA, normal light-path steps. Other settings stay as selected.",()->
-            quality(.5f,2,false,preferences.preferRtx()));
-        addDrawableChild(ButtonWidget.builder(Text.literal("Done"),b->close()).dimensions(width/2-70,top+145,140,20).build());
+        button(1,3,"Quality defaults","50% resolution, 2x AA, normal path steps. Keeps feature switches.",()->quality(.5f,2,false,preferences.preferRtx()));
+    }
+    private void tools() {
+        upright(0,0);
+        button(1,0,"Measure / stop FPS","F12 timing: 120 warmup and 300 measured frames. Press again to stop.",()->{close();LiveTerrain.benchmark(0);});
+        button(0,1,"Rebuild world lighting","Refresh captured geometry and lighting. Preparation takes time.",()->{LiveTerrain.refreshLighting();status="Rebuilding world view...";});
+        button(1,1,"Automatic mass selection","Remove any manually pinned inspection target. The strongest nearby cluster is selected automatically.",()->client.player.networkHandler.sendChatCommand("interstellar source auto"));
+        button(0,2,"Frozen inspection (F9)","Development view and numerical checks. Esc returns to gameplay and restores your visual settings.",()-> {
+            LiveTerrain.stop();client.setScreen(io.github.rohrl.interstellar.wormhole.WormholePair.active(client.world)?TerrainScreen.wormhole(false):new TerrainScreen(SelectedSource.current()));
+        });
+        button(1,2,"Optical lab (F8)","Separate educational sky/reference laboratory. Esc returns to gameplay and restores your visual settings.",()->{LiveTerrain.stop();client.setScreen(new OpticalLabScreen());});
+    }
+    private void upright(int x,int y) {
+        var b=button(x,y,"Reset camera upright","Clear wormhole tilt, preserving position and aim. R is the dedicated shortcut.",()->{WormholeClient.resetOrientation();status="Camera reset requested.";});b.active=WormholeClient.canResetOrientation();
+    }
+    private void serverButton(int x,int y,String label,String tip,String command) {
+        var b=button(x,y,label,tip,()->{client.player.networkHandler.sendChatCommand("interstellar "+command);status="Server setting requested.";});
+        b.active=client.player!=null && client.player.hasPermissionLevel(2);
     }
     private ButtonWidget button(int x,int y,String text,String tip,Runnable action) {
-        return addDrawableChild(ButtonWidget.builder(Text.literal(text),b->action.run())
-            .dimensions(left+x*(column+8),top+y*24,column,20).tooltip(Tooltip.of(Text.literal(tip))).build());
+        return addDrawableChild(ButtonWidget.builder(Text.literal(text),b->action.run()).dimensions(left+x*(column+8),top+30+y*24,column,20).tooltip(Tooltip.of(Text.literal(tip))).build());
+    }
+    @Override public void tick() {
+        if(lastGravity!=WorldFeatures.gravityEnabled || lastCapture!=WorldFeatures.gravityCapture || lastStrength!=WorldFeatures.gravityStrength)clearAndInit();
     }
     private static String on(boolean value) {return value?"On":"Off";}
     private void quality(float scale,int aa,boolean fine,boolean rtx) {save(preferences.quality(scale,aa,fine,rtx));}
     private void save(TerrainOptions next) {
-        try {
-            next.save();LiveTerrain.applyPreferences(next);status="Changes applied and saved.";
-            Interstellar.LOGGER.info("Interstellar settings saved: {}",next);
-        } catch(Exception failure) {status="Could not save settings; see log.";Interstellar.LOGGER.error(status,failure);}
+        try {next.save();LiveTerrain.applyPreferences(next);status="Visual settings applied and saved.";Interstellar.LOGGER.info("Interstellar settings saved: {}",next);}
+        catch(Exception failure){status="Could not save settings; see log.";Interstellar.LOGGER.error(status,failure);}
         clearAndInit();
     }
     @Override public void render(DrawContext context,int mouseX,int mouseY,float delta) {
         super.render(context,mouseX,mouseY,delta);
         context.drawCenteredTextWithShadow(textRenderer,title,width/2,top-22,0xFFFFFF);
-        context.drawCenteredTextWithShadow(textRenderer,status,width/2,top+128,0xC8D8E8);
+        context.drawCenteredTextWithShadow(textRenderer,textRenderer.trimToWidth(status,width-16),width/2,top+134,0xC8D8E8);
     }
     @Override public boolean shouldPause() {return false;}
 }

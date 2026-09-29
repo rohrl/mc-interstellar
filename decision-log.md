@@ -736,3 +736,30 @@ expanded the geometry set needed to open. Prioritize the fixed destination chunk
 measure opening progress against that set, and keep local capture usable while
 ordinary terrain expands. Native chunk/light and visual presentation barriers stay
 mandatory for player travel. Cold setup and uneven chunk costs remain visible.
+
+## D095 — Accepted: unified gameplay optics and explicit controls (2026-09-29)
+
+The wormhole renderer previously took exclusive ownership of the live view, so
+nearby mass gravity continued but mass lensing disappeared. F10 then stopped the
+entire optical view. Replace that implicit priority with one owner that renders
+the selected mass and the placed pair together, retaining its terrain cache when
+sources or individual feature switches change.
+
+Use shared Cartesian ray integration only for mixed scenes. Add spatial curvature
+contributions, with finite smooth influence bounds, and query native geometry
+along the resulting path. Keep existing single-effect solvers. This is an explicit
+gameplay composition, not an exact multi-object GR metric; docs/science.md records
+the equations, chart identification, observer assumptions and validation limits.
+
+Default to automatic activation. F10 and F4 share one saved master visual setting.
+F4 has Gameplay, Graphics and Tools tabs, including independent mass/portal
+switches and server-session gravity controls. Disabling portal visuals preserves
+markers and the pair, but withdraws the client's travel readiness until a passage
+frame is presented again. Leaving a lab restores the saved gameplay setting.
+Gravity controls require operator permission and broadcast their acknowledged
+values. The expanded readiness/gravity packets require matching client/server builds.
+
+Preserve the OpenGL-only artifact; both backends use the same combined optics.
+No multi-cluster optics, cross-dimension transport or extra entity transit is
+introduced by this consolidation. Measure combined views separately from the
+unchanged single-effect paths; do not infer a universal FPS cost from one pose.

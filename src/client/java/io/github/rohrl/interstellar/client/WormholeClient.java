@@ -115,6 +115,11 @@ public final class WormholeClient {
             Interstellar.LOGGER.info("Wormhole passage visually open: revision={}, renderer frame presented; travel acknowledged",preparedRegions.revision());
         }
     }
+    static void suspendView() {
+        if(preparedRegions!=null && acknowledged && MinecraftClient.getInstance().getNetworkHandler()!=null)
+            ClientPlayNetworking.send(new WormholeReadyPayload(preparedRegions.generation(),preparedRegions.revision(),false));
+        acknowledged=false;renderingOptics=0;
+    }
     static boolean passageOpen() {return opening.open() && WormholePair.active(MinecraftClient.getInstance().world);}
     static double closedRadius() {return opening.radius(WormholePair.METRIC.mouthRadius());}
     public static double roll() {return cameraWorld==MinecraftClient.getInstance().world?roll:0;}

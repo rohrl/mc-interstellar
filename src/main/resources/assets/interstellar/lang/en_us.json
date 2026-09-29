@@ -7,7 +7,7 @@
   "message.interstellar.wormhole_preparing": "Wormhole end · Opening %s%%",
   "message.interstellar.wormhole_step_out": "Step outside, then enter to travel",
   "key.interstellar.settings": "Interstellar settings",
-  "key.interstellar.live_terrain": "Toggle live terrain lensing",
+  "key.interstellar.live_terrain": "Toggle all world effects",
   "key.interstellar.live_timing": "Benchmark live terrain",
   "key.interstellar.reset_orientation": "Reset wormhole camera tilt",
   "message.interstellar.camera_upright": "Camera upright",

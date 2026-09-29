@@ -1,5 +1,28 @@
 # Progress
 
+## 2026-09-29 — Unified mass and wormhole gameplay
+
+Mass lensing and both wormhole mouths now share one gameplay view and geometry
+cache. Source edits and individual feature switches no longer replace one optical
+mode with another. Mixed scenes compose spatial ray curvature using an explicitly
+approximate model; single-effect scenes retain their established solvers.
+
+F4 now groups Gameplay, Graphics and Tools. Visual effects autoactivate by default;
+F10 is the same saved master switch. Separate mass/portal controls, server-session
+gravity/capture/strength, quality/backend, upright reset and diagnostics are exposed.
+Portal-off preserves markers and suspends travel until a passage frame is visible.
+Closing F8/F9 restores the saved gameplay setting automatically.
+
+Both builds pass105 CPU tests; normal jar remains Vulkan-free. Final69-ray GPU
+fixture passes with maximum direction error0.0005832. Runtime checks cover combined
+activation, AA modes, individual controls, lab return, travel/readiness and interior
+mining with automatic64→63→64 source changes. Settled GL/RTX pair MAE0.003395/255.
+The full1280/fine/2x combined view measures34.06ms median frames (~29FPS); normal
+paths32.28ms (~31FPS). At50% resolution/fine/2x it measures15.43ms (~65FPS).
+Saved master-off survives restart; F10 re-enables the combined scene. Owner quality
+settings restored and QA client paused. Combined optics cost more; no unchanged-FPS claim.
+[Model, images, timings and limitations](docs/profiles/2026-09-29-unified-gameplay/).
+
 ## 2026-09-29 — Continuous exterior for both wormhole mouths
 
 Removed the midpoint-plane geometry partition that deleted half the world when

@@ -15,27 +15,33 @@ public final class LiveTerrain {
     private static ClientWorld armedWorld;
     private static ClientWorld seenWorld;
     private static boolean worldComposited;
+    private static boolean labOpen;
+    private static TerrainOptions options=TerrainOptions.load();
     private LiveTerrain() { }
     static boolean active() {return armedWorld!=null;}
-    static TerrainOptions preferences() {return renderer==null?TerrainOptions.load():renderer.preferences();}
-    static void applyPreferences(TerrainOptions options) {if(renderer!=null)renderer.applyPreferences(options);}
+    static TerrainOptions preferences() {return renderer==null?options:renderer.preferences();}
+    static boolean portalViews() {return active() && options.wormholes();}
+    static void applyPreferences(TerrainOptions next) {
+        options=next;
+        if(renderer!=null)renderer.applyPreferences(next);
+        if(!next.enabled())stop();
+        else {armedWorld=MinecraftClient.getInstance().world;synchronize(MinecraftClient.getInstance());}
+        if(!portalViews())WormholeClient.suspendView();
+    }
     static void refreshLighting() {releaseRenderer();synchronize(MinecraftClient.getInstance());}
     static void wormholeChanged() {
-        var client=MinecraftClient.getInstance();boolean wasWormhole=renderer!=null && renderer.isWormhole();
-        if(wasWormhole && renderer.retainWormhole() && WormholePair.present(client.world))renderer.wormholeChanged();else releaseRenderer();
-        if(WormholePair.present(client.world))armedWorld=client.world;
-        else if(wasWormhole && SelectedSource.current()==null)armedWorld=null;
+        var client=MinecraftClient.getInstance();
+        if(renderer!=null)renderer.wormholeChanged();
         synchronize(client);
     }
     static void setEnabled(boolean enabled) {
-        var client=MinecraftClient.getInstance();
-        if(!enabled)stop();else if(client.world!=null){armedWorld=client.world;synchronize(client);}
+        var next=preferences().effects(enabled,options.massLensing(),options.wormholes(),options.statusHud());
+        try {next.save();applyPreferences(next);}catch(Exception e){Interstellar.LOGGER.error("Cannot save world effects",e);}
     }
     static void toggle(MinecraftClient client) {
-        if(active()) {stop();return;}
         if(client.world==null || client.currentScreen!=null)return;
-        armedWorld=client.world;
-        synchronize(client);
+        setEnabled(!active());
+        message(client,"World effects "+(active()?"ON":"OFF")+" | F4: settings");
     }
     // Ctrl avoids the crouch/descent side effect of holding Shift in a live world.
     static void benchmark(int modifiers) {
@@ -51,40 +57,31 @@ public final class LiveTerrain {
         } else renderer.keyPressed(GLFW.GLFW_KEY_B,0,(modifiers&GLFW.GLFW_MOD_CONTROL)!=0?GLFW.GLFW_MOD_SHIFT:0);
     }
     static void tick(MinecraftClient client) {
+        boolean lab=client.currentScreen instanceof TerrainScreen || client.currentScreen instanceof OpticalLabScreen;
         if(client.world!=seenWorld) {
             stop();seenWorld=client.world;
-            if(WormholePair.present(client.world))armedWorld=client.world;
+            options=TerrainOptions.load();if(options.enabled()&&!lab)armedWorld=client.world;
         }
+        if(labOpen&&!lab&&options.enabled())armedWorld=client.world;
+        labOpen=lab;
         synchronize(client);
     }
     private static void synchronize(MinecraftClient client) {
         if(!active())return;
         if(client.world!=armedWorld) {stop();return;}
-        var source=SelectedSource.current();
-        if(WormholeClient.nearby()) {
-            if(renderer!=null && renderer.isWormhole())return;
-            if(client.player==null)return;
-            releaseRenderer();renderer=TerrainScreen.wormhole(true);
-            width=client.getWindow().getScaledWidth();height=client.getWindow().getScaledHeight();
-            renderer.init(client,width,height);Interstellar.LOGGER.info("Live wormhole view armed; preparing local optics");check(client);return;
-        }
-        if(renderer!=null && renderer.isWormhole())releaseRenderer();
-        if(renderer!=null&&renderer.selectedSource()==source)return;
-        if(source!=null&&source.count()>0) {
-            if(renderer!=null) {
-                renderer.adoptSource(source);
-                Interstellar.LOGGER.info("Live source refreshed without terrain reload: N={}, r_s={}",source.count(),source.schwarzschildRadius());
-                return;
-            }
-            renderer=new TerrainScreen(source,true);
-            width=client.getWindow().getScaledWidth();height=client.getWindow().getScaledHeight();
-            renderer.init(client,width,height);
-            Interstellar.LOGGER.info("Live source adopted: N={}, r_s={}",source.count(),source.schwarzschildRadius());
-            check(client);
-        }
+        var source=options.massLensing()?SelectedSource.current():null;
+        boolean portals=options.wormholes() && WormholeClient.nearby();
+        if(source==null && !portals){releaseRenderer();return;}
+        if(renderer!=null){renderer.sources(source,portals);return;}
+        if(client.player==null)return;
+        renderer=new TerrainScreen(source,true,portals);
+        width=client.getWindow().getScaledWidth();height=client.getWindow().getScaledHeight();
+        renderer.init(client,width,height);
+        Interstellar.LOGGER.info("Gameplay view preparing: mass={}, wormholes={}",source==null?0:source.count(),portals);
+        check(client);
     }
-    private static void releaseRenderer() {if(renderer!=null) {renderer.removed();renderer=null;}}
-    static void stop() {releaseRenderer();armedWorld=null;worldComposited=false;}
+    private static void releaseRenderer() {if(renderer!=null) {WormholeClient.suspendView();options=renderer.preferences();renderer.removed();renderer=null;}}
+    static void stop() {WormholeClient.suspendView();releaseRenderer();armedWorld=null;worldComposited=false;}
     public static boolean worldComposited() {return worldComposited;}
     private static void message(MinecraftClient client,String message) {
         if(client.player!=null)client.player.sendMessage(Text.literal("Interstellar: "+message),true);
@@ -112,13 +109,15 @@ public final class LiveTerrain {
         }
     }
     public static void renderHud(DrawContext context) {
-        if(!active())return;
         var client=MinecraftClient.getInstance();
-        if(client.world==null || client.player==null || client.options.hudHidden)return;
+        if(client.world==null || client.player==null || client.options.hudHidden || !options.statusHud())return;
+        if(!active()) {
+            context.drawTextWithShadow(client.textRenderer,"INTERSTELLAR | World effects OFF | F4: settings | F10: on",12,12,0xFFFFD59A);return;
+        }
         if(renderer!=null && (renderer.isWormhole() || SelectedSource.current()!=null)) {renderer.renderHud(context);return;}
         context.fill(6,6,Math.min(client.getWindow().getScaledWidth()-6,440),46,0xCD101824);
-        context.drawTextWithShadow(client.textRenderer,"INTERSTELLAR | PAUSED - normal view | F10: off",12,12,0xFFFFD59A);
+        context.drawTextWithShadow(client.textRenderer,"INTERSTELLAR | World effects ON | F4: settings",12,12,0xFF88D8FF);
         context.drawTextWithShadow(client.textRenderer,SelectedSource.state().message(),12,24,0xFFFFFFFF);
-        context.drawTextWithShadow(client.textRenderer,"Source tracking active | Resumes automatically",12,36,0xFF88D8FF);
+        context.drawTextWithShadow(client.textRenderer,"Place mass blocks or throw a Rift Pearl | Automatic activation",12,36,0xFF88D8FF);
     }
 }

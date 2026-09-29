@@ -44,8 +44,10 @@ For RTX, use **Launch Interstellar RTX.cmd** or `gradlew.bat runClient -Pinterst
 Alt+F12 switches RTX/OpenGL in the live optical view. The ordinary launcher and
 normal artifact keep the Vulkan-free OpenGL path.
 
-**F4** opens live graphics settings: quality, RTX/OpenGL, lensing, camera upright,
-weather and returning body images. **Rift Pearl** places a saved pair with
+**F4** opens Gameplay, Graphics and Tools: combined mass/portal effects, server
+gravity, quality, RTX/OpenGL, camera upright, weather and returning body images.
+World effects activate automatically; **F10** is their saved master on/off switch.
+**Rift Pearl** places a saved pair with
 throws; later throws relocate the oldest mouth. [Controls and implementation](docs/settings-and-wormhole-seed.md).
 
 Use a disposable development world. F6 toggles the diagnostic HUD; F7 places a **virtual reference centre** 64 blocks ahead of the camera. It is a measurement aid only: nothing is placed in the world and no gravity is applied. The HUD reports camera coordinate distance divided by the configured Schwarzschild radius, not a measured proper distance in curved spacetime.
@@ -80,9 +82,9 @@ Edit **run/config/interstellar-optics.json** for persistent effect defaults, obs
 
 ## Mass blocks
 
-For repeatable projectile examples, use **/interstellar demo arrows**, then **F10**. Four colour-marked dispensers show a transient loop, flyby, turnaround and capture. This separate course preserves edits to the gameplay exhibit. **/interstellar demo arrows off** stops firing; **/interstellar demo leave** returns you. The local gravity reach is now40 blocks for a64-block source, with the same close-range strength.
+For repeatable projectile examples, use **/interstellar demo arrows**. Four colour-marked dispensers show a transient loop, flyby, turnaround and capture. This separate course preserves edits to the gameplay exhibit. **/interstellar demo arrows off** stops firing; **/interstellar demo leave** returns you. The local gravity reach is now40 blocks for a64-block source, with the same close-range strength.
 
-Use **/give @s interstellar:mass_block** and place connected blocks. Nearby sources are selected and updated automatically; **F10** enables world lensing. A compact 2×2×2 build bends light, a 3×3×3 build bends it more, and a 4×4×4 cube reaches the black-hole proxy threshold. Right-click with empty hands or use **/interstellar inspect x y z** to pin a source; **/interstellar source auto** resumes automatic selection. Holding a block uses normal RMB placement. [Gameplay model, controls and checks](docs/gameplay-gravity.md).
+Use **/give @s interstellar:mass_block** and place connected blocks. Nearby sources are selected, updated and rendered automatically, including beside wormholes. **F4** controls individual effects; **F10** toggles all world optics. A compact 2×2×2 build bends light, a 3×3×3 build bends it more, and a 4×4×4 cube reaches the black-hole proxy threshold. Right-click with empty hands or use **/interstellar inspect x y z** to pin a source; **/interstellar source auto** resumes automatic selection. Holding a block uses normal RMB placement. [Gameplay model, controls and checks](docs/gameplay-gravity.md).
 
 For a selected black-hole proxy, open **F8** and press **S** to use its scale and camera distance in the sky lab. F8 remains a black-hole lab; extended sources render in F9/F10. F10 recovers automatically through source edits, removal and chunk loading. **R** restores the configured F8 reference view.
 
@@ -102,4 +104,4 @@ Select a black-hole proxy and press **F9**. Close views automatically use native
 
 **Numerical mesh check:** in a ready F9 native mesh preview, **C** runs a small synthetic scene against the independent CPU ray solver (about1.8seconds here). It checks both mesh layouts at near/far distances without changing the world. [Results and limits](docs/mesh-ray-validation.md).
 
-After inspecting a black-hole proxy, press **F10** and allow initial native terrain capture (about40 seconds at render distance12). Then explore up to **256 blocks from the selected source**, with normal movement, animated mobs/clouds and the vanilla HUD. Source availability can impose an earlier limit. **F12** measures the pass; F10 returns to normal rendering. Block/light edits update affected chunks, and movement streams the camera window. Updates are queued rather than immediate. Source mass changes refresh automatically after initial selection, without reloading all terrain. Re-enabling F10 currently recaptures it. Interactions still use straight aim. [Current implementation and checks](docs/streaming-terrain.md) · [Live mob implementation](docs/live-native-mesh.md) · [Earlier voxel prototype](docs/live-terrain.md) · [Wider viewing controls and checks](docs/viewing-range.md).
+With World effects enabled (the default), nearby sources start native terrain capture automatically (about40 seconds at render distance12). Then explore up to **256 blocks from the selected source**, with normal movement, animated mobs/clouds and the vanilla HUD. Source availability can impose an earlier limit. **F12** measures the pass; F10 returns to normal rendering. Block/light edits update affected chunks, and movement streams the camera window. Updates are queued rather than immediate. Source mass changes refresh automatically after initial selection, without reloading all terrain. Re-enabling F10 currently recaptures it. Interactions still use straight aim. [Current implementation and checks](docs/streaming-terrain.md) · [Live mob implementation](docs/live-native-mesh.md) · [Earlier voxel prototype](docs/live-terrain.md) · [Wider viewing controls and checks](docs/viewing-range.md).

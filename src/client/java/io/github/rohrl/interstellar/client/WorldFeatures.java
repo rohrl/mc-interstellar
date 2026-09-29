@@ -11,14 +11,14 @@ import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.*;
 final class WorldFeatures {
     // Returning images remain an opt-in experiment: full-resolution/zoom trials
     // resolve stretched slivers, without enough recognisable detail for the cost.
-    static boolean body=false,weather=true,gravityEnabled;
+    static boolean body=false,weather=true,gravityEnabled,gravityCapture;
     static double gravityStrength;
     private WorldFeatures() {}
     static void register() {
         var preferences=TerrainOptions.load();body=preferences.bodyImages();weather=preferences.weather();
         ClientPlayConnectionEvents.DISCONNECT.register((handler,client)->gravityEnabled=false);
         ClientPlayNetworking.registerGlobalReceiver(GravityVisualPayload.ID,(p,context)-> {
-            gravityEnabled=p.enabled() && Double.isFinite(p.strength()) && p.strength()>=0 && p.strength()<=.2;gravityStrength=p.strength();
+            gravityEnabled=p.enabled() && Double.isFinite(p.strength()) && p.strength()>=0 && p.strength()<=.2;gravityStrength=p.strength();gravityCapture=p.capture();
         });
         // A distinct client root must not shadow the server's /interstellar commands.
         ClientCommandRegistrationCallback.EVENT.register((dispatcher,registry)->dispatcher.register(literal("interstellar-visuals")

@@ -6,6 +6,11 @@ Press **F4** during gameplay. Rebind it in Controls → Interstellar. The menu
 applies changes live and saves visual preferences in `config/interstellar-terrain.json`.
 It stays live while open; **Done** or **Esc** returns to play.
 
+The tabs are **Gameplay**, **Graphics**, and **Tools**. World effects start
+automatically when a nearby mass cluster or placed mouth is available. Mass
+lensing and the wormhole pair share one world view; neither replaces the other.
+The status overlay names the active mass and portal state.
+
 | Control | What it changes |
 |---|---|
 | Resolution | 50% or 100% of each framebuffer dimension. Full resolution traces four times as many pixels. |
@@ -13,11 +18,28 @@ It stays live while open; **Done** or **Esc** returns to play.
 | Smooth lighting | Minecraft's ambient occlusion, persisted in Minecraft options. Recaptures terrain lighting. |
 | Fine light paths | Smaller curved-path steps; more work near strong bending. |
 | Renderer | Prefer RTX with automatic OpenGL fallback, or force OpenGL. Disabled in a normal, Vulkan-free launch. |
-| Live lensing | Same session control as F10. Tracks sources and resumes when their data is ready. |
+| World effects | Saved master visual switch, also controlled by F10. Defaults on. Does not change server gravity. |
+| Mass lensing | Render the automatically selected mass cluster, together with the portals if enabled. |
+| Portal views | Render and prepare wormhole passages. Off keeps mouth markers and suspends your transit; it does not delete the pair. |
+| Status overlay | Show effects, source, preparation and renderer status. |
+| Entity gravity / Horizon capture | Server-session controls for attraction and consuming entities. Require operator permission. |
+| Gravity strength | Cycle 25%, 50%, 100% of the strong-gravity default. Changes gameplay forces, not optical mass. Server-session setting. |
 | Weather | Approximate local foreground rain/snow. |
 | Returning body | Experimental returning images of the player's real body; defaults off. |
 | Reset camera upright | Same as R: clear wormhole tilt without changing position or aim. |
 | Quality defaults | 50% resolution, 2× AA, normal path steps. |
+| Tools | FPS measurement, world-lighting rebuild, automatic mass selection, upright reset, and the F8/F9 laboratories. |
+
+Esc from a laboratory restores the saved gameplay visual setting. F10 switches
+all world optics together; use the two feature switches in F4 for independent
+control. Turning the master off releases the terrain cache, so turning it back on
+needs preparation. Changing only the selected mass or individual effects reuses
+an existing cache. A lighting rebuild deliberately recaptures it.
+
+The current renderer handles **one selected mass cluster plus one portal pair**.
+Overlapping fields compose spatial ray curvature as a gameplay approximation,
+not an exact multi-object spacetime; see [the science notes](science.md).
+Server gravity and portal placement remain independent of the graphics backend.
 
 All five AA modes work on RTX. Off/Edge dispatch only one sample. The sample atlas
 has two columns: one row for2×, two for4×, four for8×. Each invocation traces one

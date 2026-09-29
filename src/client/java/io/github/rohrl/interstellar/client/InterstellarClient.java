@@ -162,7 +162,7 @@ public final class InterstellarClient implements ClientModInitializer {
 
     private void drawHud(DrawContext context) {
         MinecraftClient client = MinecraftClient.getInstance();
-        if (LiveTerrain.active() || !showHud || client.world == null || client.player == null || client.options.hudHidden) {
+        if (LiveTerrain.active() || LiveTerrain.preferences().statusHud() || !showHud || client.world == null || client.player == null || client.options.hudHidden) {
             return;
         }
         Schwarzschild source = new Schwarzschild(settings.schwarzschildRadius());

@@ -116,6 +116,9 @@ uniform float Radius,PathStep;
 uniform vec3 OtherSource;
 uniform float WormholeExtent;
 uniform float WormholeInfluence;
+uniform vec3 MassSource;
+uniform float MassRadius,MassBodyRadius,MixedOptics,PortalOpen,PortalCount,ClosedRadius;
+bool mixedEditor=false,mixedInterior=false;
 vec3 wormholeChordStart;
 float wormholeTravelled=0.0;
 #endif
@@ -423,6 +426,9 @@ int meshSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
             if(massOverlay)entity-=sign(entity)*64.0;
             bool massTerrain=entity==-4.0;
             if(massTerrain)entity=0.0;
+#ifdef INTERSTELLAR_WORMHOLE
+            if(mixedEditor && !(massOverlay || massTerrain))continue;
+#endif
 #ifdef INTERSTELLAR_HORIZON
             bool editable=massOverlay || massTerrain;
             if(editorPass && !editable)continue;
@@ -459,6 +465,9 @@ int meshSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
             float t=dot(edge2,q)/det;if(t<0 || t>1 || t>=best)continue;
 #ifdef INTERSTELLAR_HORIZON
             if(interiorCamera && !editorPass && editable && length(start+delta*t-Source)<=Radius)continue;
+#endif
+#ifdef INTERSTELLAR_WORMHOLE
+            if(mixedInterior && !mixedEditor && (massOverlay || massTerrain) && length(start+delta*t-MassSource)<=MassRadius)continue;
 #endif
             // U isolates terrain missing beyond the previous source-centred footprint.
             vec2 location=(start+delta*t).xz;

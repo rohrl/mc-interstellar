@@ -229,3 +229,56 @@ Work is bounded to four throat passages per ray, eight pi of total orbital angle
 and 2048 solver iterations. Rays still circulating beyond a passage/angle limit
 return dark; iteration exhaustion stays diagnostic magenta. Most rays use zero or
 one passage. This is bounded higher-order visibility, not unlimited recursive images.
+
+## Mass and wormholes in the same gameplay view (2026-09-29)
+
+The unified renderer follows one ray through one native world, with one selected
+mass cluster and up to two wormhole mouths. It does not combine separately warped
+screen images. This avoids duplicating ordinary and bent terrain and lets a ray
+be deflected by a mass before or after passing through a mouth.
+
+**The overlap model is a gameplay approximation, not a solution of Einstein's
+equations for several objects.** We add the perpendicular spatial ray-curvature
+vectors of the selected mass and the localized mouths. This defines a reproducible
+ray rule, but we do not assert that the complete rule comes from one Lorentzian
+metric. Minecraft coordinates identify the mass's areal chart with the mouths'
+isotropic charts; that identification is another deliberate approximation.
+
+State consists of position and unit coordinate direction, parameterized by
+Euclidean arc length. For the mass, let r be distance to its centre, n the outward
+radial unit vector, d the ray direction, and mu=n·d. The exterior acceleration is
+`-3 rs (1-mu²) (n-mu d) / (2 r²)`. It follows by projecting the areal-coordinate
+Schwarzschild Hamiltonian acceleration perpendicular to d. The finite body's
+coefficient similarly follows from the existing interior lapse/radial metric.
+`MixedWorld.affineAcceleration` derives it from metric derivatives and canonical
+momentum; tests compare that independent form with the simplified GPU expression.
+
+Mass curvature stays unchanged inside half the outer radius, then tapers smoothly
+to zero at `max(96,48 rs,8 bodyRadius)` blocks. The mouths retain the localized
+Ellis gradient described above. The observer uses the existing mass static/falling
+frame convention, with its far-field correction tapered too. Single-effect scenes
+retain their established solvers and untapered mass rendering.
+
+The GPU uses adaptive Cartesian RK4. Chord-error, angular-motion and radial-motion
+bounds limit each step; a tighter boundary rule resolves the finite body's metric
+derivative jump at its surface. Outside all optical regions, one straight query
+reaches the next region or the distant scene. Mouth crossings use the same
+inversion/reflection and four-passage limit as player travel. A ray can encounter
+either source in any order; exterior capture is decided by an actual horizon
+intersection, not the isolated-hole capture cone. Another field or a mouth could
+otherwise redirect a ray before it reaches that horizon.
+
+The finite-body metric has a derivative discontinuity at its surface. Early
+constant-step reference tests exposed this as poor numerical convergence; refining
+steps specifically near that boundary fixes it without making every step tiny.
+A fine Cartesian midpoint reference uses the unsimplified metric acceleration and
+bisection at throats. GPU fixtures compare directions and passage/capture codes,
+including the zero-mass limit. These tests validate implementation of the stated
+composition rule, not the physical accuracy of combining strong fields.
+
+Closed/preparing mouths use a localized Schwarzschild preview alongside the mass.
+The interior mass editor, shared materials, native light/fog, AA and GL/RTX geometry
+queries remain available. The near-horizon mixed observer and overlapping closed
+previews have visual checks rather than a new independent spacetime reference.
+Server entity gravity remains its bounded dominant-source gameplay model; it does
+not use this optical curvature sum or simulate wormhole gravity on mobs.

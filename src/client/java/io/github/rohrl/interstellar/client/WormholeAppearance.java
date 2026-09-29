@@ -49,10 +49,10 @@ final class WormholeAppearance {
         benchmark=new LabBenchmark("Closed wormhole mouth, native sphere draw only");
     }
     static boolean pending() {
-        return WormholePair.present(MinecraftClient.getInstance().world) && !WormholeClient.passageOpen();
+        return WormholePair.present(MinecraftClient.getInstance().world) && (!WormholeClient.passageOpen() || !LiveTerrain.portalViews());
     }
     static void capture(EntityMesh target,net.minecraft.util.math.BlockPos origin) {
-        if(!pending() || WormholeClient.renderingOptics==2)return;
+        if(!pending() || WormholeClient.renderingOptics>=2)return;
         var client=MinecraftClient.getInstance();var mouths=WormholePair.layout(client.world).mouths();
         int active=WormholePair.nearest(client.world,client.gameRenderer.getCamera().getPos());
         for(int i=0;i<mouths.size();i++)if(WormholeClient.renderingOptics!=1 || i!=active)
@@ -99,6 +99,9 @@ final class WormholeAppearance {
         if(nearest>0 && world.raycast(new RaycastContext(eye,surface,RaycastContext.ShapeType.COLLIDER,
             RaycastContext.FluidHandling.NONE,client.player)).getType()!=HitResult.Type.MISS)return;
         int x=context.getScaledWindowWidth()/2,y=context.getScaledWindowHeight()/2+18;
+        if(!LiveTerrain.portalViews()) {
+            context.drawCenteredTextWithShadow(client.textRenderer,Text.literal("Wormhole end | Portal view off — enable in F4"),x,y,0xFF9EEEF5);return;
+        }
         boolean closed=layout.mouths().size()==1;
         var title=Text.translatable(closed?"message.interstellar.wormhole_closed":WormholeClient.passageOpen()?
             "message.interstellar.wormhole_open":"message.interstellar.wormhole_preparing",WormholeClient.opening.percent());

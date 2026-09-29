@@ -3,6 +3,13 @@
   "attributes":["Position"],
   "samplers":[{"name":"Voxels"},{"name":"CompactNodes"},{"name":"Atlas"},{"name":"Distant"},{"name":"DistantAppearance"},{"name":"SkyAtlas"},{"name":"Lightmap"},{"name":"LocalLight"},{"name":"CompactMovingNodes"}],
   "uniforms":[
+    {"name":"MassSource","type":"float","count":3,"values":[0,0,0]},
+    {"name":"MassRadius","type":"float","count":1,"values":[0]},
+    {"name":"MassBodyRadius","type":"float","count":1,"values":[0]},
+    {"name":"MixedOptics","type":"float","count":1,"values":[0]},
+    {"name":"PortalOpen","type":"float","count":1,"values":[0]},
+    {"name":"PortalCount","type":"float","count":1,"values":[0]},
+    {"name":"ClosedRadius","type":"float","count":1,"values":[0]},
     {"name":"OtherSource","type":"float","count":3,"values":[1072,64,560]},
     {"name":"WormholeInfluence","type":"float","count":1,"values":[0]},
     {"name":"WormholeExtent","type":"float","count":1,"values":[768]},

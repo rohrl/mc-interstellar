@@ -47,8 +47,8 @@ public final class WormholeChunks {
             if(s==null||player.getServerWorld()!=s.world||payload.revision()!=s.layout.revision())return;
             var viewer=s.viewers.get(player.getUuid());
             if(viewer!=null && viewer.announced && viewer.generation==payload.generation()) {
-                viewer.ready=true;
-                Interstellar.LOGGER.info("Wormhole destination visually ready on client: {}, generation={}, revision={}, chunks={}",player.getName().getString(),viewer.generation,s.layout.revision(),s.layout.chunks().size());
+                viewer.ready=payload.visible();
+                Interstellar.LOGGER.info("Wormhole client travel {}: {}, generation={}, revision={}, chunks={}",viewer.ready?"ready":"suspended",player.getName().getString(),viewer.generation,s.layout.revision(),s.layout.chunks().size());
             }
         });
         ServerTickEvents.END_SERVER_TICK.register(WormholeChunks::tick);

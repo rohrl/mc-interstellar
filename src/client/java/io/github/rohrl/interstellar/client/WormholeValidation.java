@@ -28,6 +28,7 @@ final class WormholeValidation {
             if(GL30.glCheckFramebufferStatus(GL30.GL_FRAMEBUFFER)!=GL30.GL_FRAMEBUFFER_COMPLETE)throw new IllegalStateException("Wormhole fixture framebuffer incomplete");
             RenderSystem.viewport(0,0,W,H);RenderSystem.disableDepthTest();RenderSystem.disableBlend();RenderSystem.setShader(()->shader);
             set(shader,"Diagnostic",4);set(shader,"Lensing",1);set(shader,"Radius",16);set(shader,"WormholeExtent",768);
+            set(shader,"MixedOptics",0);
             set(shader,"WormholeInfluence",0);
             set(shader,"MeshNodeCount",0);set(shader,"MovingNodeCount",0);set(shader,"CloudNodeCount",0);
             set(shader,"MeshClouds",0);set(shader,"PathStep",.45f);set(shader,"MeshStepLimit",16);
@@ -35,13 +36,14 @@ final class WormholeValidation {
             vector(shader,"Right",1,0,0);vector(shader,"Up",0,1,0);shader.getUniformOrDefault("ViewSlopes").set(2.3f,1.3f,0f,0f);
             var pixels=BufferUtils.createFloatBuffer(W*H*4);
             var local=local(shader,draw,pixels);total+=(int)local[0];wrong+=(int)local[1];maximum=Math.max(maximum,local[2]);
+            var mixed=mixed(shader,draw,pixels);total+=(int)mixed[0];wrong+=(int)mixed[1];maximum=Math.max(maximum,mixed[2]);
         } finally {
             set(shader,"Diagnostic",0);
             GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER,oldDraw);GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER,oldRead);
             GL30.glBindRenderbuffer(GL30.GL_RENDERBUFFER,oldRenderbuffer);RenderSystem.viewport(viewport[0],viewport[1],viewport[2],viewport[3]);
             GL30.glDeleteRenderbuffers(colour);GL30.glDeleteFramebuffers(framebuffer);
         }
-        String result="Local wormhole GPU reference: "+total+" rays, "+wrong+" mismatches; max direction error="+maximum;
+        String result="World optics GPU reference: "+total+" rays, "+wrong+" mismatches; max direction error="+maximum;
         Interstellar.LOGGER.info("{}; elapsed={}ms",result,(System.nanoTime()-started)/1e6);
         if(wrong>0)throw new IllegalStateException(result);return result;
     }
@@ -76,6 +78,26 @@ final class WormholeValidation {
         return new double[]{total,wrong,max};
     }
     private static void set(ShaderProgram s,String name,float v) {s.getUniformOrDefault(name).set(v);}
+    private static double[] mixed(ShaderProgram shader,Runnable draw,java.nio.FloatBuffer pixels) {
+        var a=new Point(0,0,0);var b=new Point(128,0,0);var mass=new Point(25,3,-4);
+        vector(shader,"Source",a);vector(shader,"OtherSource",b);vector(shader,"MassSource",mass);
+        set(shader,"MixedOptics",1);set(shader,"PortalOpen",1);set(shader,"PortalCount",2);
+        int total=0,wrong=0;double maximum=0;
+        for(var config:new double[][]{{0,0},{2,0},{2,4},{.5,2}})for(double x:new double[]{0,8,16,24,25,32,64,128}) {
+            var model=new io.github.rohrl.interstellar.science.MixedWorld(a,b,mass,config[0],config[1]);
+            var eye=new Point(x,6,-100);var look=new Point(0,0,1);
+            set(shader,"MassRadius",(float)config[0]);set(shader,"MassBodyRadius",(float)config[1]);
+            vector(shader,"Camera",eye);vector(shader,"Forward",look);
+            var reference=model.reference(eye,look,.02);
+            draw.run();pixels.clear();GL11.glReadPixels(0,0,W,H,GL11.GL_RGBA,GL11.GL_FLOAT,pixels);
+            double error=reference.code()<0?0:new Point(pixels.get(0),pixels.get(1),pixels.get(2)).subtract(reference.direction()).length();
+            boolean bad=!Double.isFinite(error) || error>.001 || pixels.get(3)!=reference.code();
+            total++;maximum=Math.max(maximum,error);
+            if(bad){wrong++;Interstellar.LOGGER.warn("Mixed GPU mismatch rs={} body={} x={} CPU={} GPU={},{},{},{} error={}",config[0],config[1],x,reference,pixels.get(0),pixels.get(1),pixels.get(2),pixels.get(3),error);}
+        }
+        Interstellar.LOGGER.info("Mixed world Hamiltonian/midpoint reference: {} rays, {} mismatches; max direction error={}",total,wrong,maximum);
+        return new double[]{total,wrong,maximum};
+    }
     private static void vector(ShaderProgram s,String name,float x,float y,float z) {s.getUniformOrDefault(name).set(x,y,z);}
     private static void vector(ShaderProgram s,String name,Point p) {vector(s,name,(float)p.x(),(float)p.y(),(float)p.z());}
 }
