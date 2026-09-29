@@ -35,9 +35,10 @@ public final class WormholePair {
     }
     public static void clientLayout(World world,Layout layout) {client=new ClientLayout(world,layout);}
     public static boolean active(World world) {return layout(world).active(world);}
+    public static boolean present(World world) {return world!=null && !layout(world).mouths().isEmpty() && layout(world).dimension().equals(world.getRegistryKey());}
     public static List<ChunkPos> chunks(World world) {return layout(world).chunks();}
     public static Vec3d centre(World world,int end) {return layout(world).mouths().get(end);}
-    public static int nearest(World world,Vec3d p) {return p.squaredDistanceTo(centre(world,0))<=p.squaredDistanceTo(centre(world,1))?0:1;}
+    public static int nearest(World world,Vec3d p) {return layout(world).mouths().size()<2 || p.squaredDistanceTo(centre(world,0))<=p.squaredDistanceTo(centre(world,1))?0:1;}
     public static boolean contains(World world,int x,int z) {return active(world)&&layout(world).contains(x,z);}
     private static boolean contains(Vec3d centre,int x,int z) {
         return Math.abs((long)x-((int)Math.floor(centre.x)>>4))<=CHUNK_RADIUS && Math.abs((long)z-((int)Math.floor(centre.z)>>4))<=CHUNK_RADIUS;

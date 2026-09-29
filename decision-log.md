@@ -682,3 +682,28 @@ Rename the item Rift Pearl and supply custom pixel artwork. Keep its registry ID
 for old inventories/recipes; Creative Tools registration remains. Connected
 wormholes prefer RTX by default in an RTX launch; preserve explicit OpenGL choice
 and the separate Vulkan-free build. Artwork provenance: docs/artwork/README.md.
+
+## D093 — Closed-mouth BH preview and visible readiness (2026-09-29) — accepted
+
+Supersedes D092's no-optics closed placeholder once local capture is available.
+The owner wants a growing BH-like end while waiting for the second mouth and
+destination preparation. Reuse Schwarzschild and horizon optics in both GL/RTX;
+do not introduce a second gravity source on the server. A lone end holds radius0.8;
+paired ends grow toward radius8 with a smoothed work percentage. The nearest mouth
+supplies preview lensing; the other closed end retains the sphere marker.
+
+Separate renderer ownership from optical mode so the local geometry cache survives
+pair creation/replacement. A new layout expands its capture window. An unloaded
+empty slot cannot qualify as captured remote geometry. Preserve prepared local
+optics across later camera-window changes.
+
+Native chunk/light receipt is necessary but insufficient for travel. Reserve100%
+for completed destination capture and the presented Ellis image, after a0.35s fade.
+Retain the last BH target only during that fade, tracing one scene per frame.
+This radius mapping and image blend are gameplay presentation, not a physical
+conversion process. No geodesic equations changed.
+
+Arm entry only after readiness and an outside pose; growing around the player or
+admin teleporting them inside must not cause transit on the following tick. Keep
+the existing R shortcut separate from F4, rebindable through Minecraft Controls.
+Evidence: docs/profiles/2026-09-29-wormhole-opening/.

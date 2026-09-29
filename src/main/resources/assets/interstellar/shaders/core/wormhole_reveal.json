@@ -1,0 +1,6 @@
+{
+  "vertex":"interstellar:optical_lab", "fragment":"interstellar:wormhole_reveal",
+  "attributes":["Position"], "samplers":[{"name":"Previous"}],
+  "uniforms":[{"name":"Viewport","type":"float","count":2,"values":[854,480]},
+    {"name":"Opacity","type":"float","count":1,"values":[1]}]
+}

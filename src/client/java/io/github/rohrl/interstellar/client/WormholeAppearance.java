@@ -14,7 +14,7 @@ import net.minecraft.world.RaycastContext;
 import org.joml.Matrix4f;
 import org.lwjgl.opengl.GL11;
 
-/** A closed anchor is a cheap opaque marker, not a black hole or an optical solver. */
+/** Closed-mouth markers before local optics are available, plus the crosshair status. */
 final class WormholeAppearance {
     private static final float[] SPHERE=sphere();
     private static final Matrix4f IDENTITY=new Matrix4f();
@@ -24,7 +24,8 @@ final class WormholeAppearance {
         WorldRenderEvents.AFTER_ENTITIES.register(context->{
             if(!pending())return;
             var camera=context.camera().getPos();
-            if(camera.squaredDistanceTo(WormholePair.layout(context.world()).mouths().getFirst())>256*256)return;
+            var mouths=WormholePair.layout(context.world()).mouths();
+            if(mouths.stream().noneMatch(centre->camera.squaredDistanceTo(centre)<256*256))return;
             var shader=RenderSystem.getShader();
             boolean cull=GL11.glIsEnabled(GL11.GL_CULL_FACE),blend=GL11.glIsEnabled(GL11.GL_BLEND);
             if(benchmark!=null)benchmark.begin();
@@ -32,7 +33,7 @@ final class WormholeAppearance {
                 RenderSystem.enableDepthTest();RenderSystem.depthMask(true);RenderSystem.disableCull();RenderSystem.disableBlend();
                 RenderSystem.setShader(GameRenderer::getPositionColorProgram);
                 var buffer=Tessellator.getInstance().begin(VertexFormat.DrawMode.QUADS,VertexFormats.POSITION_COLOR);
-                emit(buffer,context.matrixStack().peek().getPositionMatrix(),camera);
+                for(var centre:mouths)emit(buffer,context.matrixStack().peek().getPositionMatrix(),camera,centre);
                 BufferRenderer.drawWithGlobalProgram(buffer.end());
             } finally {
                 if(cull)RenderSystem.enableCull();if(blend)RenderSystem.enableBlend();
@@ -48,16 +49,19 @@ final class WormholeAppearance {
         benchmark=new LabBenchmark("Closed wormhole mouth, native sphere draw only");
     }
     static boolean pending() {
-        var world=MinecraftClient.getInstance().world;var layout=WormholePair.layout(world);
-        return world!=null && layout.dimension().equals(world.getRegistryKey()) && layout.mouths().size()==1;
+        return WormholePair.present(MinecraftClient.getInstance().world) && !WormholeClient.passageOpen();
     }
     static void capture(EntityMesh target,net.minecraft.util.math.BlockPos origin) {
-        if(pending())emit(target.solidColour(),IDENTITY,Vec3d.of(origin));
+        if(!pending() || WormholeClient.renderingOptics==2)return;
+        var client=MinecraftClient.getInstance();var mouths=WormholePair.layout(client.world).mouths();
+        int active=WormholePair.nearest(client.world,client.gameRenderer.getCamera().getPos());
+        for(int i=0;i<mouths.size();i++)if(WormholeClient.renderingOptics!=1 || i!=active)
+            emit(target.solidColour(),IDENTITY,Vec3d.of(origin),mouths.get(i));
     }
-    private static void emit(VertexConsumer out,Matrix4f matrix,Vec3d origin) {
-        var client=MinecraftClient.getInstance();var centre=WormholePair.layout(client.world).mouths().getFirst();
+    private static void emit(VertexConsumer out,Matrix4f matrix,Vec3d origin,Vec3d centre) {
+        var client=MinecraftClient.getInstance();
         var offset=centre.subtract(origin);var view=client.gameRenderer.getCamera().getPos().subtract(centre);
-        double radius=WormholePair.METRIC.mouthRadius();
+        double radius=WormholeClient.closedRadius();
         for(int i=0;i<SPHERE.length;i+=3) {
             float x=SPHERE[i],y=SPHERE[i+1],z=SPHERE[i+2];
             double vx=view.x-radius*x,vy=view.y-radius*y,vz=view.z-radius*z;
@@ -83,7 +87,7 @@ final class WormholeAppearance {
         var layout=WormholePair.layout(world);
         if(!layout.dimension().equals(world.getRegistryKey()) || layout.mouths().isEmpty())return;
         var camera=client.gameRenderer.getCamera();var eye=camera.getPos();var direction=new Vec3d(camera.getHorizontalPlane());
-        double nearest=96,radius=WormholePair.METRIC.mouthRadius();
+        double nearest=96,radius=WormholeClient.passageOpen()?WormholePair.METRIC.mouthRadius():WormholeClient.closedRadius();
         for(var centre:layout.mouths()) {
             var offset=eye.subtract(centre);double b=offset.dotProduct(direction),c=offset.lengthSquared()-radius*radius;
             double discriminant=b*b-c;if(discriminant<0)continue;
@@ -96,9 +100,11 @@ final class WormholeAppearance {
             RaycastContext.FluidHandling.NONE,client.player)).getType()!=HitResult.Type.MISS)return;
         int x=context.getScaledWindowWidth()/2,y=context.getScaledWindowHeight()/2+18;
         boolean closed=layout.mouths().size()==1;
-        var title=Text.translatable(closed?"message.interstellar.wormhole_closed":WormholeClient.ready()?
-            "message.interstellar.wormhole_open":"message.interstellar.wormhole_preparing");
+        var title=Text.translatable(closed?"message.interstellar.wormhole_closed":WormholeClient.passageOpen()?
+            "message.interstellar.wormhole_open":"message.interstellar.wormhole_preparing",WormholeClient.opening.percent());
         context.drawCenteredTextWithShadow(client.textRenderer,title,x,y,0xFF9EEEF5);
         if(closed)context.drawCenteredTextWithShadow(client.textRenderer,Text.translatable("message.interstellar.wormhole_place_second"),x,y+12,0xFFFFFFFF);
+        else if(WormholeClient.passageOpen() && eye.squaredDistanceTo(WormholePair.centre(world,WormholePair.nearest(world,eye)))<radius*radius)
+            context.drawCenteredTextWithShadow(client.textRenderer,Text.translatable("message.interstellar.wormhole_step_out"),x,y+12,0xFFFFFFFF);
     }
 }

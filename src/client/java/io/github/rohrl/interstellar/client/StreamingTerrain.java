@@ -24,6 +24,8 @@ public final class StreamingTerrain implements AutoCloseable {
     private final Map<Long,Long> versions=new HashMap<>();
     private final Set<Long> incoming=ConcurrentHashMap.newKeySet();
     private final Set<Long> wanted=new HashSet<>();
+    private final Set<Long> localWanted=new HashSet<>();
+    private WormholePair.Layout layout;
     private final LinkedHashSet<Long> queue=new LinkedHashSet<>();
     private WorldMesh capture;
     private long capturing,captureVersion,published;
@@ -32,7 +34,7 @@ public final class StreamingTerrain implements AutoCloseable {
     private volatile Window window;
     int nodeCount;
     float extent=512;
-    private boolean ready;
+    private boolean ready,localPrepared;
     private final long started=System.nanoTime();
     public static void register() {
         ClientChunkEvents.CHUNK_LOAD.register((world,chunk)->chunkEvent(world,chunk.getPos()));
@@ -54,6 +56,16 @@ public final class StreamingTerrain implements AutoCloseable {
         active=this;
     }
     boolean ready() {return ready;}
+    boolean localReady() {return localPrepared;}
+    boolean complete() {
+        if(wanted.isEmpty() || !entries.keySet().containsAll(wanted))return false;
+        // A previously unloaded local slot can become a remote destination. Its
+        // empty placeholder is not captured geometry, even after packets arrive.
+        for(var chunk:WormholePair.chunks(world)) {
+            var entry=entries.get(chunk.toLong());if(entry==null || entry.revision==0)return false;
+        }
+        return true;
+    }
     // Diagnostic export reads only occupied rows; normal capture retains no extra CPU geometry.
     int[][] replaySpans() {return entries.entrySet().stream().sorted(Map.Entry.comparingByKey())
         .filter(e->e.getValue().triangles>0).map(e->new int[]{e.getValue().vertexRow,e.getValue().triangles/2}).toArray(int[][]::new);}
@@ -80,7 +92,7 @@ public final class StreamingTerrain implements AutoCloseable {
         if(range>16)throw new IllegalStateException("Native mesh supports render distance up to16");
         var position=BlockPos.ofFloored(client.gameRenderer.getCamera().getPos());
         int x=position.getX()>>4,z=position.getZ()>>4;
-        if(x!=cameraX || z!=cameraZ || range!=distance)window(x,z,range);
+        if(x!=cameraX || z!=cameraZ || range!=distance || layout!=WormholePair.layout(world))window(x,z,range);
         for(var iterator=incoming.iterator();iterator.hasNext();) {
             long key=iterator.next();iterator.remove();
             if(wanted.contains(key)){versions.merge(key,1L,Long::sum);queue.add(key);}
@@ -109,6 +121,7 @@ public final class StreamingTerrain implements AutoCloseable {
                 capture.close();capture=null;
             }
         }
+        if(!localPrepared && !localWanted.isEmpty() && entries.keySet().containsAll(localWanted))localPrepared=true;
         if(!ready && entries.keySet().containsAll(wanted)) {
             ready=true;
             Interstellar.LOGGER.info("Streaming terrain ready: {}; initial capture={} ms",status(),(System.nanoTime()-started)/1e6);
@@ -117,10 +130,12 @@ public final class StreamingTerrain implements AutoCloseable {
     }
     private boolean loaded(long key) {return world.getChunkManager().isChunkLoaded(ChunkPos.getPackedX(key),ChunkPos.getPackedZ(key));}
     private void window(int x,int z,int range) {
+        layout=WormholePair.layout(world);
         cameraX=x;cameraZ=z;distance=range;int radius=Math.max(2,range)+1;
         window=new Window(x,z,radius);
         wanted.clear();
         for(int dx=-radius;dx<=radius;dx++)for(int dz=-radius;dz<=radius;dz++)wanted.add(ChunkPos.toLong(x+dx,z+dz));
+        localWanted.clear();localWanted.addAll(wanted);
         if(WormholePair.active(world))for(var pos:WormholePair.chunks(world))wanted.add(pos.toLong());
         boolean changed=false;
         for(var iterator=entries.entrySet().iterator();iterator.hasNext();) {
@@ -136,7 +151,7 @@ public final class StreamingTerrain implements AutoCloseable {
     private void publish(long key,WorldMesh mesh) {
         int count=mesh.triangleCount();var old=entries.get(key);
         if(triangleCount-(old==null?0:old.triangles)+count>7_000_000)throw new IllegalStateException("Streaming terrain exceeds seven million triangles");
-        Entry next=new Entry(0,0,0,0,0,null,false,0);
+        Entry next=new Entry(0,0,0,0,0,null,false,++chunkRevision);
         if(count>0) {
             var data=QuadVertices.pack(mesh.triangleData(),count);var tree=new MeshTree(data,count/2,4);var treeNodes=tree.nodes();
             int tr=(count/2+QuadVertices.PER_ROW-1)/QuadVertices.PER_ROW,nr=(tree.size()+MeshArena.NODES-1)/MeshArena.NODES;
@@ -147,7 +162,7 @@ public final class StreamingTerrain implements AutoCloseable {
             for(int i=0;i<tree.size();i++) {int p=i*12;treeNodes[p+3]=treeNodes[p+3]==tree.size()?-1:treeNodes[p+3]+base;treeNodes[p+7]+=first;}
             try {vertices.write(t,data,data.length);nodes.write(n,treeNodes,treeNodes.length);}
             catch(RuntimeException e){vertexRows.release(t,tr);nodeRows.release(n,nr);throw e;}
-            next=new Entry(t,tr,n,nr,count,part,mesh.hasMaterials(),++chunkRevision);
+            next=new Entry(t,tr,n,nr,count,part,mesh.hasMaterials(),chunkRevision);
         }
         entries.put(key,next);if(old!=null)release(old);triangleCount+=count;if(next.materials)materialChunks++;index();
         if(++published<=3 || published%100==0 || ready && Math.abs(ChunkPos.getPackedX(key)-cameraX)<=1 && Math.abs(ChunkPos.getPackedZ(key)-cameraZ)<=1)

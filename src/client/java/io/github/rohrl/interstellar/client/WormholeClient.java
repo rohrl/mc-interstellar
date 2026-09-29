@@ -15,6 +15,11 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.world.ClientWorld;
 
 public final class WormholeClient {
+    static final io.github.rohrl.interstellar.wormhole.OpeningProgress opening=new io.github.rohrl.interstellar.wormhole.OpeningProgress();
+    private static WormholeReadyPayload preparedRegions;
+    private static boolean opticalPrepared,acknowledged;
+    private static long lastProgress;
+    static int renderingOptics;
     private static ClientWorld readyWorld;
     private static ClientWorld cameraWorld;
     private static double roll;
@@ -26,6 +31,7 @@ public final class WormholeClient {
         WormholeAppearance.register();
         net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents.DISCONNECT.register((handler,client)-> {
             WormholeAppearance.changed();
+            resetOpening(false);
             WormholePair.clientLayout(null,WormholePair.EMPTY);readyWorld=null;cameraWorld=null;transit=null;roll=0;
         });
         net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry.register(io.github.rohrl.interstellar.wormhole.WormholeSeed.ENTITY,
@@ -34,6 +40,7 @@ public final class WormholeClient {
             WormholeAppearance.changed();
             var world=context.client().world;if(world==null)return;
             WormholePair.clientLayout(world,payload.layout());readyWorld=null;transit=null;roll=0;cameraWorld=world;
+            resetOpening(payload.layout().active(world));
             if(context.client().currentScreen instanceof TerrainScreen screen && screen.isWormhole())context.client().setScreen(null);
             ((WormholeChunkCache)world.getChunkManager()).interstellar$refreshRegions();
             LiveTerrain.wormholeChanged();
@@ -63,7 +70,7 @@ public final class WormholeClient {
                 if(count!=WormholePair.chunks(world).size()) {
                     Interstellar.LOGGER.error("Wormhole readiness rejected: {}/{} chunks",count,WormholePair.chunks(world).size());return;
                 }
-                readyWorld=world;ClientPlayNetworking.send(payload);
+                readyWorld=world;preparedRegions=payload;
                 Interstellar.LOGGER.info("Wormhole native regions ready: {} chunks with light data applied",count);
                 for(int end=0;end<2;end++) {
                     var pos=net.minecraft.util.math.BlockPos.ofFloored(WormholePair.centre(world,end)).add(20,-12,20);
@@ -86,10 +93,30 @@ public final class WormholeClient {
     static void resetOrientation() {if(canResetOrientation())ClientPlayNetworking.send(WormholeResetPayload.INSTANCE);}
     public static boolean ready() {return readyWorld!=null && readyWorld==MinecraftClient.getInstance().world;}
     static boolean nearby() {
-        var client=MinecraftClient.getInstance();if(!WormholePair.active(client.world)||client.player==null)return false;
+        var client=MinecraftClient.getInstance();if(!WormholePair.present(client.world)||client.player==null)return false;
         var eye=client.player.getEyePos();double reach=client.options.getViewDistance().getValue()*16+32;
         return eye.squaredDistanceTo(WormholePair.centre(client.world,WormholePair.nearest(client.world,eye)))<=reach*reach;
     }
+    private static void resetOpening(boolean paired) {
+        opening.reset(paired);preparedRegions=null;opticalPrepared=acknowledged=false;renderingOptics=0;lastProgress=System.nanoTime();
+    }
+    static void progress(double geometry) {
+        var client=MinecraftClient.getInstance();long now=System.nanoTime();
+        double dt=lastProgress==0?0:(now-lastProgress)/1e9;lastProgress=now;
+        int total=WormholePair.chunks(client.world).size();
+        double received=total==0?0:Math.min(1,((WormholeChunkCache)client.world.getChunkManager()).interstellar$remoteChunkCount()/(double)total);
+        opening.advance(.2*received+.8*geometry,opticalPrepared,client.isPaused()?0:dt);
+    }
+    static void opticalFrame(boolean passage) {
+        opticalPrepared=true;
+        if(passage)opening.presented();
+        if(passage && opening.open() && !acknowledged && preparedRegions!=null && ready()) {
+            ClientPlayNetworking.send(preparedRegions);acknowledged=true;
+            Interstellar.LOGGER.info("Wormhole passage visually open: revision={}, renderer frame presented; travel acknowledged",preparedRegions.revision());
+        }
+    }
+    static boolean passageOpen() {return opening.open() && WormholePair.active(MinecraftClient.getInstance().world);}
+    static double closedRadius() {return opening.radius(WormholePair.METRIC.mouthRadius());}
     public static double roll() {return cameraWorld==MinecraftClient.getInstance().world?roll:0;}
     /** Called after vanilla has accepted the matching position packet and sent its acknowledgement. */
     public static void afterTeleport() {

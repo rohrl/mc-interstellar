@@ -21,8 +21,9 @@ public final class LiveTerrain {
     static void applyPreferences(TerrainOptions options) {if(renderer!=null)renderer.applyPreferences(options);}
     static void refreshLighting() {releaseRenderer();synchronize(MinecraftClient.getInstance());}
     static void wormholeChanged() {
-        var client=MinecraftClient.getInstance();boolean wasWormhole=renderer!=null && renderer.isWormhole();releaseRenderer();
-        if(WormholePair.active(client.world))armedWorld=client.world;
+        var client=MinecraftClient.getInstance();boolean wasWormhole=renderer!=null && renderer.isWormhole();
+        if(wasWormhole && renderer.retainWormhole() && WormholePair.present(client.world))renderer.wormholeChanged();else releaseRenderer();
+        if(WormholePair.present(client.world))armedWorld=client.world;
         else if(wasWormhole && SelectedSource.current()==null)armedWorld=null;
         synchronize(client);
     }
@@ -52,7 +53,7 @@ public final class LiveTerrain {
     static void tick(MinecraftClient client) {
         if(client.world!=seenWorld) {
             stop();seenWorld=client.world;
-            if(WormholePair.active(client.world))armedWorld=client.world;
+            if(WormholePair.present(client.world))armedWorld=client.world;
         }
         synchronize(client);
     }
@@ -65,7 +66,7 @@ public final class LiveTerrain {
             if(client.player==null)return;
             releaseRenderer();renderer=TerrainScreen.wormhole(true);
             width=client.getWindow().getScaledWidth();height=client.getWindow().getScaledHeight();
-            renderer.init(client,width,height);Interstellar.LOGGER.info("Live Ellis wormhole view armed; preparing both regions");check(client);return;
+            renderer.init(client,width,height);Interstellar.LOGGER.info("Live wormhole view armed; preparing local optics");check(client);return;
         }
         if(renderer!=null && renderer.isWormhole())releaseRenderer();
         if(renderer!=null&&renderer.selectedSource()==source)return;
@@ -93,6 +94,7 @@ public final class LiveTerrain {
     }
     public static void renderWorld() {
         worldComposited=false;
+        WormholeClient.renderingOptics=0;
         if(!active())return;
         var client=MinecraftClient.getInstance();
         if(client.world==null || client.player==null)return;

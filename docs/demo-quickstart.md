@@ -31,8 +31,10 @@ terrain; full resolution costs substantially more than the default50%.
 
 For your own portals, obtain **Rift Pearl** in Creative → Tools & Utilities,
 or `/give @s interstellar:wormhole_seed`. Throw it onto a surface well ahead:
-the first mouth appears as a closed dark sphere, then the second connects it. Aim
-at a mouth for its status. Later throws move the
+the first mouth appears as a small closed core, with BH lensing once local capture
+is ready. The second starts opening both ends: aim at a mouth for its loading
+percentage. The cores grow, then reveal the passage. **R** resets camera tilt
+without opening the menu. Later throws move the
 oldest mouth. **Sneak + use** closes the pair. One pair per save, same dimension,
 radius8. The demo command installs its exhibit as this same pair. A successful
 throw in another dimension closes the old pair and starts a new first end there.

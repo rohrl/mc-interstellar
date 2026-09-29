@@ -1,5 +1,20 @@
 # Progress
 
+## 2026-09-29 — Growing closed mouths and visible passage readiness
+
+Closed/loading mouths now start small and grow with the hover percentage. Local
+geometry enables Schwarzschild lensing; complete destinations reveal Ellis optics
+over 0.35 seconds. Only one optical scene is traced per frame. Local capture is
+retained on pair changes; unloaded placeholders cannot count as destination geometry.
+Travel waits for the visual acknowledgement, and opening around a player requires
+them to leave and re-enter. R remains the dedicated upright key, verified with a
+10.9-degree tilted crossing.
+
+Both builds pass95 tests; normal artifact remains Vulkan-free. Runtime growth,
+replacement, inside-on-open guard, crossing, R and GL/RTX images checked. Settled
+1280x720/full/fine/2x RTX frame p50 15.62ms (~64FPS); no matched before/after claim.
+[Evidence and screenshots](docs/profiles/2026-09-29-wormhole-opening/).
+
 ## 2026-09-29 — Rift Pearl and a visible closed first mouth
 
 The owner's placement error came from an existing pair in the Gameplay dimension

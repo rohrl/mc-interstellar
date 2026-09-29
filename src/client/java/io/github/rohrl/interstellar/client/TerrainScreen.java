@@ -33,7 +33,7 @@ final class TerrainScreen extends Screen {
     private static final ShaderProgram[] wormholeShaders=new ShaderProgram[4];
     static void setWormholeShader(int pass,ShaderProgram program) {wormholeShaders[pass]=program;resourceVersion++;}
     static void setHorizonShader(int pass,ShaderProgram program) {horizonShaders[pass]=program;resourceVersion++;}
-    private boolean horizonView() {return source!=null && camera!=null && !extendedSource() && camera.distanceTo(centre())<1.25*opticalRadius();}
+    private boolean horizonView() {return !passage && (source!=null || wormhole) && camera!=null && !extendedSource() && camera.distanceTo(centre())<1.25*opticalRadius();}
     static void setBodyShader(int pass,ShaderProgram program) {bodyShaders[pass]=program;resourceVersion++;}
     private boolean separateMoving=true;
     static void setMovingShader(int pass,ShaderProgram program) {movingShaders[pass]=program;resourceVersion++;}
@@ -64,6 +64,8 @@ final class TerrainScreen extends Screen {
     private boolean meshCoverage=true;
     private final boolean live;
     private final boolean wormhole;
+    private boolean passage;
+    private final WormholeReveal reveal=new WormholeReveal();
     private double cameraRoll;
     private long publishedAt;
     private int generation;
@@ -98,6 +100,7 @@ final class TerrainScreen extends Screen {
     TerrainScreen(SourcePayload source,boolean live) {this(source,live,false);}
     private TerrainScreen(SourcePayload source,boolean live,boolean wormhole) {
         super(Text.literal("Interstellar terrain prototype"));this.source=source;this.live=live;this.wormhole=wormhole;
+        passage=wormhole&&!live;
         fine=options.finePaths();rtxPreferred=WorldBackendBridge.ENABLED && options.preferRtx();
     }
     TerrainOptions preferences() {return options;}
@@ -109,6 +112,9 @@ final class TerrainScreen extends Screen {
     }
     static TerrainScreen wormhole(boolean live) {return new TerrainScreen(null,live,true);}
     boolean isWormhole() {return wormhole;}
+    boolean retainWormhole() {return wormhole && error==null && snapshot!=null && snapshot.world==net.minecraft.client.MinecraftClient.getInstance().world && capturedVersion==resourceVersion;}
+    void wormholeChanged() {passage=false;reveal.close();cancelBenchmark();}
+    private boolean geometryReady() {return mesh!=null && (wormhole && !passage?mesh.localReady():mesh.ready());}
     String problem() {return error;}
     SourcePayload selectedSource() {return source;}
     void adoptSource(SourcePayload next) {source=next;cancelBenchmark();}
@@ -159,12 +165,13 @@ final class TerrainScreen extends Screen {
             validationStatus="Native mesh required at this distance | P: pair | Space: lensing";
         }
     }
-    private double opticalRadius() {return wormhole?WormholePair.METRIC.throat():source.schwarzschildRadius();}
+    // Match the growing core's far-field shadow radius using b_critical / r_s = 3 sqrt(3) / 2.
+    private double opticalRadius() {return wormhole?(passage?WormholePair.METRIC.throat():WormholeClient.closedRadius()/(1.5*Math.sqrt(3))):source.schwarzschildRadius();}
     private double pathRadiusRatio() {
         double r=camera.distanceTo(centre()),a=opticalRadius();
         // Equivalent coordinates on the other side of the chart transition must
         // choose the same numerical accuracy, including when R<a/2.
-        return (wormhole?Math.max(r,a*a/(4*Math.max(r,1e-9))):r)/a;
+        return (passage?Math.max(r,a*a/(4*Math.max(r,1e-9))):r)/a;
     }
     private Vec3d centre() {return wormhole?WormholePair.centre(client.world,WormholePair.nearest(client.world,camera)):new Vec3d(source.x(),source.y(),source.z());}
     @Override public void render(DrawContext context,int mouseX,int mouseY,float delta) {
@@ -182,8 +189,7 @@ final class TerrainScreen extends Screen {
                 if(live) {
                     camera=client.gameRenderer.getCamera().getPos();
                     yaw=client.gameRenderer.getCamera().getYaw();pitch=client.gameRenderer.getCamera().getPitch();
-        cameraRoll=wormhole?WormholeClient.roll():0;
-
+                    cameraRoll=wormhole?WormholeClient.roll():0;
                     String reason=camera.distanceTo(centre())>MESH_VIEW_RANGE?"Beyond "+MESH_VIEW_RANGE+"-block viewing range: move closer":null;
                     if(!java.util.Objects.equals(paused,reason)) {
                         paused=reason;cancelBenchmark();
@@ -197,11 +203,23 @@ final class TerrainScreen extends Screen {
                 if(snapshot.ready() && publishedAt==0) {publishedAt=System.nanoTime();generation=1;}
                 if(live && !meshMode && snapshot.ready() && !client.isPaused()) refresh();
                 if(meshMode && mesh!=null)mesh.advance();
-                if((live || streamedReference) && meshMode && mesh.ready()) {
+                if(wormhole && live) {
+                    WormholeClient.progress(mesh==null?0:mesh.loadingProgress());
+                    if(!passage && WormholeClient.opening.canReveal(mesh!=null && mesh.complete() && WormholeClient.ready() && snapshot.ready())) {
+                        passage=true;WormholeClient.opening.beginReveal();reveal.hold(target);target=null;
+                        Interstellar.LOGGER.info("Wormhole reveal started: regions and geometry complete; preview frame ready");
+                    }
+                    WormholeClient.renderingOptics=geometryReady()?(passage?2:1):0;
+                }
+                if((live || streamedReference) && meshMode && geometryReady()) {
                     if(moving==null)moving=mesh.movingScene();
                     if(!moving.ready() || live && !client.isPaused())moving.updateMoving();
                 }
-                if(snapshot.ready() && (!meshMode || mesh.ready())) {AppearanceCapture.finish(this);renderTerrain();return true;}
+                if(snapshot.ready() && (!meshMode || geometryReady())) {
+                    AppearanceCapture.finish(this);renderTerrain();
+                    if(wormhole && live)WormholeClient.opticalFrame(passage);
+                    return true;
+                }
             } catch(RuntimeException failure) {error="Terrain preview failed: see game log.";Interstellar.LOGGER.error(error,failure);}
         }
         return false;
@@ -211,14 +229,14 @@ final class TerrainScreen extends Screen {
             if(paused!=null) {renderPaused(context);return;}
             context.fill(6,6,Math.min(width-6,410),46,0xCD101824);
             context.drawTextWithShadow(textRenderer,"INTERSTELLAR | F4: settings | F10: off | F12: timing",12,12,0xFF88D8FF);
-            String age=meshMode && mesh!=null?mesh.viewStatus()+(wormhole?" | Ellis wormhole":" | Mass blocks: "+source.count()):"Preparing world view...";
+            String age=meshMode && mesh!=null?mesh.viewStatus()+(wormhole?(passage?" | Ellis wormhole":" | Closed mouth"):" | Mass blocks: "+source.count()):"Preparing world view...";
             age+=" | "+(rtxActive?"RTX":"OpenGL");
             if(WorldBackendBridge.ENABLED)age+=" (Alt+F12)";
             context.drawTextWithShadow(textRenderer,age,12,24,0xFFFFFFFF);
-            String details=wormhole?"Mouth "+(WormholePair.nearest(client.world,camera)==0?"A":"B")+" | Radius 8 | Fly through to cross":benchmark==null?String.format(Locale.ROOT,"%s | C %.2f | Range %.0f / %d | AA %s",source.blackHoleProxy()?"BH r="+String.format(Locale.ROOT,"%.2f",opticalRadius()):"Extended mass",
+            String details=wormhole?"Mouth "+(WormholePair.nearest(client.world,camera)==0?"A":"B")+" | "+(WormholeClient.passageOpen()?"Open | Fly through to cross":WormholePair.active(client.world)?"Opening "+WormholeClient.opening.percent()+"%":"Waiting for other end"):benchmark==null?String.format(Locale.ROOT,"%s | C %.2f | Range %.0f / %d | AA %s",source.blackHoleProxy()?"BH r="+String.format(Locale.ROOT,"%.2f",opticalRadius()):"Extended mass",
                     opticalRadius()/source.enclosingRadius(),camera.distanceTo(centre()),MESH_VIEW_RANGE,aaName()):benchmark.status().replace("B cancels","F12 cancels");
             if(!wormhole && (source.enclosingRadius()>16 || source.blackHoleProxy()&&opticalRadius()>12))details="Large source: optics only; entity gravity size limit";
-            if(horizonView())details=camera.distanceTo(centre())<=opticalRadius()?"Inside horizon | Blocks at normal positions for editing":"Near horizon | Transition to falling camera frame";
+            if(!wormhole && horizonView())details=camera.distanceTo(centre())<=opticalRadius()?"Inside horizon | Blocks at normal positions for editing":"Near horizon | Transition to falling camera frame";
             if(wormhole)details+=" | "+WormholeClient.resetHint();
             if(wormhole && benchmark!=null)details=benchmark.status().replace("B cancels","F12 cancels");
             context.drawTextWithShadow(textRenderer,textRenderer.trimToWidth(details,Math.max(1,width-24)),12,36,0xFFFFD59A);
@@ -276,7 +294,7 @@ final class TerrainScreen extends Screen {
             cancelBenchmark();if(target!=null)target.delete();target=new SimpleFramebuffer(w,h,false,false);
         }
         boolean split=useSplitShader();
-        boolean eligible=WorldBackendBridge.ENABLED && supportsRtx() && mesh.ready();
+        boolean eligible=WorldBackendBridge.ENABLED && supportsRtx() && geometryReady();
         if((split || eligible || frozenBackend!=null) && (samples==null || samples.width!=w || samples.height!=h)) {
             if(samples!=null)samples.close();samples=new TerrainSamples(w,h);
         }
@@ -312,10 +330,10 @@ final class TerrainScreen extends Screen {
             }
             if(benchmark!=null)benchmark.begin();
             if(rtxActive && frozenBackend!=null && !qualityReference) {
-                shader=wormhole?wormholeShaders[1]:horizonView()?horizonShaders[1]:extendedSource()?bodyShaders[1]:movingShaders[1];configureShader(w,h);
+                shader=passage?wormholeShaders[1]:horizonView()?horizonShaders[1]:extendedSource()?bodyShaders[1]:movingShaders[1];configureShader(w,h);
                 int texture;
                 try {
-                    frozenBackend.optics(wormhole?WorldRenderBackend.Optics.WORMHOLE:horizonView()?WorldRenderBackend.Optics.HORIZON:extendedSource()?WorldRenderBackend.Optics.EXTENDED:WorldRenderBackend.Optics.EXTERIOR);
+                    frozenBackend.optics(passage?WorldRenderBackend.Optics.WORMHOLE:horizonView()?WorldRenderBackend.Optics.HORIZON:extendedSource()?WorldRenderBackend.Optics.EXTENDED:WorldRenderBackend.Optics.EXTERIOR);
                     if(worldBackend)frozenBackend.update(moving.triangleData(),moving.triangleCount(),moving.movingRevision(),backendBridge.images(backendImages()));
                     var uniforms=FrozenBackendCapture.uniforms(shader,frozenSource);
                     // The optimized GL wrapper compiles RaySamples to 2; RTX dispatch is dynamic.
@@ -338,7 +356,7 @@ final class TerrainScreen extends Screen {
                 if(useSelectiveMaterials()) {
                     mask=samples.copyMask();
                     if(benchmark!=null)benchmark.mark(2);
-                    shader=useQuads()?(wormhole?wormholeShaders[1]:horizonView()?horizonShaders[1]:extendedSource()?bodyShaders[1]:useSeparateMoving()?movingShaders[1]:profileProgram(quadMaskedShader,1)):materialMaskedShader;configureShader(w,h);
+                    shader=useQuads()?(passage?wormholeShaders[1]:horizonView()?horizonShaders[1]:extendedSource()?bodyShaders[1]:useSeparateMoving()?movingShaders[1]:profileProgram(quadMaskedShader,1)):materialMaskedShader;configureShader(w,h);
                     shader.addSampler("PendingRays",mask);RenderSystem.setShader(()->shader);
                     samples.begin(0);shader.getUniformOrDefault("SampleOffset").set(-.25f);drawQuad(w,h);
                     if(benchmark!=null)benchmark.mark(3);
@@ -375,7 +393,7 @@ final class TerrainScreen extends Screen {
         if(antialiasing==0)target.draw(client.getWindow().getFramebufferWidth(),client.getWindow().getFramebufferHeight());
         else TerrainResolve.draw(target,client.getWindow().getFramebufferWidth(),client.getWindow().getFramebufferHeight(),antialiasing==1);
         var glow=meshMode?(moving!=null?moving.entities.glowing:mesh.entities==null?null:mesh.entities.glowing):null;
-        var glowShader=GlowingOutline.rays[wormhole?3:horizonView()?2:extendedSource()?1:0];
+        var glowShader=GlowingOutline.rays[passage?3:horizonView()?2:extendedSource()?1:0];
         if(glow!=null && glow.nodes>0 && meshEntities && glowShader!=null && GlowingOutline.edge!=null) {
             var previousShader=shader;
             try {
@@ -394,6 +412,7 @@ final class TerrainScreen extends Screen {
             } finally {shader=previousShader;}
         }
         if(benchmark!=null)benchmark.end();
+        if(wormhole && live && passage)reveal.draw(client.getWindow().getFramebufferWidth(),client.getWindow().getFramebufferHeight(),WormholeClient.opening.previousImageOpacity());
         RenderSystem.enableBlend();RenderSystem.defaultBlendFunc();
         if(compareFrozenBackend) {
             compareFrozenBackend=false;
@@ -437,7 +456,7 @@ final class TerrainScreen extends Screen {
         var up=right.crossProduct(forward);
         if(wormhole) {var oldRight=right;right=right.multiply(Math.cos(cameraRoll)).subtract(up.multiply(Math.sin(cameraRoll)));up=up.multiply(Math.cos(cameraRoll)).add(oldRight.multiply(Math.sin(cameraRoll)));}
         setVector("Forward",forward);setVector("Right",right);setVector("Up",up);
-        if(wormhole) {setVector("OtherSource",WormholePair.centre(client.world,1-WormholePair.nearest(client.world,camera)).subtract(Vec3d.of(snapshot.origin)));shader.getUniformOrDefault("WormholeExtent").set(768f);}
+        if(passage) {setVector("OtherSource",WormholePair.centre(client.world,1-WormholePair.nearest(client.world,camera)).subtract(Vec3d.of(snapshot.origin)));shader.getUniformOrDefault("WormholeExtent").set(768f);}
         shader.getUniformOrDefault("Radius").set((float)opticalRadius());
         shader.getUniformOrDefault("BodyRadius").set(extendedSource()?(float)source.enclosingRadius():0f);
         shader.getUniformOrDefault("Lensing").set(lensing?1f:0f);
@@ -554,7 +573,7 @@ final class TerrainScreen extends Screen {
         && selectiveMaterials && layoutShader!=null && layoutDiagnosticShader!=null && materialProbeShader!=null && materialMaskedShader!=null;}
     private ShaderProgram currentShader() {
         if(useQuads()) {
-            if(wormhole)return wormholeShaders[!useLayoutShader()?3:useMaterials() && !useSelectiveMaterials()?2:0];
+            if(passage)return wormholeShaders[!useLayoutShader()?3:useMaterials() && !useSelectiveMaterials()?2:0];
             if(horizonView())return horizonShaders[!useLayoutShader()?3:useMaterials() && !useSelectiveMaterials()?2:0];
             if(extendedSource())return bodyShaders[!useLayoutShader()?3:useMaterials() && !useSelectiveMaterials()?2:0];
             if(useSeparateMoving())return movingShaders[!useLayoutShader()?3:useMaterials() && !useSelectiveMaterials()?2:0];
@@ -570,7 +589,7 @@ final class TerrainScreen extends Screen {
         return meshShader;
     }
     private String programName() {
-        if(wormhole)return "native-ellis-wormhole-quads";
+        if(wormhole)return passage?"native-ellis-wormhole-quads":"closed-mouth-schwarzschild-preview";
         if(horizonView())return "native-horizon-quads";
         if(useQuads())return (extendedSource()?"native-body-quads-":"native-quads-")+(!useLayoutShader()?"general-":useSelectiveMaterials()?"selective-":"full-")+meshStepLimit+"; separateMoving="+useSeparateMoving()+"; profileExperiment="+profileExperiment;
         if(useLayoutShader())return (useMaterials()?(useSelectiveMaterials()?"native-live-selective-materials-":"native-live-materials-"):orbitStep>.02f && materialProbeShader!=null?"native-live-curvature-probe-":"native-live-layout-")+meshStepLimit;
@@ -769,6 +788,6 @@ final class TerrainScreen extends Screen {
         }
         return true;
     }
-    @Override public void removed() {closeFrozenBackend();cancelBenchmark();glowOutline.close();nativeSky.close();if(moving!=null)moving.close();if(mesh!=null)mesh.close();if(snapshot!=null)snapshot.close();if(pending!=null)pending.close();if(target!=null)target.delete();if(samples!=null)samples.close();}
+    @Override public void removed() {reveal.close();closeFrozenBackend();cancelBenchmark();glowOutline.close();nativeSky.close();if(moving!=null)moving.close();if(mesh!=null)mesh.close();if(snapshot!=null)snapshot.close();if(pending!=null)pending.close();if(target!=null)target.delete();if(samples!=null)samples.close();}
     @Override public boolean shouldPause() {return true;}
 }

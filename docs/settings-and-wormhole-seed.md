@@ -46,9 +46,10 @@ by eight Ender Pearls. The item is reusable, with a one-second throw cooldown.
 1. **Use/right-click** throws a seed in your aiming direction.
 2. It follows a ballistic path and opens a mouth after hitting a block surface.
    The centre sits nine blocks out from that surface; the mouth radius is eight.
-3. The first placement shows an opaque dark sphere with a cyan rim. Aim at it for
+3. The first placement grows a small closed core. Aim at it for
    “Wormhole end · Closed” and a reminder to throw a second pearl elsewhere.
-4. The second connects the pair and automatically enables nearby optical rendering.
+4. The second starts opening both ends. The cores grow with preparation progress;
+   the aiming hint shows a percentage. Travel starts when the passage is visible.
 5. Every subsequent successful throw keeps the newer mouth and relocates the oldest.
 6. **Sneak + use** closes the pair, allowing a fresh start, including another dimension.
 
@@ -66,16 +67,37 @@ inventory, in hand and in flight. [Artwork source and prompt](artwork/README.md)
 
 ### Closed appearance and aiming hint
 
-The unpaired sphere is a visual placeholder: no black-hole gravity, light bending
-or teleportation. A fixed sphere mesh renders against Minecraft's normal depth
-buffer; its dark surface has a narrow cyan rim. This replaces repeated server
-particle packets and does not start remote chunk preparation or an optical capture.
-If a nearby mass already has live optics, the same mesh joins the existing entity
-capture and therefore participates in that view's GL/RTX ray queries.
+The first end grows to a small closed core (radius 0.8 blocks). Local terrain
+capture starts automatically: until it is available, a native dark sphere with a
+cyan rim renders against Minecraft's depth buffer. Once captured, the existing
+Schwarzschild renderer supplies real light bending and a black shadow. This is
+an opening effect, with no server gravity, terrain destruction or teleportation.
+A lone end does not request remote chunks.
+
+With both ends placed, the closed core grows toward the eight-block mouth size.
+Progress combines chunk delivery (20%) and geometry capture (80%), reserving the
+last few percent for an optical image. It is monotonic and smoothed; it is a work
+estimate, not a prediction of remaining time. It stays below 100% until both native
+regions, their geometry and the passage image are ready. Previously unloaded
+chunk placeholders do not count as destination geometry.
+
+The renderer reuses its local mesh when a second end is placed or the pair moves.
+BH lensing continues during remote preparation. The nearest mouth supplies the
+BH optics; the other closed end uses the sphere marker if also visible. This
+preserves the existing nearest-mouth approximation, rather than introducing a
+two-black-hole spacetime solver. The preview uses r_s = core radius / (1.5 sqrt(3))
+to roughly match its far-field shadow to the intended opening size.
+
+The last BH frame fades over the first wormhole frames in 0.35 seconds. Only one
+optical scene is traced per frame; one extra framebuffer exists during the fade.
+The actual geodesic equations are unchanged. The radius animation and crossfade
+are gameplay presentation, not a physical black-hole-to-wormhole transformation.
+GL and optional RTX share the same lifecycle; the ordinary artifact remains
+Vulkan-free.
 
 The crosshair intersects the mouth sphere out to 96 blocks. A native block raycast
 suppresses the label when the entrance surface is hidden behind solid terrain.
-The label distinguishes Closed, Preparing destination and Connected. It disappears
+The label distinguishes Closed, Opening N% and Connected. It disappears
 when looking away or opening a screen. F12 can time the native closed-sphere draw
 when no live optical renderer is running; this uses the existing asynchronous GPU
 timer, with no profiling work until requested.
@@ -103,8 +125,15 @@ transport state. Frozen wormhole inspection also closes on a layout change.
 Relocation releases tickets using the **old** layout, then prepares the new one.
 Chunk coordinates are deduplicated where regions overlap, including negative
 coordinates. Delivery remains capped at two packets/tick and a two-millisecond
-budget. Travel waits for the native chunk/light queue acknowledgement. Reconnect
+budget. Travel waits for the chunk/light barrier, captured destination geometry,
+and the client's completed visual reveal acknowledgement. Reconnect
 and respawn invalidate the viewer so a fresh client cannot inherit stale readiness.
+
+If the player is already inside when a mouth opens, they must step outside before
+entering. Admin teleporting inside also does not count as entry. This prevents
+growth or a newly completed capture from unexpectedly moving the player.
+**R** is the dedicated camera-upright key (rebindable in Controls → Interstellar),
+independent of the F4 menu. It clears wormhole roll while preserving position and aim.
 
 Retired client chunks outside the local viewing region are released along with
 their lighting and block entities. Nearby chunks remain usable until vanilla

@@ -98,6 +98,9 @@ final class WorldMesh implements VertexConsumer,AutoCloseable {
     // Developer-only scene ablation, never selected by normal rendering controls.
     int profileMovingContents;
     boolean ready() {return streaming!=null?streaming.ready():singleChunk?prepared:nodeTexture!=0;}
+    boolean localReady() {return streaming!=null?streaming.localReady():ready();}
+    boolean complete() {return streaming!=null?streaming.complete():ready();}
+    double loadingProgress() {return streaming!=null?streaming.loadingPercent()/100.0:ready()?1:0;}
     boolean streamed() {return streaming!=null;}
     boolean quadStorage() {return streaming!=null;}
     String viewStatus() {return ready()?"World view ready":streaming!=null?"Preparing world view: "+streaming.loadingPercent()+"%":"Preparing world view...";}
