@@ -124,7 +124,11 @@ final class TerrainScreen extends Screen {
     }
     boolean retainWormhole() {return wormhole && error==null && snapshot!=null && snapshot.world==net.minecraft.client.MinecraftClient.getInstance().world && capturedVersion==resourceVersion;}
     void wormholeChanged() {passage=false;reveal.close();cancelBenchmark();}
-    private boolean geometryReady() {return mesh!=null && (wormhole?mesh.localReady():mesh.ready());}
+    private boolean geometryReady() {return mesh!=null && (live||wormhole?mesh.localReady():mesh.ready());}
+    boolean resourcesCurrent() {return capturedVersion==resourceVersion;}
+    String preparationSummary() {return mesh==null?"No geometry yet":mesh.status();}
+    boolean preparationReady() {return snapshot!=null && snapshot.ready() && mesh!=null && mesh.localCaughtUp() && observerPrimed;}
+    int preparationPercent() {return mesh==null?0:preparationReady()?100:Math.min(99,mesh.localLoadingPercent()*95/100+(observerPrimed?4:0));}
     String problem() {return error;}
     SourcePayload selectedSource() {return source;}
     void adoptSource(SourcePayload next) {source=next;cancelBenchmark();}
@@ -210,7 +214,7 @@ final class TerrainScreen extends Screen {
                         if(pending!=null) {pending.close();pending=null;}
                         Interstellar.LOGGER.info("Live terrain {}",paused==null?"resumed":"paused: "+paused);
                     }
-                    if(paused!=null){RelativisticVision.prepared=false;return false;}
+                    // Keep the local cache current even while a selected mass is out of range.
                 }
                 snapshot.advance();
                 if((live || streamedReference) && mesh==null)mesh=new WorldMesh(client.world,snapshot.origin,net.minecraft.util.math.BlockPos.ofFloored(centre()),true);
@@ -225,6 +229,9 @@ final class TerrainScreen extends Screen {
                     }
                     WormholeClient.renderingOptics=geometryReady()?(passage?2:mixed()?3:1):0;
                 }
+                boolean preparing=live && client.currentScreen instanceof WorldPreparationScreen;
+                if(preparing && (mesh==null || !mesh.localCaughtUp()))return false;
+                if(paused!=null && !preparing){RelativisticVision.prepared=false;return false;}
                 if((live || streamedReference) && meshMode && geometryReady()) {
                     if(moving==null)moving=mesh.movingScene();
                     if(!moving.ready() || live && !client.isPaused() && (wormhole||source!=null||RelativisticVision.visible()||!observerPrimed))moving.updateMoving();
@@ -232,7 +239,7 @@ final class TerrainScreen extends Screen {
                 boolean observerOnly=!wormhole&&source==null;
                 if(live)RelativisticVision.prepared=snapshot.ready() && geometryReady() && (!observerOnly||observerPrimed);
                 if(snapshot.ready() && (!meshMode || geometryReady())) {
-                    boolean idle=live&&observerOnly&&!RelativisticVision.visible()&&benchmark==null;
+                    boolean idle=live&&(preparing || observerOnly&&!RelativisticVision.visible()&&benchmark==null);
                     if(idle&&observerPrimed)return false;
                     // Prime GPU resources offscreen before the first sprint.
                     AppearanceCapture.finish(this);renderTerrain(!idle);observerPrimed=true;
@@ -254,7 +261,7 @@ final class TerrainScreen extends Screen {
             age+=" | "+(rtxActive?"RTX":"OpenGL");
             if(WorldBackendBridge.ENABLED)age+=" (Alt+F12)";
             context.drawTextWithShadow(textRenderer,age,12,24,0xFFFFFFFF);
-            String details=!wormhole&&source==null?"Relativistic sight | Potion controls in F4":wormhole?"Mouth "+(WormholePair.nearest(client.world,camera)==0?"A":"B")+" | "+(WormholeClient.passageOpen()?"Open | Fly through to cross":WormholePair.active(client.world)?"Opening "+WormholeClient.opening.percent()+"%":"Waiting for other end"):benchmark==null?String.format(Locale.ROOT,"%s | C %.2f | Range %.0f / %d | AA %s",source.blackHoleProxy()?"BH r="+String.format(Locale.ROOT,"%.2f",opticalRadius()):"Extended mass",
+            String details=!wormhole&&source==null?(RelativisticVision.wanted()?"Relativistic sight | Potion controls in F4":"Place mass blocks, throw a Rift Pearl or drink Relativistic Sight"):wormhole?"Mouth "+(WormholePair.nearest(client.world,camera)==0?"A":"B")+" | "+(WormholeClient.passageOpen()?"Open | Fly through to cross":WormholePair.active(client.world)?"Opening "+WormholeClient.opening.percent()+"%":"Waiting for other end"):benchmark==null?String.format(Locale.ROOT,"%s | C %.2f | Range %.0f / %d | AA %s",source.blackHoleProxy()?"BH r="+String.format(Locale.ROOT,"%.2f",opticalRadius()):"Extended mass",
                     opticalRadius()/source.enclosingRadius(),camera.distanceTo(centre()),MESH_VIEW_RANGE,aaName()):benchmark.status().replace("B cancels","F12 cancels");
             if(!wormhole && source!=null && (source.enclosingRadius()>16 || source.blackHoleProxy()&&opticalRadius()>12))details="Large source: optics only; entity gravity size limit";
             if(!wormhole && horizonView())details=camera.distanceTo(centre())<=opticalRadius()?"Inside horizon | Blocks at normal positions for editing":"Near horizon | Transition to falling camera frame";

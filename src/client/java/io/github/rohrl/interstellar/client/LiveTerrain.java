@@ -1,7 +1,7 @@
 package io.github.rohrl.interstellar.client;
 
 import io.github.rohrl.interstellar.Interstellar;
-import io.github.rohrl.interstellar.wormhole.WormholePair;
+import net.minecraft.client.gui.screen.DownloadingTerrainScreen;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.text.Text;
@@ -16,6 +16,7 @@ public final class LiveTerrain {
     private static ClientWorld seenWorld;
     private static boolean worldComposited;
     private static boolean labOpen;
+    private static boolean enteringWorld;
     private static TerrainOptions options=TerrainOptions.load();
     private LiveTerrain() { }
     static boolean active() {return armedWorld!=null;}
@@ -59,7 +60,7 @@ public final class LiveTerrain {
     static void tick(MinecraftClient client) {
         boolean lab=client.currentScreen instanceof TerrainScreen || client.currentScreen instanceof OpticalLabScreen;
         if(client.world!=seenWorld) {
-            stop();seenWorld=client.world;
+            stop();seenWorld=client.world;enteringWorld=client.world!=null;
             options=TerrainOptions.load();if(options.enabled()&&!lab)armedWorld=client.world;
         }
         if(labOpen&&!lab&&options.enabled())armedWorld=client.world;
@@ -71,9 +72,11 @@ public final class LiveTerrain {
         if(client.world!=armedWorld) {stop();return;}
         var source=options.massLensing()?SelectedSource.current():null;
         boolean portals=options.wormholes() && WormholeClient.nearby();
-        if(source==null && !portals && !RelativisticVision.wanted()){releaseRenderer();return;}
+        // Keep the streamed cache even when no item or optical effect is active.
+        if(renderer!=null && !renderer.resourcesCurrent())releaseRenderer();
         if(renderer!=null){renderer.sources(source,portals);return;}
-        if(client.player==null)return;
+        // The camera is valid only inside renderWorld, after vanilla has positioned it.
+        if(!rendering || client.player==null)return;
         renderer=new TerrainScreen(source,true,portals);
         width=client.getWindow().getScaledWidth();height=client.getWindow().getScaledHeight();
         renderer.init(client,width,height);
@@ -82,6 +85,19 @@ public final class LiveTerrain {
     }
     private static void releaseRenderer() {RelativisticVision.prepared=false;if(renderer!=null) {WormholeClient.suspendView();options=renderer.preferences();renderer.removed();renderer=null;}}
     static void stop() {WormholeClient.suspendView();releaseRenderer();armedWorld=null;worldComposited=false;}
+    private static boolean rendering;
+    /** Replace the final vanilla loading screen, after its own readiness condition passes. */
+    public static boolean beginWorldPreparation() {
+        var client=MinecraftClient.getInstance();
+        tick(client);
+        if(!active() || client.world==null || client.player==null || !enteringWorld)return false;
+        enteringWorld=false;
+        client.setScreen(new WorldPreparationScreen(client.world));
+        return true;
+    }
+    static String preparationSummary() {return renderer==null?"No cache":renderer.preparationSummary();}
+    static int preparationPercent() {return renderer==null?0:renderer.preparationPercent();}
+    static boolean preparationReady() {return renderer!=null && renderer.preparationReady();}
     public static boolean worldComposited() {return worldComposited;}
     private static void message(MinecraftClient client,String message) {
         if(client.player!=null)client.player.sendMessage(Text.literal("Interstellar: "+message),true);
@@ -95,7 +111,9 @@ public final class LiveTerrain {
         if(!active())return;
         var client=MinecraftClient.getInstance();
         if(client.world==null || client.player==null)return;
+        if(client.currentScreen instanceof DownloadingTerrainScreen)return;
         try {
+            rendering=true;
             synchronize(client);
             if(!active())return;
             if(renderer==null)return;
@@ -106,7 +124,7 @@ public final class LiveTerrain {
         } catch(RuntimeException failure) {
             Interstellar.LOGGER.error("Live terrain stopped",failure);stop();
             message(client,"Live terrain stopped after a rendering error; see log.");
-        }
+        } finally {rendering=false;}
     }
     public static void renderHud(DrawContext context) {
         var client=MinecraftClient.getInstance();

@@ -106,11 +106,13 @@ final class WorldMesh implements VertexConsumer,AutoCloseable {
     int profileMovingContents;
     boolean ready() {return streaming!=null?streaming.ready():singleChunk?prepared:nodeTexture!=0;}
     boolean localReady() {return streaming!=null?streaming.localReady():ready();}
+    boolean localCaughtUp() {return streaming!=null?streaming.localCaughtUp():ready();}
+    int localLoadingPercent() {return streaming!=null?streaming.localLoadingPercent():ready()?100:0;}
     boolean complete() {return streaming!=null?streaming.complete():ready();}
     double openingProgress() {return streaming!=null?streaming.openingProgress():ready()?1:0;}
     boolean streamed() {return streaming!=null;}
     boolean quadStorage() {return streaming!=null;}
-    String viewStatus() {return ready()?"World view ready":streaming!=null?"Preparing world view: "+streaming.loadingPercent()+"%":"Preparing world view...";}
+    String viewStatus() {return localReady()?"Nearby world ready":streaming!=null?"Preparing world view: "+streaming.loadingPercent()+"%":"Preparing world view...";}
     String status() {return streaming!=null?streaming.status():ready()?"Native mesh: "+count+" triangles | "+missingSections+" missing sections"+(entities==null?"": " | "+entities.status()):
             "Capturing native mesh: "+(100L*cursor/total)+"%";}
     void advance() {

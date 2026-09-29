@@ -76,6 +76,27 @@ public final class StreamingTerrain implements AutoCloseable {
     }
     boolean ready() {return ready;}
     boolean localReady() {return localPrepared;}
+    // Unlike localPrepared (latched for seamless streaming), loading needs the current
+    // server-visible region, including packets which have not arrived yet.
+    private net.minecraft.server.network.ChunkFilter localFilter() {
+        var client=MinecraftClient.getInstance();
+        return net.minecraft.server.network.ChunkFilter.cylindrical(client.player.getChunkPos(),client.options.getClampedViewDistance());
+    }
+    boolean localCaughtUp() {
+        if(localWanted.isEmpty())return false;
+        var filter=localFilter();
+        for(long key:localWanted)if(filter.isWithinDistance(ChunkPos.getPackedX(key),ChunkPos.getPackedZ(key)) || loaded(key)) {
+            var entry=entries.get(key);if(entry==null || entry.revision==0)return false;
+        }
+        return true;
+    }
+    int localLoadingPercent() {
+        int total=0,captured=0;var filter=localFilter();
+        for(long key:localWanted)if(filter.isWithinDistance(ChunkPos.getPackedX(key),ChunkPos.getPackedZ(key)) || loaded(key)) {
+            total++;var entry=entries.get(key);if(entry!=null && entry.revision!=0)captured++;
+        }
+        return total==0?0:captured*100/total;
+    }
     boolean complete() {
         if(!WormholePair.active(world))return ready;
         // A previously unloaded local slot can become a remote destination. Its
@@ -156,6 +177,13 @@ public final class StreamingTerrain implements AutoCloseable {
         }
         if(indexChanged)index();
         if(capture==null) {Long edit=refreshes.nextEdit(key->loaded(key) && (!FAIR_PREPARATION || Math.abs(ChunkPos.getPackedX(key)-cameraX)<=1 && Math.abs(ChunkPos.getPackedZ(key)-cameraZ)<=1));if(edit!=null)beginCapture(edit);}
+        if(capture==null && client.currentScreen instanceof WorldPreparationScreen) {
+            // World entry waits only for the local view; remote portals open later.
+            for(long key:queue)if(localWanted.contains(key) && loaded(key)) {
+                var entry=entries.get(key);
+                if(entry==null || entry.revision==0){beginCapture(key);break;}
+            }
+        }
         if(capture==null && !queue.isEmpty()) {
             // Finish the fixed destination set before ordinary camera-window
             // churn. Moving around must not keep missing portal chunks at the tail.
@@ -187,8 +215,8 @@ public final class StreamingTerrain implements AutoCloseable {
                 capture.close();capture=null;
             }
         }
-        if(!localPrepared && !localWanted.isEmpty() && captured(localWanted))localPrepared=true;
-        if(!ready && captured(wanted)) {
+        if(!localPrepared && !localWanted.isEmpty() && captured(localWanted) && (!COMPLETE_PREPARATION || localCaughtUp()))localPrepared=true;
+        if(!ready && localPrepared && captured(wanted)) {
             ready=true;
             Interstellar.LOGGER.info("Streaming terrain ready: {}; initial capture={} ms",status(),(System.nanoTime()-started)/1e6);
             Interstellar.LOGGER.info("Quad terrain ready: {} quads; vertex payload={} bytes; single retained vertex/node arenas",triangleCount/2,triangleCount/2*192L);
