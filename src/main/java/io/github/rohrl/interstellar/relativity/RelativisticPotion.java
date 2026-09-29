@@ -20,7 +20,7 @@ public final class RelativisticPotion {
     public static final RegistryEntry<StatusEffect> EFFECT=Registry.registerReference(Registries.STATUS_EFFECT,
         Identifier.of(Interstellar.MOD_ID,"relativistic_sight"),new StatusEffect(StatusEffectCategory.BENEFICIAL,0x9474ED){});
     public static final RegistryEntry<Potion> POTION=Registry.registerReference(Registries.POTION,
-        Identifier.of(Interstellar.MOD_ID,"relativistic_sight"),new Potion("relativistic_sight",new StatusEffectInstance(EFFECT,8*60*20,0,false,false,true)));
+        Identifier.of(Interstellar.MOD_ID,"relativistic_sight"),new Potion("relativistic_sight",new StatusEffectInstance(EFFECT,2*60*20,0,false,false,true)));
     public static ItemStack stack(){return PotionContentsComponent.createStack(Items.POTION,POTION);}
     public static void register() {
         ItemGroupEvents.modifyEntriesEvent(ItemGroups.FOOD_AND_DRINK).register(entries->entries.add(stack()));
@@ -29,7 +29,7 @@ public final class RelativisticPotion {
             .then(literal("relativity").then(literal("potion").requires(s->s.hasPermissionLevel(2)).executes(context->{
                 var player=context.getSource().getPlayerOrThrow();var stack=stack();
                 if(!player.getInventory().insertStack(stack))player.dropItem(stack,false);
-                player.sendMessage(Text.literal("Relativistic Sight: drink, wait for the view to prepare, then sprint. Normal movement speed. F4: Relativity."),false);return 1;
+                player.sendMessage(Text.literal("Relativistic Sight: drink, then walk in any direction once the view is ready. Lasts 2 minutes. Normal movement speed. F4: Relativity."),false);return 1;
             })))));
     }
 }

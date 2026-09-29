@@ -1,6 +1,27 @@
 # Progress
 
 
+## 2026-09-29 — Prompt live block edits; two-minute walking potion
+
+- Fixed the stale-block queue: actual edits precede background capture; lighting
+  notifications no longer invalidate in-progress geometry. Edge neighbours still
+  refresh, with the existing incremental budget and shared GL/RTX cache.
+- Native stationary-camera RTX placement/mining published in 208/198 ms with
+  roughly 250 background chunks; OpenGL placement 175 ms. Corner lighting refresh
+  reached about 500 ms. No camera movement/manual refresh required in the RTX test.
+- Relativistic Sight now lasts two minutes and charges with W/A/S/D, including
+  sideways/backwards walking. Input plus displacement prevents passive pushes and
+  walls from charging. Default 15-second ramp to 0.99c and normal movement remain.
+- 114 tests; final normal and RTX builds pass. Ordinary jar excludes optional
+  backend entries. Runtime shaders load; edited-image GL/RTX mean error
+  0.000067636/255, no pixels over 16/255. Timings and test limitations, including
+  the final duration change after the expiry test, are in
+  docs/profiles/2026-09-29-live-edits-and-walking/.
+- New QA copy only; client saved/closed. Original settings restored byte-for-byte,
+  original saves, .idea and preserved AA work untouched. See D097/D098.
+
+
+
 ## 2026-09-29 — Relativistic Sight potion and independent optical controls
 
 - Added an eight-minute vanilla potion/status effect: Creative Food & Drinks,

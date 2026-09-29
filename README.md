@@ -6,7 +6,7 @@ A Minecraft Java mod for educational relativistic optics. Scientific assumptions
 
 ## Start here
 
-- [Relativistic Sight potion](docs/relativistic-sight.md): sprint-triggered observer optics, current `v/c`, and independent aberration, Doppler colour and brightness controls in F4.
+- [Relativistic Sight potion](docs/relativistic-sight.md): walking-triggered observer optics, current `v/c`, and independent aberration, Doppler colour and brightness controls in F4.
 
 - [Illustrated rendering guide](docs/visual-guide/interstellar-visual-guide.html): graphics basics, black-hole optics, algorithms, optimizations and discoveries; self-contained offline HTML with interactive diagrams.
 - [RTX feasibility probe](docs/rtx-probe-2026-09-24.md): measured hardware intersection queries and their limits; the production renderer is unchanged.

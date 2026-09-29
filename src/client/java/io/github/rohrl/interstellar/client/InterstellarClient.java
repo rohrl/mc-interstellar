@@ -47,7 +47,7 @@ public final class InterstellarClient implements ClientModInitializer {
         net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback.EVENT.register((stack,context,type,lines)->{
             var contents=stack.get(net.minecraft.component.DataComponentTypes.POTION_CONTENTS);
             if(contents!=null && contents.potion().filter(io.github.rohrl.interstellar.relativity.RelativisticPotion.POTION::equals).isPresent()) {
-                lines.add(Text.literal("Sprint to see near-light-speed optics.").formatted(net.minecraft.util.Formatting.LIGHT_PURPLE));
+                lines.add(Text.literal("Walk in any direction for near-light-speed optics (2 minutes).").formatted(net.minecraft.util.Formatting.LIGHT_PURPLE));
                 lines.add(Text.literal("Normal movement speed. F4: Relativity.").formatted(net.minecraft.util.Formatting.GRAY));
             }
         });

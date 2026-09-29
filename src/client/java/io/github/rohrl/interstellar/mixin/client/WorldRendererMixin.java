@@ -23,6 +23,11 @@ abstract class WorldRendererMixin {
     }
     @Inject(method="scheduleChunkRender",at=@At("HEAD"))
     private void interstellar$dirty(int x,int y,int z,boolean important,CallbackInfo ci) {
-        StreamingTerrain.dirty(x,z);
+        StreamingTerrain.lightingDirty(x,z);
+    }
+    @Inject(method="updateBlock",at=@At("HEAD"))
+    private void interstellar$edited(net.minecraft.world.BlockView world,net.minecraft.util.math.BlockPos pos,
+                                    net.minecraft.block.BlockState oldState,net.minecraft.block.BlockState newState,int flags,CallbackInfo ci) {
+        if(oldState!=newState)StreamingTerrain.edited(world,pos);
     }
 }

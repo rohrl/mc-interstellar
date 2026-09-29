@@ -2,6 +2,10 @@ package io.github.rohrl.interstellar.science;
 
 /** Gameplay envelope for a prescribed local observer speed, independent of block/tick speed. */
 public final class SprintObserver {
+    /** Require intended travel as well as displacement: walls and passive pushes do not charge. */
+    public static boolean walking(float forward,float sideways,double distance,boolean flying,boolean gliding,boolean swimming) {
+        return (forward!=0 || sideways!=0) && distance>.015 && !flying && !gliding && !swimming;
+    }
     private double elapsed,beta;
     public double beta(){return beta;}
     public double elapsed(){return elapsed;}

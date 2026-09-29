@@ -38,15 +38,15 @@ final class RelativisticVision {
         // A portal transports velocity; its coordinate displacement is not running.
         if(movement.lengthSquared()>16){movement=p.getVelocity();length=movement.horizontalLength();}
         boolean wasRunning=running;
-        running=wanted()&&LiveTerrain.active()&&prepared&&p.isSprinting()&&!p.getAbilities().flying&&!p.isFallFlying()&&!p.isSwimming()&&length>.015;
+        running=wanted()&&LiveTerrain.active()&&prepared&&SprintObserver.walking(p.input.movementForward,p.input.movementSideways,length,p.getAbilities().flying,p.isFallFlying(),p.isSwimming());
         if(running) {
             var target=new Vec3d(movement.x,0,movement.z).normalize();
             direction=previousBeta==0||direction.dotProduct(target)<-.8?target:direction.lerp(target,.45).normalize();
         }
         envelope.advance(running,.05,options.cap(),options.rampSeconds());
         if(!wanted()||!LiveTerrain.active()){envelope.reset();previousBeta=0;}
-        if(wasRunning!=running)Interstellar.LOGGER.info("Relativistic sprint {}: beta={}, direction={}, prepared={}",running?"started":"stopped",envelope.beta(),direction,prepared);
-        if(previousBeta<options.cap() && envelope.beta()>=options.cap())Interstellar.LOGGER.info("Relativistic sprint reached {}c",options.cap());
+        if(wasRunning!=running)Interstellar.LOGGER.info("Relativistic walk {}: beta={}, direction={}, prepared={}",running?"started":"stopped",envelope.beta(),direction,prepared);
+        if(previousBeta<options.cap() && envelope.beta()>=options.cap())Interstellar.LOGGER.info("Relativistic walk reached {}c",options.cap());
     }
     static Vec3d velocity(boolean live) {
         if(!wanted()||!LiveTerrain.preferences().enabled())return Vec3d.ZERO;
@@ -62,7 +62,7 @@ final class RelativisticVision {
         else if(!wanted())text="Relativistic sight: all effects off | F4";
         else if(!prepared)text="Relativistic sight: preparing world view...";
         else if(visible())text=String.format(Locale.ROOT,"Relativistic sight  %.2fc / %.2fc%s",envelope.beta(),options.cap(),running?"":"  slowing");
-        else text="Relativistic sight  0.00c | Sprint on foot to charge";
+        else text="Relativistic sight  0.00c | Walk in any direction to charge";
         int x=8,y=context.getScaledWindowHeight()-66,w=Math.min(context.getScaledWindowWidth()-16,client.textRenderer.getWidth(text)+12);
         context.fill(x,y,x+w,y+24,0xBD101824);
         context.drawTextWithShadow(client.textRenderer,client.textRenderer.trimToWidth(text,w-12),x+6,y+5,0xFFC7B4FF);

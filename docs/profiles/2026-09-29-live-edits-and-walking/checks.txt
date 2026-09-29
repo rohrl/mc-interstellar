@@ -1,0 +1,59 @@
+[19:58:52] [Render thread/INFO] (interstellar) Terrain edit received: pos=BlockPos{x=452, y=211, z=-173}, queued=251
+[19:58:52] [Render thread/INFO] (interstellar) Terrain edit published: chunk=(28, -11), latencyMs=208.318, revision=494, queued=257
+[19:58:54] [Render thread/INFO] (interstellar) Terrain edit received: pos=Mutable{x=452, y=211, z=-173}, queued=241
+[19:58:54] [Render thread/INFO] (interstellar) Terrain edit published: chunk=(28, -11), latencyMs=197.8106, revision=511, queued=241
+[19:59:03] [Render thread/INFO] (interstellar) Terrain edit published: chunk=(27, -11), latencyMs=314.1407, revision=603, queued=157
+[19:59:34] [Render thread/INFO] (interstellar) Terrain edit received: pos=BlockPos{x=452, y=211, z=-173}, queued=0
+[19:59:34] [Render thread/INFO] (interstellar) Terrain edit published: chunk=(28, -11), latencyMs=99.4946, revision=774, queued=6
+[19:59:35] [Render thread/INFO] (interstellar) Terrain edit received: pos=BlockPos{x=447, y=211, z=-176}, queued=0
+[19:59:35] [Render thread/INFO] (interstellar) Terrain edit published: chunk=(27, -12), latencyMs=103.3558, revision=781, queued=3
+[19:59:36] [Render thread/INFO] (interstellar) Terrain edit published: chunk=(27, -11), latencyMs=212.2554, revision=782, queued=2
+[19:59:36] [Render thread/INFO] (interstellar) Terrain edit published: chunk=(28, -11), latencyMs=319.2608, revision=783, queued=1
+[19:59:36] [Render thread/INFO] (interstellar) Terrain edit published: chunk=(28, -12), latencyMs=427.3977, revision=784, queued=0
+[19:59:37] [Render thread/INFO] (interstellar) Terrain edit published: chunk=(27, -12), latencyMs=106.0115, revision=786, queued=12
+[19:59:37] [Render thread/INFO] (interstellar) Terrain edit published: chunk=(27, -11), latencyMs=216.0327, revision=787, queued=11
+[19:59:37] [Render thread/INFO] (interstellar) Terrain edit published: chunk=(28, -11), latencyMs=326.3254, revision=788, queued=10
+[19:59:37] [Render thread/INFO] (interstellar) Terrain edit published: chunk=(28, -12), latencyMs=446.438, revision=789, queued=9
+[19:59:38] [Render thread/INFO] (interstellar) Terrain edit received: pos=BlockPos{x=447, y=211, z=-176}, queued=0
+[19:59:38] [Render thread/INFO] (interstellar) Terrain edit published: chunk=(27, -12), latencyMs=154.0975, revision=799, queued=4
+[19:59:38] [Render thread/INFO] (interstellar) Terrain edit published: chunk=(27, -11), latencyMs=276.2719, revision=800, queued=11
+[19:59:38] [Render thread/INFO] (interstellar) Terrain edit published: chunk=(28, -11), latencyMs=389.7969, revision=801, queued=10
+[19:59:38] [Render thread/INFO] (interstellar) Terrain edit published: chunk=(28, -12), latencyMs=499.1822, revision=802, queued=9
+[19:59:39] [Render thread/INFO] (interstellar) Terrain edit published: chunk=(27, -12), latencyMs=102.5404, revision=809, queued=6
+[19:59:39] [Render thread/INFO] (interstellar) Terrain edit published: chunk=(27, -11), latencyMs=214.0417, revision=810, queued=5
+[19:59:39] [Render thread/INFO] (interstellar) Terrain edit published: chunk=(28, -11), latencyMs=321.1326, revision=811, queued=4
+[19:59:39] [Render thread/INFO] (interstellar) Terrain edit published: chunk=(28, -12), latencyMs=429.1591, revision=812, queued=3
+[19:59:40] [Render thread/INFO] (interstellar) RTX full-image comparison completed: C:\work\code\minecraft\interstellar\interstellar\run\rtx-image\compare-1790675980542; scene=Streaming terrain | 6615872 triangles | 0 queued chunks; mesh=true; streamedReference=false; entities=true; coverage=true; clouds=true; distant=true; faceLight=true; smoothLight=true; origin=BlockPos{x=413, y=122, z=-110}
+[19:59:45] [Render thread/INFO] (interstellar) RTX live benchmark completed: TERRAIN 640x360, scale=0.50, r/rs=7.56907, lensing=true, fine=true, snapshot=Streaming terrain | 6615872 triangles | 0 queued chunks, hybrid=true, live=true, mesh=true, entities=true, nativeLight=true, coverage=true, clouds=true; yaw=0.0; pitch=45.0; AA=2x; observer=(0.0, 0.0, 0.0); adaptive=true; fastBounds=true; fastFetch=true; emptyCells=true; emptyReach=1024.0; program=native-mixed-world-quads; movingContents=0; angularCap=0.08; curveFactor=4.0; includes resolve; 120 warmup frames; 300 samples; Vulkan update/render GPU p50=0.636896 p95=0.652 p99=0.659776 ms; sampled frame intervals p50=8.3495 p95=9.8395 p99=12.6884 ms (includes cap/vsync; Vulkan timing excludes GL appearance copies and resolve)
+[20:00:21] [Render thread/INFO] (interstellar) Terrain edit published: chunk=(27, -11), latencyMs=117.0224, revision=827, queued=1
+[20:00:28] [Render thread/INFO] (Minecraft) [System] [CHAT] InterstellarDev has the following entity data: [{duration: 1178, show_icon: 1b, id: "interstellar:relativistic_sight", show_particles: 0b}]
+[20:00:29] [Render thread/INFO] (interstellar) Relativistic walk started: beta=0.07500000000000001, direction=(1.0, 0.0, 0.0), prepared=true
+[20:00:29] [Render thread/INFO] (interstellar) Relativistic walk stopped: beta=0.07379837081765267, direction=(1.0, 0.0, 0.0), prepared=true
+[20:00:30] [Render thread/INFO] (interstellar) Relativistic walk started: beta=0.07500000000000001, direction=(-1.0, 0.0, 0.0), prepared=true
+[20:00:31] [Render thread/INFO] (interstellar) Relativistic walk stopped: beta=0.07379837081765267, direction=(-1.0, 0.0, 0.0), prepared=true
+[20:00:32] [Render thread/INFO] (interstellar) Relativistic walk started: beta=0.07500000000000001, direction=(0.0, 0.0, -1.0), prepared=true
+[20:00:32] [Render thread/INFO] (interstellar) Relativistic walk stopped: beta=0.0657206108950491, direction=(0.0, 0.0, -1.0), prepared=true
+[20:00:33] [Render thread/INFO] (interstellar) Relativistic walk started: beta=0.07500000000000001, direction=(0.0, 0.0, 1.0), prepared=true
+[20:00:34] [Render thread/INFO] (interstellar) Relativistic walk stopped: beta=0.0657206108950491, direction=(0.0, 0.0, 1.0), prepared=true
+[20:00:35] [Render thread/INFO] (interstellar) Relativistic walk started: beta=0.07500000000000001, direction=(0.0, 0.0, 1.0), prepared=true
+[20:00:35] [Render thread/INFO] (interstellar) Relativistic walk stopped: beta=0.008404214285400918, direction=(0.0, 0.0, 1.0), prepared=true
+[20:00:51] [Render thread/INFO] (Minecraft) [System] [CHAT] InterstellarDev has the following entity data: [{duration: 711, show_icon: 1b, id: "interstellar:relativistic_sight", show_particles: 0b}]
+[20:01:30] [Render thread/INFO] (Minecraft) [System] [CHAT] Found no elements matching active_effects
+[20:01:57] [Render thread/INFO] (interstellar) Terrain edit received: pos=BlockPos{x=452, y=211, z=-173}, queued=0
+[20:01:57] [Render thread/INFO] (interstellar) Terrain edit published: chunk=(28, -11), latencyMs=109.8615, revision=1010, queued=7
+[20:01:59] [Render thread/INFO] (interstellar) Terrain edit published: chunk=(27, -11), latencyMs=98.3379, revision=1018, queued=0
+[20:02:03] [Render thread/INFO] (interstellar) Relativistic walk started: beta=0.07500000000000001, direction=(0.0, 0.0, 1.0), prepared=true
+[20:02:18] [Render thread/INFO] (interstellar) Relativistic walk reached 0.99c
+[20:02:20] [Render thread/INFO] (interstellar) Relativistic walk stopped: beta=0.84, direction=(0.0, 0.0, 1.0), prepared=true
+[20:02:48] [Render thread/INFO] (interstellar) Relativistic walk started: beta=0.07500000000000001, direction=(0.05490834755538206, 0.0, 0.9984913987454961), prepared=true
+[20:02:48] [Render thread/INFO] (interstellar) Relativistic walk stopped: beta=0.0, direction=(0.046198147019601794, 0.0, 0.9989322956096451), prepared=true
+[20:02:48] [Render thread/INFO] (interstellar) Relativistic walk started: beta=0.07500000000000001, direction=(0.04602403605220876, 0.0, 0.9989403326052387), prepared=true
+[20:02:49] [Render thread/INFO] (interstellar) Relativistic walk stopped: beta=0.09784397716728199, direction=(0.01576236245026657, 0.0, 0.9998757662479806), prepared=true
+[20:02:50] [Render thread/INFO] (interstellar) Relativistic walk started: beta=0.07500000000000001, direction=(0.03661573420232936, 0.0, 0.9993294191650842), prepared=true
+[20:02:57] [Render thread/INFO] (interstellar) Relativistic walk stopped: beta=0.7087638043533713, direction=(0.9822676314473101, 0.0, 0.18748413322436475), prepared=true
+[20:03:02] [Render thread/INFO] (interstellar) Live renderer preference: OpenGL
+[20:03:04] [Render thread/INFO] (interstellar) Terrain edit received: pos=BlockPos{x=452, y=211, z=-173}, queued=226
+[20:03:04] [Render thread/INFO] (interstellar) Terrain edit published: chunk=(28, -11), latencyMs=174.8298, revision=1545, queued=232
+[20:03:12] [Render thread/INFO] (interstellar) Optical benchmark completed: TERRAIN 640x360, scale=0.50, r/rs=7.56907, lensing=true, fine=true, snapshot=Streaming terrain | 4566936 triangles | 216 queued chunks, hybrid=true, live=true, mesh=true, entities=true, nativeLight=true, coverage=true, clouds=true; yaw=2.1000001; pitch=3.0000062; AA=2x; observer=(0.0, 0.0, 0.0); adaptive=true; fastBounds=true; fastFetch=true; emptyCells=true; emptyReach=1024.0; program=native-mixed-world-quads; movingContents=0; angularCap=0.08; curveFactor=4.0; includes resolve; 120 warmup frames; 300 samples; GPU pass p50=12.75088 p95=13.745408 p99=14.268608 ms; sampled frame intervals p50=13.4573 p95=15.7135 p99=19.1667 ms (includes cap/vsync; not full-frame GPU time)
+[20:04:53] [Render thread/INFO] (interstellar) Terrain edit published: chunk=(27, -11), latencyMs=117.3502, revision=1812, queued=0
+[20:05:47] [Render thread/INFO] (interstellar) Terrain edit published: chunk=(27, -11), latencyMs=127.3766, revision=1828, queued=0

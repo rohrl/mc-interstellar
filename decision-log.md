@@ -786,3 +786,33 @@ A source-free renderer allows the potion to work without mass blocks or portals.
 It primes the GPU before charging, reuses bounded streaming, and skips the extra
 ray draw/dynamic capture when idle. Existing F10 master and independent gameplay
 gravity remain. The normal artifact keeps the optional Vulkan backend excluded.
+
+
+## D097 — Accepted: prioritize live block edits without lighting starvation (2026-09-29)
+
+Actual block-state changes now take priority over background chunk capture and
+missing portal scenery. Generic renderer/lighting notifications keep a follow-up
+queued but do not advance the geometry content version. Actual edits and chunk
+replacement still invalidate an in-progress capture. This prevents ordinary
+lighting churn from repeatedly discarding edited geometry. Refresh only edge
+neighbours needed for culling/AO; retain the existing 5 ms incremental capture
+budget and shared GL/RTX publication path.
+
+Measured native placement/mining with a stationary camera published in about
+198–208 ms despite 241–251 background chunks. Corner lighting updates reached
+about 500 ms across adjacent columns. These are measured publication latencies,
+not a hard guarantee or mouse-to-monitor latency. Whole-column capture remains.
+See docs/profiles/2026-09-29-live-edits-and-walking/ for tests and scope.
+
+## D098 — Accepted: two-minute sight potion and walking activation (2026-09-29)
+
+Supersedes D096's eight-minute duration and sprint requirement. Owner requests
+**two minutes** (2400 game ticks), with ordinary on-foot W/A/S/D movement charging
+optical speed. The interim one-minute request was superseded before the final
+build. Require both movement input and displacement; retain the actual horizontal
+travel direction, independent of gaze, and existing ramp/cap/release. Sprinting
+still works; movement attributes and server simulation remain unchanged.
+
+Expiry and W/A/S/D were exercised in-game using the interim 60-second registration;
+the final 120-second constant and UI text passed both builds. Do not claim a second
+full 120-second expiry measurement. Menus, HUD, tooltip and feature guide agree.

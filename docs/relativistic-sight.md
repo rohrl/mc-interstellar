@@ -1,17 +1,17 @@
 # Relativistic Sight
 
-Drink a **Potion of Relativistic Sight**, let the world view prepare, then sprint
-on foot. Your running speed stays normal. The displayed speed is the speed of a
+Drink a **Potion of Relativistic Sight**, let the world view prepare, then walk
+in any direction. Your movement speed stays normal. The displayed speed is the speed of a
 simulated observer used to calculate incoming light.
 
 - Creative inventory: Food & Drinks, or search for Relativistic Sight.
 - Survival brewing: Awkward Potion + Amethyst Shard.
 - Operator shortcut: `/interstellar relativity potion` (also in F4 → Relativity).
-- Duration: eight minutes. Milk removes it like a normal status effect.
-- Default ramp: roughly 0.1c to 0.99c over 15 seconds of continuous sprinting.
+- Duration: two minutes (120 seconds of game time). Milk removes it like a normal status effect.
+- Default ramp: roughly 0.1c to 0.99c over 15 seconds of continuous walking.
 - A bottom-left readout shows the current fraction of light speed and a charge bar.
 - Stopping releases the effect within about a third of a second. A wall stops
-  charging; sprint-jumping continues. Flying, gliding and swimming do not charge it.
+  charging; sideways/backwards walking, sprinting and jumping continue. Flying, gliding and swimming do not charge it.
 
 ## Controls
 
@@ -24,7 +24,7 @@ F4 → **Relativity** contains independent controls:
 | Doppler colour | Off, Gentle, or Full shift |
 | Brightness / dimming | Independent directional exposure cue |
 | Speed cap | 0.50c, 0.90c, or 0.99c |
-| Sprint ramp | 10, 15, or 25 seconds |
+| Walk ramp | 10, 15, or 25 seconds |
 
 F10 remains the master switch for all Interstellar world visuals. The Graphics
 tab controls the shared quality and OpenGL/RTX backend. Relativity settings are
@@ -102,7 +102,9 @@ normalization, ramp/cap behaviour and release. Frozen F9 → Ctrl+Alt+C checks 5
 actual shader rays against the independent double-precision photon reference,
 including 0.99c and aberration disabled. This does not certify spectral accuracy.
 Runtime results, screenshots and timings are in the
-[acceptance report](profiles/2026-09-29-relativistic-sight/README.md).
+[original acceptance report](profiles/2026-09-29-relativistic-sight/README.md).
+[Walking and live-edit follow-up](profiles/2026-09-29-live-edits-and-walking/README.md)
+records the updated controls, duration and runtime checks.
 
 Primary background: [Kraus: high-speed flight](https://www.spacetimetravel.org/aur),
 [Einstein Online: Doppler](https://www.einstein-online.info/en/spotlight/doppler/),

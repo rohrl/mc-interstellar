@@ -1,71 +1,56 @@
-# Handoff — Relativistic Sight, 29 September 2026
+# Handoff — Live block edits and walking potion, 29 September 2026
 
 ## Completed state
 
-Branch **codex/rtx-wormhole-demo**; see Git for the final commit. User authorizes
-normal branches, commits, pushes and autonomous runtime controls. No agents.
+Branch **codex/rtx-wormhole-demo**; see Git for final commit. User authorizes normal
+commits, pushes and autonomous runtime controls. No agents.
 
-Relativistic Sight potion, sprint-driven optical speed and independent F4
-aberration / Doppler colour / brightness controls are implemented. Normal player
-movement is unchanged. Eight-minute duration, ~0.1c to 0.99c over 15s, <=0.34s
-release, on-foot sprint (jumping allowed), horizontal travel sets direction.
-HUD gives preparation, current c fraction and charge. Cap/ramp are adjustable.
-Creative Food & Drinks; Awkward Potion + Amethyst; /interstellar relativity potion.
+Latest requests implemented:
+- Placed/mined blocks get priority over background scenery capture. Lighting
+  notifications queue a follow-up without repeatedly invalidating geometry.
+  Content changes still invalidate captures; edge neighbours refresh for AO/culling.
+- Relativistic Sight lasts **2 minutes**, superseding the interim 1-minute request.
+  W/A/S/D walking charges it; sprinting still works. Horizontal travel sets optical
+  direction independently of gaze. Walls/passive pushes do not charge. Existing
+  15-second ramp to 0.99c, release and normal movement remain.
+- F4 controls, HUD, tooltip, command help and user guide updated.
 
-Works without a mass or with mass/wormholes. OpenGL and RTX share the boost;
-normal jar still excludes Vulkan/shaderc/backend code. Source-free idle uses
-native drawing while retaining the bounded scene cache. Colour/brightness are
-explicit approximations; no entity history or server time effects.
+Read D097/D098, **docs/relativistic-sight.md** and
+**docs/profiles/2026-09-29-live-edits-and-walking/README.md**. Prior SR optical
+implementation is D096 / 955c5e8; no shader equations changed in this fix.
 
-Read **docs/relativistic-sight.md**, D096 and
-**docs/profiles/2026-09-29-relativistic-sight/README.md** for exact checks, images,
-measurements and limitations. Prior unified gameplay is D095 / 8b0ed4d.
+## Verification and limits
 
-## Verification
-
-- Final normal and RTX builds pass 109 CPU tests. Normal jar checked for absence
-  of optional backend entries; proof copy run/sr-opengl-only.jar.
-- Runtime shaders compile/link. Final acceptance launch has no ERROR/Exception/
-  shader-link-failure messages. Existing optimized-out uniform warnings remain.
-- 50 GPU local observer rays pass, maximum direction/relative-frequency error
-  1.6369261e-6; independent CPU photon four-vector reference.
-- Final gentle 0.99c GL/RTX mean RGB error 0.000686/255; mixed optics 0.000110/255.
-  No pixels in these two pairs have max-channel difference >16/255.
-- Actual drinking, automatic activation, cap, release, wall stop, independent
-  menu switches, restart persistence and mixed optics exercised.
-- Frozen simple-course p50 frame 8.352ms (120 FPS cap); timings are not a claim
-  about heavy BH FPS or isolated SR cost. Report contains renderer wall timings.
-- Brewing recipe compiles/registered; a real brewing-stand cycle was not tested.
-  Broad movement/flicker survey remains owner-deferred.
+- Both final Gradle builds pass 114 tests. Normal jar checked for optional backend
+  exclusion; proof copy run/refresh-opengl-only.jar. Final jar is RTX flavour.
+- Native RTX placement/mining with stationary camera: 208/198 ms to publication,
+  251/241 background chunks. Native OpenGL placement: 175 ms. Corner lighting refresh
+  reached ~500 ms. Capture remains whole-column/incremental, not a hard latency bound.
+- GL/RTX edited-image mean RGB difference 0.000067636/255; none over 16/255.
+- W/A/S/D without sprint verified; normal walking reaches0.99c. Wall stop verified.
+  Actual drinking and expiry verified with the interim 60 s duration. Final 2400-tick
+  registration was built after owner's 2-minute request; no second full timed run.
+- RTX frame p50=8.350 ms at a simple downward pose; GL 13.457 ms at a different pose
+  with background capture. No comparative performance regression bound claimed.
+  One attempted extra GL benchmark received no inputs/timed out, so has no result.
+- Runtime shaders loaded; no ERROR/Exception/shader-link failures. Existing unused
+  uniform warnings remain. Broad movement/flicker survey remains owner-deferred.
 
 ## Runtime and preservation
 
-Client **saved and closed**. Only **run/saves/Interstellar Relativity QA 2026-09-29**
-was edited: copied from prior Unified QA, with a colour-gate track at
-x446..458, y210, z-185..-5. Saved at feet(452.5,211,-174.5), yaw0/pitch0, survival,
-with a fresh potion in inventory. Native mass64 and pair revision28 retained.
-Original owner and previous QA saves were not edited. AA WIP8ad46eb and .idea
-untouched.
+Client saved/closed. Only **run/saves/Interstellar Refresh QA 2026-09-29** edited,
+a copy of prior Relativity QA. It retains a test glowstone near (452, 211, -173).
+Previous/original saves, AA WIP 8ad46eb and .idea untouched.
+All original interstellar*.json preferences and options.txt restored byte-for-byte
+from run/refresh-backup. Owner's current graphics: 50%/fine/2x/RTX, fullscreen.
+Relativity controls remain saved defaults (all on/Gentle/.99c/15s).
 
-Prior terrain preferences restored from run/sr-terrain-prefs-backup.json:
-master/mass/portal/status on, 100%/fine/2x/RTX, weather on, body off. New relativity
-preferences remain defaults (all three on, Gentle, 0.99c/15s).
-
-Final jar build/libs/interstellar-0.1.0-dev.jar is RTX flavour. Ordinary launchers
-remain unchanged. Cached shader launches are fast; changing the huge shared
-shader forced approximately six minutes of cold GL compilation in this session.
 JDK C:/Portable/jdks/temurin-21.0.12.1; Python C:/Portable/python-3.11.7/python.exe.
+Use explicit UTF-8 and newline='\n' for Python text edits; default codepage is 1252.
+Useful ignored files: refresh-init.gradle, refresh-walk-check.ps1,
+refresh-accepted-runtime.log, refresh-normal-build.log, refresh-final-build.log,
+refresh-backup/. Opt-in edit diagnostics: -Dinterstellar.traceEdits=true.
 
-Useful ignored files: run/sr-init.gradle (quickplay QA), sr-sprint.ps1,
-sr-chord.ps1, sr-acceptance-runtime.log, sr-acceptance-qa.log, sr-final-qa-first.log,
-sr-normal-build.log, sr-rtx-build.log. Final backend pairs:
-run/rtx-image/compare-1790661422024 (Gentle), compare-1790661572579 (mixed).
-Their reports and accepted screenshots are copied into the tracked evidence.
-
-## Follow-up scope
-
-Owner feedback on visual strength/feel is the next useful input. No new goal is
-active. Dynamic retarded-time histories, true spectra/UV/IR and gravitational
-spectral transport are separate work. Do not call the palette approximation exact
-Doppler radiometry. A before/after heavy-world performance regression study was
-not part of these feature checks. Preserve the optional OpenGL-only flavour.
+No new goal is active. Further optimization/feature work follows owner direction.
+Preserve the OpenGL-only flavour. Initial streaming still takes time; this change
+prioritizes subsequent edits without expanding the existing capture budget.

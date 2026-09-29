@@ -5,6 +5,15 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ObserverTest {
+    @Test void WalkingWorksInAllDirectionsWithoutSprinting() {
+        for(float[] keys:new float[][]{{1,0},{-1,0},{0,1},{0,-1},{1,1},{-1,-1}})
+            assertTrue(SprintObserver.walking(keys[0],keys[1],.2,false,false,false));
+        assertFalse(SprintObserver.walking(0,0,.2,false,false,false),"Passive pushes should not charge");
+        assertFalse(SprintObserver.walking(1,0,0,false,false,false),"Walking into a wall should not charge");
+        assertFalse(SprintObserver.walking(1,0,.2,true,false,false));
+        assertFalse(SprintObserver.walking(1,0,.2,false,true,false));
+        assertFalse(SprintObserver.walking(1,0,.2,false,false,true));
+    }
     @Test void boostInvertsAndPreservesPhotonNullNorm() {
         var axis=new Point(1,2,-3).unit();
         for(double beta:new double[]{0,.1,.5,.9,.99})for(var n:new Point[]{axis,axis.scale(-1),new Point(1,0,0),new Point(0,1,0),new Point(0,0,1)}) {

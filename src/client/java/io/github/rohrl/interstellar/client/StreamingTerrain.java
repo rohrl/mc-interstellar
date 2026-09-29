@@ -21,14 +21,17 @@ public final class StreamingTerrain implements AutoCloseable {
     private record Entry(int vertexRow,int vertexRowCount,int nodeRow,int nodeRows,int triangles,SceneTree.Part part,boolean materials,long revision) {}
     private long geometryRevision,chunkRevision;
     private final Map<Long,Entry> entries=new HashMap<>();
-    private final Map<Long,Long> versions=new HashMap<>();
-    private final Set<Long> incoming=ConcurrentHashMap.newKeySet();
+    private final TerrainRefreshes refreshes=new TerrainRefreshes();
+    private final Map<Long,Integer> incoming=new ConcurrentHashMap<>();
+    private final Map<Long,Long> editStarted=new HashMap<>();
+    private static final boolean TRACE_EDITS=Boolean.getBoolean("interstellar.traceEdits");
     private final Set<Long> wanted=new HashSet<>();
     private final Set<Long> localWanted=new HashSet<>();
     private WormholePair.Layout layout;
     private final LinkedHashSet<Long> queue=new LinkedHashSet<>();
     private WorldMesh capture;
     private long capturing,captureVersion,published;
+    private boolean captureEdit;
     private int cameraX=Integer.MIN_VALUE,cameraZ,distance,triangleCount,materialChunks;
     private record Window(int x,int z,int radius) {}
     private volatile Window window;
@@ -45,9 +48,18 @@ public final class StreamingTerrain implements AutoCloseable {
         for(int x=-1;x<=1;x++)for(int z=-1;z<=1;z++)dirty(pos.x+x,pos.z+z);
     }
     public static void dirty(int x,int z) {
+        changed(x,z,TerrainRefreshes.CONTENT);
+    }
+    public static void lightingDirty(int x,int z) {changed(x,z,TerrainRefreshes.LIGHT);}
+    public static void edited(net.minecraft.world.BlockView world,BlockPos pos) {
+        var cache=active;if(cache==null||cache.world!=world)return;
+        for(long key:TerrainRefreshes.affected(pos.getX(),pos.getZ()))changed(ChunkPos.getPackedX(key),ChunkPos.getPackedZ(key),TerrainRefreshes.CONTENT|TerrainRefreshes.EDIT);
+        if(TRACE_EDITS)Interstellar.LOGGER.info("Terrain edit received: pos={}, queued={}",pos,cache.queue.size());
+    }
+    private static void changed(int x,int z,int kind) {
         var cache=active;if(cache==null)return;var w=cache.window;
         if(w!=null && (Math.abs((long)x-w.x)<=w.radius+1 && Math.abs((long)z-w.z)<=w.radius+1
-                || WormholePair.active(cache.world)&&WormholePair.contains(cache.world,x,z)))cache.incoming.add(ChunkPos.toLong(x,z));
+                || WormholePair.active(cache.world)&&WormholePair.contains(cache.world,x,z)))cache.incoming.merge(ChunkPos.toLong(x,z),kind,(a,b)->a|b);
     }
     StreamingTerrain(ClientWorld world,BlockPos origin,BlockPos centre) {
         this.world=world;this.origin=origin;this.centre=centre;
@@ -98,9 +110,19 @@ public final class StreamingTerrain implements AutoCloseable {
         var position=BlockPos.ofFloored(client.gameRenderer.getCamera().getPos());
         int x=position.getX()>>4,z=position.getZ()>>4;
         if(x!=cameraX || z!=cameraZ || range!=distance || layout!=WormholePair.layout(world))window(x,z,range);
-        for(var iterator=incoming.iterator();iterator.hasNext();) {
-            long key=iterator.next();iterator.remove();
-            if(wanted.contains(key)){versions.merge(key,1L,Long::sum);queue.add(key);}
+        for(var event:incoming.entrySet()) {
+            long key=event.getKey();int kind=event.getValue();
+            // A concurrent light update must not be erased while draining events.
+            if(!incoming.remove(key,kind))continue;
+            if(wanted.contains(key)) {
+                refreshes.changed(key,kind);queue.add(key);
+                if((kind&TerrainRefreshes.EDIT)!=0 && TRACE_EDITS)editStarted.putIfAbsent(key,System.nanoTime());
+                // Finish a prompt lighting follow-up when it arrives during an edit rebuild.
+                if(capture!=null && capturing==key && captureEdit)refreshes.retry(key,true);
+            }
+        }
+        if(capture!=null && captureVersion!=refreshes.version(capturing)) {
+            refreshes.retry(capturing,captureEdit);capture.close();capture=null;
         }
         boolean indexChanged=false;
         // Unloaded geometry disappears promptly, even if other chunks are waiting to rebuild.
@@ -108,9 +130,11 @@ public final class StreamingTerrain implements AutoCloseable {
             if(WormholePair.active(world)&&WormholePair.contains(world,ChunkPos.getPackedX(key),ChunkPos.getPackedZ(key)))continue;
             var old=entries.put(key,new Entry(0,0,0,0,0,null,false,0));if(old!=null){release(old);indexChanged|=old.part!=null;}
             queue.remove(key);
+            refreshes.remove(key);editStarted.remove(key);
             if(capture!=null && capturing==key){capture.close();capture=null;}
         }
         if(indexChanged)index();
+        if(capture==null) {Long edit=refreshes.nextEdit(this::loaded);if(edit!=null)beginCapture(edit);}
         if(capture==null && !queue.isEmpty()) {
             // Finish the fixed destination set before ordinary camera-window
             // churn. Moving around must not keep missing portal chunks at the tail.
@@ -128,8 +152,8 @@ public final class StreamingTerrain implements AutoCloseable {
         if(capture!=null) {
             capture.advance();
             if(capture.ready()) {
-                if(wanted.contains(capturing) && loaded(capturing) && captureVersion==versions.getOrDefault(capturing,0L))publish(capturing,capture);
-                else if(wanted.contains(capturing))queue.add(capturing);
+                if(wanted.contains(capturing) && loaded(capturing) && captureVersion==refreshes.version(capturing))publish(capturing,capture);
+                else if(wanted.contains(capturing)){queue.add(capturing);refreshes.retry(capturing,captureEdit);}
                 capture.close();capture=null;
             }
         }
@@ -141,7 +165,7 @@ public final class StreamingTerrain implements AutoCloseable {
         }
     }
     private void beginCapture(long key) {
-        capturing=key;queue.remove(key);captureVersion=versions.getOrDefault(key,0L);
+        capturing=key;queue.remove(key);captureVersion=refreshes.version(key);captureEdit=refreshes.begin(key);
         capture=WorldMesh.chunk(world,origin,centre,ChunkPos.getPackedX(key),ChunkPos.getPackedZ(key));
     }
     private boolean loaded(long key) {return world.getChunkManager().isChunkLoaded(ChunkPos.getPackedX(key),ChunkPos.getPackedZ(key));}
@@ -157,7 +181,7 @@ public final class StreamingTerrain implements AutoCloseable {
         for(var iterator=entries.entrySet().iterator();iterator.hasNext();) {
             var entry=iterator.next();if(!wanted.contains(entry.getKey())){release(entry.getValue());iterator.remove();changed=true;}
         }
-        versions.keySet().retainAll(wanted);queue.retainAll(wanted);
+        refreshes.retain(wanted);editStarted.keySet().retainAll(wanted);queue.retainAll(wanted);
         if(capture!=null && !wanted.contains(capturing)){capture.close();capture=null;}
         var add=new ArrayList<Long>();for(long key:wanted)if(!entries.containsKey(key) && (capture==null || key!=capturing))add.add(key);
         add.sort(Comparator.comparingLong(key->{long dx=ChunkPos.getPackedX(key)-x,dz=ChunkPos.getPackedZ(key)-z;return dx*dx+dz*dz;}));queue.addAll(add);
@@ -181,6 +205,8 @@ public final class StreamingTerrain implements AutoCloseable {
             next=new Entry(t,tr,n,nr,count,part,mesh.hasMaterials(),chunkRevision);
         }
         entries.put(key,next);if(old!=null)release(old);triangleCount+=count;if(next.materials)materialChunks++;index();
+        Long edited=editStarted.remove(key);
+        if(edited!=null)Interstellar.LOGGER.info("Terrain edit published: chunk=({}, {}), latencyMs={}, revision={}, queued={}",ChunkPos.getPackedX(key),ChunkPos.getPackedZ(key),(System.nanoTime()-edited)/1e6,next.revision,queue.size());
         if(++published<=3 || published%100==0 || ready && Math.abs(ChunkPos.getPackedX(key)-cameraX)<=1 && Math.abs(ChunkPos.getPackedZ(key)-cameraZ)<=1)
             Interstellar.LOGGER.info("Streaming chunk published: ({}, {}), triangles={}, replacement={}, pending={}",ChunkPos.getPackedX(key),ChunkPos.getPackedZ(key),count,old!=null,queue.size());
     }
@@ -199,6 +225,6 @@ public final class StreamingTerrain implements AutoCloseable {
         if(entry.part==null)return;vertexRows.release(entry.vertexRow,entry.vertexRowCount);nodeRows.release(entry.nodeRow,entry.nodeRows);triangleCount-=entry.triangles;if(entry.materials)materialChunks--;
     }
     @Override public void close() {
-        if(active==this)active=null;if(capture!=null)capture.close();vertices.close();nodes.close();entries.clear();incoming.clear();queue.clear();
+        if(active==this)active=null;if(capture!=null)capture.close();vertices.close();nodes.close();entries.clear();incoming.clear();queue.clear();refreshes.clear();editStarted.clear();
     }
 }
