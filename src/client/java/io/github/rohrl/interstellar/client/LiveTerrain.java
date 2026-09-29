@@ -113,6 +113,7 @@ public final class LiveTerrain {
         if(client.world==null || client.player==null)return;
         if(client.currentScreen instanceof DownloadingTerrainScreen)return;
         try {
+            RefreshProfile.beginFrame();
             rendering=true;
             synchronize(client);
             if(!active())return;
@@ -124,7 +125,7 @@ public final class LiveTerrain {
         } catch(RuntimeException failure) {
             Interstellar.LOGGER.error("Live terrain stopped",failure);stop();
             message(client,"Live terrain stopped after a rendering error; see log.");
-        } finally {rendering=false;}
+        } finally {rendering=false;RefreshProfile.endFrame();}
     }
     public static void renderHud(DrawContext context) {
         var client=MinecraftClient.getInstance();

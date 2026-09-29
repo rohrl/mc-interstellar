@@ -1,4 +1,5 @@
 import io.github.rohrl.interstellar.client.WorldRenderBackend;
+import io.github.rohrl.interstellar.client.RefreshProfile;
 import org.lwjgl.system.*;
 import org.lwjgl.vulkan.*;
 import java.util.*;
@@ -8,6 +9,7 @@ import static org.lwjgl.vulkan.KHRAccelerationStructure.*;
 /** Resident compact terrain, independently replaceable chunk BLAS, bounded moving geometry.
  * All mutation follows queue completion; no buffers/structures are allocated on steady frames. */
 final class LiveGeometry implements AutoCloseable {
+    private static final boolean BATCH_UPLOAD=Boolean.parseBoolean(System.getProperty("interstellar.batchTerrainUpload","true"));
     private static final int ROW_BYTES=4092*16,MAX_MOVING=200_000;
     private final Probe vk;
     private final WorldRenderBackend.Terrain source;
@@ -19,14 +21,20 @@ final class LiveGeometry implements AutoCloseable {
     private final Map<Long,Chunk> chunks=new LinkedHashMap<>();
     private final Structure actors=new Structure(false),clouds=new Structure(false);
     final Structure top=new Structure(true);
-    private record Chunk(WorldRenderBackend.Chunk metadata,Structure structure) {}
+    private record Chunk(WorldRenderBackend.Chunk metadata,Structure structure,byte[] shape) {}
+    private static byte[] shape(java.nio.ByteBuffer bytes,int quads) {
+        var positions=java.nio.ByteBuffer.allocate(quads*48);
+        for(int q=0;q<quads;q++)for(int v=0;v<4;v++)for(int axis=0;axis<3;axis++)positions.putInt(bytes.getInt(q*192+v*48+axis*4));
+        try {return java.security.MessageDigest.getInstance("SHA-256").digest(positions.array());}
+        catch(java.security.NoSuchAlgorithmException e){throw new AssertionError(e);}
+    }
     private boolean changed=true;
     private long updateCount;
     float[] checkRay;
     int checkVertex;
 
     LiveGeometry(Probe vk,WorldRenderBackend.Terrain source) {
-        this.vk=vk;this.source=source;
+        this.vk=vk;this.source=source;source.retainUpdates(true);
         try {
         if((long)source.rows()*ROW_BYTES>vk.maxStorageBufferRange)throw new IllegalStateException("GPU storage-buffer range cannot address the retained terrain arena");
         terrain=terrainBuffer((long)source.rows()*ROW_BYTES);
@@ -73,11 +81,16 @@ final class LiveGeometry implements AutoCloseable {
         long started=System.nanoTime();
         var next=source.chunks();var keys=new HashSet<Long>();for(var chunk:next)keys.add(chunk.key());
         for(var iterator=chunks.entrySet().iterator();iterator.hasNext();) {var old=iterator.next();if(!keys.contains(old.getKey())){old.getValue().structure.close();iterator.remove();}}
-        int builds=0;
+        int builds=0,reused=0;
         for(var metadata:next) {
             var old=chunks.get(metadata.key());if(old!=null && old.metadata.equals(metadata))continue;
             ensureIndices(metadata.quads());
-            var bytes=source.read(metadata);
+            long stage=RefreshProfile.start();var bytes=source.read(metadata);
+            byte[] shape=RefreshProfile.experiment("reuse",Boolean.getBoolean("interstellar.reuseTerrainBlas"))?shape(bytes,metadata.quads()):null;
+            boolean reuse=shape!=null && old!=null && old.shape!=null && old.metadata.quads()==metadata.quads() && Arrays.equals(shape,old.shape);
+            RefreshProfile.end(RefreshProfile.READ,stage);
+            stage=RefreshProfile.start();
+            boolean combined=RefreshProfile.experiment("batch",BATCH_UPLOAD) && (long)metadata.quads()*192<=staging.size();
             try {
                 if(checkRay==null)for(int q=0;q<metadata.quads();q++) {
                     int p=q*192;float[] a=new float[3],u=new float[3],v=new float[3];
@@ -92,20 +105,23 @@ final class LiveGeometry implements AutoCloseable {
                     MemoryUtil.memCopy(MemoryUtil.memAddress(bytes)+offset,MemoryUtil.memAddress(staging.mapped()),size);
                     try(MemoryStack s=MemoryStack.stackPush()) {
                         vk.begin();vkCmdCopyBuffer(vk.command,staging.handle(),terrain.handle(),VkBufferCopy.calloc(1,s).srcOffset(0).dstOffset((long)metadata.row()*ROW_BYTES+offset).size(size));
-                        barrier(VK_ACCESS_TRANSFER_WRITE_BIT,VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR|VK_ACCESS_SHADER_READ_BIT);vk.finish();
+                        barrier(VK_ACCESS_TRANSFER_WRITE_BIT,VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR|VK_ACCESS_SHADER_READ_BIT);if(!combined)vk.finish();
                     }
                     offset+=size;
                 }
             } finally {MemoryUtil.memFree(bytes);}
+            RefreshProfile.end(RefreshProfile.TRANSFER,stage);stage=RefreshProfile.start();
             Structure structure=old==null?new Structure(false):old.structure;
-            chunks.put(metadata.key(),new Chunk(metadata,structure));
+            chunks.put(metadata.key(),new Chunk(metadata,structure,shape));
             long vertices=terrain.address()+(long)metadata.row()*ROW_BYTES;
             structure.ensure(metadata.quads()*2,vertices,indices.address());
-            vk.begin();structure.record(metadata.quads()*2,vertices,indices.address());barrier(VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_KHR,VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR);vk.finish();
-            builds++;
+            if(!reuse) {
+                if(!combined)vk.begin();structure.record(metadata.quads()*2,vertices,indices.address());barrier(VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_KHR,VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR);vk.finish();builds++;
+            } else {if(combined)vk.finish();reused++;}
+            RefreshProfile.end(RefreshProfile.BLAS,stage);
         }
         terrainRevision=source.revision();movingRevision=-1;
-        System.out.println("RTX terrain synchronized: residentChunks="+chunks.size()+" rebuilt="+builds+" revision="+terrainRevision+" wallMs="+(System.nanoTime()-started)/1e6);
+        System.out.println("RTX terrain synchronized: residentChunks="+chunks.size()+" rebuilt="+builds+" reused="+reused+" revision="+terrainRevision+" wallMs="+(System.nanoTime()-started)/1e6);
     }
     private Probe.Buffer terrainBuffer(long bytes) {
         if(bytes>vk.maxStorageBufferRange)throw new IllegalStateException("GPU storage-buffer range cannot address the retained terrain arena");
@@ -170,5 +186,5 @@ final class LiveGeometry implements AutoCloseable {
         }
         public void close(){if(handle!=0)vkDestroyAccelerationStructureKHR(vk.device,handle,null);handle=address=0;vk.release(scratch);vk.release(storage);scratch=storage=null;capacity=0;}
     }
-    public void close(){top.close();actors.close();clouds.close();for(var chunk:chunks.values())chunk.structure.close();chunks.clear();vk.release(indices);vk.release(instances);vk.release(staging);vk.release(moving);vk.release(terrain);}
+    public void close(){source.retainUpdates(false);top.close();actors.close();clouds.close();for(var chunk:chunks.values())chunk.structure.close();chunks.clear();vk.release(indices);vk.release(instances);vk.release(staging);vk.release(moving);vk.release(terrain);}
 }

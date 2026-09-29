@@ -168,7 +168,7 @@ public final class VulkanWorldBackend implements WorldRenderBackend {
         }finally{shaderc_result_release(result);shaderc_compile_options_release(options);shaderc_compiler_release(compiler);}
     }
     @Override public void update(float[] triangles,int count,long revision,Map<String,Image> images) {
-        check(vkQueueWaitIdle(vk.queue));
+        long waitStart=io.github.rohrl.interstellar.client.RefreshProfile.start();check(vkQueueWaitIdle(vk.queue));io.github.rohrl.interstellar.client.RefreshProfile.end(io.github.rohrl.interstellar.client.RefreshProfile.WAIT,waitStart);
         if(profile && rendered)previousGpu=completedGpuMillis();
         geometry.update(triangles,count,revision);frameImages=images;
         for(var entry:inputs.entrySet()) {

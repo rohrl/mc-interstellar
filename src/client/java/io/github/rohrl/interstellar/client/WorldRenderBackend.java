@@ -17,6 +17,8 @@ public interface WorldRenderBackend extends AutoCloseable {
         int rows();
         List<Chunk> chunks();
         ByteBuffer read(Chunk chunk);
+        /** Opt in only while a consumer can use freshly published CPU geometry. */
+        default void retainUpdates(boolean enabled) {}
     }
     record Image(int id,int width,int height,int minFilter,int magFilter,int wrapS,int wrapT,int format) {}
     record Scene(Terrain terrain,String opticalSource,Map<String,Image> images,int width,int height,int samples) {}
