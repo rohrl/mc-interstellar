@@ -19,10 +19,10 @@ Implemented:
 
 ## Verification
 
-Both final builds pass117 tests, zero failures/skips; normal jar excludes optional
-backend/Vulkan/shaderc entries. New empty survival world:21.85s /5.77M triangles.
-Final RTX saved-source reload:17.80s locally; remote work continued to43.16s.
-Nether:15.83s /5.70M triangles, actual BH remains RTX. Paired GL/RTX MAE0.00334/255.
+Both final builds pass 117 tests, zero failures/skips; normal jar excludes optional
+backend/Vulkan/shaderc entries. New empty survival world: 21.85s / 5.77M triangles.
+Final RTX saved-source reload: 17.80s locally; remote work continued to 43.16s.
+Nether: 15.83s / 5.70M triangles, actual BH remains RTX. Paired GL/RTX MAE 0.00334/255.
 Other BH/combined-image comparisons and timings are in the report; do not present
 these as a controlled FPS regression study or universal loading bounds.
 
@@ -54,7 +54,8 @@ QA launch scripts are under run/loading-study/. Old checkpoint.md there is a
 mid-task record superseded by this handoff and the report.
 
 JDK C:/Portable/jdks/temurin-21.0.12.1; Python C:/Portable/python-3.11.7/python.exe.
-Use UTF-8 LF writes. At1280×720 GUI2, existing-world experimental confirmation is
+Use explicit UTF-8 reads and LF writes; Python defaults to cp1252 here.
+At 1280×720 GUI2, existing-world experimental confirmation is
 window808,305 (image800,274 plus border8,31). Native creation confirmation is
 window486,363. Verify chat acknowledgements: input can be dropped while GPU setup
 stalls. One early survival fixture teleported into uncleared terrain and died;

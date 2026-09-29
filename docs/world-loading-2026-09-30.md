@@ -1,4 +1,4 @@
-# World-entry preparation and gameplay bug bash â€” 30 September 2026
+# World-entry preparation and gameplay bug bash — 30 September 2026
 
 ## What changes for players
 
@@ -69,12 +69,12 @@ mining, movement and passage. No existing owner world was used for these edits.
 | Check | Observed result |
 |---|---|
 | Item-free entry, first mass, growing source | Loading activates with no items. Eight blocks produce extended lensing; expanding to 64 creates the BH. Source changes reuse the prepared cache. |
-| Horizon editing | Native left-click mining changed64â†’63; right-click replacement restored 64 without inspection/F10. Held blocks and hands remained visible. |
+| Horizon editing | Native left-click mining changed 64 → 63; right-click replacement restored 64 without inspection/F10. Held blocks and hands remained visible. |
 | First and second Rift Pearls with an existing BH | First end stays closed. Second connects automatically. Both portals and the BH render in one continuous world. |
 | Portal relocation and validation | Repeated valid throws replace the oldest end. An overlapping repeat throw is rejected while keeping the existing pair. A terrain-clearance rejection also leaves state intact. |
 | Travel and orientation | Actual movement crosses in both directions, including an off-axis return and a subsequently relocated distant destination. R resets the reported roll. |
 | Distant destination and source-free travel | A newly placed mouth 370 blocks from its partner opens in the background. Leaving all nearby effects does not destroy the cache. One cache instance covered the entire initial placement/relocation sequence. |
-| F4 graphics/gameplay controls | Mass and portal switches work independently. AA cycles4xâ†’8xâ†’Offâ†’Edgeâ†’2xâ†’4x. RTX/OpenGL switch from both F4 and Alt+F12. Settings are saved. |
+| F4 graphics/gameplay controls | Mass and portal switches work independently. AA cycles 4x → 8x → Off → Edge → 2x → 4x. RTX/OpenGL switch from both F4 and Alt+F12. Settings are saved. |
 | Gravity | A sheep starting at Y=67 reached Y=70.833 while being pulled toward the source. An arrow launched with zero X velocity acquired negative X velocity toward the source. Sheep, arrow and trident capture exercised. Capture-off/on controls work. |
 | Glowing entities | Reproduced the detached outline, repaired it, then checked both backends. |
 | Relativistic Sight | Drank the actual potion in survival. W reached 0.99c after 15 seconds; S/A/D also charged in their respective directions. Stopping released the effect. Duration initially 2378 ticks shortly after drinking, 425 ticks near the end, then no active effect after expiry. |
@@ -88,13 +88,13 @@ mining, movement and passage. No existing owner world was used for these edits.
 
 ## Measurements and limits
 
-At 1280Ã—720, render distance 12, 50% optical resolution, fine paths and 4x AA:
+At 1280×720, render distance 12, 50% optical resolution, fine paths and 4x AA:
 
 | Run | Extra preparation phase |
 |---|---:|
 | OpenGL QA reload, roughly 4.4M triangles |13.60s |
 | RTX QA reload, roughly 4.4M triangles |16.54s |
-| Final RTX code, saved source and distant pair |17.80s to gameplay; remote capture continued to43.16s |
+| Final RTX code, saved source and distant pair |17.80s to gameplay; remote capture continued to 43.16s |
 | Final RTX Nether, roughly 5.7M triangles |15.83s |
 | Final RTX return to Overworld |15.92s |
 
@@ -103,7 +103,7 @@ or application startup. They are representative scene measurements, not a bound
 for other worlds. The earlier 19.50s brand-new-world run preceded the expected-chunk
 readiness refinement. The final item-free-world check is recorded below.
 
-Same-frame OpenGL/RTX image mean absolute differences, in0â€“255 RGB units:
+Same-frame OpenGL/RTX image mean absolute differences, in 0–255 RGB units:
 BH **0.00716**, combined pair+BH **0.00562**, Nether BH **0.00334**. The Nether pair
 had no pixel with maximum channel error above 16. These check backend consistency,
 not exact agreement with general relativity or all native rendering features.
