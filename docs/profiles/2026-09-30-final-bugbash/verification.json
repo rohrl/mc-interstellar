@@ -1,0 +1,68 @@
+{
+  "base": "1009750",
+  "qaWorld": "Interstellar Final QA",
+  "builds": {
+    "opengl": {
+      "sha256": "7f2aad9829bcfd857851f7a5e6ec0cad83b1c2eb259df06ed6745738c45c31c3",
+      "tests": {
+        "tests": 117,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "optionalEntries": []
+    },
+    "rtx": {
+      "sha256": "e607945f555b9744bfc645175a3f676456f9fda0a19b8cb30dca238f8a7792b4",
+      "tests": {
+        "tests": 117,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "optionalEntries": [
+        "LiveGeometry$Chunk.class",
+        "LiveGeometry$Structure.class",
+        "LiveGeometry.class",
+        "Probe.class",
+        "VulkanWorldBackend$Pipelines.class",
+        "VulkanWorldBackend$SharedInput.class",
+        "VulkanWorldBackend$TextureImage.class",
+        "VulkanWorldBackend.class"
+      ]
+    }
+  },
+  "settingsRestored": {
+    "interstellar-gravity.json": "456e663137b50208c148a57f869e3db58ff62c53e49ec9bebef22973113c3916",
+    "interstellar-optics.json": "7701058a40253e17d9244e9dcd91c146cb2065fa2986cc4529e9aced349b9d9b",
+    "interstellar-relativity.json": "2d1d82d65d69ff767174e175343e0927d945b05eae23e8a3470201c55f154be5",
+    "interstellar-terrain.json": "be15db53f968b2f4460b5b6ce63aae8583ae57da1458a30fd7f58634d61338a3",
+    "interstellar.json": "d29056bdce4430a01757864895d71066a908235222c83475cb38693a29d01b14",
+    "options.txt": "05e8096eeb10742ccd346f205f826666419536faa4b14d8b5b414349ce72af8c"
+  },
+  "runtime-rtx.logErrors": [],
+  "runtime-fixed.logErrors": [],
+  "aaSequenceBackendInitializations": 1,
+  "comparisons": [
+    {
+      "label": "final-bash-aa8",
+      "quality": "quality=AA=8x, scale=0.5, lensing=true, fine=true, adaptive=true, fastBounds=true, fastFetch=true, emptyCells=true, emptyReach=1024.0, angularCap=0.08, curveFactor=4.0, program=native-mixed-world-quads",
+      "metrics": "RGB_mean_abs_255=0.002833478009259259 RGB_RMSE_255=0.08744211047993515 changedPixels=2985 pixelsMaxErrorAbove16=0"
+    },
+    {
+      "label": "final-bash-aa-off",
+      "quality": "quality=AA=Off, scale=0.5, lensing=true, fine=true, adaptive=true, fastBounds=true, fastFetch=true, emptyCells=true, emptyReach=1024.0, angularCap=0.08, curveFactor=4.0, program=native-mixed-world-quads",
+      "metrics": "RGB_mean_abs_255=0.0032146990740740742 RGB_RMSE_255=0.5278499585144473 changedPixels=284 pixelsMaxErrorAbove16=44"
+    },
+    {
+      "label": "final-bash-aa2",
+      "quality": "quality=AA=2x, scale=0.5, lensing=true, fine=true, adaptive=true, fastBounds=true, fastFetch=true, emptyCells=true, emptyReach=1024.0, angularCap=0.08, curveFactor=4.0, program=native-mixed-world-quads",
+      "metrics": "RGB_mean_abs_255=0.0036650028935185184 RGB_RMSE_255=0.18218647758750028 changedPixels=1993 pixelsMaxErrorAbove16=33"
+    },
+    {
+      "label": "final-bash-aa4",
+      "quality": "quality=AA=4x, scale=0.5, lensing=true, fine=true, adaptive=true, fastBounds=true, fastFetch=true, emptyCells=true, emptyReach=1024.0, angularCap=0.08, curveFactor=4.0, program=native-mixed-world-quads",
+      "metrics": "RGB_mean_abs_255=0.0033112702546296297 RGB_RMSE_255=0.13713519577882366 changedPixels=2484 pixelsMaxErrorAbove16=24"
+    }
+  ]
+}

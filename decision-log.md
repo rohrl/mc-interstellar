@@ -897,3 +897,18 @@ in its separately matched combined-portal scene. Do not extrapolate the confound
 larger gain from early separate launches, or promise universal FPS improvements.
 Quality and optics remain unchanged. Audits, timings, lifecycle checks, optional
 developer switches and limitations are in `docs/incremental-refresh-2026-09-30.md`.
+
+## D102 — Accepted: retain RTX sample capacity when reducing AA (2026-09-30)
+
+The final gameplay bug bash exposed several-second backend recreation when
+reducing AA, even though the existing output buffer could hold the smaller request.
+Keep that allocation when the requested sample count is within capacity. Dispatch
+and resolve still use the requested sample count. Grow/recreate only when capacity
+is insufficient or the output resolution changes; ordinary backend teardown still
+releases it. No shader or OpenGL-only behavior changes.
+
+This retains peak output-buffer memory for that backend lifetime (14 MiB additional
+storage for 8x rather than 4x at the tested 640×360 optical size), avoiding repeated
+terrain BLAS/pipeline initialization. Larger allocations and renderer activation
+can still stall; separating those resources is future work. Runtime paired-image
+checks and the broader gameplay assessment are in `docs/final-bugbash-2026-09-30.md`.

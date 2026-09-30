@@ -1,5 +1,21 @@
 # Progress
 
+## 2026-09-30 — Final bug bash and gameplay assessment
+
+- Exercised automatic masses, native horizon mining/replacement, first/paired
+  Rift Pearls, relocation, crossings both ways, R reset, all AA modes, resolution,
+  renderer switches, actual potion drinking/WASD/expiry, gravity lift and arrows,
+  F10/resource reload, dimension entry/return and saved-world relaunch.
+- Fixed avoidable RTX reinitialization when reducing AA: retain sufficient sample
+  capacity. Final 4x→8x→Off→Edge→2x→4x sequence created only the one necessary
+  larger backend. Four paired-image MAEs are 0.00283–0.00367/255; both builds
+  pass 117 tests. No shader or steady-frame-work changes.
+- No other new blocking fault found in the exercised paths. Assessment prioritizes
+  clearer interaction targeting, portal placement preview and a compact gameplay
+  HUD. These remain proposals; the section rewrite stays deferred.
+- Copied QA world only; client saved/closed, owner settings restored byte-for-byte.
+  See D102 and [the full assessment](docs/final-bugbash-2026-09-30.md).
+
 ## 2026-09-30 — Verified incremental walking refresh improvements
 
 - Keep direct recent CPU geometry handoff to RTX, one combined transfer/build

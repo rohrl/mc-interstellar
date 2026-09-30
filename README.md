@@ -6,6 +6,8 @@ A Minecraft Java mod for educational relativistic optics. Scientific assumptions
 
 ## Start here
 
+- [Final bug bash and gameplay assessment](docs/final-bugbash-2026-09-30.md): combined feature checks, remaining usability priorities, and the fix for avoidable pauses when reducing RTX antialiasing.
+
 - [Incremental refresh experiments](docs/incremental-refresh-2026-09-30.md): measured walking gains from worker packing and direct RTX geometry transfer; rejected trials and the deferred section rewrite.
 
 - [World loading and gameplay bug bash](docs/world-loading-2026-09-30.md): preparation before play in every enabled world, retained caches without items, and fixes for mirrored glowing outlines and cloudless RTX views.

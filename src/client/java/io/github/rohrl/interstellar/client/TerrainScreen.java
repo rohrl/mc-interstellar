@@ -323,7 +323,9 @@ final class TerrainScreen extends Screen {
         }
         int w=Math.max(1,Math.round(client.getWindow().getFramebufferWidth()*scale));
         int h=Math.max(1,Math.round(client.getWindow().getFramebufferHeight()*scale));
-        if(frozenBackend!=null && (backendWidth!=w || backendHeight!=h || worldBackend && backendSamples!=Math.max(2,raySamples()))){cancelBenchmark();closeFrozenBackend();}
+        // Lower AA can reuse the allocated sample capacity. Recreating RTX here
+        // would also rebuild every terrain BLAS and all optical pipelines.
+        if(frozenBackend!=null && (backendWidth!=w || backendHeight!=h || worldBackend && backendSamples<Math.max(2,raySamples()))){cancelBenchmark();closeFrozenBackend();}
         if(target==null || target.textureWidth!=w || target.textureHeight!=h) {
             cancelBenchmark();if(target!=null)target.delete();target=new SimpleFramebuffer(w,h,false,false);
         }

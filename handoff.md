@@ -1,4 +1,4 @@
-# Handoff — Incremental refresh, 30 September 2026
+# Handoff — Final bug bash, 30 September 2026
 
 ## Current state
 
@@ -9,6 +9,21 @@ pushes and autonomous GUI testing remain authorized. No agents.
 Read **D101** and **docs/incremental-refresh-2026-09-30.md**. Compact timing,
 comparison, build/settings evidence and three images are in
 **docs/profiles/2026-09-30-incremental-refresh/**.
+
+Latest follow-up: **D102** and **docs/final-bugbash-2026-09-30.md** record the final
+bug bash and gameplay assessment. Fixed AA reductions rebuilding the RTX backend
+despite sufficient sample capacity. Runtime 4x→8x→Off→Edge→2x→4x creates only the
+necessary initial larger backend; paired images pass, both builds pass117 tests.
+No other new blocking fault found in the exercised paths. Compact HUD, placement
+preview and interaction feedback are recommendations, not an approved new scope.
+
+Final session used **Interstellar Final QA**, copied from Refresh QA. Saved/closed;
+six owner files restored from **run/final-bash/owner-backup/**. Final accepted jars
+and logs are in **run/final-bash/** (superseding refresh-study jars for delivery).
+QA pair is now (41,88.004,.605) and (161,88.255,.5); source64 remains. The QA player
+is back at the lane start. The notes below describe the prior refresh measurements.
+For automated GUI checks, wait for the backend-ready log after renderer activation
+or capacity/resolution growth; commands sent during that setup can be dropped.
 
 ## Delivered choices
 

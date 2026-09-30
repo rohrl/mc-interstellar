@@ -32,7 +32,8 @@ Particles (smoke, flames, potion/explosion effects), beacon beams, portal surfac
 entity hurt/flash overlays, and arbitrary special model/shader layers remain incomplete
 or omitted. Transparent blending has a finite layer budget and imperfect coplanar
 surfaces/boat water masks; water is not physically refracted. Thin secondary images
-and subpixel edges are limited by trace resolution and two-ray AA.
+and subpixel edges remain limited by trace resolution, even with the available
+2x, 4x and 8x AA modes.
 
 Shader packs, alternate renderers and arbitrary resource packs are not broadly
 validated. Rendering order is not exhaustive certification of every status effect.
