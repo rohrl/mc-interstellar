@@ -283,7 +283,7 @@ previews have visual checks rather than a new independent spacetime reference.
 Server entity gravity remains its bounded dominant-source gameplay model; it does
 not use this optical curvature sum or simulate wormhole gravity on mobs.
 
-## Sprint observer frame (D096)
+## Walking observer frame (D096, D103)
 
 Relativistic Sight adds a prescribed horizontal local observer velocity before
 baseline camera-to-GR ray mapping. In flat space this is inverse Lorentz
@@ -293,12 +293,28 @@ approximations remain unchanged. Optical speed is separate from Minecraft
 movement; there is no retarded dynamic-entity history, server-clock modification,
 or combined gravitational spectral transport in this feature.
 
-RGB colour assumes linear spectral samples at 450/550/650 nm and zero at 380/780 nm.
-Full mode uses Doppler D; gentle mode uses D^0.06. The independent exposure cue
+RGB colour assumes linear spectral samples at 450/550/650 nm. D103 replaces the
+original zero-at-380/780-nm cutoff with a fictional weak continuum: at 380 nm its
+amplitude is 0.005 times the average of linear RGB luminance and blue; at 780 nm,
+the same expression uses red. Interpolate to the visible anchors. Below 380 nm
+multiply the boundary amplitude by (wavelength/380)^4; above 780 nm multiply by
+(780/wavelength)^2. These choices keep the model continuous, nonnegative and
+unchanged at the RGB anchors. They are not measured spectra, a thermal-emission
+model, or a reconstruction of UV/IR from Minecraft RGB.
+
+Full mode samples the assumed source spectrum at output wavelength times Doppler
+D; gentle mode uses D^0.06. The independent exposure cue
 uses a compressed bolometric exponent 1.4, bounded log gain, and a highlight
 shoulder. These are explicit display approximations, not exact spectra or
-calibrated radiometry. See [controls and limitations](relativistic-sight.md).
+calibrated radiometry. After display conversion, colour-enabled output has a
+hue-preserving exposure floor: its maximum channel is at least 0.04 times the
+input's maximum display-RGB channel. Black remains black. This deliberately
+preserves nearly black texture detail, even when a real scene might be invisible.
+The model uses three spectral samples, not integrated cone-response functions or
+consistent absolute spectral radiometry. See [controls and limitations](relativistic-sight.md).
 
 Primary background: https://www.spacetimetravel.org/aur ;
+https://www.spacetimetravel.org/ejpvis/ejpvis.pdf (why Doppler visualization needs
+source spectra outside the visible band as well as within it) ;
 https://www.einstein-online.info/en/spotlight/doppler/ ;
 https://github.com/MITGameLab/OpenRelativity . No third-party shader is copied.

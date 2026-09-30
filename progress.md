@@ -1,5 +1,19 @@
 # Progress
 
+## 2026-09-30 — Faint Doppler detail and portal restoration
+
+- Full Doppler colour now shifts weak assumed IR/UV tails into view. A
+  hue-preserving 4% display exposure floor leaves nearly black texture detail;
+  truly black pixels stay black. Shared GL/RTX code; no added rays or passes.
+  These spectra and exposure choices are explicitly approximate (D103).
+- Both builds pass 117 tests; actual GPU checks pass 50 ray references and 54
+  colour contracts. Inspected forward/rear 0.99c views. Paired GL/RTX MAEs are
+  0.000383 and 0.0000224 /255. Timings and unchanged captures are in the
+  [acceptance report](docs/profiles/2026-09-30-spectral-visibility/README.md).
+- Restored the owner's original portal pair in Interstellar Final QA, backed up
+  the moved pair and changed only its coordinates/revision. Runtime checks used
+  a new Spectrum QA copy. Client saved/closed; owner settings restored exactly.
+
 ## 2026-09-30 — Final bug bash and gameplay assessment
 
 - Exercised automatic masses, native horizon mining/replacement, first/paired

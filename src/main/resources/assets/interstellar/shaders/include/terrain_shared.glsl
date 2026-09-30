@@ -959,6 +959,7 @@ vec2 aaOffset(int samples,int index) {
     return vec2(0);
 }
 void main() {
+    if(Diagnostic>5.5) {fragColor=vec4(observerRadiance(Source,vec2(.5)),1);return;}
     if(Diagnostic>4.5) {
         vec2 xy=(screenUv*2.0-1.0)*ViewSlopes.xy;
         vec3 sight=normalize(Forward+(xy.x+ViewSlopes.z)*Right+(-xy.y+ViewSlopes.w)*Up);

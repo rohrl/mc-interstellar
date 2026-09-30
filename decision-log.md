@@ -912,3 +912,20 @@ storage for 8x rather than 4x at the tested 640×360 optical size), avoiding rep
 terrain BLAS/pipeline initialization. Larger allocations and renderer activation
 can still stall; separating those resources is future work. Runtime paired-image
 checks and the broader gameplay assessment are in `docs/final-bugbash-2026-09-30.md`.
+
+## D103 — Accepted: weak assumed IR/UV and faint Doppler detail (2026-09-30)
+
+The owner found Full Doppler shift's black forward/rear regions unhelpful, requested
+nearly black residual detail, and explicitly preferred a physics-informed assumed
+infrared/ultraviolet spectrum. Replace the old visible-only cutoff with continuous
+weak tails around the existing RGB anchors. Shift this fictional spectrum with
+the actual Doppler factor in Full mode; retain Gentle's existing compression.
+Both rendering backends use the same function, with no new passes or ray queries.
+
+RGB cannot specify a real material's invisible spectrum. Tail strength and slopes
+are display choices, documented in `docs/science.md`. A hue-preserving floor of
+4% of each input pixel's peak display channel provides the requested faint trace.
+It is an exposure aid, not inferred physical emission; truly black input remains
+black. Keep the independent brightness control and all aberration/GR mathematics.
+Extend the existing GPU fixture with colour invariants rather than treating a
+visually pleasing result as scientific validation of invented spectra.

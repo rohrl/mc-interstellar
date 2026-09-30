@@ -14,7 +14,7 @@ final class ObserverValidation {
         int fb=GL30.glGenFramebuffers(),colour=GL30.glGenRenderbuffers();
         int oldDraw=GL11.glGetInteger(GL30.GL_DRAW_FRAMEBUFFER_BINDING),oldRead=GL11.glGetInteger(GL30.GL_READ_FRAMEBUFFER_BINDING);
         int oldRb=GL11.glGetInteger(GL30.GL_RENDERBUFFER_BINDING);int[] viewport=new int[4];GL11.glGetIntegerv(GL11.GL_VIEWPORT,viewport);
-        int count=0;double worst=0;
+        int count=0,colours=0;double worst=0;
         try(var pack=new TerrainReplay.PackState()) {
             GL15.glBindBuffer(GL21.GL_PIXEL_PACK_BUFFER,0);
             for(int name:new int[]{GL11.GL_PACK_ROW_LENGTH,GL11.GL_PACK_SKIP_PIXELS,GL11.GL_PACK_SKIP_ROWS})GL11.glPixelStorei(name,0);
@@ -37,13 +37,33 @@ final class ObserverValidation {
                 if(!Double.isFinite(error)||error>1e-4)throw new IllegalStateException("Observer fixture mismatch: beta="+beta+", aberration="+aberration+", error="+error);
                 worst=Math.max(worst,error);count++;
             }
+            // Display contracts, not a claim that the assumed spectra are measured
+            // material properties. Exercise the same radiance code as GL and RTX.
+            shader.getUniformOrDefault("Diagnostic").set(6f);vector(shader,"Forward",axis);
+            for(double beta:new double[]{0,.99,-.99})for(float shift:new float[]{0,.06f,1})for(boolean brightness:new boolean[]{false,true})for(var input:new Point[]{new Point(0,0,0),new Point(.2,.5,.8),new Point(1,1,1)}) {
+                vector(shader,"ObserverVelocity",axis.scale(beta));vector(shader,"Source",input);
+                shader.getUniformOrDefault("ObserverEffects").set(1f,shift,brightness?1f:0f);
+                draw.run();pixel.clear();GL11.glReadPixels(0,0,1,1,GL11.GL_RGBA,GL11.GL_FLOAT,pixel);
+                var actual=new Point(pixel.get(0),pixel.get(1),pixel.get(2));
+                double peak=Math.max(actual.x(),Math.max(actual.y(),actual.z())),inputPeak=Math.max(input.x(),Math.max(input.y(),input.z()));
+                boolean valid=Double.isFinite(peak)&&actual.x()>=0&&actual.y()>=0&&actual.z()>=0&&peak<=1.00001;
+                if(beta==0 || shift==0&&!brightness)valid&=actual.subtract(input).length()<1e-6;
+                if(inputPeak==0)valid&=peak==0;
+                if(shift>0)valid&=peak>=.04*inputPeak-1e-6;
+                if(Math.abs(beta)==.99 && shift==1 && input.x()==1) {
+                    valid&=peak>=.03999&&peak<=.041;
+                    valid&=beta>0?actual.z()>actual.x():actual.x()>actual.z();
+                }
+                if(!valid)throw new IllegalStateException("Observer colour contract: beta="+beta+", shift="+shift+", brightness="+brightness+", input="+input+", actual="+actual);
+                colours++;
+            }
         } finally {
             shader.getUniformOrDefault("Diagnostic").set(0f);vector(shader,"ObserverVelocity",new Point(0,0,0));
             GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER,oldDraw);GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER,oldRead);
             GL30.glBindRenderbuffer(GL30.GL_RENDERBUFFER,oldRb);GL30.glDeleteFramebuffers(fb);GL30.glDeleteRenderbuffers(colour);
             RenderSystem.viewport(viewport[0],viewport[1],viewport[2],viewport[3]);RenderSystem.depthMask(true);
         }
-        String result="Observer fixture: "+count+" rays passed; maximum direction/relative Doppler error="+worst;
+        String result="Observer fixture: "+count+" rays and "+colours+" colour contracts passed; maximum direction/relative Doppler error="+worst;
         Interstellar.LOGGER.info(result);return result;
     }
     private static void vector(ShaderProgram shader,String name,Point p){shader.getUniformOrDefault(name).set((float)p.x(),(float)p.y(),(float)p.z());}
