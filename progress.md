@@ -1,5 +1,14 @@
 # Progress
 
+## 2026-09-30 — Slightly brighter Doppler minimum
+
+- Owner feedback: the darkest trace was still hard to see. Raise the display floor
+  from 4% to 6%, retaining the shifted hue and exact black. Same rendering work.
+- Update existing GPU fixture expectations and current science/feature notes.
+  Both Gradle variants pass 117 tests. No new runtime capture for this small
+  constant adjustment; earlier screenshots and GPU timings remain labeled 4%.
+  Current jars/build logs are in `run/visibility-study/brighter/`.
+
 ## 2026-09-30 — Faint Doppler detail and portal restoration
 
 - Full Doppler colour now shifts weak assumed IR/UV tails into view. A

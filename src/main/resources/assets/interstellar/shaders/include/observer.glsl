@@ -47,10 +47,10 @@ vec3 observerRadiance(vec3 c,vec2 uv) {
     }
     vec3 displayed=pow(max(linear,vec3(0)),vec3(1.0/2.2));
     // Display exposure floor, not extra physical emission: retain the shifted
-    // hue and a 4% trace of texture brightness. Truly black inputs stay black.
+    // hue and a 6% trace of texture brightness. Truly black inputs stay black.
     if(ObserverEffects.y>0.0) {
         float peak=max(displayed.r,max(displayed.g,displayed.b));
-        float trace=.04*max(0.0,max(c.r,max(c.g,c.b)));
+        float trace=.06*max(0.0,max(c.r,max(c.g,c.b)));
         displayed*=max(1.0,trace/max(peak,1e-20));
     }
     return displayed;

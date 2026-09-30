@@ -49,9 +49,9 @@ final class ObserverValidation {
                 boolean valid=Double.isFinite(peak)&&actual.x()>=0&&actual.y()>=0&&actual.z()>=0&&peak<=1.00001;
                 if(beta==0 || shift==0&&!brightness)valid&=actual.subtract(input).length()<1e-6;
                 if(inputPeak==0)valid&=peak==0;
-                if(shift>0)valid&=peak>=.04*inputPeak-1e-6;
+                if(shift>0)valid&=peak>=.06*inputPeak-1e-6;
                 if(Math.abs(beta)==.99 && shift==1 && input.x()==1) {
-                    valid&=peak>=.03999&&peak<=.041;
+                    valid&=peak>=.05999&&peak<=.061;
                     valid&=beta>0?actual.z()>actual.x():actual.x()>actual.z();
                 }
                 if(!valid)throw new IllegalStateException("Observer colour contract: beta="+beta+", shift="+shift+", brightness="+brightness+", input="+input+", actual="+actual);

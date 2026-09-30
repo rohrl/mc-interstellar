@@ -307,7 +307,7 @@ D; gentle mode uses D^0.06. The independent exposure cue
 uses a compressed bolometric exponent 1.4, bounded log gain, and a highlight
 shoulder. These are explicit display approximations, not exact spectra or
 calibrated radiometry. After display conversion, colour-enabled output has a
-hue-preserving exposure floor: its maximum channel is at least 0.04 times the
+hue-preserving exposure floor: its maximum channel is at least 0.06 times the
 input's maximum display-RGB channel. Black remains black. This deliberately
 preserves nearly black texture detail, even when a real scene might be invisible.
 The model uses three spectral samples, not integrated cone-response functions or

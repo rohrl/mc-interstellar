@@ -2,17 +2,22 @@
 
 ## Current state
 
-Branch **codex/incremental-refresh**, following **0732557**. See Git for the
+Branch **codex/incremental-refresh**, following **a4e206c**. See Git for the
 current delivery commit. Branches, pushes and autonomous GUI checks remain
 authorized. No agents. Read **D103**, **docs/relativistic-sight.md** and
 **docs/profiles/2026-09-30-spectral-visibility/README.md** for this change.
 
 Shared observer shader now assumes weak continuous UV/IR tails around the existing
 RGB anchors. Full uses actual Doppler D; Gentle retains D^0.06. A hue-preserving
-4% display peak floor keeps nearly black detail. Black inputs stay black.
+6% display peak floor keeps nearly black detail. Black inputs stay black.
 Spectra and exposure are explicitly approximate; no new rays or passes.
 
-Both builds pass 117 tests. Actual GPU fixture passes 50 independent boost
+Latest owner follow-up raises the floor from 4% to 6% for a little more visibility.
+Both builds pass 117 tests; existing colour-contract expectations updated.
+No new runtime capture for this constant-only tuning. The following runtime
+evidence is from the original 4% acceptance, not a fresh 6% check.
+
+Actual GPU fixture passes 50 independent boost
 comparisons and 54 colour contracts. Forward/rear 0.99c views inspected;
 GL/RTX paired MAEs 0.000383 and 0.0000224 /255. Renderer medians, unadjusted images
 and limitations are in the report. These are not before/after performance data.
@@ -34,9 +39,10 @@ restored byte-for-byte from **run/visibility-study/owner-backup/** (fresh snapsh
 AFTER the owner's play session; do not restore older bug-bash defaults over it).
 Owner settings include fullscreen, Full Doppler, RTX, 4x AA and mass/portals enabled.
 
-Accepted jars: **run/visibility-study/accepted-opengl.jar** and **accepted-rtx.jar**.
-Final build output is RTX. Ordinary jar audited for absent RTX/Vulkan/shaderc
-entries. Logs and helper scripts are under the same ignored study directory.
+Current jars: **run/visibility-study/brighter/accepted-opengl.jar** and
+**accepted-rtx.jar** in the same directory, alongside both build logs.
+Final build output is RTX. The original 4% jars/logs remain in the parent study
+directory; that ordinary jar was audited for absent RTX/Vulkan/shaderc entries.
 Don't rerun restore-portals.py: the one-shot patch already succeeded.
 
 ## Previous completed work / deferred scope

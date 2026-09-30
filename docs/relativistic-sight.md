@@ -83,7 +83,7 @@ beaming, with a highlight shoulder. It is not calibrated radiometry. Both switch
 off preserve the original material colour; aberration can still be shown alone.
 
 With Doppler colour enabled, an additional exposure floor preserves the shifted
-hue and keeps the brightest output channel at least 4% of the original pixel's
+hue and keeps the brightest output channel at least 6% of the original pixel's
 brightest display-RGB channel. This is **a visibility aid**, not a claim about real
 emission or human vision. Dark textures stay proportionally darker; a black input,
 including a black-hole silhouette, stays black. Behind a real fast-moving observer,

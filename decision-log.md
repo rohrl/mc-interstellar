@@ -929,3 +929,10 @@ It is an exposure aid, not inferred physical emission; truly black input remains
 black. Keep the independent brightness control and all aberration/GR mathematics.
 Extend the existing GPU fixture with colour invariants rather than treating a
 visually pleasing result as scientific validation of invented spectra.
+
+Owner brightness follow-up: raise the floor from 4% to 6% of the input's peak
+display channel. The owner still struggled to see the darkest regions. This small
+parameter adjustment preserves spectral hue, exact black and the rendering work.
+Update the existing colour-contract expectations; retain the original 4% captures
+as historical evidence. No new runtime capture is needed for this tuning follow-up
+under the owner's request to reserve screenshot verification for major changes.

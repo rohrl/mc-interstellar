@@ -1,5 +1,10 @@
 # Faint Doppler detail — 30 September 2026
 
+**Brightness follow-up:** the owner requested slightly more visible dark detail,
+so the current floor is **6%**, raised from 4%. The captures, GPU results and timings
+below describe the original 4% acceptance. The follow-up changes only the floor
+constant and fixture expectations; no fresh runtime/image capture was performed.
+
 Full shift previously assumed zero light outside 380–780 nm, producing completely
 black forward and rear regions at high speed. The owner requested nearly black
 detail and an assumed infrared/ultraviolet spectrum. D103 adds weak continuous
