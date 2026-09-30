@@ -23,7 +23,6 @@ abstract class WorldRendererMixin {
     }
     @Inject(method="scheduleChunkRender",at=@At("HEAD"))
     private void interstellar$dirty(int x,int y,int z,boolean important,CallbackInfo ci) {
-        io.github.rohrl.interstellar.client.RefreshProfile.lightSection(x,y,z);
         StreamingTerrain.lightingDirty(x,z);
     }
     @Inject(method="updateBlock",at=@At("HEAD"))

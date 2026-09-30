@@ -6,21 +6,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import static io.github.rohrl.interstellar.scene.TerrainRefreshes.*;
 
 class TerrainRefreshesTest {
-    @Test void lightingBurstsCoalesceButContinuousChangesCannotStarveAndEditsRemainImmediate() {
-        var work=new TerrainRefreshes();
-        work.changed(7,LIGHT,0,true);
-        work.changed(7,LIGHT,80_000_000,true);
-        assertFalse(work.eligible(7,100_000_000));
-        assertTrue(work.eligible(7,180_000_000));
-        work.changed(7,LIGHT,170_000_000,true);
-        work.changed(7,LIGHT,240_000_000,true);
-        assertTrue(work.eligible(7,250_000_000),"Continuous lighting may wait at most 250ms");
-        work.changed(7,CONTENT|EDIT,245_000_000,false);
-        assertTrue(work.eligible(7,245_000_000));
-        assertEquals(7L,work.nextEdit(key->true));
-        work.begin(7);work.changed(7,LIGHT,300_000_000,true);
-        work.retain(Set.of());assertTrue(work.eligible(7,300_000_000));
-    }
     @Test void editJumpsAheadOfBackgroundWorkAndSkipsUnloadedEdits() {
         var work=new TerrainRefreshes();
         for(long i=0;i<600;i++)work.changed(i,CONTENT|LIGHT);

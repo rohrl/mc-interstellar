@@ -870,3 +870,30 @@ The requested gameplay bug bash additionally repaired mirrored Glowing-mask UVs
 and an invalid zero cloud sampler in RTX's cloudless-dimension setup. Runtime
 checks, representative loading/timing results and remaining limits are in
 `docs/world-loading-2026-09-30.md`. Existing rendering/physics roadmap is unchanged.
+
+## D101 — Accepted: measured incremental refresh work, bounded off-thread packing (2026-09-30)
+
+The owner requested trials of five refresh ideas, retaining only verified gains
+with justified complexity and no noticeable gameplay/quality loss. The section
+rewrite was explicitly deferred after roughly 98% of sampled walking captures
+followed whole-column content invalidation.
+
+Keep one recent CPU geometry payload (at most 16 MiB), subscribed to only by RTX,
+with chunk/revision matching and GL readback fallback. Batch a fitting Vulkan
+transfer and BLAS build in one submission. Keep one worker job for quad packing
+and search-tree construction; capture/world reads and GPU publication stay on
+the render thread. Nearby edits bypass the worker. Validate loading, membership
+and content version before publication; invalidate results when version history
+is pruned on window departure. Closing a cache cancels and releases its worker.
+
+Reject notification debounce (no material improvement), position fingerprints for
+BLAS reuse (checking cost exceeded saved work), and a whole-pipeline credit budget
+(similar frame times but fewer updates and more backlog). Trial code is preserved
+in `35e72a8`; none of these rejected mechanisms remain in the delivered source.
+
+The conservative warmed RTX comparison improves mean frame time about 5.3%, p95
+about 9%, and p99 about 11%, with more completed refreshes. OpenGL-only is neutral
+in its separately matched combined-portal scene. Do not extrapolate the confounded
+larger gain from early separate launches, or promise universal FPS improvements.
+Quality and optics remain unchanged. Audits, timings, lifecycle checks, optional
+developer switches and limitations are in `docs/incremental-refresh-2026-09-30.md`.

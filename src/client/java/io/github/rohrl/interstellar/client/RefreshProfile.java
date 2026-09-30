@@ -12,9 +12,6 @@ public final class RefreshProfile {
     public static final int CAPTURE=0,PACK=1,TREE=2,PUBLISH=3,READ=4,TRANSFER=5,BLAS=6,WAIT=7;
     private static final long[] stages=new long[8];
     private static BufferedWriter output;
-    private static BufferedWriter columns;
-    private static final java.util.Map<Long,Long> sectionChanges=new java.util.concurrent.ConcurrentHashMap<>();
-    private static final java.util.Map<Long,Long> columnVersions=new java.util.HashMap<>();
     private static long previous,start,wall,frames;
     private static double interval;
     private static int queue,published,cancelled;
@@ -22,25 +19,6 @@ public final class RefreshProfile {
     private static java.util.Set<String> experiments;
     private static long nextControl;
     private static String previousControl="";
-    private static long workCredit,captureLimit=5_000_000L;
-    static long captureBudget(){return captureLimit;}
-    public static void lightSection(int x,int y,int z) {
-        if(ENABLED)sectionChanges.merge(net.minecraft.util.math.ChunkPos.toLong(x,z),1L<<(y+32),(a,b)->a|b);
-    }
-    static void column(long key,long version,boolean existing) {
-        if(!ENABLED || failed)return;
-        try {
-            if(columns==null) {
-                Path path=Path.of(System.getProperty("interstellar.refreshProfile")+".columns.csv");
-                if(path.getParent()!=null)Files.createDirectories(path.getParent());
-                columns=Files.newBufferedWriter(path);columns.write("wall,key,existing,content,sections\n");
-                Runtime.getRuntime().addShutdownHook(new Thread(()->{try{columns.close();}catch(Exception ignored){}},"Interstellar column profile close"));
-            }
-            Long old=columnVersions.put(key,version),mask=sectionChanges.remove(key);
-            columns.write(System.currentTimeMillis()+","+key+","+existing+","+(old==null||old!=version)+","+(mask==null?0:Long.bitCount(mask))+"\n");
-            columns.flush();
-        }catch(Exception e){failed=true;Interstellar.LOGGER.warn("Column profiling disabled",e);}
-    }
     /** Developer-only A/B switches, read only when an explicit control path is supplied. */
     public static boolean experiment(String name,boolean fallback){return experiments==null?fallback:experiments.contains(name);}
     private RefreshProfile() {}
@@ -61,11 +39,6 @@ public final class RefreshProfile {
                 }
             }catch(java.io.IOException ignored){}
         }
-        if(experiment("budget",false) && MinecraftClient.getInstance().currentScreen==null) {
-            long spent=stages[CAPTURE]+stages[PUBLISH]+stages[READ]+stages[TRANSFER]+stages[BLAS];
-            if(!experiment("worker",false))spent+=stages[PACK]+stages[TREE];
-            workCredit=Math.min(5_000_000L,workCredit+5_000_000L-spent);captureLimit=Math.max(0,workCredit);
-        } else {workCredit=0;captureLimit=5_000_000L;}
         Arrays.fill(stages,0);published=cancelled=0;
     }
     static void published(){if(ENABLED)published++;}

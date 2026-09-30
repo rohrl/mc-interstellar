@@ -1,5 +1,26 @@
 # Progress
 
+## 2026-09-30 — Verified incremental walking refresh improvements
+
+- Keep direct recent CPU geometry handoff to RTX, one combined transfer/build
+  submission, and one bounded worker for packing/search-tree construction.
+  Near edits remain synchronous; worker results are validated before publication.
+- Warmed same-client RTX walking: about 5.3% lower mean frame time (5.6% more FPS),
+  9% better p95 and 11% better p99, with about 7% more columns published per leg.
+  No geometry, quality, range or optical-shader changes.
+- OpenGL-only alternating comparison shows effectively unchanged frame time.
+  At least 700 direct payloads match GL readback byte-for-byte; paired-image MAE
+  0.00172/255 during terrain streaming and 0.00199/255 after a portal crossing.
+  Near edit publication remains about 23 ms in the controlled RTX command test.
+- Reject lighting coalescing, fingerprint-based BLAS reuse and the whole-pipeline
+  budget: no useful gain or worse backlog. Owner deferred section storage after
+  approximately 98% whole-column invalidation in the sampled walking captures.
+- Both builds pass 117 tests. Portal relocation, F10 and resource reload recover.
+  Final review guards stale worker results after window leave/re-entry; built in
+  both variants, exact rare race not forcibly reproduced. Client saved/closed,
+  owner settings restored; original worlds and AA work preserved.
+  See D101 and [measurements and decisions](docs/incremental-refresh-2026-09-30.md).
+
 ## 2026-09-30 — World-entry preparation and gameplay bug bash
 
 - Every enabled world prepares its nearby native geometry and first GPU frame before

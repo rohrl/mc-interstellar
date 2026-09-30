@@ -6,6 +6,8 @@ A Minecraft Java mod for educational relativistic optics. Scientific assumptions
 
 ## Start here
 
+- [Incremental refresh experiments](docs/incremental-refresh-2026-09-30.md): measured walking gains from worker packing and direct RTX geometry transfer; rejected trials and the deferred section rewrite.
+
 - [World loading and gameplay bug bash](docs/world-loading-2026-09-30.md): preparation before play in every enabled world, retained caches without items, and fixes for mirrored glowing outlines and cloudless RTX views.
 
 - [World preparation fixes and measurements](docs/world-preparation-2026-09-29.md): dense-world storage growth, fair capture scheduling and lossless capture optimizations; approximately 28–33 seconds to an open passage in the final representative checks.

@@ -116,9 +116,6 @@ final class WorldMesh implements VertexConsumer,AutoCloseable {
     String status() {return streaming!=null?streaming.status():ready()?"Native mesh: "+count+" triangles | "+missingSections+" missing sections"+(entities==null?"": " | "+entities.status()):
             "Capturing native mesh: "+(100L*cursor/total)+"%";}
     void advance() {
-        advance(5_000_000L);
-    }
-    void advance(long captureBudget) {
         if(streaming!=null) {
             streaming.advance();triangleTexture=streaming.triangleTexture();nodeTexture=streaming.nodeTexture();compactNodeTexture=streaming.compactNodeTexture();nodeCount=streaming.nodeCount;extent=streaming.extent;return;
         }
@@ -127,7 +124,7 @@ final class WorldMesh implements VertexConsumer,AutoCloseable {
         if(viewDistance>16)throw new IllegalStateException("Native mesh reference supports render distance up to 16 chunks; lower it and reopen");
         var manager=MinecraftClient.getInstance().getBlockRenderManager();
         var pos=new BlockPos.Mutable();
-        long deadline=System.nanoTime()+captureBudget;
+        long deadline=System.nanoTime()+5_000_000;
         int cachedChunk=-1;
         net.minecraft.world.chunk.WorldChunk terrain=null;
         net.minecraft.client.render.block.BlockModelRenderer.enableBrightnessCache();

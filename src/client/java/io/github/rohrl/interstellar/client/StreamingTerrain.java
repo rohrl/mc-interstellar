@@ -24,12 +24,12 @@ public final class StreamingTerrain implements AutoCloseable {
     private long recentKey,recentRevision;
     private float[] recentData;
     private long auditedUpdates;
+    private static final boolean MESH_WORKER=Boolean.parseBoolean(System.getProperty("interstellar.meshWorker","true"));
     private static final boolean DIRECT_UPDATES=Boolean.parseBoolean(System.getProperty("interstellar.directTerrainUpdates","true"));
     private final Map<Long,Entry> entries=new HashMap<>();
     private final TerrainRefreshes refreshes=new TerrainRefreshes();
     private final Map<Long,Integer> incoming=new ConcurrentHashMap<>();
     private final Map<Long,Long> editStarted=new HashMap<>();
-    private static final boolean COALESCE_LIGHTING=Boolean.getBoolean("interstellar.coalesceLighting");
     private static final boolean TRACE_EDITS=Boolean.getBoolean("interstellar.traceEdits");
     private static final boolean PREP_PROFILE=Boolean.getBoolean("interstellar.profilePreparation");
     // Opt-out reference switches are for developer A/B measurements only.
@@ -47,8 +47,9 @@ public final class StreamingTerrain implements AutoCloseable {
     private boolean buildingEdit;
     private record Built(float[] data,float[] nodes,int count,boolean materials,long blocks,long enclosed,long packTime,long treeTime) {}
     private static Built build(float[] triangles,int count,boolean materials,long blocks,long enclosed) {
-        long start=RefreshProfile.start();var data=QuadVertices.pack(triangles,count);long packed=RefreshProfile.start();
-        var tree=new MeshTree(data,count/2,4);var nodes=tree.nodes();long finished=RefreshProfile.start();
+        boolean timed=PREP_PROFILE || RefreshProfile.ENABLED;
+        long start=timed?System.nanoTime():0;var data=QuadVertices.pack(triangles,count);long packed=timed?System.nanoTime():0;
+        var tree=new MeshTree(data,count/2,4);var nodes=tree.nodes();long finished=timed?System.nanoTime():0;
         return new Built(data,nodes,count,materials,blocks,enclosed,packed-start,finished-packed);
     }
     private void finishBuilding() {
@@ -61,10 +62,12 @@ public final class StreamingTerrain implements AutoCloseable {
     }
     private boolean prepare(long key,WorldMesh mesh) {
         // Capture and GPU mutation stay on the render thread. Workers receive only arrays/scalars.
-        if(building!=null)return false;
+        boolean urgent=captureEdit && Math.abs(ChunkPos.getPackedX(key)-cameraX)<=1 && Math.abs(ChunkPos.getPackedZ(key)-cameraZ)<=1;
+        boolean asynchronous=!urgent && RefreshProfile.experiment("worker",MESH_WORKER);
+        if(asynchronous && building!=null)return false;
         var triangles=mesh.triangleData();int count=mesh.triangleCount();boolean materials=mesh.hasMaterials();
         long blocks=mesh.modelBlocks,enclosed=mesh.enclosedBlocks;
-        if(!captureEdit && RefreshProfile.experiment("worker",Boolean.getBoolean("interstellar.meshWorker"))) {
+        if(asynchronous) {
             if(meshWorker==null)meshWorker=java.util.concurrent.Executors.newSingleThreadExecutor(r->{var t=new Thread(r,"Interstellar mesh packing");t.setDaemon(true);return t;});
             buildingKey=key;buildingVersion=captureVersion;buildingEdit=captureEdit;
             building=meshWorker.submit(()->build(triangles,count,materials,blocks,enclosed));
@@ -154,7 +157,7 @@ public final class StreamingTerrain implements AutoCloseable {
         }
         return captured/(double)total;
     }
-    // Diagnostic export reads only occupied rows; normal capture retains no extra CPU geometry.
+    // Diagnostic export reads occupied rows; RTX may retain one bounded recent CPU update.
     int[][] replaySpans() {return entries.entrySet().stream().sorted(Map.Entry.comparingByKey())
         .filter(e->e.getValue().triangles>0).map(e->new int[]{e.getValue().vertexRow,e.getValue().triangles/2}).toArray(int[][]::new);}
     WorldRenderBackend.Terrain backendTerrain() {
@@ -169,8 +172,8 @@ public final class StreamingTerrain implements AutoCloseable {
                     var bytes=org.lwjgl.system.MemoryUtil.memAlloc(recentData.length*4).order(java.nio.ByteOrder.nativeOrder());
                     bytes.asFloatBuffer().put(recentData);recentData=null;
                     if(RefreshProfile.experiment("audit",Boolean.getBoolean("interstellar.auditDirectUpdates"))) {
-                        var proof=readGpu(chunk);
-                        try {for(int i=0;i<bytes.capacity();i+=4)if(bytes.getInt(i)!=proof.getInt(i))throw new IllegalStateException("Direct terrain byte mismatch: chunk="+chunk.key()+" offset="+i);}
+                        java.nio.ByteBuffer proof=null;
+                        try {proof=readGpu(chunk);for(int i=0;i<bytes.capacity();i+=4)if(bytes.getInt(i)!=proof.getInt(i))throw new IllegalStateException("Direct terrain byte mismatch: chunk="+chunk.key()+" offset="+i);}
                         catch(RuntimeException e){org.lwjgl.system.MemoryUtil.memFree(bytes);throw e;}
                         finally {org.lwjgl.system.MemoryUtil.memFree(proof);}
                         if(++auditedUpdates==1 || auditedUpdates%100==0)Interstellar.LOGGER.info("Direct terrain byte audit: {} matching updates",auditedUpdates);
@@ -208,8 +211,7 @@ public final class StreamingTerrain implements AutoCloseable {
             // A concurrent light update must not be erased while draining events.
             if(!incoming.remove(key,kind))continue;
             if(wanted.contains(key)) {
-                boolean far=Math.abs(ChunkPos.getPackedX(key)-cameraX)>1 || Math.abs(ChunkPos.getPackedZ(key)-cameraZ)>1;
-                refreshes.changed(key,kind,System.nanoTime(),RefreshProfile.experiment("coalesce",COALESCE_LIGHTING) && far);queue.add(key);
+                refreshes.changed(key,kind);queue.add(key);
                 if((kind&TerrainRefreshes.EDIT)!=0 && TRACE_EDITS)editStarted.putIfAbsent(key,System.nanoTime());
                 // Finish a prompt lighting follow-up when it arrives during an edit rebuild.
                 if(capture!=null && capturing==key && captureEdit)refreshes.retry(key,true);
@@ -230,10 +232,10 @@ public final class StreamingTerrain implements AutoCloseable {
             if(capture!=null && capturing==key){capture.close();capture=null;}
         }
         if(indexChanged)index();
-        if(capture==null) {Long edit=refreshes.nextEdit(key->loaded(key) && (!FAIR_PREPARATION || Math.abs(ChunkPos.getPackedX(key)-cameraX)<=1 && Math.abs(ChunkPos.getPackedZ(key)-cameraZ)<=1));if(edit!=null)beginCapture(edit);}
+        if(capture==null) {Long edit=refreshes.nextEdit(key->available(key) && (!FAIR_PREPARATION || Math.abs(ChunkPos.getPackedX(key)-cameraX)<=1 && Math.abs(ChunkPos.getPackedZ(key)-cameraZ)<=1));if(edit!=null)beginCapture(edit);}
         if(capture==null && client.currentScreen instanceof WorldPreparationScreen) {
             // World entry waits only for the local view; remote portals open later.
-            for(long key:queue)if(localWanted.contains(key) && loaded(key)) {
+            for(long key:queue)if(localWanted.contains(key) && available(key)) {
                 var entry=entries.get(key);
                 if(entry==null || entry.revision==0){beginCapture(key);break;}
             }
@@ -243,25 +245,25 @@ public final class StreamingTerrain implements AutoCloseable {
             // churn. Moving around must not keep missing portal chunks at the tail.
             for(var chunk:WormholePair.chunks(world)) {
                 long key=chunk.toLong();var entry=entries.get(key);
-                if((entry==null || entry.revision==0) && loaded(key)) {beginCapture(key);break;}
+                if((entry==null || entry.revision==0) && available(key)) {beginCapture(key);break;}
             }
         }
         if(capture==null && !queue.isEmpty()) {
             if(FAIR_PREPARATION)for(long key:queue) {
                 var entry=entries.get(key);
-                if((entry==null || entry.revision==0) && loaded(key)){beginCapture(key);break;}
+                if((entry==null || entry.revision==0) && available(key)){beginCapture(key);break;}
             }
         }
-        if(capture==null && FAIR_PREPARATION) {Long edit=refreshes.nextEdit(this::loaded);if(edit!=null)beginCapture(edit);}
+        if(capture==null && FAIR_PREPARATION) {Long edit=refreshes.nextEdit(this::available);if(edit!=null)beginCapture(edit);}
         if(capture==null && !queue.isEmpty()) {
             for(var iterator=queue.iterator();iterator.hasNext();) {
-                long key=iterator.next();if(!loaded(key) || !refreshes.eligible(key,System.nanoTime()))continue;
+                long key=iterator.next();if(!available(key))continue;
                 iterator.remove();beginCapture(key);break;
             }
         }
         if(capture!=null) {
             long profileStart=PREP_PROFILE?System.nanoTime():0;
-            long refreshStart=RefreshProfile.start();capture.advance(captureEdit?5_000_000L:RefreshProfile.captureBudget());RefreshProfile.end(RefreshProfile.CAPTURE,refreshStart);
+            long refreshStart=RefreshProfile.start();capture.advance();RefreshProfile.end(RefreshProfile.CAPTURE,refreshStart);
             if(PREP_PROFILE)captureNanos+=System.nanoTime()-profileStart;
             if(capture.ready()) {
                 if(wanted.contains(capturing) && loaded(capturing) && captureVersion==refreshes.version(capturing)) {if(!prepare(capturing,capture))return;}
@@ -285,9 +287,9 @@ public final class StreamingTerrain implements AutoCloseable {
     }
     private void beginCapture(long key) {
         capturing=key;queue.remove(key);captureVersion=refreshes.version(key);captureEdit=refreshes.begin(key);
-        var previous=entries.get(key);RefreshProfile.column(key,captureVersion,previous!=null && previous.revision!=0);
         capture=WorldMesh.chunk(world,origin,centre,ChunkPos.getPackedX(key),ChunkPos.getPackedZ(key));
     }
+    private boolean available(long key) {return loaded(key) && (building==null || key!=buildingKey || buildingVersion!=refreshes.version(key));}
     private boolean loaded(long key) {return world.getChunkManager().isChunkLoaded(ChunkPos.getPackedX(key),ChunkPos.getPackedZ(key));}
     private void window(int x,int z,int range) {
         layout=WormholePair.layout(world);
@@ -301,6 +303,9 @@ public final class StreamingTerrain implements AutoCloseable {
         for(var iterator=entries.entrySet().iterator();iterator.hasNext();) {
             var entry=iterator.next();if(!wanted.contains(entry.getKey())){release(entry.getValue());iterator.remove();changed=true;}
         }
+        // retain() forgets versions outside the window. Never let a late worker
+        // result match a recycled version if the camera returns before it finishes.
+        if(building!=null && !wanted.contains(buildingKey))buildingVersion=-1;
         refreshes.retain(wanted);editStarted.keySet().retainAll(wanted);queue.retainAll(wanted);
         if(capture!=null && !wanted.contains(capturing)){capture.close();capture=null;}
         var add=new ArrayList<Long>();for(long key:wanted)if(!entries.containsKey(key) && (capture==null || key!=capturing) && (building==null || key!=buildingKey))add.add(key);
@@ -338,7 +343,7 @@ public final class StreamingTerrain implements AutoCloseable {
         }
         triangleCount+=count;if(next.materials)materialChunks++;index();
         if(PREP_PROFILE) {
-            publishNanos+=System.nanoTime()-profileStart;
+            publishNanos+=System.nanoTime()-profileStart+mesh.packTime+mesh.treeTime;
             modelBlocks+=mesh.blocks;enclosedBlocks+=mesh.enclosed;
             if(published%100==0)Interstellar.LOGGER.info("Preparation profile: unique={}, published={}, abandoned={}, triangles={}, captureMs={}, publishMs={}, vertexFree={}, vertexLargest={}, nodeFree={}, queued={}, wallMs={}",entries.size(),published+1,abandoned,triangleCount,captureNanos/1e6,publishNanos/1e6,vertexRows.freeRows(),vertexRows.largestFree(),nodeRows.freeRows(),queue.size(),(System.nanoTime()-started)/1e6);
             if(published%100==0)Interstellar.LOGGER.info("Preparation model work: blocks={}, enclosed={}, audit={}",modelBlocks,enclosedBlocks,Boolean.getBoolean("interstellar.auditEnclosed"));

@@ -1,62 +1,64 @@
-# Handoff — World loading and bug bash, 30 September 2026
+# Handoff — Incremental refresh, 30 September 2026
 
 ## Current state
 
-Branch **codex/world-preparation**, based on **76db147**. See Git for the delivery
-commit. Branches/pushes and autonomous runtime testing are authorized. No agents.
-Read **D100** and **docs/world-loading-2026-09-30.md**; compact evidence and five
-screenshots are in **docs/profiles/2026-09-30-world-loading/**.
+Branch **codex/incremental-refresh**, based on **37733f7**. See Git for the delivery
+commit. Experimental implementations are preserved in **35e72a8**. Branches,
+pushes and autonomous GUI testing remain authorized. No agents.
 
-Implemented:
-- Enabled worlds prepare local terrain and one GPU frame after vanilla loading,
-  even without items. Continue in background / Escape yields early; disabled entry
-  skips preparation. Damage/errors also release the loading screen.
-- Native expected-chunk readiness avoids finishing on the first packet batch.
-  Local work precedes remote portal capture. Caches survive source-free periods
-  and out-of-range views; resource reload recovers automatically.
-- Fixed Glowing outlines mirrored vertically, and RTX cloudless-dimension fallback
-  from an invalid zero cloud texture. Native cloud texture stays bound when empty.
+Read **D101** and **docs/incremental-refresh-2026-09-30.md**. Compact timing,
+comparison, build/settings evidence and three images are in
+**docs/profiles/2026-09-30-incremental-refresh/**.
 
-## Verification
+## Delivered choices
 
-Both final builds pass 117 tests, zero failures/skips; normal jar excludes optional
-backend/Vulkan/shaderc entries. New empty survival world: 21.85s / 5.77M triangles.
-Final RTX saved-source reload: 17.80s locally; remote work continued to 43.16s.
-Nether: 15.83s / 5.70M triangles, actual BH remains RTX. Paired GL/RTX MAE 0.00334/255.
-Other BH/combined-image comparisons and timings are in the report; do not present
-these as a controlled FPS regression study or universal loading bounds.
+- Direct recent CPU geometry to RTX, bounded to one 16 MiB payload; revision/key
+  match or GL readback fallback. No handoff payload retained in OpenGL-only mode.
+- Combine fitting Vulkan upload and BLAS build in one submission.
+- One worker packs quads/builds the search tree. World reads/capture and GPU work
+  remain on the render thread. Near edits bypass it. Validate results before
+  publication and invalidate a job if its chunk leaves the retained window.
+- Reject lighting debounce, position fingerprints/BLAS reuse, and total-pipeline
+  budgeting. **Owner explicitly deferred the section-storage rewrite**: roughly
+  98% of sampled walking captures followed whole-column content invalidation.
 
-Bug bash covered native horizon mining/replacement, sources8→64, first/paired
-pearls beside a BH, both portals visible, oldest-mouth relocation, rejected overlap,
-distant relocation and actual crossings both ways, R upright, F4/Alt+F12 controls,
-all AA levels, mob lift and arrow/trident gravity/capture, corrected Glowing outlines,
-actual potion walking W/A/S/D to0.99c and two-minute expiry, F10 recovery, F3+T,
-respawn, dimension changes, early loading exit and entry with effects off.
+## Verification and limitations
 
-Remaining: rapid command teleports can expose missing geometry until streaming
-catches up (already deferred). Single-player/dev GPU only; no exhaustive weather,
-leash/fishing, multiplayer, shader-pack or resource-pack certification. Existing
-capacity/range limits remain. Further roadmap is unchanged.
+Warmed same-client RTX walking: mean 19.90→18.84 ms (~5.6% more FPS), p95 ~9%
+better, p99 ~11% better, ~7% more published columns per leg. Do not repeat the
+confounded early separate-launch claim of ~25% FPS improvement.
 
-## Preservation and runtime
+OpenGL-only is neutral: 64.52 vs 64.46 ms in its heavier local-portal view.
+These are matched comparisons within each client, not equivalent scenes across
+backends. 700+ direct updates match GL bytes. Paired image MAE 0.00172/255 during
+streaming and 0.00199/255 after actual crossing. RTX near command edits publish
+in ~23 ms; native pearl relocation, F10 off/on and F3+T recover correctly.
 
-Client saved/closed. Original **New World**, .idea and AA branch **8ad46ebd** untouched.
-Only **Interstellar Loading Fresh 2026-** (native name field truncated; seed
--5073909985471291755) and **Interstellar Empty Loading QA** (seed4087341643980156325)
-were opened/changed. The first contains test fixtures and a pair at(271,93.028,.5)
-and(641,93.028,.5), plus masses in Overworld/Nether; second has empty inventory/no
-items. The gameplay world is saved back in the Overworld.
+Final late-window worker guard was added after the runtime/timing matrix and
+built in both variants; the rare exact race was not forcibly reproduced.
+Both delivery builds pass 117 tests, zero failures/errors/skips. Normal jar has
+no optional backend/Vulkan/shaderc entries. No shader/quality/range changes.
+No universal FPS guarantee, exhaustive multiplayer or low-core CPU testing.
 
+## Preservation and resuming
+
+Client saved/closed. Only **Interstellar Refresh QA**, a copy of the previous
+loading fixture, changed. Owner worlds, .idea and AA work **8ad46ebd** untouched.
 Owner options and interstellar*.json restored byte-for-byte from
-**run/loading-study/owner-backup/**. Final build artifact is RTX; accepted normal
-copy: **run/loading-study/accepted-opengl.jar**. Both builds/logs, screenshots and
-QA launch scripts are under run/loading-study/. Old checkpoint.md there is a
-mid-task record superseded by this handoff and the report.
+**run/refresh-study/owner-backup/**; hashes are in verification.json.
+
+Final build artifact is RTX. Accepted jars: **run/refresh-study/accepted-rtx.jar**
+and **accepted-opengl.jar**. Raw CSV/logs/scripts are under run/refresh-study/;
+checkpoint.md there is obsolete. Developer opt-outs and analyzer usage are in
+the report. Control mode reset to default; no profiling enabled in normal launch.
+
+QA lane: x=.5, y=66, z=-90.5, yaw/pitch0; W/S18s each. Mass64 at x5..8,
+y68..71,z18..21. Relocated portal pair at (641,93.028,.5) and
+(41,88.432,.5915). Floating glass launch walls are test fixtures only.
+Seed -5073909985471291755. QA player saved in creative at the lane start.
 
 JDK C:/Portable/jdks/temurin-21.0.12.1; Python C:/Portable/python-3.11.7/python.exe.
-Use explicit UTF-8 reads and LF writes; Python defaults to cp1252 here.
-At 1280×720 GUI2, existing-world experimental confirmation is
-window808,305 (image800,274 plus border8,31). Native creation confirmation is
-window486,363. Verify chat acknowledgements: input can be dropped while GPU setup
-stalls. One early survival fixture teleported into uncleared terrain and died;
-respawned, corrected the fixture, and repeated potion testing successfully.
+Use explicit UTF-8 and LF. Final normal build used the optional-free source set;
+final RTX build followed it. Preserve ordinary/Vulkan-free packaging.
+The larger product roadmap is unchanged; no further optimization is pre-approved
+solely by this handoff. Ask the owner what to prioritize next if no new request.

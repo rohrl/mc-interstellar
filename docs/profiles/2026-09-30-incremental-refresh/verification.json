@@ -1,0 +1,82 @@
+{
+  "base": "37733f7",
+  "trials": "35e72a8",
+  "builds": {
+    "gl": {
+      "tests": {
+        "tests": 117,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "sha256": "a2a13c80e1b6c97aca2ca963cd148d0614325c001b43a0bbc9e1f1f4bf2cfbcb",
+      "optionalEntries": []
+    },
+    "rtx": {
+      "tests": {
+        "tests": 117,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "sha256": "1a737a26fdcf2535122b93a52d746429f40eb6bf49c4d20ce0458d8f1d85cea0",
+      "optionalEntries": [
+        "LiveGeometry$Chunk.class",
+        "LiveGeometry$Structure.class",
+        "LiveGeometry.class",
+        "Probe.class",
+        "VulkanWorldBackend$Pipelines.class",
+        "VulkanWorldBackend$SharedInput.class",
+        "VulkanWorldBackend$TextureImage.class",
+        "VulkanWorldBackend.class"
+      ]
+    }
+  },
+  "restoredSettings": {
+    "interstellar-gravity.json": "456e663137b50208c148a57f869e3db58ff62c53e49ec9bebef22973113c3916",
+    "interstellar-optics.json": "7701058a40253e17d9244e9dcd91c146cb2065fa2986cc4529e9aced349b9d9b",
+    "interstellar-relativity.json": "2d1d82d65d69ff767174e175343e0927d945b05eae23e8a3470201c55f154be5",
+    "interstellar-terrain.json": "be15db53f968b2f4460b5b6ce63aae8583ae57da1458a30fd7f58634d61338a3",
+    "interstellar.json": "d29056bdce4430a01757864895d71066a908235222c83475cb38693a29d01b14",
+    "options.txt": "05e8096eeb10742ccd346f205f826666419536faa4b14d8b5b414349ce72af8c"
+  },
+  "editPublicationMs": {
+    "final-rtx:reference": [
+      23.1706,
+      22.1848,
+      24.2755,
+      22.5878,
+      22.5093,
+      24.173,
+      22.6933,
+      23.1501
+    ],
+    "final-rtx:optimized": [
+      23.9895,
+      23.5376,
+      23.2775,
+      22.6595,
+      22.4214,
+      22.3984,
+      22.4656,
+      23.4435
+    ],
+    "final-gl:gl-worker": [
+      49.747,
+      51.8409,
+      49.3877,
+      47.762,
+      47.9439,
+      51.6982,
+      50.0141,
+      53.9513
+    ]
+  },
+  "final-rtxFailures": [],
+  "byteAuditUpdatesReported": 700,
+  "lifecycle": [
+    "\u001b[m\u001b[34m[10:10:39]\u001b[m \u001b[32m[Server thread/INFO]\u001b[m \u001b[36m(interstellar)\u001b[m \u001b[0mWormhole crossing: 0 -> 1, eye=(271.5, 93.02000000476838, -7.311721131850456) -> (641.5222524253351, 93.0196413881961, 8.659380614299858), yaw=-7.324607, pitch=0.11772079, roll=0.007541618684786978",
+    "\u001b[m\u001b[34m[10:10:51]\u001b[m \u001b[32m[Render thread/INFO]\u001b[m \u001b[36m(interstellar)\u001b[m \u001b[0mWormhole client layout: revision=6, mouths=[(641.0, 93.02805792579706, 0.5), (41.0, 88.43238205057814, 0.5914994030370626)]"
+  ],
+  "final-glFailures": []
+}

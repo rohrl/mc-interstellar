@@ -21,13 +21,7 @@ final class LiveGeometry implements AutoCloseable {
     private final Map<Long,Chunk> chunks=new LinkedHashMap<>();
     private final Structure actors=new Structure(false),clouds=new Structure(false);
     final Structure top=new Structure(true);
-    private record Chunk(WorldRenderBackend.Chunk metadata,Structure structure,byte[] shape) {}
-    private static byte[] shape(java.nio.ByteBuffer bytes,int quads) {
-        var positions=java.nio.ByteBuffer.allocate(quads*48);
-        for(int q=0;q<quads;q++)for(int v=0;v<4;v++)for(int axis=0;axis<3;axis++)positions.putInt(bytes.getInt(q*192+v*48+axis*4));
-        try {return java.security.MessageDigest.getInstance("SHA-256").digest(positions.array());}
-        catch(java.security.NoSuchAlgorithmException e){throw new AssertionError(e);}
-    }
+    private record Chunk(WorldRenderBackend.Chunk metadata,Structure structure) {}
     private boolean changed=true;
     private long updateCount;
     float[] checkRay;
@@ -81,13 +75,11 @@ final class LiveGeometry implements AutoCloseable {
         long started=System.nanoTime();
         var next=source.chunks();var keys=new HashSet<Long>();for(var chunk:next)keys.add(chunk.key());
         for(var iterator=chunks.entrySet().iterator();iterator.hasNext();) {var old=iterator.next();if(!keys.contains(old.getKey())){old.getValue().structure.close();iterator.remove();}}
-        int builds=0,reused=0;
+        int builds=0;
         for(var metadata:next) {
             var old=chunks.get(metadata.key());if(old!=null && old.metadata.equals(metadata))continue;
             ensureIndices(metadata.quads());
             long stage=RefreshProfile.start();var bytes=source.read(metadata);
-            byte[] shape=RefreshProfile.experiment("reuse",Boolean.getBoolean("interstellar.reuseTerrainBlas"))?shape(bytes,metadata.quads()):null;
-            boolean reuse=shape!=null && old!=null && old.shape!=null && old.metadata.quads()==metadata.quads() && Arrays.equals(shape,old.shape);
             RefreshProfile.end(RefreshProfile.READ,stage);
             stage=RefreshProfile.start();
             boolean combined=RefreshProfile.experiment("batch",BATCH_UPLOAD) && (long)metadata.quads()*192<=staging.size();
@@ -112,16 +104,14 @@ final class LiveGeometry implements AutoCloseable {
             } finally {MemoryUtil.memFree(bytes);}
             RefreshProfile.end(RefreshProfile.TRANSFER,stage);stage=RefreshProfile.start();
             Structure structure=old==null?new Structure(false):old.structure;
-            chunks.put(metadata.key(),new Chunk(metadata,structure,shape));
+            chunks.put(metadata.key(),new Chunk(metadata,structure));
             long vertices=terrain.address()+(long)metadata.row()*ROW_BYTES;
             structure.ensure(metadata.quads()*2,vertices,indices.address());
-            if(!reuse) {
-                if(!combined)vk.begin();structure.record(metadata.quads()*2,vertices,indices.address());barrier(VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_KHR,VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR);vk.finish();builds++;
-            } else {if(combined)vk.finish();reused++;}
+            if(!combined)vk.begin();structure.record(metadata.quads()*2,vertices,indices.address());barrier(VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_KHR,VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR);vk.finish();builds++;
             RefreshProfile.end(RefreshProfile.BLAS,stage);
         }
         terrainRevision=source.revision();movingRevision=-1;
-        System.out.println("RTX terrain synchronized: residentChunks="+chunks.size()+" rebuilt="+builds+" reused="+reused+" revision="+terrainRevision+" wallMs="+(System.nanoTime()-started)/1e6);
+        System.out.println("RTX terrain synchronized: residentChunks="+chunks.size()+" rebuilt="+builds+" revision="+terrainRevision+" wallMs="+(System.nanoTime()-started)/1e6);
     }
     private Probe.Buffer terrainBuffer(long bytes) {
         if(bytes>vk.maxStorageBufferRange)throw new IllegalStateException("GPU storage-buffer range cannot address the retained terrain arena");
