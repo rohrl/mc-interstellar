@@ -161,11 +161,11 @@ public final class SourceInspector {
             if(found!=null) {selection.id=found.id;selection.requested=null;}
         }
         var entry=data.tracker.byId(selection.id);
-        if(entry!=null&&distanceSquared(player,entry)>288*288)entry=null;
+        if(entry!=null&&distanceSquared(player,entry)>SourcePayload.RETENTION_RANGE*SourcePayload.RETENTION_RANGE)entry=null;
         if(selection.requested==null&&(!selection.pinned||entry==null)) {
             double best=entry==null?0:score(player,entry)*1.6;
             for(var candidate:data.tracker.entries()) {
-                if(!candidate.ready()||distanceSquared(player,candidate)>256*256)continue;
+                if(!candidate.ready()||distanceSquared(player,candidate)>SourcePayload.VIEW_RANGE*SourcePayload.VIEW_RANGE)continue;
                 double score=score(player,candidate);
                 if(score>best) {entry=candidate;best=score;}
             }

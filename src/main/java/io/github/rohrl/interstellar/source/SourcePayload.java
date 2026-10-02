@@ -8,6 +8,9 @@ import net.minecraft.util.Identifier;
 /** Server-authoritative complete source, or count=0 to clear the previous selection. */
 public record SourcePayload(Identifier dimension, int count, double x, double y, double z,
                             double enclosingRadius, double schwarzschildRadius) implements CustomPayload {
+    /** Shared selection/rendering limit; independent of the camera's terrain capture radius. */
+    public static final int VIEW_RANGE=512;
+    public static final int RETENTION_RANGE=VIEW_RANGE+64;
     public static final Id<SourcePayload> ID = new Id<>(Identifier.of("interstellar", "source_selection"));
     public static final PacketCodec<RegistryByteBuf, SourcePayload> CODEC = new PacketCodec<>() {
         @Override public SourcePayload decode(RegistryByteBuf buf) {

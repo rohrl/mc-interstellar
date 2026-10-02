@@ -1,5 +1,15 @@
 # Progress
 
+## 2026-10-02 — Double black-hole viewing range
+
+- Shared client/server range raised from 256 to 512 blocks; retain source to 576.
+  No larger terrain capture or forced loading. Source availability can limit reach.
+- Both builds pass 117 tests. Copied QA view verified at 500, pause/recovery at 512,
+  and reacquisition after leaving 576. Matched RTX medians about 14.5 ms/frame
+  at both 252 and 500 blocks; this is two poses, not a universal performance bound.
+- See D104 and [range evidence](docs/viewing-range.md). Owner settings restored;
+  owner worlds untouched. Animated accretion disk implementation is next.
+
 ## 2026-09-30 — Slightly brighter Doppler minimum
 
 - Owner feedback: the darkest trace was still hard to see. Raise the display floor

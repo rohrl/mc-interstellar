@@ -936,3 +936,13 @@ parameter adjustment preserves spectral hue, exact black and the rendering work.
 Update the existing colour-contract expectations; retain the original 4% captures
 as historical evidence. No new runtime capture is needed for this tuning follow-up
 under the owner's request to reserve screenshot verification for major changes.
+
+## D104 — Accepted: 512-block optical viewing range (2026-10-02)
+
+Double both the native rendering guard and automatic source selection from 256
+to 512 blocks, sharing the value in SourcePayload. Retain selection to 576 blocks
+for boundary stability. Keep terrain capture, loaded-chunk policy, inspection
+reach, discovery budgets and shaders unchanged. Source unload can still limit
+horizontal visibility sooner. Runtime checks, timing limits and recovery evidence
+are in `docs/viewing-range.md`. An animated accretion disk is the owner's next
+authorized implementation task, superseding its earlier deferred status.

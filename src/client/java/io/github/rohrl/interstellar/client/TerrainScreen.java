@@ -20,7 +20,7 @@ import java.util.Locale;
 
 /** Shared frozen/live scene-data preview. World geometry is never moved or destroyed. */
 final class TerrainScreen extends Screen {
-    private static final int MESH_VIEW_RANGE=256,VOXEL_VIEW_RANGE=128;
+    private static final int MESH_VIEW_RANGE=SourcePayload.VIEW_RANGE,VOXEL_VIEW_RANGE=128;
     private static ShaderProgram generalShader,meshShader,compactMeshShader,defaultMeshShader;
     private static ShaderProgram longMeshShader,longDefaultShader;
     private static ShaderProgram splitShader;

@@ -1,5 +1,14 @@
 # Handoff — Faint Doppler detail, 30 September 2026
 
+## 2 October update
+
+512-block viewing range completed; see D104 and docs/viewing-range.md. Client
+guard and source acquisition share SourcePayload.VIEW_RANGE; retention is 576.
+Both builds pass 117 tests; copied-world runtime checks and timings passed.
+Current range jars/logs: run/range-study/. Owner settings restored; client closed.
+Owner has now authorized the animated accretion disk with F4 controls and a
+large-BH-only default. This is the active task; it supersedes the old deferral.
+
 ## Current state
 
 Branch **codex/incremental-refresh**, following **a4e206c**. See Git for the
