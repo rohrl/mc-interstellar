@@ -2,6 +2,9 @@
 
 ## 2026-10-03 — Disk refinement and ambience
 
+- Follow-up: stars contribute 50% more light in vanilla and captured skies,
+  preserving daylight/weather fading. Source-only change; no launch or tests
+  at the owner's request.
 - Removed noise-cell wedges and fullscreen glow echoes. Granular emissivity has
   subtle apparent depth; both backends match closely in final captures.
 - F4 Ambience: denser native stars (default2×), sharper1024² sky faces,

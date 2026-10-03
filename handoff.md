@@ -2,6 +2,11 @@
 
 ## Current state
 
+Latest follow-up: star light contribution increased 50% through vanilla's sky
+draw, also affecting both lensed backends. The multiplier is sqrt(1.5) because
+vanilla multiplies RGB and source alpha together. Source-only; no new launch,
+build or tests per owner instruction.
+
 Branch `codex/incremental-refresh`. Accretion disk, visual refinements and
 ambience are complete; implementation, assumptions and evidence are in
 [docs/accretion-disk.md](docs/accretion-disk.md), with decisions in D105.

@@ -9,10 +9,17 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyConstant;
 import org.spongepowered.asm.mixin.injection.Constant;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(WorldRenderer.class)
 abstract class WorldRendererMixin {
+    @Redirect(method="renderSky",at=@At(value="INVOKE",target="Lnet/minecraft/client/world/ClientWorld;getStarBrightness(F)F"))
+    private float interstellar$starBrightness(net.minecraft.client.world.ClientWorld world,float tickDelta) {
+        // Vanilla uses brightness for both RGB and source alpha: sqrt(1.5) gives 50% more light.
+        // This also applies to the native sky captures used by OpenGL and RTX lensing.
+        return world.getStarBrightness(tickDelta)*1.2247449f;
+    }
     @ModifyConstant(method="buildStarsBuffer",constant=@Constant(intValue=1500))
     private int interstellar$starDensity(int count) {return io.github.rohrl.interstellar.client.DiskAtmosphere.starAttempts(count);}
     @ModifyConstant(method="renderWeather",constant={@Constant(intValue=5),@Constant(intValue=10)})
