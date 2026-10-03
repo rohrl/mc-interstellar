@@ -14,6 +14,7 @@ final class FrozenBackendCapture {
     private FrozenBackendCapture() {}
     static String source() throws Exception {
         return include("terrain_shared.glsl").replace("#moj_import <interstellar:observer.glsl>",include("observer.glsl"))
+            .replace("#moj_import <interstellar:accretion.glsl>",include("accretion.glsl"))
             .replace("#moj_import <interstellar:extended_source.glsl>",include("extended_source.glsl"))
             .replace("#moj_import <interstellar:wormhole.glsl>",include("wormhole.glsl"))
             .replace("#moj_import <interstellar:wormhole_local.glsl>",include("wormhole_local.glsl"))

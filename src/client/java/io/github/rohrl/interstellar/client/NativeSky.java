@@ -13,7 +13,10 @@ import org.lwjgl.opengl.GL11;
 
 /** Six directional captures of vanilla sky/cloud rendering; contains no terrain images. */
 final class NativeSky implements AutoCloseable {
-    private static final int SIZE=256;
+    private static final int SIZE=1024;
+    private static int revision;
+    private int capturedRevision=-1;
+    static void invalidate(){revision++;}
     private static final float[][] DIRECTIONS={{1,0,0},{-1,0,0},{0,1,0},{0,-1,0},{0,0,1},{0,0,-1}};
     private static final float[][] UPS={{0,1,0},{0,1,0},{0,0,1},{0,0,-1},{0,1,0},{0,1,0}};
     private SimpleFramebuffer target;
@@ -25,7 +28,7 @@ final class NativeSky implements AutoCloseable {
         var client=MinecraftClient.getInstance();var camera=client.gameRenderer.getCamera();
         long tick=client.world.getTime();
         includeClouds=includeClouds && client.options.getCloudRenderModeValue()!=net.minecraft.client.option.CloudRenderMode.OFF;
-        if(target!=null && capturedClouds==includeClouds && tick>=capturedTick && tick-capturedTick<10 && camera.getPos().squaredDistanceTo(capturedPosition)<1)return;
+        if(target!=null && capturedRevision==revision && capturedClouds==includeClouds && tick>=capturedTick && tick-capturedTick<10 && camera.getPos().squaredDistanceTo(capturedPosition)<1)return;
         if(target==null) {target=new SimpleFramebuffer(SIZE*6,SIZE,true,false);target.setTexFilter(GL11.GL_LINEAR);}
         float start=RenderSystem.getShaderFogStart(),end=RenderSystem.getShaderFogEnd();
         var shape=RenderSystem.getShaderFogShape();float[] fog=RenderSystem.getShaderFogColor().clone();
@@ -55,7 +58,7 @@ final class NativeSky implements AutoCloseable {
                 BackgroundRenderer.applyFog(camera,BackgroundRenderer.FogType.FOG_TERRAIN,client.gameRenderer.getViewDistance(),false,tickDelta);
                 if(includeClouds)client.worldRenderer.renderClouds(new MatrixStack(),view,projection,tickDelta,camera.getPos().x,camera.getPos().y,camera.getPos().z);
             }
-            capturedTick=tick;capturedPosition=camera.getPos();capturedClouds=includeClouds;
+            capturedTick=tick;capturedPosition=camera.getPos();capturedClouds=includeClouds;capturedRevision=revision;
         } finally {
             modelView.popMatrix();RenderSystem.applyModelViewMatrix();
             RenderSystem.setProjectionMatrix(previousProjection,previousSorting);

@@ -38,18 +38,19 @@ final class TerrainSamples implements AutoCloseable {
         target.beginWrite(false);
         RenderSystem.viewport(sample*width,0,width,height);
     }
-    void fold(SimpleFramebuffer destination,Runnable draw) {
-        foldFrom(target.getColorAttachment(),destination,draw);
+    void fold(SimpleFramebuffer destination,Runnable draw,boolean bloom) {
+        foldFrom(target.getColorAttachment(),destination,2,draw,bloom);
     }
     void foldFrom(int texture,SimpleFramebuffer destination,Runnable draw) {
-        foldFrom(texture,destination,2,draw);
+        foldFrom(texture,destination,2,draw,false);
     }
-    void foldFrom(int texture,SimpleFramebuffer destination,int count,Runnable draw) {
+    void foldFrom(int texture,SimpleFramebuffer destination,int count,Runnable draw,boolean bloom) {
         destination.beginWrite(true);
         RenderSystem.setShader(()->foldShader);
         foldShader.addSampler("Samples",texture);
         foldShader.getUniformOrDefault("Viewport").set((float)width,(float)height);
         foldShader.getUniformOrDefault("SampleCount").set((float)count);
+        foldShader.getUniformOrDefault("BloomMask").set(bloom?1f:0f);
         draw.run();
     }
     int copyMask() {

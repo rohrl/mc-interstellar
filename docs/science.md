@@ -318,3 +318,17 @@ https://www.spacetimetravel.org/ejpvis/ejpvis.pdf (why Doppler visualization nee
 source spectra outside the visible band as well as within it) ;
 https://www.einstein-online.info/en/spotlight/doppler/ ;
 https://github.com/MITGameLab/OpenRelativity . No third-party shader is copied.
+
+## Accretion disk (October 2026)
+
+The optional mass-source disk is a razor-thin, optically thick annulus from
+3 r_s (Schwarzschild ISCO) to a configurable outer edge. Existing curved rays
+intersect it in terrain order. Circular emitters have local speed
+`v/c = 1/sqrt(2(r/r_s - 1))`; the frequency ratio follows emitter/observer photon
+energy contractions, using the same near-horizon camera frame as the mass rays.
+The Newtonian zero-torque temperature profile, procedural filaments, selected
+4200 K peak, compressed exposure and cinematic camera bloom are declared
+assumptions. This is not Kerr,
+Novikov–Thorne, GRMHD, or a simulation of accretion supply. Spectral sampling,
+absent retarded-time history and combined-wormhole limitations are documented in
+[the disk model](accretion-disk.md), together with primary references and checks.

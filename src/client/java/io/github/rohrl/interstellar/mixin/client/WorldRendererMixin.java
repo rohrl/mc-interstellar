@@ -13,6 +13,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(WorldRenderer.class)
 abstract class WorldRendererMixin {
+    @ModifyConstant(method="buildStarsBuffer",constant=@Constant(intValue=1500))
+    private int interstellar$starDensity(int count) {return io.github.rohrl.interstellar.client.DiskAtmosphere.starAttempts(count);}
     @ModifyConstant(method="renderWeather",constant={@Constant(intValue=5),@Constant(intValue=10)})
     private int interstellar$weatherRange(int range) {return LocalWeather.drawing?3:range;}
     @Inject(method="drawEntityOutlinesFramebuffer",at=@At("HEAD"),cancellable=true)

@@ -11,6 +11,7 @@ import net.minecraft.client.render.LightmapTextureManager;
 
 @Mixin(WorldRenderer.class)
 public interface WorldRendererAccessor {
+    @Invoker("renderStars") void interstellar$stars();
     @Accessor("blockBreakingProgressions") Long2ObjectMap<SortedSet<BlockBreakingInfo>> interstellar$breaking();
     @Invoker("renderWeather") void interstellar$weather(LightmapTextureManager light,float delta,double x,double y,double z);
 }

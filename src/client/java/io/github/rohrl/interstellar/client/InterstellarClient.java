@@ -121,6 +121,7 @@ public final class InterstellarClient implements ClientModInitializer {
             }
         });
         CoreShaderRegistrationCallback.EVENT.register(context -> context.register(Identifier.of("interstellar", "terrain_resolve"), VertexFormats.POSITION, TerrainResolve::setShader));
+        CoreShaderRegistrationCallback.EVENT.register(context -> context.register(Identifier.of("interstellar", "accretion_bloom"), VertexFormats.POSITION, AccretionBloom::setShader));
         CoreShaderRegistrationCallback.EVENT.register(context -> context.register(Identifier.of("interstellar", "wormhole_reveal"), VertexFormats.POSITION, WormholeReveal::setShader));
         KeyBinding terrain = KeyBindingHelper.registerKeyBinding(new KeyBinding("key.interstellar.terrain", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_F9, "key.categories.interstellar"));
         KeyBinding menu = KeyBindingHelper.registerKeyBinding(new KeyBinding("key.interstellar.settings", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_F4, "key.categories.interstellar"));

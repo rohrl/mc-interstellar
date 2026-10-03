@@ -112,6 +112,10 @@ uniform vec3 TerrainFogRange;
 uniform vec4 TerrainFogColour;
 uniform vec3 Camera,Source,Forward,Right,Up;
 uniform float Radius,PathStep;
+uniform vec4 DiskSource,DiskSettings;
+uniform vec3 DiskAxis;
+uniform float DiskBloom;
+float diskCoverage=0.0,diskTerminal=0.0;
 #ifdef INTERSTELLAR_WORMHOLE
 uniform vec3 OtherSource;
 uniform float WormholeExtent;
@@ -166,7 +170,8 @@ vec3 nativeSky(vec3 d) {
     else if(a.y>=a.z) {face=d.y>0?2:3;forward=vec3(0,sign(d.y),0);up=vec3(0,0,sign(d.y));}
     else {face=d.z>0?4:5;forward=vec3(0,0,sign(d.z));up=vec3(0,1,0);}
     vec2 uv=vec2(dot(d,cross(forward,up)),dot(d,up))/dot(d,forward)*.5+.5;
-    uv=clamp(uv,vec2(.5/256.0),vec2(255.5/256.0));
+    float edge=.5/float(textureSize(SkyAtlas,0).y);
+    uv=clamp(uv,vec2(edge),vec2(1.0-edge));
     return texture(SkyAtlas,vec2((float(face)+uv.x)/6.0,uv.y)).rgb;
 }
 vec3 worldLight() {return texture(Lightmap,(surfaceLight+.5)/16.0).rgb;}
@@ -567,6 +572,7 @@ vec3 surface(int value,vec3 hit,vec3 normal) {
     if(MeshMode>.5) {
         // Synthetic opaque-box fixture: report the entered cell, preserving traversal failures.
         if(Diagnostic>2.5) {if(diagnostic.w!=-2.0)diagnostic=vec4(floor(hit-normal*.001),3);return vec3(0);}
+        if(value==4){diskTerminal=1.0;return meshColour;} // Self-emission; no Minecraft fog.
         float fogDistance=sceneFogDistance(hit);
         float amount=TerrainFogRange.y>TerrainFogRange.x?smoothstep(TerrainFogRange.x,TerrainFogRange.y,fogDistance):step(TerrainFogRange.y,fogDistance);
         return mix(meshColour,TerrainFogColour.rgb,amount*TerrainFogColour.a);
@@ -685,9 +691,30 @@ int distantSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
     }
     return 2;
 }
+#moj_import <interstellar:accretion.glsl>
 int sceneSegment(vec3 start,vec3 end,out vec3 hit,out vec3 normal) {
     distantHit=false;surfaceLight=vec2(0,15);
-    if(MeshMode>.5)return meshSegment(start,end,hit,normal);
+    if(MeshMode>.5) {
+        float diskAt=Diagnostic<.5?diskIntersection(start,end):-1.0;
+        // One call site keeps the large software/RTX traversal out of duplicate
+        // branches (GL drivers inline it). Foreground terrain still wins.
+        vec3 limit=diskAt>0.0?mix(start,end,diskAt):end;
+        int value=meshSegment(start,limit,hit,normal);
+        if(value>0 || diskAt<=0.0)return value;
+        if(diskAt>0.0) {
+            hit=limit;normal=DiskAxis;
+            meshColour=diskRadiance(hit,normalize(end-start));
+#if defined(INTERSTELLAR_MATERIALS) || defined(INTERSTELLAR_MATERIAL_PROBE)
+            float diskR=length(hit-DiskSource.xyz)/DiskSource.w;
+            meshAlpha=smoothstep(3.0,3.08,diskR)*(1.0-smoothstep(DiskSettings.x*.92,DiskSettings.x,diskR));
+#endif
+#ifdef INTERSTELLAR_MATERIALS
+            meshCloud=false;meshBlend=2;
+#endif
+            return 4;
+        }
+        return value;
+    }
     int local=segment(start,end,hit,normal);
     if(Hybrid<.5 || Diagnostic>.5)return local;
     ivec3 savedCell=materialCell;vec3 farHit,farNormal;
@@ -721,6 +748,8 @@ bool passMaterial(int value,vec3 hit,vec3 normal) {
     )return false;
 #endif
     vec3 colour=meshCloud?meshColour:surface(value,hit,normal);
+    if(value==4)diskCoverage+=(1.0-materialLayers.a)*meshAlpha;
+    diskTerminal=0.0;
     if(meshBlend==1 || meshBlend==3) {
         float distance=sceneFogDistance(hit);
         float fade=1.0-(TerrainFogRange.y>TerrainFogRange.x?smoothstep(TerrainFogRange.x,TerrainFogRange.y,distance):step(TerrainFogRange.y,distance));
@@ -734,6 +763,20 @@ bool passMaterial(int value,vec3 hit,vec3 normal) {
 }
 #endif
 #moj_import <interstellar:observer.glsl>
+void prepareDisk(vec2 uv) {
+    diskCoverage=0.0;diskTerminal=0.0;
+    if(DiskSource.w<=0.0)return;
+    vec2 xy=(uv*2.0-1.0)*ViewSlopes.xy;
+    diskBegin(observerRay(normalize(Forward+(xy.x+ViewSlopes.z)*Right+(-xy.y+ViewSlopes.w)*Up)));
+}
+float diskMask() {
+    if(DiskBloom<=0.0 || Diagnostic>.5)return 0.0;
+#ifdef INTERSTELLAR_MATERIALS
+    return clamp(diskCoverage+(1.0-materialLayers.a)*diskTerminal,0.0,1.0);
+#else
+    return diskTerminal*(1.0-cloudLayer.a);
+#endif
+}
 #ifdef INTERSTELLAR_WORMHOLE
 #moj_import <interstellar:wormhole.glsl>
 #else
@@ -959,6 +1002,14 @@ vec2 aaOffset(int samples,int index) {
     return vec2(0);
 }
 void main() {
+#if defined(INTERSTELLAR_NATIVE_MESH) && !defined(INTERSTELLAR_GLOW)
+    if(Diagnostic>7.5) {fragColor=vec4(diskNoise(Source.xy,uint(Forward.x)),1);return;}
+#endif
+    if(Diagnostic>6.5) {
+        vec3 d=normalize(Forward-Source);diskBegin(d);
+        float at=diskIntersection(Source,Forward);
+        fragColor=vec4(at,at>0.0?diskShift(mix(Source,Forward,at),d):0.0,0,1);return;
+    }
     if(Diagnostic>5.5) {fragColor=vec4(observerRadiance(Source,vec2(.5)),1);return;}
     if(Diagnostic>4.5) {
         vec2 xy=(screenUv*2.0-1.0)*ViewSlopes.xy;
@@ -977,7 +1028,7 @@ void main() {
 #else
     vec2 sampleUv=screenUv+vec2(SampleOffset)/Viewport;
 #endif
-    trace(sampleUv);
+    prepareDisk(sampleUv);trace(sampleUv);
 #ifdef INTERSTELLAR_MATERIALS
     fragColor.rgb=materialLayers.rgb+(1.0-materialLayers.a)*fragColor.rgb;
 #else
@@ -987,7 +1038,9 @@ void main() {
     if(Diagnostic<.5)fragColor.rgb=observerRadiance(fragColor.rgb,sampleUv);
 #endif
 #ifdef INTERSTELLAR_MATERIAL_PROBE
-    fragColor.a=meshAlpha<.999?0.0:1.0;
+    fragColor.a=meshAlpha<.999?0.0:1.0+diskMask();
+#else
+    fragColor.a=1.0+diskMask();
 #endif
 #else
     if(MeshMode<.5 && Diagnostic>1.5 && Diagnostic<2.5) {
@@ -1003,7 +1056,7 @@ void main() {
         // Each ray owns its hit/cloud state; no cloud or far hit may leak into the next subpixel.
         cloudLayer=vec4(0);diagnostic=vec4(0);distantHit=false;distantLayer=0;distantSide=false;
         vec2 offset=aaOffset(samples,sampleIndex);
-        trace(screenUv+offset/Viewport);
+        prepareDisk(screenUv+offset/Viewport);trace(screenUv+offset/Viewport);
 #ifdef INTERSTELLAR_GLOW
         fragColor=glowHit?vec4(meshColour,1):vec4(0);
 #endif
@@ -1014,6 +1067,9 @@ void main() {
 #endif
 #ifndef INTERSTELLAR_GLOW
         if(Diagnostic<.5)fragColor.rgb=observerRadiance(fragColor.rgb,screenUv+offset/Viewport);
+#endif
+#ifndef INTERSTELLAR_GLOW
+        if(DiskBloom>0.0 && Diagnostic<.5)fragColor.a=diskMask();
 #endif
         sum+=fragColor;
     }

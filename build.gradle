@@ -55,6 +55,12 @@ if (project.hasProperty('interstellarRtxImage') || project.hasProperty('interste
         clientImplementation 'org.lwjgl:lwjgl-shaderc:3.3.3'
         clientRuntimeOnly 'org.lwjgl:lwjgl-shaderc:3.3.3:natives-windows'
     }
+    tasks.register('checkRtxShaders', JavaExec) {
+        dependsOn tasks.named('clientClasses')
+        classpath = sourceSets.client.runtimeClasspath
+        mainClass = 'ShaderCheck'
+        jvmArgs '-Dorg.lwjgl.system.stackSize=512'
+    }
 }
 
 processResources {

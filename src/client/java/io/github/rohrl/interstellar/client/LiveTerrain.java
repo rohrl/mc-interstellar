@@ -61,11 +61,12 @@ public final class LiveTerrain {
         boolean lab=client.currentScreen instanceof TerrainScreen || client.currentScreen instanceof OpticalLabScreen;
         if(client.world!=seenWorld) {
             stop();seenWorld=client.world;enteringWorld=client.world!=null;
-            options=TerrainOptions.load();if(options.enabled()&&!lab)armedWorld=client.world;
+            options=TerrainOptions.load();AccretionDiskVisuals.reload();if(options.enabled()&&!lab)armedWorld=client.world;
         }
         if(labOpen&&!lab&&options.enabled())armedWorld=client.world;
         labOpen=lab;
         synchronize(client);
+        DiskAtmosphere.tick(client);
     }
     private static void synchronize(MinecraftClient client) {
         if(!active())return;

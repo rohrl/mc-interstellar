@@ -6,6 +6,11 @@ A Minecraft Java mod for educational relativistic optics. Scientific assumptions
 
 ## Start here
 
+- [Accretion disk and ambience](docs/accretion-disk.md): animated gold emission,
+  granular apparent-depth texture, glow, denser and sharper stars, random
+  Nether/End music near black holes, and a gentle disk-skimming gas veil.
+  Controls are in F4 → Disk / Ambience; both OpenGL and RTX are supported.
+
 - [Final bug bash and gameplay assessment](docs/final-bugbash-2026-09-30.md): combined feature checks, remaining usability priorities, and the fix for avoidable pauses when reducing RTX antialiasing.
 
 - [Incremental refresh experiments](docs/incremental-refresh-2026-09-30.md): measured walking gains from worker packing and direct RTX geometry transfer; rejected trials and the deferred section rewrite.
@@ -114,4 +119,10 @@ Select a black-hole proxy and press **F9**. Close views automatically use native
 
 **Numerical mesh check:** in a ready F9 native mesh preview, **C** runs a small synthetic scene against the independent CPU ray solver (about1.8seconds here). It checks both mesh layouts at near/far distances without changing the world. [Results and limits](docs/mesh-ray-validation.md).
 
-With World effects enabled (the default), nearby sources start native terrain capture automatically (about40 seconds at render distance12). Then explore up to **256 blocks from the selected source**, with normal movement, animated mobs/clouds and the vanilla HUD. Source availability can impose an earlier limit. **F12** measures the pass; F10 returns to normal rendering. Block/light edits update affected chunks, and movement streams the camera window. Updates are queued rather than immediate. Source mass changes refresh automatically after initial selection, without reloading all terrain. Re-enabling F10 currently recaptures it. Interactions still use straight aim. [Current implementation and checks](docs/streaming-terrain.md) · [Live mob implementation](docs/live-native-mesh.md) · [Earlier voxel prototype](docs/live-terrain.md) · [Wider viewing controls and checks](docs/viewing-range.md).
+With World effects enabled (the default), nearby sources start native terrain capture automatically (about40 seconds at render distance12). Then explore up to **512 blocks from the selected source**, with normal movement, animated mobs/clouds and the vanilla HUD. Source availability can impose an earlier limit. **F12** measures the pass; F10 returns to normal rendering. Block/light edits update affected chunks, and movement streams the camera window. Updates are queued rather than immediate. Source mass changes refresh automatically after initial selection, without reloading all terrain. Re-enabling F10 currently recaptures it. Interactions still use straight aim. [Current implementation and checks](docs/streaming-terrain.md) · [Live mob implementation](docs/live-native-mesh.md) · [Earlier voxel prototype](docs/live-terrain.md) · [Wider viewing controls and checks](docs/viewing-range.md).
+
+**F4 → Disk** controls an animated, lensed accretion disk in both renderers.
+Default **Auto** enables it for horizon diameters of 32 blocks or more (normally
+a compact 7×7×7 mass cube). Choose **All BHs** for smaller black holes. Brightness,
+size, tilt, animation and golden glow are adjustable. Glow defaults to **Intense**.
+[Model, controls and limits](docs/accretion-disk.md).

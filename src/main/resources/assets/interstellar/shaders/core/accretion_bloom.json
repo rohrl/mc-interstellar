@@ -1,0 +1,10 @@
+{
+  "vertex":"interstellar:optical_lab", "fragment":"interstellar:accretion_bloom",
+  "attributes":["Position"], "samplers":[{"name":"Scene"}],
+  "uniforms":[
+    {"name":"Viewport","type":"float","count":2,"values":[160,90]},
+    {"name":"InputSize","type":"float","count":2,"values":[640,360]},
+    {"name":"Direction","type":"float","count":2,"values":[1,0]},
+    {"name":"Seed","type":"float","count":1,"values":[1]}
+  ]
+}

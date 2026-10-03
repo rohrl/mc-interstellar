@@ -3,6 +3,10 @@
   "attributes":["Position"],
   "samplers":[{"name":"PendingRays"},{"name":"Voxels"},{"name":"CompactNodes"},{"name":"Atlas"},{"name":"Distant"},{"name":"DistantAppearance"},{"name":"SkyAtlas"},{"name":"Lightmap"},{"name":"LocalLight"},{"name":"CompactMovingNodes"}],
   "uniforms":[
+    {"name":"DiskBloom","type":"float","count":1,"values":[0]},
+    {"name":"DiskSource","type":"float","count":4,"values":[0,0,0,0]},
+    {"name":"DiskSettings","type":"float","count":4,"values":[10,1,0,7500]},
+    {"name":"DiskAxis","type":"float","count":3,"values":[0,1,0]},
     {"name":"ObserverVelocity","type":"float","count":3,"values":[0,0,0]},
     {"name":"ObserverEffects","type":"float","count":3,"values":[1,0.15,1]},
     {"name":"BodyRadius","type":"float","count":1,"values":[0]},

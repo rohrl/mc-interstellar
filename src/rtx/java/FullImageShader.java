@@ -11,7 +11,8 @@ final class FullImageShader {
     FullImageShader(String original) {this(original,false);}
     FullImageShader(String original,boolean live) {this(original,live,Optics.EXTERIOR);}
     FullImageShader(String original,boolean live,Optics optics) {
-        String source=original.replaceAll("(?m)^#moj_import[^\\n]*","");
+        if(original.contains("#moj_import"))throw new IllegalArgumentException("RTX shader has an unexpanded include; update FrozenBackendCapture.source()");
+        String source=original;
         int start=source.indexOf("#ifdef INTERSTELLAR_QUAD_MESH\nvec4 quadPart");
         if(start<0) {source=source.replace("\r\n","\n");start=source.indexOf("#ifdef INTERSTELLAR_QUAD_MESH\nvec4 quadPart");}
         int end=source.indexOf("vec3 emptyLow",start);

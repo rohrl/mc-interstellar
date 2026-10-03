@@ -10,16 +10,19 @@ import org.lwjgl.opengl.GL11;
 final class TerrainResolve {
     private static ShaderProgram shader;
     static void setShader(ShaderProgram next) {shader=next;}
-    static void draw(SimpleFramebuffer target,int width,int height,boolean edge) {
+    static void draw(SimpleFramebuffer target,int width,int height,int edge,int bloom,float strength) {
         if(shader==null) {target.draw(width,height);return;}
         target.setTexFilter(GL11.GL_LINEAR);
         try {
             RenderSystem.disableDepthTest();RenderSystem.depthMask(false);RenderSystem.disableBlend();
             RenderSystem.viewport(0,0,width,height);RenderSystem.setShader(()->shader);
             shader.addSampler("Scene",target.getColorAttachment());
+            shader.addSampler("Bloom",bloom>0?bloom:target.getColorAttachment());
+            shader.getUniformOrDefault("BloomStrength").set(strength);
+            shader.getUniformOrDefault("GasOpacity").set(DiskAtmosphere.gasOpacity());
             shader.getUniformOrDefault("Viewport").set((float)width,(float)height);
             shader.getUniformOrDefault("Texel").set(1f/target.textureWidth,1f/target.textureHeight);
-            shader.getUniformOrDefault("EdgeAA").set(edge?1f:0f);
+            shader.getUniformOrDefault("EdgeAA").set((float)edge);
             var quad=Tessellator.getInstance().begin(VertexFormat.DrawMode.QUADS,VertexFormats.POSITION);
             quad.vertex(0,0,0);quad.vertex(0,height,0);quad.vertex(width,height,0);quad.vertex(width,0,0);
             BufferRenderer.drawWithGlobalProgram(quad.end());

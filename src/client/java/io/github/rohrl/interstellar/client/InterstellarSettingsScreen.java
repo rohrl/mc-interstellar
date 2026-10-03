@@ -1,6 +1,7 @@
 package io.github.rohrl.interstellar.client;
 
 import io.github.rohrl.interstellar.Interstellar;
+import io.github.rohrl.interstellar.config.AccretionSettings;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.tooltip.Tooltip;
@@ -19,13 +20,24 @@ final class InterstellarSettingsScreen extends Screen {
         preferences=LiveTerrain.preferences().features(WorldFeatures.weather,WorldFeatures.body);
         lastGravity=WorldFeatures.gravityEnabled;lastCapture=WorldFeatures.gravityCapture;lastStrength=WorldFeatures.gravityStrength;
         int total=Math.min(420,width-24);left=(width-total)/2;column=(total-8)/2;top=Math.max(38,(height-210)/2);
-        String[] tabs={"Gameplay","Graphics","Relativity","Tools"};int tabWidth=(total-12)/4;
-        for(int i=0;i<4;i++) {final int p=i;
+        String[] tabs={"Gameplay","Graphics","Disk","Ambience","Relativity","Tools"};int tabWidth=(total-20)/6;
+        for(int i=0;i<6;i++) {final int p=i;
             var tab=addDrawableChild(ButtonWidget.builder(Text.literal(tabs[i]),b->{page=p;clearAndInit();})
                 .dimensions(left+i*(tabWidth+4),top,tabWidth,20).build());tab.active=i!=page;
         }
-        if(page==0)gameplay();else if(page==1)graphics();else if(page==2)relativity();else tools();
+        if(page==0)gameplay();else if(page==1)graphics();else if(page==2)disk();else if(page==3)ambience();else if(page==4)relativity();else tools();
         addDrawableChild(ButtonWidget.builder(Text.literal("Done"),b->close()).dimensions(width/2-70,top+154,140,20).build());
+    }
+    private void ambience() {
+        var s=DiskAtmosphere.options();
+        button(0,0,"Stars: "+s.stars()+"x","Vanilla star field density: 1x / 2x / 3x. Applies to normal and lensed skies. Default 2x.",()->atmosphere(new DiskAtmosphere.Options(s.stars()%3+1,s.music(),s.gas())));
+        button(1,0,"BH music: "+on(s.music()),"Choose eerie Minecraft Nether/End music at random when approaching a black hole. Respects Music volume; leaving restores ordinary music scheduling.",()->atmosphere(new DiskAtmosphere.Options(s.stars(),!s.music(),s.gas())));
+        button(0,1,"Disk gas veil: "+on(s.gas()),"Gentle irregular warm haze only while skimming the visible disk. Maximum 18% opacity; no damage or simulated gas volume.",()->atmosphere(new DiskAtmosphere.Options(s.stars(),s.music(),!s.gas())));
+    }
+    private void atmosphere(DiskAtmosphere.Options next) {
+        try {DiskAtmosphere.apply(next);status="Ambience settings applied and saved.";}
+        catch(Exception failure){status="Could not save ambience settings; see log.";Interstellar.LOGGER.error(status,failure);}
+        clearAndInit();
     }
     private void gameplay() {
         button(0,0,"World effects: "+on(LiveTerrain.active()),"Master visual switch; F10 does the same. Enabled by default in every world. Server gravity has its own controls below.",()->
@@ -63,6 +75,22 @@ final class InterstellarSettingsScreen extends Screen {
             WorldFeatures.body=!WorldFeatures.body;save(preferences.features(WorldFeatures.weather,WorldFeatures.body));
         });
         button(1,3,"Quality defaults","50% resolution, 2x AA, normal path steps. Keeps feature switches.",()->quality(.5f,2,false,preferences.preferRtx()));
+    }
+    private void disk() {
+        var s=AccretionDiskVisuals.options();
+        button(0,0,"Accretion: "+s.modeName(),"Off / Auto: large black holes / All black holes. Requires mass lensing. A supplied gas disk is assumed; size alone does not create one in nature.",()->disk(new AccretionSettings((s.mode()+1)%3,s.animation(),s.brightness(),s.outerRadius(),s.tilt(),s.threshold(),s.glow())));
+        button(1,0,"Animation: "+on(s.animation()),"Orbiting bright filaments evolve and stretch. Inner orbits move faster. Turbulence is an appearance model.",()->disk(new AccretionSettings(s.mode(),!s.animation(),s.brightness(),s.outerRadius(),s.tilt(),s.threshold(),s.glow())));
+        button(0,1,"Brightness: "+(int)(s.brightness()*100)+"%","Cycle 50%, 100%, 200%, 400% exposure. The new 100% equals the original 200%. The gas emits its own light; this does not add terrain lighting or heat damage.",()->disk(new AccretionSettings(s.mode(),s.animation(),s.brightness()<1?1:s.brightness()<2?2:s.brightness()<4?4:.5f,s.outerRadius(),s.tilt(),s.threshold(),s.glow())));
+        button(1,1,"Disk size: "+(int)s.outerRadius()+" horizon radii","Outer radius: 6 / 10 / 16 times the horizon radius. The stable disk starts at 3 horizon radii. Larger disks cover more of the view.",()->disk(new AccretionSettings(s.mode(),s.animation(),s.brightness(),s.outerRadius()<10?10:s.outerRadius()<16?16:6,s.tilt(),s.threshold(),s.glow())));
+        button(0,2,"Tilt: "+(int)s.tilt()+" degrees","Tilt from horizontal: 0 / 15 / 30 / 60 / 90 degrees. Applies to the mass disk, including its lensed images.",()->disk(new AccretionSettings(s.mode(),s.animation(),s.brightness(),s.outerRadius(),s.tilt()<15?15:s.tilt()<30?30:s.tilt()<60?60:s.tilt()<90?90:0,s.threshold(),s.glow())));
+        button(1,2,"Auto: horizon "+(int)(s.threshold()*2)+"+ blocks","Auto requires a horizon diameter of at least 16 / 32 / 64 blocks. Default 32; compact 7x7x7 and larger masses meet it under normal calibration.",()->disk(new AccretionSettings(s.mode(),s.animation(),s.brightness(),s.outerRadius(),s.tilt(),s.threshold()<16?16:s.threshold()<32?32:8,s.glow())));
+        button(0,3,"Disk defaults","Auto for large black holes, animated, 100% brightness, radius 10 horizons, tilt 15 degrees.",()->disk(AccretionSettings.defaults()));
+        button(1,3,"Glow: "+(s.glow()==0?"Off":s.glow()<1?"Soft":s.glow()<2?"Strong":"Intense"),"Cinematic camera bloom from visible disk light only. Off / Soft / Strong / Intense. Does not illuminate terrain or alter light paths.",()->disk(new AccretionSettings(s.mode(),s.animation(),s.brightness(),s.outerRadius(),s.tilt(),s.threshold(),s.glow()==0?.6f:s.glow()<1?1.2f:s.glow()<2?2.4f:0)));
+    }
+    private void disk(AccretionSettings next) {
+        try {AccretionDiskVisuals.apply(next);status="Disk settings applied and saved.";}
+        catch(Exception e){status="Could not save disk settings; see log.";Interstellar.LOGGER.error(status,e);}
+        clearAndInit();
     }
     private void tools() {
         upright(0,0);

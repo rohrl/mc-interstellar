@@ -946,3 +946,65 @@ reach, discovery budgets and shaders unchanged. Source unload can still limit
 horizontal visibility sooner. Runtime checks, timing limits and recovery evidence
 are in `docs/viewing-range.md`. An animated accretion disk is the owner's next
 authorized implementation task, superseding its earlier deferred status.
+
+## D105 — Accepted: analytic accretion disk shared by both renderers (2026-10-02)
+
+The owner authorizes an animated disk, menu controls and a large-BH-only default.
+Use an analytic annulus intersected by the existing curved ray chords, querying
+terrain only up to the disk hit. Keep one traversal call site: duplicating the
+large software traversal in two branches unnecessarily increases shader code and
+compilation cost. No extra scene geometry, capture or BLAS update.
+
+Default Auto requires r_s >= 16 blocks; Off and All BHs are also available.
+The inner edge is the Schwarzschild ISCO at 3 r_s. Circular orbital Doppler and
+gravitational frequency shifts act on an assumed thermal spectrum. A Newtonian
+zero-torque temperature profile, procedural differential rotation, 4200 K peak,
+display exposure and softened radial edges are explicit approximations. There
+is no Kerr metric, gas dynamics, retarded-time animation or terrain illumination.
+Mixed wormhole paths keep the existing approximate composition. Full scope,
+controls and acceptance evidence belong in docs/accretion-disk.md.
+
+Owner visual feedback supersedes the initial grey/white exposure: make the disk
+much more yellow with intense glow. Add disk-only coverage to existing ray/sample
+outputs, then optional quarter-resolution extraction and separable bloom in the
+shared final presentation. Default Intense, adjustable in F4. This is cinematic
+camera glare, not additional gravitational lensing or terrain illumination.
+The owner reviewed performance and explicitly declined further benchmarks;
+finish correctness/visual checks without another timing run.
+
+Owner follow-up: relabel the previous 200% exposure as the new 100%, add a 400%
+choice, and introduce gentle nonuniform bright/dark patches. Double baseline
+exposure to 36. Advect two continuous spatial patch scales a few percent around
+the circular pattern rate and perturb filament phase slightly; do not alter
+the emitter velocities or lensing. This is a visual turbulence approximation,
+not independent random brightness per frame or a fluid simulation.
+
+Owner also requests gentle flicker. Add bounded (±6%) smooth, patch-dependent
+emission modulation on roughly1–2 second scales, with a seconds-based clock
+independent of BH radius to avoid small-hole strobes. Animation Off freezes it.
+
+3 October follow-up: owner screenshots revealed fullscreen glow echoes and
+texture wedges. Replace float-sine corner hashing with deterministic integer
+hashing plus quintic interpolation; add an actual GPU continuity check. Bound
+glow resolution and use contiguous blur taps with pixel-area downsampling.
+Add multiscale granular emissivity, analytic hot-rim relief and bounded apparent
+layer parallax. Keep these explicitly artistic: no new volume or geometry,
+and no changes to the emitter velocities or optical ray paths. Owner now
+requests a final matched performance comparison, superseding the earlier
+request to skip additional timings.
+
+Further accepted ambience: extend native stars to2× by default (F4 offers1–3×),
+raise captured sky faces256→1024 to retain small features, randomly choose vanilla
+basalt-delta/crimson-forest/End music per BH approach with distance hysteresis
+and no immediately repeated event, and a bounded18%
+gas veil only inside the visible disk annulus/height. Expose independent controls
+under F4 Ambience. The veil advects coherent spatial noise; no particles, damage,
+volume ray march or rapid random flashes. Music uses the normal Music category.
+Final matched disk-visible interval25.06→25.68ms; disk-off33.40→33.50ms. Accept
+the roughly2.5% cost for the requested visual improvements at this test pose.
+
+Add a headless RTX shader-compilation task after catching a missing include and
+a Vulkan-reserved identifier during integration. Check all 16 production
+variants before paying for a cold Minecraft/OpenGL launch. An unresolved shader
+include now fails explicitly instead of being silently stripped. Keep normal
+OpenGL-only artifacts free of optional Vulkan/shaderc dependencies.

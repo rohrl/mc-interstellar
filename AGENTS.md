@@ -12,7 +12,7 @@ Read README.md, decision-log.md, progress.md, and handoff.md before continuing. 
 - Use primary scientific sources and official technical documentation; record URLs and assumptions in docs/science.md.
 - Keep server work bounded and event-driven. No terrain destruction or expensive GR solver on the server tick thread.
 - The actual player body/skin is required for returning-light demonstrations. Do not substitute a mannequin as the product feature.
-- Accretion disk and general entity history/horizon-freeze effects are deferred. Guided horizon crossing remains in scope.
+- The owner authorized the accretion disk in D105; its implementation and limits are in docs/accretion-disk.md. General entity history/horizon-freeze effects remain deferred. Guided horizon crossing remains in scope.
 - Keep independent SR and GR scale settings; compose them only through an explicitly defined local observer frame.
 - Preserve local .idea settings, saved worlds, and credentials. Do not commit them.
 - Do not add a project license without the owner's choice. Retain licenses/notices for copied third-party material.

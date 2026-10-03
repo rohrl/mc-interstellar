@@ -1,73 +1,56 @@
-# Handoff — Faint Doppler detail, 30 September 2026
-
-## 2 October update
-
-512-block viewing range completed; see D104 and docs/viewing-range.md. Client
-guard and source acquisition share SourcePayload.VIEW_RANGE; retention is 576.
-Both builds pass 117 tests; copied-world runtime checks and timings passed.
-Current range jars/logs: run/range-study/. Owner settings restored; client closed.
-Owner has now authorized the animated accretion disk with F4 controls and a
-large-BH-only default. This is the active task; it supersedes the old deferral.
+# Handoff — Disk and ambience completed, 3 October 2026
 
 ## Current state
 
-Branch **codex/incremental-refresh**, following **a4e206c**. See Git for the
-current delivery commit. Branches, pushes and autonomous GUI checks remain
-authorized. No agents. Read **D103**, **docs/relativistic-sight.md** and
-**docs/profiles/2026-09-30-spectral-visibility/README.md** for this change.
+Branch `codex/incremental-refresh`. Accretion disk, visual refinements and
+ambience are complete; implementation, assumptions and evidence are in
+[docs/accretion-disk.md](docs/accretion-disk.md), with decisions in D105.
+Preserve owner worlds, IDE settings and the earlier AA branch/commit `8ad46ebd`.
 
-Shared observer shader now assumes weak continuous UV/IR tails around the existing
-RGB anchors. Full uses actual Doppler D; Gentle retains D^0.06. A hue-preserving
-6% display peak floor keeps nearly black detail. Black inputs stay black.
-Spectra and exposure are explicitly approximate; no new rays or passes.
+- Shared OpenGL/RTX disk, new brightness scale (old 200% = 100%; up to 400%),
+  animated patches/shimmer, granular hot rims and bounded apparent parallax.
+  Apparent depth is shading, not new geometry or a gas simulation.
+- Fixed texture wedges (noise corner hashing) and fullscreen glow echoes
+  (bounded bloom resolution and contiguous blur taps).
+- F4 now has Gameplay / Graphics / Disk / Ambience / Relativity / Tools.
+  Ambience controls stars (default 2×), BH music and gentle disk gas opacity.
+- Latest change selects basalt-delta, crimson-forest or End music randomly
+  once per BH approach, avoiding immediate repetition of the music event.
+  Normal Music volume applies. No new music assets or dependencies.
 
-Latest owner follow-up raises the floor from 4% to 6% for a little more visibility.
-Both builds pass 117 tests; existing colour-contract expectations updated.
-No new runtime capture for this constant-only tuning. The following runtime
-evidence is from the original 4% acceptance, not a fresh 6% check.
+## Verification and limits
 
-Actual GPU fixture passes 50 independent boost
-comparisons and 54 colour contracts. Forward/rear 0.99c views inspected;
-GL/RTX paired MAEs 0.000383 and 0.0000224 /255. Renderer medians, unadjusted images
-and limitations are in the report. These are not before/after performance data.
-The first launch after changing shared includes spent about six minutes compiling
-GL variants; world preparation then took 23.19 seconds.
+Before the final random-music change, both builds passed 120 JVM tests and all
+16 RTX shader variants compiled. Logs: `run/disk-study/final-{opengl,rtx}-build.log`.
+The normal artifact was checked for absence of Vulkan/shaderc backend classes.
+The final small music-selection change is source-reviewed only: the owner
+explicitly requested no tests or Minecraft launch while the PC is busy.
+Existing accepted jars predate that selection change; next build picks it up.
 
-## Owner world and test ownership
+GPU checks passed 50 observer rays, 54 colour contracts, 15 disk cases and
+30 noise seams (maximum numerical error 1.64e-6). Final GL/RTX image comparison
+`run/rtx-image/compare-1791001960973` has RGB MAE 0.000269/255.
+Windowed/fullscreen rendering, F4 controls, star changes and gas on/off checked.
+`run/disk-study/final-smoke-runtime.log` confirms repeated music start/stop and
+clean client shutdown. Do not launch or control Minecraft until allowed again.
 
-**Interstellar Final QA now contains owner play changes; preserve it.** Restored
-only the requested portal pair from the beginning of that play session:
-A=(41,88.00432496543833,.6045897075471959),
-B=(161,88.2551570825417,.5), revision14. Other uncompressed portal-save bytes and
-all other owner-world files unchanged. Backup of moved pair, saved owner-session
-log and exact restoration record: **run/visibility-study/**.
+Matched 1280×720, 4× AA RTX view: disk-visible frame median 25.06→25.68 ms
+(~2.5% cost), disk-off 33.40→33.50 ms. No more benchmarks needed for music.
+Final screenshots: `run/disk-study/final-fullscreen.png`, `final-stars.png`,
+`ambience-menu.png`, `gas-on.png`, `gas-off.png`.
 
-All runtime checks used a new **Interstellar Spectrum QA** copy. Runtime confirmed
-the restored coordinates. Client saved/closed. Six owner options/config files
-restored byte-for-byte from **run/visibility-study/owner-backup/** (fresh snapshot
-AFTER the owner's play session; do not restore older bug-bash defaults over it).
-Owner settings include fullscreen, Full Doppler, RTX, 4x AA and mass/portals enabled.
+An earlier transient RTX black frame was not root-caused; later clean launches,
+fullscreen and image comparisons passed without debugging readbacks. Do not
+count black-output timings. VulkanWorldBackend has no remaining debug edits.
+Very high-resolution AA can still exhaust VRAM and trigger OpenGL fallback.
+Automated movement/flicker checks remain deferred to owner feedback.
 
-Current jars: **run/visibility-study/brighter/accepted-opengl.jar** and
-**accepted-rtx.jar** in the same directory, alongside both build logs.
-Final build output is RTX. The original 4% jars/logs remain in the parent study
-directory; that ordinary jar was audited for absent RTX/Vulkan/shaderc entries.
-Don't rerun restore-portals.py: the one-shot patch already succeeded.
+## Owner settings and QA
 
-## Previous completed work / deferred scope
+Only copied `Interstellar Disk QA` was used. Do not restore old backup settings
+over the owner's newer choices. Last restored preferences: disk Auto, animation
+on, brightness 200%, outer radius 6, tilt 0, Intense glow; 4× AA, full scale,
+fine paths and RTX preferred. New ambience defaults: stars 2×, music/gas on.
 
-**D102**, **docs/final-bugbash-2026-09-30.md**: retained sufficient RTX sample
-capacity when reducing AA. Broad combined gameplay bug bash passed. Compact HUD,
-placement preview and curved interaction feedback remain proposals.
-
-**D101**, **docs/incremental-refresh-2026-09-30.md**: bounded worker geometry packing,
-direct CPU-to-RTX handoff and combined upload/build. Warmed matched RTX walking
-improved mean frame time ~5.3%; OpenGL-only neutral. Rejected trials preserved in
-35e72a8. Owner explicitly deferred section storage (~98% whole-column invalidation).
-No further optimization is authorized solely by these notes.
-
-Preserve .idea, owner worlds and independent AA work **8ad46ebd**.
-JDK: C:/Portable/jdks/temurin-21.0.12.1; Python: C:/Portable/python-3.11.7/python.exe.
-Use UTF-8 and LF. Client commands can be dropped during backend setup: wait for
-readiness logs. Normal builds exclude optional Vulkan/shaderc; final RTX build
-follows normal build. Do not rebuild source sets while a client is still loading.
+No further feature work is pending for this batch. Final random-music runtime
+confirmation can wait until the owner next plays; it was intentionally skipped.

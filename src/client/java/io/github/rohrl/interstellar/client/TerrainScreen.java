@@ -85,6 +85,9 @@ final class TerrainScreen extends Screen {
     private int profileExperiment;
     private Vec3d camera;
     private float yaw,pitch;
+    private double frozenDiskTime=Double.NaN;
+    private final AccretionBloom accretionBloom=new AccretionBloom();
+    private boolean diskBloom(){return AccretionDiskVisuals.radius(source)>0 && AccretionDiskVisuals.options().glow()>0;}
     private boolean lensing=true, fine=false;
     private String error;
     private String paused;
@@ -381,7 +384,7 @@ final class TerrainScreen extends Screen {
                     io.github.rohrl.interstellar.Interstellar.LOGGER.error("RTX frame failed; retaining OpenGL",failure);renderTerrain(present);return;
                 }
                 if(benchmark!=null)for(int i=0;i<5;i++)benchmark.mark(i);
-                samples.foldFrom(texture,target,raySamples(),()->drawQuad(w,h));
+                samples.foldFrom(texture,target,raySamples(),()->drawQuad(w,h),diskBloom());
                 if(benchmark!=null)benchmark.mark(5);
             } else if(split) {
                 samples.begin(0);shader.getUniformOrDefault("SampleOffset").set(-.25f);drawQuad(w,h);
@@ -419,7 +422,7 @@ final class TerrainScreen extends Screen {
                     TerrainProfile.capture(w,h,mask,useSeparateMoving(),program->{shader=program;configureShader(w,h);},()->drawQuad(w,h),
                         "separateMoving="+useSeparateMoving()+" camera="+camera+" yaw="+yaw+" pitch="+pitch+" logical="+w+"x"+h+" movingContents="+(moving==null?0:moving.profileMovingContents)+"; "+mesh.status());
                 }
-                samples.fold(target,()->drawQuad(w,h));
+                samples.fold(target,()->drawQuad(w,h),diskBloom());
                 if(benchmark!=null)benchmark.mark(5);
             } else {drawQuad(w,h);if(benchmark!=null)for(int i=0;i<6;i++)benchmark.mark(i);}
         } finally {
@@ -427,8 +430,13 @@ final class TerrainScreen extends Screen {
             RenderSystem.depthMask(true);RenderSystem.enableDepthTest();RenderSystem.enableBlend();RenderSystem.defaultBlendFunc();
         }
         if(!present)return;
-        if(antialiasing==0)target.draw(client.getWindow().getFramebufferWidth(),client.getWindow().getFramebufferHeight());
-        else TerrainResolve.draw(target,client.getWindow().getFramebufferWidth(),client.getWindow().getFramebufferHeight(),antialiasing==1);
+        int bloom=0;float glowStrength=0;
+        if(diskBloom()) {
+            bloom=accretionBloom.render(target);glowStrength=AccretionDiskVisuals.options().glow();
+            client.getFramebuffer().beginWrite(true);
+        }
+        if(antialiasing==0 && bloom==0 && DiskAtmosphere.gasOpacity()==0)target.draw(client.getWindow().getFramebufferWidth(),client.getWindow().getFramebufferHeight());
+        else TerrainResolve.draw(target,client.getWindow().getFramebufferWidth(),client.getWindow().getFramebufferHeight(),antialiasing==0?-1:antialiasing==1?1:0,bloom,glowStrength);
         var glow=meshMode?(moving!=null?moving.entities.glowing:mesh.entities==null?null:mesh.entities.glowing):null;
         var glowShader=GlowingOutline.rays[wormholeProgram()?3:horizonView()?2:extendedSource()?1:0];
         if(glow!=null && glow.nodes>0 && meshEntities && glowShader!=null && GlowingOutline.edge!=null) {
@@ -524,6 +532,9 @@ final class TerrainScreen extends Screen {
         setVector("ObserverVelocity",RelativisticVision.velocity(live));
         var sr=RelativisticVision.options();
         shader.getUniformOrDefault("ObserverEffects").set(sr.aberration()?1f:0f,sr.colour()==0?0f:sr.colour()==1?.06f:1f,sr.brightness()?1f:0f);
+        if(Double.isNaN(frozenDiskTime))frozenDiskTime=client.world.getTime()/20.0;
+        AccretionDiskVisuals.configure(shader,source,Vec3d.of(snapshot.origin),live?
+            (client.world.getTime()+client.getRenderTickCounter().getTickDelta(false))/20.0:frozenDiskTime);
         shader.getUniformOrDefault("Hybrid").set(hybrid?1f:0f);
         shader.getUniformOrDefault("FaceLighting").set(faceLighting?1f:0f);
         shader.getUniformOrDefault("SmoothLighting").set(smoothLighting?1f:0f);
@@ -534,7 +545,11 @@ final class TerrainScreen extends Screen {
         int oldX=((net.minecraft.util.math.BlockPos.ofFloored(centre()).getX()>>4)-8)*16-snapshot.origin.getX();
         int oldZ=((net.minecraft.util.math.BlockPos.ofFloored(centre()).getZ()>>4)-8)*16-snapshot.origin.getZ();
         shader.getUniformOrDefault("OldMeshBounds").set((float)oldX,(float)oldZ,(float)oldX+256,(float)oldZ+256);
-        shader.getUniformOrDefault("MeshExtent").set(meshMode?Math.max(mesh.extent,moving==null?0:moving.extent)+mesh.sourceShift(centre()):512f);
+        double extent=meshMode?Math.max(mesh.extent,moving==null?0:moving.extent)+mesh.sourceShift(centre()):512;
+        double diskRadius=AccretionDiskVisuals.radius(source);
+        if(diskRadius>0)extent=Math.max(extent,diskRadius*(AccretionDiskVisuals.options().outerRadius()+1)
+            +new Vec3d(source.x(),source.y(),source.z()).distanceTo(centre()));
+        shader.getUniformOrDefault("MeshExtent").set((float)extent);
         shader.getUniformOrDefault("MovingNodeCount").set(!meshMode || moving==null?0f:(float)(useSeparateMoving()?moving.actorNodeCount:moving.nodeCount));
         shader.getUniformOrDefault("CloudNodeCount").set(!meshMode || moving==null || !useSeparateMoving()?0f:(float)moving.cloudNodeCount);
         shader.getUniformOrDefault("MeshNodeCount").set(meshMode?(float)mesh.nodeCount:0f);
@@ -859,6 +874,6 @@ final class TerrainScreen extends Screen {
         }
         return true;
     }
-    @Override public void removed() {reveal.close();closeFrozenBackend();cancelBenchmark();glowOutline.close();nativeSky.close();if(moving!=null)moving.close();if(mesh!=null)mesh.close();if(snapshot!=null)snapshot.close();if(pending!=null)pending.close();if(target!=null)target.delete();if(samples!=null)samples.close();}
+    @Override public void removed() {accretionBloom.close();reveal.close();closeFrozenBackend();cancelBenchmark();glowOutline.close();nativeSky.close();if(moving!=null)moving.close();if(mesh!=null)mesh.close();if(snapshot!=null)snapshot.close();if(pending!=null)pending.close();if(target!=null)target.delete();if(samples!=null)samples.close();}
     @Override public boolean shouldPause() {return true;}
 }

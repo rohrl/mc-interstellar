@@ -14,7 +14,7 @@ final class ObserverValidation {
         int fb=GL30.glGenFramebuffers(),colour=GL30.glGenRenderbuffers();
         int oldDraw=GL11.glGetInteger(GL30.GL_DRAW_FRAMEBUFFER_BINDING),oldRead=GL11.glGetInteger(GL30.GL_READ_FRAMEBUFFER_BINDING);
         int oldRb=GL11.glGetInteger(GL30.GL_RENDERBUFFER_BINDING);int[] viewport=new int[4];GL11.glGetIntegerv(GL11.GL_VIEWPORT,viewport);
-        int count=0,colours=0;double worst=0;
+        int count=0,colours=0,disks=0,seams=0;double worst=0;
         try(var pack=new TerrainReplay.PackState()) {
             GL15.glBindBuffer(GL21.GL_PIXEL_PACK_BUFFER,0);
             for(int name:new int[]{GL11.GL_PACK_ROW_LENGTH,GL11.GL_PACK_SKIP_PIXELS,GL11.GL_PACK_SKIP_ROWS})GL11.glPixelStorei(name,0);
@@ -57,13 +57,48 @@ final class ObserverValidation {
                 if(!valid)throw new IllegalStateException("Observer colour contract: beta="+beta+", shift="+shift+", brightness="+brightness+", input="+input+", actual="+actual);
                 colours++;
             }
+            shader.getUniformOrDefault("Diagnostic").set(7f);
+            shader.getUniformOrDefault("DiskSource").set(0f,0f,0f,1f);
+            shader.getUniformOrDefault("DiskAxis").set(0f,1f,0f);
+            shader.getUniformOrDefault("DiskSettings").set(10f,1f,0f,7500f);
+            shader.getUniformOrDefault("Lensing").set(1f);
+            vector(shader,"Camera",new Point(0,100,0));
+            for(double r:new double[]{2,3.5,5,9,11})for(double z:new double[]{-2,0,2}) {
+                var start=new Point(r,1,z);var end=new Point(r,-1,-z);
+                vector(shader,"Source",start);vector(shader,"Forward",end);
+                double t=io.github.rohrl.interstellar.science.AccretionDisk.crossing(start,end,new Point(0,1,0),10);
+                // At (r,0,0), orbital tangent is -Z; chord has no radial part.
+                double shift=t<0?0:io.github.rohrl.interstellar.science.AccretionDisk.staticShift(r,100,z/Math.sqrt(1+z*z));
+                draw.run();pixel.clear();GL11.glReadPixels(0,0,1,1,GL11.GL_RGBA,GL11.GL_FLOAT,pixel);
+                double error=Math.max(Math.abs(pixel.get(0)-t),Math.abs(pixel.get(1)-shift));
+                if(!Double.isFinite(error)||error>1e-4)throw new IllegalStateException("Disk fixture mismatch: r="+r+", z="+z+", error="+error);
+                worst=Math.max(worst,error);disks++;
+            }
+            // Shared noise corners must remain continuous after long animation
+            // histories and on either side of negative-coordinate grid lines.
+            shader.getUniformOrDefault("Diagnostic").set(8f);
+            for(int seed:new int[]{0,4096,65536})for(int cell:new int[]{-19,-1,0,1,23})for(boolean vertical:new boolean[]{false,true}) {
+                vector(shader,"Forward",new Point(seed,0,0));
+                Point previous=null;
+                for(double side:new double[]{-1,1}) {
+                    double across=cell+side*.0001;
+                    vector(shader,"Source",vertical?new Point(.371,across,0):new Point(across,.371,0));
+                    draw.run();pixel.clear();GL11.glReadPixels(0,0,1,1,GL11.GL_RGBA,GL11.GL_FLOAT,pixel);
+                    var actual=new Point(pixel.get(0),pixel.get(1),pixel.get(2));
+                    if(previous!=null && (!Double.isFinite(actual.length())||actual.subtract(previous).length()>.002))
+                        throw new IllegalStateException("Disk noise seam: seed="+seed+", cell="+cell+", vertical="+vertical);
+                    previous=actual;
+                }
+                seams++;
+            }
         } finally {
+            shader.getUniformOrDefault("DiskSource").set(0f,0f,0f,0f);
             shader.getUniformOrDefault("Diagnostic").set(0f);vector(shader,"ObserverVelocity",new Point(0,0,0));
             GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER,oldDraw);GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER,oldRead);
             GL30.glBindRenderbuffer(GL30.GL_RENDERBUFFER,oldRb);GL30.glDeleteFramebuffers(fb);GL30.glDeleteRenderbuffers(colour);
             RenderSystem.viewport(viewport[0],viewport[1],viewport[2],viewport[3]);RenderSystem.depthMask(true);
         }
-        String result="Observer fixture: "+count+" rays and "+colours+" colour contracts passed; maximum direction/relative Doppler error="+worst;
+        String result="Observer fixture: "+count+" rays, "+colours+" colour contracts, "+disks+" disk cases and "+seams+" noise seams passed; maximum error="+worst;
         Interstellar.LOGGER.info(result);return result;
     }
     private static void vector(ShaderProgram shader,String name,Point p){shader.getUniformOrDefault(name).set((float)p.x(),(float)p.y(),(float)p.z());}

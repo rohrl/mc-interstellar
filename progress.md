@@ -1,5 +1,30 @@
 # Progress
 
+## 2026-10-03 — Disk refinement and ambience
+
+- Removed noise-cell wedges and fullscreen glow echoes. Granular emissivity has
+  subtle apparent depth; both backends match closely in final captures.
+- F4 Ambience: denser native stars (default2×), sharper1024² sky faces,
+  random Nether/End music near a BH, and an optional irregular disk-skimming gas veil.
+- Both final builds pass120 tests and16 RTX shader compilations. Actual GPU
+  checks include30 noise seams; fullscreen and menu/gas/star checks passed.
+- Matched disk-visible frame interval25.06→25.68ms (+2.5%); disk-off33.40→33.50ms.
+  See [disk evidence and limits](docs/accretion-disk.md); no universal FPS claim.
+- Final smoke log confirms music entry/exit and clean shutdown. The subsequent
+  random-music selection change was reviewed in source only: owner requested
+  no new tests or Minecraft launch while their PC is busy.
+
+## 2026-10-02 — Animated accretion disk
+
+- Shared OpenGL/RTX analytic disk, gravitational/orbital colour shifts, animated
+  filaments and gently drifting bright/dark patches with smooth ±6% shimmer.
+- F4 Disk tab: Auto/All/Off, animation, size, tilt, threshold, glow and brightness.
+  New 100% equals the original 200%; 400% is available. Warm disk-only bloom
+  provides the requested cinematic glow without making ordinary scenery glow.
+- Both builds pass 120 tests; all 16 RTX shader variants compile. GPU maths and
+  renderer comparison evidence, visual checks and limitations are recorded in
+  [the disk notes](docs/accretion-disk.md). No further timing runs, per owner.
+
 ## 2026-10-02 — Double black-hole viewing range
 
 - Shared client/server range raised from 256 to 512 blocks; retain source to 576.
