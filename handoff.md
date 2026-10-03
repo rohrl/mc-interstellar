@@ -2,6 +2,10 @@
 
 ## Current state
 
+Gas veil follow-up: distance from the disk plane is now 3× the original
+threshold (0.6–9 blocks depending on BH size), with doubled opacity (max 36%).
+Radial annulus limits and smooth fading remain. Source-only; no new tests/build/launch.
+
 Latest follow-up: star light contribution increased 50% through vanilla's sky
 draw, also affecting both lensed backends. The multiplier is sqrt(1.5) because
 vanilla multiplies RGB and source alpha together. Source-only; no new launch,

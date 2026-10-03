@@ -2,6 +2,9 @@
 
 ## 2026-10-03 — Disk refinement and ambience
 
+- Gas veil follow-up: tripled the distance threshold above/below the disk
+  (including the clamp bounds), and doubled opacity to a maximum of 36%.
+  Source-only change; no build or Minecraft launch.
 - Follow-up: stars contribute 50% more light in vanilla and captured skies,
   preserving daylight/weather fading. Source-only change; no launch or tests
   at the owner's request.

@@ -32,7 +32,7 @@ final class InterstellarSettingsScreen extends Screen {
         var s=DiskAtmosphere.options();
         button(0,0,"Stars: "+s.stars()+"x","Vanilla star field density: 1x / 2x / 3x. Applies to normal and lensed skies. Default 2x.",()->atmosphere(new DiskAtmosphere.Options(s.stars()%3+1,s.music(),s.gas())));
         button(1,0,"BH music: "+on(s.music()),"Choose eerie Minecraft Nether/End music at random when approaching a black hole. Respects Music volume; leaving restores ordinary music scheduling.",()->atmosphere(new DiskAtmosphere.Options(s.stars(),!s.music(),s.gas())));
-        button(0,1,"Disk gas veil: "+on(s.gas()),"Gentle irregular warm haze only while skimming the visible disk. Maximum 18% opacity; no damage or simulated gas volume.",()->atmosphere(new DiskAtmosphere.Options(s.stars(),s.music(),!s.gas())));
+        button(0,1,"Disk gas veil: "+on(s.gas()),"Irregular warm haze near the visible disk. Maximum 36% opacity; no damage or simulated gas volume.",()->atmosphere(new DiskAtmosphere.Options(s.stars(),s.music(),!s.gas())));
     }
     private void atmosphere(DiskAtmosphere.Options next) {
         try {DiskAtmosphere.apply(next);status="Ambience settings applied and saved.";}

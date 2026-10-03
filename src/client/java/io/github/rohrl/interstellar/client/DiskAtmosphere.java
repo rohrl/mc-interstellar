@@ -72,7 +72,7 @@ public final class DiskAtmosphere {
         var axis=new Vec3d(Math.sin(tilt),Math.cos(tilt),0);
         var p=client.gameRenderer.getCamera().getPos().subtract(source.x(),source.y(),source.z());
         double height=p.dotProduct(axis),r=Math.sqrt(Math.max(0,p.lengthSquared()-height*height))/rs;
-        double thickness=Math.clamp(rs*.045,.2,3),vertical=1-Math.abs(height)/thickness;
+        double thickness=3*Math.clamp(rs*.045,.2,3),vertical=1-Math.abs(height)/thickness;
         double edge=Math.min((r-3)/.2,(AccretionDiskVisuals.options().outerRadius()-r)/.3);
         if(vertical<=0||edge<=0)return 0;
         double time=AccretionDiskVisuals.options().animation()
@@ -81,7 +81,7 @@ public final class DiskAtmosphere {
         double travel=time*60/rs/Math.sqrt(2*r*r*r),phase=angle-travel,phase2=angle-travel*.97;
         double clouds=noise(Math.cos(phase)*r*9,Math.sin(phase)*r*9);
         double filaments=noise(Math.cos(phase2)*r*21+8,Math.sin(phase2)*r*21-5);
-        return (float)(Math.min(1,edge)*vertical*vertical*(.025+.155*clouds*clouds)*(.7+.3*filaments));
+        return (float)(Math.min(1,edge)*vertical*vertical*(.05+.31*clouds*clouds)*(.7+.3*filaments));
     }
     private static double noise(double x,double y) {
         int ix=(int)Math.floor(x),iy=(int)Math.floor(y);double a=x-ix,b=y-iy;

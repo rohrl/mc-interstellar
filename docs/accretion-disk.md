@@ -41,7 +41,7 @@ boundary chattering. Leaving or disabling the feature stops this score and
 returns to ordinary music scheduling. No music assets are bundled.
 
 The gas veil is a deliberate cinematic approximation: a warm screen blend of
-at most18%, only inside the visible disk's annulus and a thin layer around its
+at most 36%, only inside the visible disk's annulus and a layer around its
 plane. Two smooth spatial noise fields rotate at slightly different rates, so
 movement encounters irregular patches rather than random whole-screen flashes.
 It adds no particles, ray marches, damage or actual gas dynamics. It is drawn
