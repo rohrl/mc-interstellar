@@ -5,7 +5,9 @@ import java.util.*;
 
 /** No optional classes are touched until the user selects the separately compiled backend. */
 final class WorldBackendBridge {
-    static final boolean ENABLED=Boolean.getBoolean("interstellar.rtx");
+    static final boolean ENABLED=io.github.rohrl.interstellar.config.RendererAvailability.rtxEnabled(
+        WorldBackendBridge.class.getResource("/interstellar-rtx.marker")!=null,
+        System.getProperty("interstellar.rtx"),System.getProperty("os.name",""),System.getProperty("os.arch",""));
     private Map<String,Integer> previous=Map.of();
     private Map<String,WorldRenderBackend.Image> images=Map.of();
     Map<String,WorldRenderBackend.Image> images(Map<String,Integer> ids) {

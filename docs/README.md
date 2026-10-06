@@ -13,6 +13,7 @@ Reviewed 6 October 2026. Start with the [player README](../README.md) for instal
 | [Minecraft coverage](minecraft-coverage.md) | Supported features and remaining limits |
 | [Science](science.md) | Physical identities, chosen approximations and references; dated sections retain model evolution |
 | [Development](development.md) | Building, ordinary artifacts and optional Windows RTX launch |
+| [RTX installation](rtx-installation.md) | Standalone Windows RTX jar, dependencies, fallback and distribution checks |
 | [Plan](../plan.md) / [handoff](../handoff.md) | Current completion, deferrals and outstanding verification |
 
 ## Illustrated explanation

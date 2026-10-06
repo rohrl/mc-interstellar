@@ -1,4 +1,4 @@
-# Handoff — Documentation refreshed, 6 October 2026
+# Handoff — Standalone RTX packaging, 6 October 2026
 
 ## Current state
 
@@ -6,18 +6,28 @@ Documentation audit complete: README now covers normal Fabric installation,
 source/RTX launch, features, controls, troubleshooting and scientific references.
 Current guides are indexed in docs/README.md; older experiment reports are clearly
 historical. All checked relative links resolve to tracked files/directories.
-No build or Minecraft launch during this documentation-only task. Standalone RTX
-packaging remains unfinished: the current Gradle launch supplies runtime libraries
-and JVM properties that an ordinary copied RTX jar does not supply.
+The subsequent authorized packaging task now supplies an installable Windows x64
+RTX edition. `build packageDemo -PinterstellarRtx` produces distinctly named RTX
+jar/ZIP with three nested LWJGL libraries, native compiler, marker and notices.
+Automatic eligibility respects Windows x64, explicit opt-out and saved GL choice;
+the ordinary build remains free of optional bindings and marker. See D106 and
+docs/rtx-installation.md. No Minecraft launch during either task.
+
+Both builds pass 123 JVM tests. `verifyRtxDistribution -PinterstellarRtx` passes
+all 16 shader variants from the remapped jar and its nested libraries with a
+64 KiB stack (no game or GPU initialization). tools/verify-distribution.py checks
+both jar contents, unique nested mod IDs, DLL and license inclusion. Logs:
+run/rtx-distribution-final.log and run/opengl-distribution-check.log.
+Full Fabric normal-launcher gameplay is still untested for the new package.
 
 Gas veil follow-up: distance from the disk plane is now 3× the original
 threshold (0.6–9 blocks depending on BH size), with doubled opacity (max 36%).
-Radial annulus limits and smooth fading remain. Source-only; no new tests/build/launch.
+Radial annulus limits and smooth fading remain. Now built; runtime appearance remains unverified.
 
 Latest follow-up: star light contribution increased 50% through vanilla's sky
 draw, also affecting both lensed backends. The multiplier is sqrt(1.5) because
-vanilla multiplies RGB and source alpha together. Source-only; no new launch,
-build or tests per owner instruction.
+vanilla multiplies RGB and source alpha together. Now built; runtime appearance
+remains unverified. The no-launch instruction is still in force.
 
 Branch `codex/incremental-refresh`. Accretion disk, visual refinements and
 ambience are complete; implementation, assumptions and evidence are in
@@ -42,7 +52,8 @@ Before the final random-music change, both builds passed 120 JVM tests and all
 The normal artifact was checked for absence of Vulkan/shaderc backend classes.
 The final small music-selection change is source-reviewed only: the owner
 explicitly requested no tests or Minecraft launch while the PC is busy.
-Existing accepted jars predate that selection change; next build picks it up.
+Current distribution jars include the subsequent music/star/gas changes; only their
+runtime checks remain deferred. Earlier disk-study accepted jars predate them.
 
 GPU checks passed 50 observer rays, 54 colour contracts, 15 disk cases and
 30 noise seams (maximum numerical error 1.64e-6). Final GL/RTX image comparison

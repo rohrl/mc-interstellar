@@ -11,7 +11,7 @@ planning history, not instructions to reimplement completed features.
 | World integration | Native terrain and live entities, shared OpenGL/optional RTX, incremental refresh and world-entry preparation. |
 | Gameplay and settings | Mass gravity, arrow exhibit, Rift Pearl pair and player transit, two-minute walking Relativistic Sight potion; six-tab F4 menu. |
 | Visual refinement | AA up to 8×, native special layers, optional returning body, local weather, animated accretion disk and ambience. |
-| Packaging | Normal OpenGL jar/demo ZIP build tasks exist. Standalone RTX runtime packaging and broad compatibility testing remain unfinished. |
+| Packaging | Separate normal OpenGL and standalone Windows RTX jar/demo ZIP builds exist. RTX bundles its optional libraries with automatic eligibility and OpenGL fallback. Full normal-launcher verification and broad compatibility testing remain outstanding. |
 | Latest verification | Disk/ambience checks recorded in docs/accretion-disk.md. Subsequent random-music, star-brightness and gas-strength changes are source-only at owner request. |
 
 Deferred: Kerr rotation; physical terrain infall/destruction; delayed emission

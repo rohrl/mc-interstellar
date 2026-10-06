@@ -1012,3 +1012,24 @@ a Vulkan-reserved identifier during integration. Check all 16 production
 variants before paying for a cold Minecraft/OpenGL launch. An unresolved shader
 include now fails explicitly instead of being silently stripped. Keep normal
 OpenGL-only artifacts free of optional Vulkan/shaderc dependencies.
+
+## D106 — Accepted: standalone optional Windows RTX edition (2026-10-06)
+
+The owner requests installation through an ordinary Fabric profile. Use Loom's
+standard jar-in-jar packaging for LWJGL 3.3.3 Vulkan, shaderc and Windows x64
+shaderc natives; do not duplicate Minecraft's LWJGL core. Include upstream notice
+texts explicitly because the Maven jars omit them. Keep the ordinary edition
+dependency-free with respect to Vulkan/shaderc and use separate artifact names.
+Both editions retain mod ID interstellar: they are alternatives, not addons to
+install together.
+
+Enable optional backend eligibility from a build-specific resource marker, with
+Windows x64 gating and an optional explicit system-property override. F4 keeps
+saved renderer preference and automatic fallback. Large generated shader sources
+use an explicitly freed native buffer instead of a larger global LWJGL stack;
+normal launcher JVM arguments need no change.
+
+Validation is headless per the owner's no-launch instruction: 123 JVM tests in
+both builds, distribution/native compiler check for 16 shader variants from the
+remapped artifact, and archive isolation/content checks. This is not a claim of
+an end-to-end Fabric launcher run. Full launcher/hardware validation remains open.

@@ -39,20 +39,21 @@ outside the tested Windows machine has not been broadly verified.
 .\gradlew.bat build checkRtxShaders -PinterstellarRtx
 ```
 
-The property adds optional backend sources, LWJGL Vulkan/shaderc and Windows
-shaderc natives. `runClient` also sets `-Dinterstellar.rtx=true` and the native
-stack size. It requires supported Vulkan ray queries and Windows OpenGL/Vulkan
+The property adds optional backend sources and bundles LWJGL Vulkan/shaderc and
+Windows shaderc natives. A resource marker enables RTX without launcher flags.
+It requires supported Vulkan ray queries and Windows OpenGL/Vulkan
 external-memory/semaphore sharing. The driver supplies Vulkan support.
 
-**A jar produced with the property is not a standalone RTX distribution:**
-Gradle's runtime dependencies and JVM configuration are not embedded by the
-current packaging task. Use the development launch until dedicated RTX packaging
-exists. Ordinary builds exclude these optional sources/dependencies. Build cleanly
-without RTX properties when producing the normal installable artifact; both modes
-use the same output filename, so copy artifacts aside if retaining both.
+The resulting **`interstellar-rtx-0.1.0-dev.jar`** is the standalone RTX edition.
+Ordinary builds exclude the optional sources/dependencies and retain the filename
+`interstellar-0.1.0-dev.jar`. Both use the same mod ID: install only one edition.
+See [RTX packaging](rtx-installation.md). Neither edition requires a custom native
+stack-size flag; generated shader sources no longer use the thread-local stack.
 
 `checkRtxShaders` compiles 16 compute variants without a Vulkan device or Minecraft
-launch. It does not verify runtime rendering. F4 → Graphics or Alt+F12 changes the
+launch. `verifyRtxDistribution -PinterstellarRtx` repeats compilation from the
+remapped jar and its bundled libraries with a normal 64 KiB stack. Neither check
+verifies runtime rendering. F4 → Graphics or Alt+F12 changes the
 backend preference; the status overlay identifies the actual renderer/fallback.
 
 ## Demo packaging
@@ -64,7 +65,7 @@ backend preference; the status overlay identifies the actual renderer/fallback.
 The ZIP under `build/distributions` contains the ordinary mod and a curated set
 of documents, not Minecraft, Java, Fabric Loader or Fabric API. The repository
 has the complete documentation/evidence; the ZIP is not a complete mirror.
-Do not add RTX properties when creating this ordinary distribution.
+Add `-PinterstellarRtx` to produce the separately named RTX ZIP instead.
 
 ## Verification
 

@@ -32,13 +32,13 @@ of general relativity. Current documentation reviewed **6 October 2026**.
 | Mod loader | **Fabric Loader 0.16.14** is the tested version; the mod requires at least 0.16.14 |
 | Fabric API | **0.102.1+1.21.1** is the pinned, tested version |
 | Java | **Java 21**; building from source requires a complete JDK 21 |
-| Graphics | Ordinary build uses OpenGL. RTX is optional and currently a Windows development-launch path; see below. |
+| Graphics | Ordinary build uses OpenGL. The optional RTX edition supports Windows x64 with a compatible GPU/driver; see below. |
 
-1. Obtain the normal **`interstellar-0.1.0-dev.jar`** from your build/provider, or
+1. Obtain **`interstellar-0.1.0-dev.jar`** (OpenGL) or
+   **`interstellar-rtx-0.1.0-dev.jar`** (Windows RTX with OpenGL fallback), or
    [build it from this repository](#build-or-launch-from-source). Use the remapped
    jar in `build/libs`, **not** a sources jar or an unremapped development artifact.
-   The `-dev` in the version `0.1.0-dev` is expected. Do not assume an RTX
-   development jar is a self-contained installable release.
+   The `-dev` in the version `0.1.0-dev` is expected. Install only one edition.
 2. Install Fabric for **Minecraft 1.21.1** using the
    [official Fabric installer](https://fabricmc.net/use/installer/). Select the
    matching Fabric profile in your launcher. Fabric's
@@ -69,17 +69,20 @@ The normal build has no Vulkan/shaderc dependencies and keeps the OpenGL rendere
 It supports the same gameplay features. The optional backend accelerates geometry
 intersection queries; curved light propagation is still computed by the mod.
 
-**For RTX today, use the Windows source launch below.** It supplies Vulkan/shaderc
-libraries, Windows natives and the required JVM switch. You need a compatible GPU
+**The RTX jar installs into the same Fabric `mods` folder.** It bundles the
+Vulkan/shaderc libraries and Windows native compiler, and enables RTX preference
+without special JVM flags. An existing saved OpenGL preference is respected.
+You need a compatible GPU
 and driver supporting Vulkan ray queries and Windows Vulkan/OpenGL sharing;
 development measurements used an **RTX 5070 Ti**. Other hardware is not certified.
 Unsupported or failed backend initialization falls back to OpenGL where possible.
 
-`build -PinterstellarRtx` alone does **not** package those runtime libraries into
-a ready-to-install RTX distribution. A standalone RTX installation package is
-still pending. There is no separate Vulkan installer step in the documented
-development launch; Gradle supplies Java bindings and the GPU driver supplies
-Vulkan support.
+No separate Vulkan SDK or bindings installation is needed; the GPU driver supplies
+Vulkan support. You can force OpenGL from F4 at any time, or install the smaller
+OpenGL-only edition. See [RTX installation and packaging](docs/rtx-installation.md)
+for hardware requirements, build commands and verification limits. Packaging and
+native shader compilation are checked headlessly; a full normal-launcher session
+has not yet been tested for this new distribution.
 
 ## First things to try
 
@@ -201,7 +204,7 @@ Use the menu for normal changes. F8 lab settings are separate from gameplay.
   viewing guard is **512 blocks**; this does not force distant chunks to load.
   `/interstellar source auto` clears a manually pinned source.
 - **RTX option unavailable:** a normal OpenGL launch cannot enable the absent
-  backend just by toggling the menu. Use the RTX development launch and inspect
+  backend just by toggling the menu. Install the RTX edition or use its source launch and inspect
   the status overlay for the renderer actually in use.
 - **Block changes appear late:** captures are incremental and queued. If lighting
   remains stale after work completes, F4 → Tools offers Rebuild world lighting.
@@ -225,6 +228,10 @@ Install Git and a **complete JDK 21**. From the repository directory containing
 .\gradlew.bat clean build
 # Output: build\libs\interstellar-0.1.0-dev.jar
 
+# Build the optional installable RTX edition without launching Minecraft:
+.\gradlew.bat build packageDemo -PinterstellarRtx
+# Output: build\libs\interstellar-rtx-0.1.0-dev.jar
+
 # Development launch, using its own run\ game directory:
 .\gradlew.bat runClient
 # Optional Windows RTX development launch:
@@ -242,8 +249,8 @@ your normal launcher instance. Do not open the same save in two clients.
 The source launch uses the stable development player name `InterstellarDev`.
 
 `gradlew.bat packageDemo` creates the ordinary demo ZIP under
-`build/distributions`; Fabric API, Fabric Loader, Java and Minecraft are not
-included. Build without RTX properties for that ordinary distribution.
+`build/distributions`; adding `-PinterstellarRtx` creates a separately named RTX
+ZIP. Fabric API, Fabric Loader, Java and Minecraft are not included.
 See [development details](docs/development.md).
 
 ## Scientific and compatibility limits

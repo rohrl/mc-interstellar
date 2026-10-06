@@ -15,7 +15,13 @@ Food & Drinks; survival: Awkward Potion + Amethyst Shard. See
 
 For this checkout, install a full JDK21 and run **Launch Interstellar.cmd**. It launches the current development build; do not open the same save in two clients.
 
-For the optional hardware renderer, run **Launch Interstellar RTX.cmd**, or
+For ordinary Fabric installation, choose `interstellar-rtx-0.1.0-dev.jar` for
+Windows x64 RTX with OpenGL fallback, or `interstellar-0.1.0-dev.jar` for OpenGL
+only. Install one edition plus Fabric API. The RTX jar bundles its extra libraries
+and needs no JVM flags; see `RTX-INSTALLATION.md` in the demo ZIP or the
+[RTX guide online](https://github.com/rohrl/mc-interstellar/blob/codex/incremental-refresh/docs/rtx-installation.md).
+
+For the optional hardware renderer from source, run **Launch Interstellar RTX.cmd**, or
 `gradlew.bat runClient -PinterstellarRtx`. **Alt+F12** switches RTX/OpenGL while
 F10 is active; the HUD names the actual renderer. This covers small masses,
 near/inside-horizon views and the wormhole demo. The ordinary launcher/build keeps

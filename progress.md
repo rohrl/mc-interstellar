@@ -1,5 +1,22 @@
 # Progress
 
+## 2026-10-06 — Standalone Windows RTX distribution
+
+- Optional RTX jar/ZIP bundles Vulkan/shaderc bindings and Windows x64 native
+  compiler via Fabric jar-in-jar. Normal OpenGL artifacts remain separate and
+  contain no optional bindings. Both editions share the mod ID; install one.
+- Resource marker replaces the required development JVM opt-in. OS/architecture
+  gate and explicit opt-out precede native loading; saved GL choice is respected.
+- Moved generated shader strings off the LWJGL stack, removing the stack-size
+  launch requirement. Physics and rendering algorithms are unchanged.
+- Both builds pass 123 JVM tests. All 16 compute variants compile from the actual
+  remapped jar and nested libraries at the default stack size. Archive checks
+  confirm unique dependency IDs, native DLL/notices and normal-build isolation,
+  including switching from RTX back to OpenGL without cleaning.
+- Built jars and demo ZIPs under build/libs and build/distributions. No Minecraft
+  launch; normal-launcher gameplay and hardware fallback remain untested for this
+  packaging change. [Install/build guide](docs/rtx-installation.md).
+
 ## 2026-10-06 — Documentation audit and player setup guide
 
 - Replaced the prototype-oriented README with installation requirements, normal

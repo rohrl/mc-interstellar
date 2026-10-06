@@ -145,7 +145,7 @@ public final class Probe implements AutoCloseable {
         String source=Files.readString(Path.of(shaderFile));if(rt)source=source.replace("#version 460","#version 460\n#define HARDWARE");
         long compiler=shaderc_compiler_initialize(),options=shaderc_compile_options_initialize();
         shaderc_compile_options_set_target_env(options,shaderc_target_env_vulkan,shaderc_env_version_vulkan_1_2);shaderc_compile_options_set_optimization_level(options,shaderc_optimization_level_performance);
-        long result=shaderc_compile_into_spv(compiler,source,shaderc_compute_shader,"query.comp","main",options);
+        long result=RtxShaderCompiler.compile(compiler,source,shaderc_compute_shader,"query.comp","main",options);
         try(MemoryStack s=MemoryStack.stackPush()){
             if(shaderc_result_get_compilation_status(result)!=shaderc_compilation_status_success)throw new IllegalStateException(shaderc_result_get_error_message(result));
             var out=s.mallocLong(1);check(vkCreateShaderModule(device,VkShaderModuleCreateInfo.calloc(s).sType$Default().pCode(shaderc_result_get_bytes(result)),null,out));long module=out.get(0);

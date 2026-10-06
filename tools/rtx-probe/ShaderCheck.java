@@ -6,7 +6,11 @@ import static org.lwjgl.util.shaderc.Shaderc.*;
 /** Fast headless compilation of every production RTX optics/material variant. */
 public final class ShaderCheck {
     private static String expand(String name) throws Exception {
-        String text=Files.readString(Path.of("src/main/resources/assets/interstellar/shaders/include",name));
+        String text;
+        try(var resource=ShaderCheck.class.getResourceAsStream("/assets/interstellar/shaders/include/"+name)) {
+            if(resource==null)throw new java.io.IOException("Missing packaged shader include: "+name);
+            text=new String(resource.readAllBytes(),java.nio.charset.StandardCharsets.UTF_8);
+        }
         var pattern=Pattern.compile("#moj_import <interstellar:([^>]+)>").matcher(text);
         var out=new StringBuilder();
         while(pattern.find())pattern.appendReplacement(out,Matcher.quoteReplacement(expand(pattern.group(1))));
@@ -22,7 +26,7 @@ public final class ShaderCheck {
                 var shader=new FullImageShader(source,live,optics);
                 for(String code:new String[]{shader.probe,shader.material}) {
                     String name=optics+"-"+(live?"live":"frozen")+"-"+count;
-                    long result=shaderc_compile_into_spv(compiler,code,shaderc_compute_shader,name,"main",options);
+                    long result=RtxShaderCompiler.compile(compiler,code,shaderc_compute_shader,name,"main",options);
                     try {
                         if(shaderc_result_get_compilation_status(result)!=shaderc_compilation_status_success)
                             throw new IllegalStateException(shaderc_result_get_error_message(result));
