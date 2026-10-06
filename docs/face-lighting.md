@@ -1,5 +1,7 @@
 # Captured face lighting — 2026-09-17
 
+> Historical implementation report or proposal. Results, defaults and pending work describe the recorded checkpoint, not necessarily the current mod. See the [current guides and status](README.md).
+
 Nearby opaque surfaces previously assumed sky15/block0, while distant column sides reused light from above the column. Capture adjacent sky/block levels for each of the six faces instead. Include the emitting block's luminance; inset snow tops sample their own cell. Distant caps and representative material beneath them have separate face-light records, so a snow cap does not inherit a dark cliff sample. Shader selection follows the same cap/side and upper/lower layer as material selection.
 
 Each sky/block pair occupies one byte; three faces pack into an exactly representable24-bit integer in a float. Local data uses an RG32F texture matching the existing flattened96-cubed grid; distant data uses a512x256 RGBA32F texture with two layer texels per column, each holding cap/side records. Extra memory is17.5MiB CPU+GPU per snapshot, at most35MiB for published+pending snapshots. Capture remains inside existing per-frame budgets and texture uploads share existing unpack/PBO isolation. All new buffers/textures are released with their snapshots.

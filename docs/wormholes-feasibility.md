@@ -1,5 +1,7 @@
 # Traversable wormholes in Interstellar: feasibility study
 
+> Historical implementation report or proposal. Results, defaults and pending work describe the recorded checkpoint, not necessarily the current mod. See the [current guides and status](README.md).
+
 Status: original feasibility study, requested 28 September 2026. The owner has now
 authorized a two-way demo implementation; see [active scope and progress](overnight-goals-2026-09-28.md).
 The study below records the reasoning and proposed extensions, not a claim that

@@ -1,5 +1,7 @@
 # Automatic source refresh
 
+> Historical implementation report or proposal. Results, defaults and pending work describe the recorded checkpoint, not necessarily the current mod. See the [current guides and status](README.md).
+
 ## Behavior
 
 A selection now tracks the original inspected block position for the current player/world session. Relevant mass edits and chunk load/unload events immediately withdraw stale optical metadata, then trigger a bounded rescan. Unrelated chunks remain ignored for completed selections. F10 preserves its armed state while waiting and rebuilds the terrain renderer only after a complete black-hole source arrives.

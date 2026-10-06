@@ -1,5 +1,7 @@
 # Native corner lighting — 2026-09-17
 
+> Historical implementation report or proposal. Results, defaults and pending work describe the recorded checkpoint, not necessarily the current mod. See the [current guides and status](README.md).
+
 Capture the corner brightness and lightmap coordinates emitted by Minecraft's own `BlockModelRenderer`, using a quad consumer instead of drawing those quads. This supplies native smooth lighting/ambient occlusion for the supported block faces. Runtime lighting still follows the current Minecraft lightmap. No ray equations, scene geometry or world blocks are changed.
 
 Each face stores four corner records: 8-bit brightness and native block/sky lightmap coordinates, packed into an exactly representable 24-bit integer. A sign bit preserves the baked quad's triangle diagonal. The fragment shader reconstructs each corner's lit colour and interpolates over the same triangles at the terrain hit. Inset snow faces use their captured model height. Unsupported layouts or exhausted record capacity fall back to the previous face-light path. Brightness quantization and the existing material/tint limitations remain; this is not a claim of arbitrary baked-model support.

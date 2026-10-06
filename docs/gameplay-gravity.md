@@ -1,5 +1,7 @@
 # Gameplay gravity — implementation and verification
 
+> Historical implementation report or proposal. Results, defaults and pending work describe the recorded checkpoint, not necessarily the current mod. See the [current guides and status](README.md).
+
 Initially implemented on `codex/gameplay-gravity`; range, arrow-course and visual follow-ups are on `codex/gameplay-arrow-exhibit`. The owner accepted the proposal and permits a small performance cost. The checks below establish sampled numerical and runtime behaviour, not complete physical accuracy or a worst-case performance guarantee.
 
 ## Behaviour and controls

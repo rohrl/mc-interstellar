@@ -1,5 +1,7 @@
 # Stable exploration
 
+> Historical implementation report or proposal. Results, defaults and pending work describe the recorded checkpoint, not necessarily the current mod. See the [current guides and status](README.md).
+
 ## Behavior
 
 Completed source selections depend only on chunks intersecting the horizontal bounding square of the enclosing sphere plus a one-block connectivity shell. Unrelated chunk loads/unloads and distant mass edits no longer clear them. Mass callbacks pass their changed position. Relevant changes still clear the source at the end of the tick; incomplete inspections retain conservative world epochs. This is bounded invalidation, not automatic cluster maintenance or reinspection.

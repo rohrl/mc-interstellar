@@ -1,5 +1,7 @@
 # Wormhole acceptance evidence
 
+> Historical implementation report or proposal. Results, defaults and pending work describe the recorded checkpoint, not necessarily the current mod. See the [current guides and status](../../README.md).
+
 See [the implementation report](../../wormhole-demo-implementation.md) for scope,
 physics, controls, results and limitations. No single scalar image metric is used
 as an automatic visual acceptance threshold.

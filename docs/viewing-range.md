@@ -1,5 +1,7 @@
 # Wider native-mesh viewing — 2026-09-18
 
+> Historical implementation report or proposal. Results, defaults and pending work describe the recorded checkpoint, not necessarily the current mod. See the [current guides and status](README.md).
+
 ## Current limit: 512 blocks (2 October 2026)
 
 The owner requested twice the visibility distance. Client rendering and server

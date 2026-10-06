@@ -1,5 +1,7 @@
 # Mass blocks and bounded cluster inspection
 
+> Historical implementation report or proposal. Results, defaults and pending work describe the recorded checkpoint, not necessarily the current mod. See the [current guides and status](README.md).
+
 Mass Block (interstellar:mass_block) is registered as a normal block and block item, listed in the Functional Blocks creative group. It currently references Minecraft's lodestone-top texture as provisional art. No Minecraft texture file is copied into the repository. Each block contributes 0.125 coordinate blocks to the effective Schwarzschild radius.
 
 ## Try it

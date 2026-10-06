@@ -1,5 +1,7 @@
 # Optical settings and quality
 
+> Historical implementation report or proposal. Results, defaults and pending work describe the recorded checkpoint, not necessarily the current mod. See the [current guides and status](README.md).
+
 The lab reads config/interstellar-optics.json whenever F8 opens it. In the development client this is run/config/interstellar-optics.json. The separate interstellar.json still controls the calibration HUD/reference scale. Existing files are never rewritten by the loader; missing fields inherit defaults, unknown fields are ignored, and invalid fields cause a logged fallback to defaults for that lab instance. Invalid files remain unchanged.
 
 ```json

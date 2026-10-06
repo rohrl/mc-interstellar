@@ -2,6 +2,11 @@
 
 This document separates physical identities from chosen gameplay approximations. Equations are not evidence that an implementation has been validated.
 
+Reviewed 6 October 2026. Conventions and the summaries below describe the current
+model; dated implementation sections also retain its development history. A
+proposal in an earlier section is not proof that it was implemented. Current
+player-facing limits are in [Minecraft coverage](minecraft-coverage.md).
+
 ## Conventions
 
 - Initial physical model: isolated, stationary, uncharged, non-rotating Schwarzschild source.
@@ -10,16 +15,16 @@ This document separates physical identities from chosen gameplay approximations.
 - Critical impact parameter b_crit = (3 sqrt(3)/2) r_s. This is not a physical surface radius or the near-observer angular shadow radius.
 - For a static observer outside the photon sphere, sin(alpha_shadow) = b_crit sqrt(1-r_s/r)/r for a distant luminous background. Inside the photon sphere the angular branch differs; never reuse asin blindly. Static observers do not exist at/inside the horizon.
 - Bootstrap HUD's Euclidean camera-to-centre distance is a proposed coordinate embedding, not GR proper distance. It applies no metric or observer transformation.
-- SR beta = v/c must be finite with |beta| < 1. gamma = 1/sqrt(1-beta^2). Forward head-on frequency ratio D = sqrt((1+beta)/(1-beta)). Full directional transforms and spectral radiance are future work.
+- SR beta = v/c must be finite with |beta| < 1. gamma = 1/sqrt(1-beta^2). Forward head-on frequency ratio D = sqrt((1+beta)/(1-beta)). Directional aberration and frequency transforms are implemented; RGB-based spectral reconstruction and exposure remain approximations (see Walking observer frame below).
 - Do not use a generic RGB tint for exact spectral Doppler. Minecraft RGB spectra are underdetermined.
 - Never present photon sphere as a glowing shell; Einstein rings need source alignment; multiple images come from different light paths, not reflections.
 - A physical free-fall horizon crossing is optically continuous. Hovering and falling observers at equal radius see different skies.
 
 ## Chosen approximations
 
-One mass block will add 0.125 coordinate blocks to r_s; mass is additive by design. Binding energy, pressure, real collapse, terrain gravity and astrophysical matter dynamics are not simulated. Cluster radius/collapse treatment needs an explicit shape rule. Strong-field Schwarzschild metrics cannot simply be summed for multiple sources.
+The normal gameplay calibration adds `sqrt(3)/32` coordinate blocks to r_s per mass block; the preserved legacy exhibit uses the older 0.125 calibration. Mass is additive by design, with collapse determined by the cluster's enclosing-radius proxy (see Mass-block source proxy below). Binding energy, pressure, real collapse, terrain gravity and astrophysical matter dynamics are not simulated. Strong-field Schwarzschild metrics cannot simply be summed for multiple sources.
 
-GR exhibit scale and SR speed scale are independently configurable. A later combined mode must define a coherent local observer frame. Playback slowing must not be mislabelled physical time dilation.
+GR exhibit scale and SR speed scale are independently configurable. The combined mode applies the walking boost in the existing local optical observer frame (see Walking observer frame below). Playback slowing must not be mislabelled physical time dilation.
 
 Stationary actual-player-body demonstrations can omit motion history because the geometry is time independent. Moving player-body images require past poses and emission times. Static Minecraft terrain behind an interior observer is not a physically valid stationary interior material model; controlled interior boundary conditions must be defined before the tour is claimed physical.
 

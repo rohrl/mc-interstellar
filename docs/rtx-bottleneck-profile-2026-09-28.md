@@ -1,5 +1,7 @@
 # Where the current black-hole renderer spends its time
 
+> Historical implementation report or proposal. Results, defaults and pending work describe the recorded checkpoint, not necessarily the current mod. See the [current guides and status](README.md).
+
 **Result: repeated scene searches are the main target. RTX is worth a representative
 prototype; optical lookup tables are a lower priority for these views.** This profile
 does not measure an RTX version of Minecraft. It connects the earlier isolated RTX

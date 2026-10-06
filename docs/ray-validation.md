@@ -1,5 +1,7 @@
 # GPU ray validation — 2026-09-14
 
+> Historical implementation report or proposal. Results, defaults and pending work describe the recorded checkpoint, not necessarily the current mod. See the [current guides and status](README.md).
+
 V in the optical lab performs a one-shot 128x72 RGBA32F readback from the production ray shader. It records capture/escape/unresolved outcomes and the sine/cosine of the exit angle. The CPU integrates the corresponding pixel-centre directions with double-precision RK4 at h=0.001; the GPU uses float RK4 at h=0.02. The analytic static shadow angle provides a separate capture check. This compares shared-algorithm implementations, not independent solvers.
 
 ## Bug found and corrected

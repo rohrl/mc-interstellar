@@ -1,5 +1,7 @@
 # Black-hole and relativity feature ideas
 
+> Historical implementation report or proposal. Results, defaults and pending work describe the recorded checkpoint, not necessarily the current mod. See the [current guides and status](README.md).
+
 These are proposals, not implemented behavior or commitments. Start with features that add interaction without another expensive full-screen pass. The physical models should be validated against primary references, including [Carroll's general-relativity notes, especially the black-hole chapter](https://arxiv.org/abs/gr-qc/9712019), and the project's existing independent ray tests.
 
 | Idea | What the player does | Implementation direction / likely cost |

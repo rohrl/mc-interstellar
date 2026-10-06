@@ -1,4 +1,4 @@
-# Minecraft feature coverage — 2026-09-24
+# Minecraft feature coverage — reviewed 2026-10-06
 
 This describes live F10. F9 remains a frozen diagnostic view. Missing curved graphics
 do not disable the corresponding vanilla gameplay mechanics.
@@ -45,9 +45,12 @@ validated. Rendering order is not exhaustive certification of every status effec
 | Aiming/interacting | Straight collision/interaction rays: the visually bent position can differ from the actual target. |
 | Entity gravity | Mobs, ordinary/spectral arrows, tridents, vanilla thrown entities and free fishing bobbers participate. Players, mounted/passenger groups, homing projectiles, dropped items, boats and minecarts remain outside this implementation. Loyalty, fishing/reeling and leash attachments keep native rules. |
 | Motion realism | Bounded Newtonian gameplay force with native gravity/drag/collisions, not relativistic massive-particle geodesics. Red/dim approach cue is stylized; no delayed light or apparent horizon freezing. |
-| Source limits | One selected spherical optical source. No combined multi-hole spacetime. Physics supports enclosing radius up to16 blocks, horizon radius up to12 and force reach at most64. Visual tether sag uses the selected source. |
-| Terrain/horizon | F10 stays active through the horizon with a falling optical frame and straight-aim interior block editing. Central background cutoff at0.1 r_s. No physical terrain infall/destruction, absorbed-mass growth or accretion disk. [Assumptions](horizon-body-study.md). |
-| Range/updates | 256-block camera range, finite geometry budgets and queued terrain updates. Initial preparation can take tens of seconds in natural worlds. Teleporting is not a v1 support target. |
+| Source limits | One selected spherical optical mass plus one wormhole pair. Their combined field is a gameplay approximation, not an exact multi-object spacetime. Physics supports enclosing radius up to 16 blocks, horizon radius up to 12 and force reach at most 64. Visual tether sag uses the selected source. |
+| Terrain/horizon | F10 stays active through the horizon with a falling optical frame and straight-aim interior block editing. Central background cutoff at 0.1 r_s. No physical terrain infall/destruction or absorbed-mass growth. The optional [accretion disk](accretion-disk.md) is an emitting thin surface, not simulated gas dynamics. [Horizon assumptions](horizon-body-study.md). |
+| Range/updates | 512-block mass viewing guard, subject to source chunks staying loaded; finite geometry budgets and queued updates. Local preparation runs during world entry when enabled, even without items. A distant portal may prepare later. Arbitrary teleporting is not a v1 support target. |
+| Wormholes | Player transit and destination terrain/block entities; remote mob tracking and mob/projectile transit remain unsupported. One pair per save, with both mouths in the same dimension. |
+| Relativistic Sight | Two-minute walking potion; independent aberration, approximate Doppler colour and compressed brightness. Movement speed remains normal; material spectra and delayed emission history are not known. |
+| Disk and ambience | Shared OpenGL/RTX disk, procedural apparent relief, golden bloom, denser/brighter stars, random native music and local gas veil. No disk illumination of terrain, volumetric scattering or Kerr rotation. |
 
 The legacy calibration exhibit disables entity gravity; gameplay/arrow exhibits use it.
 F10 controls optics independently of server forces. See [feature evidence](world-features.md),

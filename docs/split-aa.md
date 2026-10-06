@@ -1,5 +1,7 @@
 # Separate AA ray passes — accepted
 
+> Historical implementation report or proposal. Results, defaults and pending work describe the recorded checkpoint, not necessarily the current mod. See the [current guides and status](README.md).
+
 Keep the accepted two diagonal subpixel rays at offsets(-.25,-.25) and(+.25,+.25), all traversal/optics/materials, and bounded cubic reconstruction. A shorter shader traces one ray per fragment. Two draws use the original logical viewport/interpolated coordinates, with physical viewports occupying two halves of an RGBA32F target. A small fold pass averages both samples into the existing RGBA8 target before reconstruction. This avoids quantizing individual samples and retains the original order of averaging/clamping. Extra temporary storage at1280x720 logical resolution is29,491,200 bytes (28.125MiB), plus one fold pass; no scene coverage or sample count reduction.
 
 Only the normal-settings, compact,16-block-cap program uses this experiment. Alternate settings fall back to existing shaders. X toggles split/serial AA; Shift+X captures a same-frame pair. C still checks the existing diagnostic variant of the unchanged trace/traversal, not the split executable's sample scheduling. Actual scheduling needs image comparisons.

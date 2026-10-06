@@ -1,5 +1,7 @@
 # Critical-ray diagnostics
 
+> Historical implementation report or proposal. Results, defaults and pending work describe the recorded checkpoint, not necessarily the current mod. See the [current guides and status](README.md).
+
 Press **C** in F8 for a bounded blocking stress test. It runs 252 rays: local looking cosine offsets of +/-10^-2 through +/-10^-7 from the analytic critical direction, seven observer cases, and all three integration qualities. Static cases: r/r_s=8, 1.5, 1.05. Falling cases: 8, 1, 0.7067775, 0.35. Input radii and cosines are cast to float before the independent PG reference is evaluated, matching shader uniform inputs. GPU arithmetic still rounds intermediate normalization and slope calculations.
 
 Each ray is drawn to a 1x1 RGBA32F framebuffer through the production solver. Diagnostic mode overrides only its input direction and emits cos(phi), sin(phi), status and unwrapped phi. Normal output keeps alpha=1. The diagnostic restores framebuffer bindings, viewport, renderbuffer and all changed scene uniforms. It pauses playback, cancels timing, and has no readback/reference-integration cost during ordinary rendering. The screen catches diagnostic runtime failures after framebuffer cleanup. V retains the screen-grid comparison and now also logs maximum unwrapped error and full-turn-bin differences.

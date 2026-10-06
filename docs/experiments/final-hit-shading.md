@@ -1,5 +1,7 @@
 # Final-hit opaque shading — rejected experiment, 2026-09-19
 
+> Historical implementation report or proposal. Results, defaults and pending work describe the recorded checkpoint, not necessarily the current mod. See the [current guides and status](../README.md).
+
 Defer vertex-colour/lightmap shading until the final nearest opaque triangle across terrain and moving trees. Preserve every alpha test, nearest-hit decision, cloud contribution, numerical ray step and AA sample. Retain winning triangle/tree, barycentric weights and albedo, then reload its vertex light data. Compile a separate native candidate so the reference executable remains unchanged.
 
 `final-shade-build.log`:51 tests pass. `final-shade-runtime.log`:candidate passes17600 sampled optical comparisons, zero mismatches/inconclusive/unresolved. Same-frame pair1590503795081838478 is pixel-identical (both PNG hashes206A7804C5CDDF084F701502D76243380374742A9F3EF901CD43F4B7E2CDDDB1).

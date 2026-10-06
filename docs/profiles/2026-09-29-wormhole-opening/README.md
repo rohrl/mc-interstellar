@@ -1,5 +1,7 @@
 # Wormhole opening checks — 2026-09-29
 
+> Historical implementation report or proposal. Results, defaults and pending work describe the recorded checkpoint, not necessarily the current mod. See the [current guides and status](../../README.md).
+
 ## Result
 
 First mouth: small closed core, native depth-tested marker while local geometry

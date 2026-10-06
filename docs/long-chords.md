@@ -1,5 +1,7 @@
 # Curvature-limited longer segments — accepted16-block cap
 
+> Historical implementation report or proposal. Results, defaults and pending work describe the recorded checkpoint, not necessarily the current mod. See the [current guides and status](README.md).
+
 Raise only the native adaptive integrator's spatial segment cap from4 to16 blocks initially. Keep the existing local curvature estimate, nominal0.001-block sagitta tolerance (scaled with the standard/fine path setting), minimum path step,0.02radian angular cap, RK4 equations and all scene intersections. A larger cap matters only where the existing curvature formula permits a longer segment. It does not skip geometry queries or assume the segment is empty.
 
 The curvature estimate is local, not a rigorous bound over a long segment; changing numerical sampling can affect tangent surfaces and outgoing sky direction. Fresh independent optical and actual-world image comparisons are required. This is distinct from the rejected empty-region stepping experiment, which computed additional clearance bounds and relaxed the spatial limit only inside certified empty space.

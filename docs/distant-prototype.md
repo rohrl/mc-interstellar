@@ -1,5 +1,7 @@
 # Distant height-field experiment — 2026-09-16
 
+> Historical implementation report or proposal. Results, defaults and pending work describe the recorded checkpoint, not necessarily the current mod. See the [current guides and status](README.md).
+
 Status: opt-in research prototype, **not demo acceptance**. The default F10 renderer remains unchanged. `distantPrototype: true` in `run/config/interstellar-terrain.json` enables the experiment on the next F10 activation; F9 H toggles it for comparisons. F9 V/C also run a small independent distant flat-hit check. Diagnostic local rays retain their original solver/settings.
 
 ## Representation and ownership

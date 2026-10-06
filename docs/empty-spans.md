@@ -1,5 +1,7 @@
 # Larger steps in certified empty space — rejected experiment
 
+> Historical implementation report or proposal. Results, defaults and pending work describe the recorded checkpoint, not necessarily the current mod. See the [current guides and status](README.md).
+
 **Decision:** retain the production stepping algorithm. The candidate regresses against a separately compiled original shader, despite apparently favourable on/off measurements within the modified program. Preserve this experiment separately; its controls and shader changes are not production features.
 
 The existing renderer certifies empty boxes separately for terrain and moving geometry. Inside their intersection, a longer chord cannot encounter geometry if its whole path remains within a conservative distance bound. This experiment relaxes the spatial chord-size limit only in that certified region. It retains the existing0.02radian angular step cap, RK4 equations, sky/horizon exits, AA and geometry. Numerical step sizes change, so independent accuracy and image checks are required.

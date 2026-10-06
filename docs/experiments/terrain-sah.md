@@ -1,5 +1,7 @@
 # Terrain surface-area tree experiment — rejected, 2026-09-19
 
+> Historical implementation report or proposal. Results, defaults and pending work describe the recorded checkpoint, not necessarily the current mod. See the [current guides and status](../README.md).
+
 Do not enable this experiment in the production branch. It replaces terrain midpoint splits with12-bin surface-area splits, keeping all geometry, GPU intersection code and ray steps. Moving actors retain their original trees. The cost model follows the [surface-area heuristic described in PBRT](https://pbr-book.org/4ed/Primitives_and_Intersection_Acceleration/Bounding_Volume_Hierarchies); the implementation is original.
 
 ## Evidence

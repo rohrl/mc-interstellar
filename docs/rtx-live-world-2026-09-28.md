@@ -1,5 +1,7 @@
 # Live RTX world integration — 28 September 2026
 
+> Historical implementation report or proposal. Results, defaults and pending work describe the recorded checkpoint, not necessarily the current mod. See the [current guides and status](README.md).
+
 The optional RTX backend now renders the live F10 exterior black-hole view. Mobs,
 clouds, native appearance and edited/streamed terrain update while playing. The
 OpenGL renderer remains available, and ordinary builds have no Vulkan dependency.

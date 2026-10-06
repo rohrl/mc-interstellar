@@ -1,5 +1,7 @@
 # Native baked-mesh integration experiment
 
+> Historical implementation report or proposal. Results, defaults and pending work describe the recorded checkpoint, not necessarily the current mod. See the [current guides and status](README.md).
+
 Follow-up: native mob bodies and corrected terrain lightmap sampling are now implemented; see [mesh-entities.md](mesh-entities.md) for current controls, supported layers and improved comparisons. The measurements and entity omissions below describe the initial checkpoint.
 
 2026-09-17, branch `codex/world-mesh-reference`. Quality-first experiment authorized by the owner; FPS is not its acceptance gate. The existing F10 backend remains available. This is not yet the final integrated renderer or a converged lensed reference.

@@ -1,5 +1,7 @@
 # Live terrain preview
 
+> Historical implementation report or proposal. Results, defaults and pending work describe the recorded checkpoint, not necessarily the current mod. See the [current guides and status](README.md).
+
 Inspect a complete black-hole proxy with `/interstellar inspect x y z`, stand outside 1.05 r_s and within the captured region, then press **F10**. Move and look normally. F10 switches back to Minecraft; **F12** starts/cancels pass timing. **F9** retains the frozen comparison/geometry lab; F8 retains the sky lab. Opening either stops the live preview. `run/config/interstellar-terrain.json` controls enabled/renderScale for both terrain modes, loaded on opening.
 
 The normal HUD and crosshair remain visible. **Interactions use vanilla straight aim**, not curved light paths: switch the preview off when selecting/building blocks. The camera uses a fixed 70-degree vertical FOV and a static local observer at its current position; movement is not yet relativistic motion. Native entity/hand/world images are covered by the terrain pass. Only supported opaque cubes are represented; no returning player-body images yet.

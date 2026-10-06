@@ -1,5 +1,7 @@
 # Continuous exterior and bounded repeated views — 29 September 2026
 
+> Historical implementation report or proposal. Results, defaults and pending work describe the recorded checkpoint, not necessarily the current mod. See the [current guides and status](../../README.md).
+
 ## What changed
 
 The old GPU triangle filter assigned terrain to opposite sides of the plane halfway

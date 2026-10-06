@@ -1,5 +1,7 @@
 # Exact compact nodes
 
+> Historical implementation report or proposal. Results, defaults and pending work describe the recorded checkpoint, not necessarily the current mod. See the [current guides and status](README.md).
+
 Accepted after the checks below, targeting acceleration-tree memory traffic. Bounds and escape links retain their original32-bit float values. Two adjacent texels hold min/escape and max/header. The header encodes the first triangle or child-tree pointer and leaf kind in a normal finite float, decoded with [ARB_shader_bit_encoding](https://registry.khronos.org/OpenGL/extensions/ARB/ARB_shader_bit_encoding.txt), which specifies GLSL1.50 bit reinterpretation. No bound quantization, reordered triangles, changed intersections or optical steps.
 
 The low27 bits contain a23-bit pointer and4-bit kind; OR with0x40000000 makes a normal finite carrier, avoiding NaN/subnormal transport. Kinds0/1–8/9 denote internal/ordinary leaf/child-tree jump. Kind15 refers to an overflow descriptor preserving an unusually large leaf's exact first/count. The pointer limit covers current triangle and node arenas; out-of-range input fails explicitly.

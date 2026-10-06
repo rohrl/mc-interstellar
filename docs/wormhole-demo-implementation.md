@@ -1,5 +1,7 @@
 # Wormhole demo implementation — 28 September 2026
 
+> Historical implementation report or proposal. Results, defaults and pending work describe the recorded checkpoint, not necessarily the current mod. See the [current guides and status](README.md).
+
 **Historical implementation report.** Gameplay now uses two localized mouths in
 one continuous exterior, replacing the nearest-chart terrain partition described
 here. See [current controls and limits](settings-and-wormhole-seed.md),

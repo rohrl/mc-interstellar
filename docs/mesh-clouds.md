@@ -1,5 +1,7 @@
 # Native foreground clouds — 2026-09-18
 
+> Historical implementation report or proposal. Results, defaults and pending work describe the recorded checkpoint, not necessarily the current mod. See the [current guides and status](README.md).
+
 F9 **M** now captures native cloud geometry alongside terrain and supported frozen living entities. **N** toggles foreground cloud composition; OFF restores the previous background-only cloud cube for comparison. **Space** enables lensing. This remains a frozen integration experiment, separate from F10.
 
 ## Representation

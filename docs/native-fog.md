@@ -1,5 +1,7 @@
 # Native fog and boundary check — 2026-09-17
 
+> Historical implementation report or proposal. Results, defaults and pending work describe the recorded checkpoint, not necessarily the current mod. See the [current guides and status](README.md).
+
 Owner reports improved nighttime sky, with a small apparent viewport/size jump and different mountain shading when crossing the F10 viewing boundary.
 
 ## Change

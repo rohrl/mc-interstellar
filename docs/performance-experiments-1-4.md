@@ -1,5 +1,7 @@
 # Original four-experiment scope
 
+> Historical implementation report or proposal. Results, defaults and pending work describe the recorded checkpoint, not necessarily the current mod. See the [current guides and status](README.md).
+
 The active goal is to try items 1–4 of the revised priorities at `e324e84`, before
 later evidence changed the ranking. Keep these requirements fixed:
 

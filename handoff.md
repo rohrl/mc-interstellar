@@ -1,6 +1,14 @@
-# Handoff — Disk and ambience completed, 3 October 2026
+# Handoff — Documentation refreshed, 6 October 2026
 
 ## Current state
+
+Documentation audit complete: README now covers normal Fabric installation,
+source/RTX launch, features, controls, troubleshooting and scientific references.
+Current guides are indexed in docs/README.md; older experiment reports are clearly
+historical. All checked relative links resolve to tracked files/directories.
+No build or Minecraft launch during this documentation-only task. Standalone RTX
+packaging remains unfinished: the current Gradle launch supplies runtime libraries
+and JVM properties that an ordinary copied RTX jar does not supply.
 
 Gas veil follow-up: distance from the disk plane is now 3× the original
 threshold (0.6–9 blocks depending on BH size), with doubled opacity (max 36%).

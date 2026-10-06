@@ -1,5 +1,7 @@
 # Prompt live edits and walking-triggered Relativistic Sight
 
+> Historical implementation report or proposal. Results, defaults and pending work describe the recorded checkpoint, not necessarily the current mod. See the [current guides and status](../../README.md).
+
 ## User-visible changes
 
 Placed/mined blocks no longer wait behind the scenery capture queue. Actual block

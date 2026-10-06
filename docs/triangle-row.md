@@ -1,5 +1,7 @@
 # Reuse terrain triangle row addresses — accepted simplification
 
+> Historical implementation report or proposal. Results, defaults and pending work describe the recorded checkpoint, not necessarily the current mod. See the [current guides and status](README.md).
+
 A terrain triangle has nine consecutive texels and starts at an index divisible by nine.4095 is also divisible by nine, so base%4095+part for part0..8 cannot cross a row. Compute the quotient/remainder from the triangle base, allowing reuse across attribute fetches. Moving triangles use4096-wide rows and can cross boundaries; their original per-attribute addressing is retained. No data, geometry, optics, samples or reconstruction changes.
 
 Separate live/diagnostic programs keep the accepted fixed-layout reference; Z/Shift+Z toggles/compares. The reference macro expands to the same original sceneTriangle(tree,base+part) expressions. triangle-row-build.log passes53 tests. Matching triangle-row diagnostic at00:59:24 in triangle-row-runtime.log passes26240 sampled checks, zero mismatch/inconclusive/unresolved. Wall14780835100883114064 and down2559387832180417174 pairs are pixel-identical, SHA256 respectively54DEA18B967A9A786738905B206B74C82EFF4BC08DFD0E7A552928F898FC170C and40D3328106735DAEB7607F4E135D8889B28080732F24649E10282FA60978E66D.

@@ -1,5 +1,22 @@
 # Progress
 
+## 2026-10-06 — Documentation audit and player setup guide
+
+- Replaced the prototype-oriented README with installation requirements, normal
+  Fabric setup, source/RTX launch distinction, features, first-use steps, six-tab
+  controls, troubleshooting, limits and annotated scientific references.
+- Corrected current coverage/science/settings/demo guides: disk support, 512-block
+  guard, world-entry preparation, walking potion, calibrated mass and ambience.
+- Added a documentation index and explicit historical labels to old reports;
+  retained their measurements and rejected-experiment evidence.
+- Confirmed the optional RTX jar is not a self-contained runtime distribution:
+  the documented working route is the Windows Gradle development launch.
+- Checked 94 Markdown files and 421 local links (including anchors): all targets exist and linked
+  files are tracked (including the new index). Official Fabric setup guidance
+  and the main paper titles/links were checked. No Minecraft launch or build;
+  no change to renderer/gameplay code. The October 3 source-only tuning changes
+  remain unverified at runtime.
+
 ## 2026-10-03 — Disk refinement and ambience
 
 - Gas veil follow-up: tripled the distance threshold above/below the disk

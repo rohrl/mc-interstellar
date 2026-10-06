@@ -1,5 +1,7 @@
 # Faint Doppler detail — 30 September 2026
 
+> Historical implementation report or proposal. Results, defaults and pending work describe the recorded checkpoint, not necessarily the current mod. See the [current guides and status](../../README.md).
+
 **Brightness follow-up:** the owner requested slightly more visible dark detail,
 so the current floor is **6%**, raised from 4%. The captures, GPU results and timings
 below describe the original 4% acceptance. The follow-up changes only the floor

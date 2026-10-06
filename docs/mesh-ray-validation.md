@@ -1,5 +1,7 @@
 # Independent curved mesh fixture
 
+> Historical implementation report or proposal. Results, defaults and pending work describe the recorded checkpoint, not necessarily the current mod. See the [current guides and status](README.md).
+
 In a ready **F9 native mesh preview**, press **C**. The test briefly pauses rendering, logs a compact comparison table, and restores the normal preview. It creates no blocks, changes no world state, and allocates only two temporary one-row mesh textures. The ordinary F10 path never runs the fixture. In the legacy voxel preview, C retains its previous world-snapshot diagnostic.
 
 ## What is compared

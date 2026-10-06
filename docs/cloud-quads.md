@@ -1,5 +1,7 @@
 # Native cloud face intersections — 2026-09-23
 
+> Historical implementation report or proposal. Results, defaults and pending work describe the recorded checkpoint, not necessarily the current mod. See the [current guides and status](README.md).
+
 Follow-up to [separate moving roots](moving-trees.md). **Not adopted:** both tested
 cloud-face implementations were effectively tied with the accepted renderer.
 The experiment is preserved on `codex/cloud-quad-intersections`; the normal

@@ -1,5 +1,7 @@
 # Free-fall sky experiment
 
+> Historical implementation report or proposal. Results, defaults and pending work describe the recorded checkpoint, not necessarily the current mod. See the [current guides and status](README.md).
+
 The lab now follows a radial observer falling from rest at infinity through the Schwarzschild horizon. It remains an illustrative sky at infinity: no terrain, player body, accretion disk, spectral transport or matter collapse is rendered.
 
 ## Observer and reference equations

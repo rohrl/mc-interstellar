@@ -1,5 +1,7 @@
 # Rendering profile and revised priorities — 2026-09-23
 
+> Historical implementation report or proposal. Results, defaults and pending work describe the recorded checkpoint, not necessarily the current mod. See the [current guides and status](README.md).
+
 **Latest priority update, 28 September:** the [current-renderer shader-clock study](rtx-bottleneck-profile-2026-09-28.md)
 attributes roughly76–87% of initial-ray latency to geometry search and3–7% to orbit
 steps in two exterior views, with instrumentation interference explicitly measured.

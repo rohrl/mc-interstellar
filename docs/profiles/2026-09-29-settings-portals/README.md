@@ -1,5 +1,7 @@
 # Settings and Wormhole Seed checks
 
+> Historical implementation report or proposal. Results, defaults and pending work describe the recorded checkpoint, not necessarily the current mod. See the [current guides and status](../../README.md).
+
 RTX5070Ti, driver616.92; Ryzen5800X3D; Minecraft1.21.1/Fabric/JDK21.
 1280×720 output, existing120FPS cap. Copied save:
 `Interstellar Overnight Check 2026-09-28`; original saves untouched.

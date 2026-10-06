@@ -1,5 +1,7 @@
 # Demo packaging checkpoint — 2026-09-22
 
+> Historical implementation report or proposal. Results, defaults and pending work describe the recorded checkpoint, not necessarily the current mod. See the [current guides and status](README.md).
+
 Branch `codex/demo-visual-refinement`, based on performance baseline `79aa1d0`. The owner resumed steps3–4 with an FPS floor; this checkpoint completes the packaging increment, not all visual refinement.
 
 The separate `interstellar:demo` dimension contains a deterministic wall, pillar, terrain, stairs/slabs, tree,64-block source and3 persistent named sheep. Construction checks occupied cells before writing, then rechecks each write, with256-cell/4ms tick slices. A cold chunk load may overrun a slice. Entry and leave persist/restore dimension, position, view, game mode and flying state; inventory is retained. Repeat entry preserves edits and does not spawn duplicate exhibit sheep. View commands provide four fixed cameras. Loading/source/range/AA status is visible in F10.

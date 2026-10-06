@@ -1,5 +1,7 @@
 # Visual integration reference: feasibility and next gate
 
+> Historical implementation report or proposal. Results, defaults and pending work describe the recorded checkpoint, not necessarily the current mod. See the [current guides and status](README.md).
+
 2026-09-16 plan; checkpoint updated 2026-09-17. Owner rejected white mountains and a dark, flat sky. The first same-frame vanilla/zero-bending capture and regional comparison tool now runs, alongside native sky/light and snow-cap repairs: see [native-appearance.md](native-appearance.md). Appearance parity and the broader pose suite remain unfinished; the slow lensed reference is not implemented. Owner has deferred automated movement/flicker checks; retain periodic fixed-snapshot inspection.
 
 ## Diagnosis

@@ -1,5 +1,7 @@
 # Rain and snow — feasibility assessment, 2026-09-19
 
+> Historical implementation report or proposal. Results, defaults and pending work describe the recorded checkpoint, not necessarily the current mod. See the [current guides and status](README.md).
+
 ## Decision: defer implementation for this performance pass
 
 Native-looking, lensed precipitation is feasible. Capturing its geometry is relatively small work; correct transparent composition is the larger addition. With the current1440p renderer still well over the16.7ms budget, I would not add an unmeasured transparency pass now. This is a scope/performance decision, not a claim that rain or snow is impossible or has a measured FPS penalty.

@@ -1,5 +1,7 @@
 # Optical pass benchmark — 2026-09-14
 
+> Historical implementation report or proposal. Results, defaults and pending work describe the recorded checkpoint, not necessarily the current mod. See the [current guides and status](README.md).
+
 Measured on RTX 5070 Ti, NVIDIA 616.92, Minecraft 1.21.1 / Fabric baseline, OpenGL 3.2 context with ARB_timer_query. Fullscreen framebuffer 2560x1440; VSync enabled, configured FPS cap 120, render/simulation distance 12. Disposable Interstellar Calibration world is paused while the lab screen renders. Grid and aligned source enabled. Shader uses 800 maximum RK4 steps of 0.02 radians. No Iris/Sodium installed.
 
 | Scene | GPU p50 ms | GPU p95 ms | GPU p99 ms | Sampled frame interval p95 ms |

@@ -1,5 +1,7 @@
 # Rift Pearl UX acceptance
 
+> Historical implementation report or proposal. Results, defaults and pending work describe the recorded checkpoint, not necessarily the current mod. See the [current guides and status](../../README.md).
+
 Minecraft 1.21.1/Fabric/JDK21, RTX5070Ti driver616.92, Ryzen5800X3D,
 1280×720. Both builds pass 88 tests; normal artifact has zero optional backend,
 Vulkan or shaderc entries. No optical equations or shaders changed.

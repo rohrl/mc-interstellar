@@ -1,5 +1,28 @@
 # Project plan
 
+## Current status — 6 October 2026
+
+The current batch is complete. Earlier priority sections below are chronological
+planning history, not instructions to reimplement completed features.
+
+| Area | Current state |
+| --- | --- |
+| Stable sources and exploration | Automatic discovery, updates and recovery; 512-block optical guard subject to loaded chunks. |
+| World integration | Native terrain and live entities, shared OpenGL/optional RTX, incremental refresh and world-entry preparation. |
+| Gameplay and settings | Mass gravity, arrow exhibit, Rift Pearl pair and player transit, two-minute walking Relativistic Sight potion; six-tab F4 menu. |
+| Visual refinement | AA up to 8×, native special layers, optional returning body, local weather, animated accretion disk and ambience. |
+| Packaging | Normal OpenGL jar/demo ZIP build tasks exist. Standalone RTX runtime packaging and broad compatibility testing remain unfinished. |
+| Latest verification | Disk/ambience checks recorded in docs/accretion-disk.md. Subsequent random-music, star-brightness and gas-strength changes are source-only at owner request. |
+
+Deferred: Kerr rotation; physical terrain infall/destruction; delayed emission
+history and horizon freezing; player gravity; remote mobs and non-player
+wormhole transit; arbitrary teleports; complete particles/special render layers;
+full volumetric disk physics. Section-level terrain storage, optical tables and
+further traversal/refit ideas remain research candidates, not scheduled promises.
+See [current coverage](docs/minecraft-coverage.md) and [documentation index](docs/README.md).
+
+## Historical priorities and milestones
+
 ## Current priority — world feature integration (2026-09-24)
 
 The owner authorizes emissive/glint layers, Glowing-status outlines, entity shadows,

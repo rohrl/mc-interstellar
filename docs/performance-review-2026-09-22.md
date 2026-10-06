@@ -1,5 +1,7 @@
 # Performance review after demo and material refinement
 
+> Historical implementation report or proposal. Results, defaults and pending work describe the recorded checkpoint, not necessarily the current mod. See the [current guides and status](README.md).
+
 **Profiling follow-up:** [2026-09-23 measurements and revised ranking](performance-profile-2026-09-23.md) supersede the proposal order below. Moving-scene/cloud/actor traversal is now the first target; terrain-only planar intersections move down the list. That report includes updated complexity, size, development time, net LoC, gain and quality estimates for every proposal, plus new opportunities. No new production optimization was adopted during profiling.
 
 ## Assessment

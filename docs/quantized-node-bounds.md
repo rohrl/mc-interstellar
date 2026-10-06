@@ -1,5 +1,7 @@
 # Conservative compressed bounds — 2026-09-23
 
+> Historical implementation report or proposal. Results, defaults and pending work describe the recorded checkpoint, not necessarily the current mod. See the [current guides and status](README.md).
+
 Original item4 of the [four-experiment goal](performance-experiments-1-4.md).
 **Rejected: about20% more heavy-view GPU time.** The complete candidate is
 preserved on `codex/quantized-node-bounds`; normal source remains `e324e84`.

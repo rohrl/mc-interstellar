@@ -1,5 +1,7 @@
 # Small-mass lens artifacts and renderer shortcut
 
+> Historical implementation report or proposal. Results, defaults and pending work describe the recorded checkpoint, not necessarily the current mod. See the [current guides and status](README.md).
+
 ## What the owner reported
 
 F2 screenshots `2026-09-28_21.00.29.png`, `21.00.31.png` and `21.00.39.png`

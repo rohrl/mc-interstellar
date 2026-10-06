@@ -1,5 +1,7 @@
 # Relativistic Sight acceptance — 29 September 2026
 
+> Historical implementation report or proposal. Results, defaults and pending work describe the recorded checkpoint, not necessarily the current mod. See the [current guides and status](../../README.md).
+
 Scope and assumptions: [feature guide](../../relativistic-sight.md), decision D096.
 All world edits and inputs used **Interstellar Relativity QA 2026-09-29**, copied
 from the previous QA save. No original owner save was edited. A simple elevated

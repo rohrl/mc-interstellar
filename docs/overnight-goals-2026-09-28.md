@@ -1,5 +1,7 @@
 # Overnight implementation — 28 September 2026
 
+> Historical implementation report or proposal. Results, defaults and pending work describe the recorded checkpoint, not necessarily the current mod. See the [current guides and status](README.md).
+
 Owner-authorized scope: finish RTX for small masses and near/inside horizons, then
 implement a physics-based, playable, bidirectional spherical wormhole demo linking
 two distant locations. Both implementations now have bounded runtime acceptance

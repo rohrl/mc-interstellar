@@ -1,5 +1,7 @@
 # Live native terrain and moving mobs — 2026-09-18
 
+> Historical implementation report or proposal. Results, defaults and pending work describe the recorded checkpoint, not necessarily the current mod. See the [current guides and status](README.md).
+
 Subsequent checkpoint: [streaming-terrain.md](streaming-terrain.md) implements incremental chunk edits/movement and preserves terrain across source refresh. The retained-terrain restrictions below describe this initial live checkpoint.
 
 F10 now uses the accepted native terrain representation. After initial capture, the camera and Minecraft simulation remain live. Supported living mobs move and animate; clouds update too. F12 measures the optical pass. F9 M remains the frozen appearance-comparison path.

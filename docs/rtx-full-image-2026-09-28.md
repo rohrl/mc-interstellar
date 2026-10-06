@@ -1,5 +1,7 @@
 # RTX full-image experiment — 28 September 2026
 
+> Historical implementation report or proposal. Results, defaults and pending work describe the recorded checkpoint, not necessarily the current mod. See the [current guides and status](README.md).
+
 **The complete frozen optical renderer benefits substantially on this GPU.** At
 2560×1440 output, the heavy down-looking view takes **22.132 → 3.543 ms** and the wall
 view **9.826 → 3.417 ms**, including completion on both APIs. These are **6.25× and

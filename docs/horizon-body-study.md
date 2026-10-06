@@ -1,5 +1,7 @@
 # Horizon access and returning-body study — 2026-09-24
 
+> Historical implementation report or proposal. Results, defaults and pending work describe the recorded checkpoint, not necessarily the current mod. See the [current guides and status](README.md).
+
 Branch `codex/horizon-body-study`, following `982d563`.
 
 ## Close viewing and editing

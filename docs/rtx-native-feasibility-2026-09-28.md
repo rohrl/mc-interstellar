@@ -1,5 +1,7 @@
 # RTX with real Minecraft geometry: feasibility checkpoint
 
+> Historical implementation report or proposal. Results, defaults and pending work describe the recorded checkpoint, not necessarily the current mod. See the [current guides and status](README.md).
+
 **Decision: proceed to a bounded full-image prototype; do not adopt a production backend yet.**
 
 RTX queries work on our actual captured geometry and ray segments, including tested

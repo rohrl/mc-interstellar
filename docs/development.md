@@ -1,49 +1,99 @@
-# Windows development
+# Development setup
 
-## Requirements
+For ordinary player installation, start with the [README](../README.md).
+This guide describes the source checkout. Reviewed 6 October 2026.
 
-Complete Java 21 JDK; Git; IntelliJ IDEA; Minecraft Java account for normal gameplay. Gradle/Fabric dependencies are managed by the wrapper. Current Minecraft target is 1.21.1.
+## Requirements and commands
 
-On the original machine, JDK is C:\Portable\jdks\temurin-21.0.12.1. Select it for IntelliJ Project SDK and Settings > Build, Execution, Deployment > Build Tools > Gradle > Gradle JVM. The repo does not store a machine-specific JDK location.
+Use a complete **JDK 21** and Git. An IDE is optional. The Gradle wrapper supplies
+Gradle, and Loom manages the pinned Minecraft 1.21.1/Fabric dependencies.
+In IntelliJ, select JDK 21 as both Project SDK and Gradle JVM.
 
-For a PowerShell terminal:
+From the directory containing `build.gradle` and `gradlew.bat`:
 
 ```powershell
-$env:JAVA_HOME = 'C:\Portable\jdks\temurin-21.0.12.1'
+# Point this at your installed JDK, not a JRE or somebody else's machine path.
+$env:JAVA_HOME = 'C:\path\to\jdk-21'
 $env:Path = "$env:JAVA_HOME\bin;$env:Path"
 .\gradlew.bat --version
-.\gradlew.bat build
+.\gradlew.bat clean build
 .\gradlew.bat runClient
 ```
 
-Build artifacts go to build/libs. runClient creates a separate run/ game directory; it does not edit the normal launcher profile or existing worlds. On first startup Minecraft assets and dependencies need network access. Use a disposable creative world for calibration.
+The ordinary remapped mod is `build/libs/interstellar-0.1.0-dev.jar`; the source
+jar is not an installable mod. `runClient` uses the separate `run/` game directory
+and stable development name `InterstellarDev`. Logs are in `run/logs/latest.log`,
+screenshots in `run/screenshots`, and worlds in `run/saves`. Do not run two clients
+against the same save. First launch downloads dependencies and Minecraft assets.
 
-If the primary Fabric Maven service times out, this project supports its official secondary service:
+The Windows `.cmd` launchers call the same Gradle tasks. They accept `JAVA_HOME`
+and contain an optional fallback for the original developer's portable JDK.
+On other systems use `./gradlew` for the ordinary build; runtime compatibility
+outside the tested Windows machine has not been broadly verified.
+
+## Optional Windows RTX backend
+
+```powershell
+.\gradlew.bat runClient -PinterstellarRtx
+# Build/check without starting Minecraft:
+.\gradlew.bat build checkRtxShaders -PinterstellarRtx
+```
+
+The property adds optional backend sources, LWJGL Vulkan/shaderc and Windows
+shaderc natives. `runClient` also sets `-Dinterstellar.rtx=true` and the native
+stack size. It requires supported Vulkan ray queries and Windows OpenGL/Vulkan
+external-memory/semaphore sharing. The driver supplies Vulkan support.
+
+**A jar produced with the property is not a standalone RTX distribution:**
+Gradle's runtime dependencies and JVM configuration are not embedded by the
+current packaging task. Use the development launch until dedicated RTX packaging
+exists. Ordinary builds exclude these optional sources/dependencies. Build cleanly
+without RTX properties when producing the normal installable artifact; both modes
+use the same output filename, so copy artifacts aside if retaining both.
+
+`checkRtxShaders` compiles 16 compute variants without a Vulkan device or Minecraft
+launch. It does not verify runtime rendering. F4 → Graphics or Alt+F12 changes the
+backend preference; the status overlay identifies the actual renderer/fallback.
+
+## Demo packaging
+
+```powershell
+.\gradlew.bat clean build packageDemo
+```
+
+The ZIP under `build/distributions` contains the ordinary mod and a curated set
+of documents, not Minecraft, Java, Fabric Loader or Fabric API. The repository
+has the complete documentation/evidence; the ZIP is not a complete mirror.
+Do not add RTX properties when creating this ordinary distribution.
+
+## Verification
+
+- Java/resource changes: build and appropriate JVM tests.
+- Optical changes: relevant numerical checks, runtime shader compilation and
+  representative images; compare timings at fixed settings when performance matters.
+- Documentation-only changes: check commands/versions against code and validate
+  local links. Do not launch Minecraft merely to validate prose.
+
+Past successful runs do not validate later edits. Current outstanding runtime
+checks are recorded in [handoff](../handoff.md). The owner's no-launch instruction
+remains in force until superseded.
+
+F8/F9 provide the optical/frozen diagnostic laboratories. F6 toggles diagnostics;
+F7 places a virtual reference point only. These are separate from F4 gameplay
+settings. See [the documentation index](README.md) for dated numerical studies.
+
+## Slow startup and dependency downloads
+
+Separate Gradle compilation/downloads, driver shader compilation and world-view
+preparation when diagnosing startup. Cold shaders have taken several minutes on
+the tested driver; local terrain preparation recurs when its cache is recreated.
+The latest logs reveal which stage is active.
+
+If the primary Fabric Maven endpoint is unavailable, the project also accepts:
 
 ```powershell
 .\gradlew.bat build '-Pfabric_maven_url=https://maven2.fabricmc.net/'
 ```
 
-Pass the same property to runClient. To use it from IntelliJ on an affected machine, set `fabric_maven_url=https://maven2.fabricmc.net/` in your user Gradle properties (outside Git). The secondary service is listed by Fabric's official installer in `src/main/java/net/fabricmc/installer/util/Reference.java`.
-
-## Bootstrap controls
-
-- F6: show/hide diagnostics (session toggle).
-- F7: set virtual reference centre 64 coordinate blocks ahead of the camera (session only).
-- Config: run/config/interstellar.json. Restart the client to reload edited values.
-- HUD respects Minecraft's hidden-HUD setting (F1).
-
-No optical effect is present in iteration 0. Config changes control measurements only; entering the reference radius has no gameplay effect.
-
-## Verification checklist
-
-- Build/test passes on JDK 21.
-- Launch with runClient; verify main menu and no classloading exceptions.
-- Join a disposable world, F6 toggle, F7 reference placement, movement changes r/r_s, F1 hides HUD.
-- Return to title/rejoin and verify reference is cleared.
-- Check invalid config produces a readable error and safe defaults without overwriting the invalid file.
-- No FPS claims until the real optical renderer and agreed quality settings are running.
-
-## Mobile monitoring
-
-Official docs: https://learn.chatgpt.com/docs/remote-connections . Pair the desktop host with the ChatGPT mobile app through Settings > Connections > Control this PC. Account/workspace and rollout must support it. Keep host awake and app running; enable notification permissions on the phone. Agent can flag attention in the task but cannot confirm push delivery. No external notification service has been configured.
+Use the same property for `runClient` if needed. Keep machine-specific paths,
+credentials, personal settings and worlds out of commits.

@@ -1,5 +1,7 @@
 # Normal-setting shader specialization — accepted
 
+> Historical implementation report or proposal. Results, defaults and pending work describe the recorded checkpoint, not necessarily the current mod. See the [current guides and status](README.md).
+
 Compile a separate native compact-node program with ordinary settings fixed to their existing values: entities/clouds/coverage/lensing/native sky/native lighting enabled,2xAA, adaptive steps/fast bounds/addressing/empty cache enabled, cache reach1024, diagnostics off. Camera/source/geometry/fog/lightmap/path-step remain live inputs. No numerical equation, geometry or quality setting changes.
 
 Select it only while every fixed setting matches. Changing any relevant toggle automatically selects the accepted dynamic compact shader; noncompact/general paths remain available. F9 D toggles the specialization; Shift+D compares whole programs in one frame. Existing F/S controls retain their purposes. Extra shared-GLSL branches use compile-time constants so the dynamic reference remains the original implementation.

@@ -1,5 +1,7 @@
 # Incremental terrain refresh experiments — 30 September 2026
 
+> Historical implementation report or proposal. Results, defaults and pending work describe the recorded checkpoint, not necessarily the current mod. See the [current guides and status](README.md).
+
 Status: accepted optimizations implemented and measured in both renderer variants.
 Base: `37733f7`. Trial implementations are preserved in commit `35e72a8`.
 

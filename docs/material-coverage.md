@@ -1,5 +1,7 @@
 # Native material coverage — accepted refinement, 2026-09-22
 
+> Historical implementation report or proposal. Results, defaults and pending work describe the recorded checkpoint, not necessarily the current mod. See the [current guides and status](README.md).
+
 Later additions (2026-09-24): emissive/glint, shadows, text, interaction overlays,
 Glowing outlines and actual returning-body images are described in
 [world features](world-features.md). The acceptance measurements below are historical;

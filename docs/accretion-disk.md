@@ -29,7 +29,8 @@ the animation clock along with the inspection view.
 
 F4 → **Ambience** has independent star-density (1×/2×/3×, default2×), BH-music
 and disk-gas controls. Stars extend Minecraft's deterministic star field; the
-original stars remain in place. The captured sky now uses 1024² pixels per face
+original stars remain in place. Their light contribution is 50% brighter than
+vanilla, retaining time-of-day/weather fading. The captured sky now uses 1024² pixels per face
 instead of 256² to retain sharper small features in lensed views.
 
 Near a selected BH, the mod randomly chooses Minecraft's basalt-delta, crimson-
@@ -42,7 +43,8 @@ returns to ordinary music scheduling. No music assets are bundled.
 
 The gas veil is a deliberate cinematic approximation: a warm screen blend of
 at most 36%, only inside the visible disk's annulus and a layer around its
-plane. Two smooth spatial noise fields rotate at slightly different rates, so
+plane. The distance threshold is three times the original, ranging from 0.6 to
+9 blocks according to source size. Two smooth spatial noise fields rotate at slightly different rates, so
 movement encounters irregular patches rather than random whole-screen flashes.
 It adds no particles, ray marches, damage or actual gas dynamics. It is drawn
 below hands/HUD; Animation Off freezes its pattern. Disabling disk visibility,

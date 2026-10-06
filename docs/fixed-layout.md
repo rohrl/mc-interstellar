@@ -1,5 +1,7 @@
 # Known streamed texture layouts — accepted
 
+> Historical implementation report or proposal. Results, defaults and pending work describe the recorded checkpoint, not necessarily the current mod. See the [current guides and status](README.md).
+
 Streamed terrain triangle arenas are4095 texels wide; moving triangle textures are4096. Compile those existing dimensions into a separate shader, removing repeated textureSize/dimension branches from sceneTriangle. Integer index arithmetic, every texel/attribute, traversal, AA and optics stay unchanged. Select only for streamed native meshes with normal settings/split AA; monolithic and alternate settings keep their existing programs. No extra buffers.
 
 Y toggles this specialization; Shift+Y compares to the accepted split-AA shader. C uses a matching streamed-layout diagnostic variant (including the fixed terrain addressing), while actual-program image pairs cover material/moving-tree fetches and AA. Builds fixed-layout-build.log, fixed-layout-final-build.log and fixed-layout-live-build.log pass53 tests. Accepted after the corrected live selection was verified.

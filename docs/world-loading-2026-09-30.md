@@ -1,5 +1,7 @@
 # World-entry preparation and gameplay bug bash — 30 September 2026
 
+> Historical implementation report or proposal. Results, defaults and pending work describe the recorded checkpoint, not necessarily the current mod. See the [current guides and status](README.md).
+
 ## What changes for players
 
 When **World effects** is enabled (F4 / F10), every world now finishes with a

@@ -1,5 +1,7 @@
 # Gameplay gravity and automatic sources — proposal, 2026-09-23
 
+> Historical implementation report or proposal. Results, defaults and pending work describe the recorded checkpoint, not necessarily the current mod. See the [current guides and status](README.md).
+
 ## Priority and status
 
 The owner requests gradual mass-block effects, automatic updates, nearby mob attraction and curved projectile paths. Plan this milestone before further GPU profiling, optical-table experiments and moving-tree refit/reuse. The original four performance experiments are complete; retain their accepted renderer.

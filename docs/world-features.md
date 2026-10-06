@@ -1,5 +1,7 @@
 # World feature integration — 2026-09-24
 
+> Historical implementation report or proposal. Results, defaults and pending work describe the recorded checkpoint, not necessarily the current mod. See the [current guides and status](README.md).
+
 Implementation branch: `codex/world-feature-coverage`, based on `ecf1b09`.
 
 Later [horizon/body study](horizon-body-study.md): returning images now default off

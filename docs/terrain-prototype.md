@@ -1,5 +1,7 @@
 # Minecraft terrain-lensing prototype
 
+> Historical implementation report or proposal. Results, defaults and pending work describe the recorded checkpoint, not necessarily the current mod. See the [current guides and status](README.md).
+
 Inspect a complete black-hole proxy, stand outside 1.05 r_s and within the captured region, then press **F9**. It captures actual nearby client-world blocks, including off-screen blocks, and traces rays through them on the GPU. This is a frozen preview screen, not live replacement of Minecraft's world renderer. F8 remains the independent sky lab.
 
 | Control | Result |

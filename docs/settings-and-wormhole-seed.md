@@ -6,7 +6,7 @@ Press **F4** during gameplay. Rebind it in Controls → Interstellar. The menu
 applies changes live and saves visual preferences in `config/interstellar-terrain.json`.
 It stays live while open; **Done** or **Esc** returns to play.
 
-The tabs are **Gameplay**, **Graphics**, **Relativity**, and **Tools**. World effects start
+The tabs are **Gameplay**, **Graphics**, **Disk**, **Ambience**, **Relativity**, and **Tools**. World effects start
 automatically when a nearby mass cluster or placed mouth is available. Mass
 lensing and the wormhole pair share one world view; neither replaces the other.
 The status overlay names the active mass and portal state.
@@ -29,7 +29,8 @@ The status overlay names the active mass and portal state.
 | Reset camera upright | Same as R: clear wormhole tilt without changing position or aim. |
 | Quality defaults | 50% resolution, 2× AA, normal path steps. |
 | Tools | FPS measurement, world-lighting rebuild, automatic mass selection, upright reset, and the F8/F9 laboratories. |
-| Relativity | Potion visuals, independent aberration / Doppler colour / brightness controls, optical speed cap and sprint ramp. See [Relativistic Sight](relativistic-sight.md). |
+| Disk / Ambience | Disk size, tilt, emission and glow; star density, BH music and gas veil. See [accretion disk](accretion-disk.md). |
+| Relativity | Potion visuals, independent aberration / Doppler colour / brightness controls, optical speed cap and walking ramp. See [Relativistic Sight](relativistic-sight.md). |
 
 Esc from a laboratory restores the saved gameplay visual setting. F10 switches
 all world optics together; use the two feature switches in F4 for independent

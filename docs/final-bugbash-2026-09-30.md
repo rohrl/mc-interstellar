@@ -1,5 +1,7 @@
 # Final bug bash and gameplay assessment — 30 September 2026
 
+> Historical implementation report or proposal. Results, defaults and pending work describe the recorded checkpoint, not necessarily the current mod. See the [current guides and status](README.md).
+
 ## Verdict
 
 The core features work together well enough for a controlled demo and creative

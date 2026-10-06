@@ -1,5 +1,7 @@
 # Per-actor hierarchy experiment — 2026-09-23
 
+> Historical implementation report or proposal. Results, defaults and pending work describe the recorded checkpoint, not necessarily the current mod. See the [current guides and status](README.md).
+
 Original priority 3 of the [four-experiment goal](performance-experiments-1-4.md).
 **Rejected for lack of FPS improvement.** Candidate preserved on
 `codex/actor-hierarchy`; accepted production source remains `e324e84`.

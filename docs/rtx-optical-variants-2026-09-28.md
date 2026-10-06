@@ -1,5 +1,7 @@
 # RTX for extended masses and horizon views
 
+> Historical implementation report or proposal. Results, defaults and pending work describe the recorded checkpoint, not necessarily the current mod. See the [current guides and status](README.md).
+
 The live RTX backend now renders all three existing optical models: exterior black
 holes, finite extended masses and near/inside-horizon views. Alt+F12 selects RTX or
 OpenGL for each. Ordinary builds retain no Vulkan requirement.

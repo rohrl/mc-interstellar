@@ -1,5 +1,7 @@
 # Snow-layer support — 2026-09-15
 
+> Historical implementation report or proposal. Results, defaults and pending work describe the recorded checkpoint, not necessarily the current mod. See the [current guides and status](README.md).
+
 F9 and F10 now support vanilla snow layers at heights 1/8 through 8/8 block. Texture UVs come from the baked faces, including unculled top faces. The palette stores each material height in the unused alpha of its first texel; full cubes retain height 1. The GPU traverses voxels as before, testing thin snow cuboids inside each straight chord. Empty space above snow is traversable. Curved integration itself is unchanged.
 
 The CPU diagnostic uses independent height-aware slab intersections. A regression test covers downward top hits, side hits and rays above all eight snow heights. Build passes with 32 tests. Final scene GPU diagnostic: 40x27 rays, 0 flat mismatches, 506 flat hits, 695 lensed opaque hits, 0 off-screen-with-margin hits and 0 unresolved samples. This validates sampled flat geometry, not full curved-surface accuracy. The snowy scene had 10895 supported opaque cells, 8 materials and zero unknown/unsupported cells. One modest-resolution visual check confirms white snow and secondary images instead of purple diagnostics. Existing snow, weather and owner edits were preserved.

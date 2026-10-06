@@ -1,5 +1,7 @@
 # Camera-centred mesh coverage — 2026-09-18
 
+> Historical implementation report or proposal. Results, defaults and pending work describe the recorded checkpoint, not necessarily the current mod. See the [current guides and status](README.md).
+
 F9 M now captures around the camera, covering the configured render distance plus one chunk in every horizontal direction, over full build height. At render distance12 this requests a 27×27 square, replacing the source-centred 16×16 square. All directions matter because curved rays can turn away from the ordinary camera view. Only loaded chunks are read; no chunks are generated or requested by the capture. Missing sections remain explicit.
 
 The frozen reference retains a hard triangle budget, increased from four to seven million (about 961 MiB for triangle data alone at the cap, separately on CPU and GPU during upload). Capture/build/upload peak memory includes array growth, BVH, native upload staging and other game allocations. This is deliberately expensive quality-reference work, not the live representation or a performance optimization. Configured render distance above16 is refused inside the guarded preview capture loop; dense scenes can hit the triangle budget earlier. Failures are logged rather than silently dropping triangles. Existing 128-block camera guard is unchanged.

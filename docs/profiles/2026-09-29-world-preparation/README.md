@@ -1,5 +1,7 @@
 # Preparation evidence
 
+> Historical implementation report or proposal. Results, defaults and pending work describe the recorded checkpoint, not necessarily the current mod. See the [current guides and status](../../README.md).
+
 See [the full report](../../world-preparation-2026-09-29.md) for interpretation.
 All original raw logs and init scripts remain in the ignored run/preparation-study/.
 These extracts preserve milestones/work counts without megabytes of per-frame logs.

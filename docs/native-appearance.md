@@ -1,5 +1,7 @@
 # Native appearance repair — 2026-09-17
 
+> Historical implementation report or proposal. Results, defaults and pending work describe the recorded checkpoint, not necessarily the current mod. See the [current guides and status](README.md).
+
 The interrupted implementation now builds and runs in F9/F10. The shader startup blocker was a variable named `packed`, a reserved GLSL keyword; renaming it to `lightCode` fixes compilation. Changing its arithmetic alone did not fix the reserved name. See the [Khronos GLSL specification](https://registry.khronos.org/OpenGL/specs/gl/GLSLangSpec.4.10.pdf).
 
 ## Appearance changes

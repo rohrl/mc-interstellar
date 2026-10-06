@@ -1,5 +1,7 @@
 # World preparation: failure analysis and optimization
 
+> Historical implementation report or proposal. Results, defaults and pending work describe the recorded checkpoint, not necessarily the current mod. See the [current guides and status](README.md).
+
 ## Result
 
 The reported switch-off was a geometry-storage failure, not a shader compilation

@@ -1,5 +1,7 @@
 # Incremental native terrain — 2026-09-18
 
+> Historical implementation report or proposal. Results, defaults and pending work describe the recorded checkpoint, not necessarily the current mod. See the [current guides and status](README.md).
+
 F10 now retains independently replaceable chunk meshes. Block/light changes queue affected chunks; ordinary movement retains overlapping chunks and captures the new edge. Mobs/clouds keep their separate per-frame mesh. Initial loading is still allowed; teleport support, precipitation and FPS optimization remain deferred by the owner.
 
 ## Cache and traversal

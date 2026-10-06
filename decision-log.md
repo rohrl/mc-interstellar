@@ -996,10 +996,14 @@ request to skip additional timings.
 Further accepted ambience: extend native stars to2× by default (F4 offers1–3×),
 raise captured sky faces256→1024 to retain small features, randomly choose vanilla
 basalt-delta/crimson-forest/End music per BH approach with distance hysteresis
-and no immediately repeated event, and a bounded18%
+and no immediately repeated event, and an initially bounded 18%
 gas veil only inside the visible disk annulus/height. Expose independent controls
 under F4 Ambience. The veil advects coherent spatial noise; no particles, damage,
 volume ray march or rapid random flashes. Music uses the normal Music category.
+Owner follow-up increased star light contribution by 50%, tripled the gas layer's
+distance threshold and doubled its maximum opacity to 36%. These final tuning
+changes and random music selection were source-only, with runtime checks deferred
+at the owner's request.
 Final matched disk-visible interval25.06→25.68ms; disk-off33.40→33.50ms. Accept
 the roughly2.5% cost for the requested visual improvements at this test pose.
 

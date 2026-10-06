@@ -1,5 +1,7 @@
 # Shared native quad vertices — experiment, 2026-09-22
 
+> Historical implementation report or proposal. Results, defaults and pending work describe the recorded checkpoint, not necessarily the current mod. See the [current guides and status](README.md).
+
 Owner approved this experiment and pushes to the existing repository. Baseline2843a50 is preserved in history. The original storage comparison is preserved on codex/quad-vertices-experiment at49738ba. After seeing the results, the owner explicitly accepted a gain in the heaviest view with a small regression in the easier view. The consolidated four-quad implementation is accepted on codex/quad-vertices and codex/demo-visual-refinement. The earlier strict no-regression conclusion below is superseded by that clarification.
 
 ## Isolated implementation

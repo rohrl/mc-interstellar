@@ -1,5 +1,7 @@
 # Frozen native mobs and terrain lightmap parity
 
+> Historical implementation report or proposal. Results, defaults and pending work describe the recorded checkpoint, not necessarily the current mod. See the [current guides and status](README.md).
+
 2026-09-17, `codex/world-mesh-reference`. Owner visually accepted the baked terrain experiment as a substantial improvement and requested mobs. Continue quality-first; performance optimization remains deferred.
 
 ## Behavior
