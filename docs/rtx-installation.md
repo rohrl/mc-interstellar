@@ -64,6 +64,6 @@ from packaged shader resources with the normal 64 KiB stack; no Minecraft or
 graphics window is started. This checks packaging/native compilation, not a full
 Fabric launcher session or GPU rendering. See the handoff for performed checks.
 
-For gameplay and troubleshooting, see the [repository README](https://github.com/rohrl/mc-interstellar/blob/codex/incremental-refresh/README.md).
+For gameplay and troubleshooting, see the [repository README](https://github.com/rohrl/mc-interstellar/blob/main/README.md).
 Packaging references: [Fabric Loom jar-in-jar](https://docs.fabricmc.net/develop/loom/)
 and [LWJGL stack configuration](https://javadoc.lwjgl.org/org/lwjgl/system/Configuration.html).

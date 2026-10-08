@@ -1,7 +1,7 @@
 # Interstellar demo
 
 Reviewed 6 October 2026. For installation, versions, troubleshooting and the full
-feature overview, see the [repository README](https://github.com/rohrl/mc-interstellar/blob/codex/incremental-refresh/README.md).
+feature overview, see the [repository README](https://github.com/rohrl/mc-interstellar/blob/main/README.md).
 This guide is also copied into the ordinary demo ZIP; linked repository guides
 may contain newer or more complete evidence than the ZIP's curated documents.
 
@@ -9,7 +9,7 @@ may contain newer or more complete evidence than the ZIP's curated documents.
 visuals while retaining normal movement. F4 → Relativity has independent aberration,
 Doppler colour and brightness switches, speed cap and ramp duration. Creative:
 Food & Drinks; survival: Awkward Potion + Amethyst Shard. See
-[the potion guide](https://github.com/rohrl/mc-interstellar/blob/codex/incremental-refresh/docs/relativistic-sight.md).
+[the potion guide](https://github.com/rohrl/mc-interstellar/blob/main/docs/relativistic-sight.md).
 
 ## Install or launch
 
@@ -19,7 +19,7 @@ For ordinary Fabric installation, choose `interstellar-rtx-0.1.0-dev.jar` for
 Windows x64 RTX with OpenGL fallback, or `interstellar-0.1.0-dev.jar` for OpenGL
 only. Install one edition plus Fabric API. The RTX jar bundles its extra libraries
 and needs no JVM flags; see `RTX-INSTALLATION.md` in the demo ZIP or the
-[RTX guide online](https://github.com/rohrl/mc-interstellar/blob/codex/incremental-refresh/docs/rtx-installation.md).
+[RTX guide online](https://github.com/rohrl/mc-interstellar/blob/main/docs/rtx-installation.md).
 
 For the optional hardware renderer from source, run **Launch Interstellar RTX.cmd**, or
 `gradlew.bat runClient -PinterstellarRtx`. **Alt+F12** switches RTX/OpenGL while
@@ -55,7 +55,7 @@ without opening the menu. Later throws move the
 oldest mouth. **Sneak + use** closes the pair. One pair per save, same dimension,
 radius8. The demo command installs its exhibit as this same pair. A successful
 throw in another dimension closes the old pair and starts a new first end there.
-[Full controls and limits](https://github.com/rohrl/mc-interstellar/blob/codex/incremental-refresh/docs/settings-and-wormhole-seed.md).
+[Full controls and limits](https://github.com/rohrl/mc-interstellar/blob/main/docs/settings-and-wormhole-seed.md).
 
 - **Wormholes:** `/interstellar demo wormholes` connects orange and cyan scenes about 1,145 blocks apart. Lensing arms automatically; wait for **World view ready**, then fly into the sphere to cross. `/interstellar demo view mouth_a` or `mouth_b` gives an exterior view; `throat_a` or `throat_b` starts just before passage. Cross either way. Off-centre entry can rotate the camera; a named viewpoint resets it. These are hypothetical wormholes with Ellis lensing near each throat and a smooth transition to the shared exterior, with no event horizon or compulsory gravity pull. Player passage and remote terrain/block entities are supported; remote mob tracking and mob/projectile passage are not part of this version.
 - **New gameplay:** `/interstellar demo gameplay` builds a separate exhibit with gradual mass progression, automatic discovery and local mob/projectile gravity. A complete 4×4×4 source is at the black-hole threshold; removing blocks reduces the field, and compact 2×2×2/3×3×3 builds keep visible material with lensing. Close mobs can lift and be captured; ordinary/spectral arrows and thrown projectiles bend. Players and terrain are unaffected. Model, settings and limits: `docs/gameplay-gravity.md` in the repository or demo archive.
@@ -110,7 +110,7 @@ mass cube; select All BHs to show a disk around the smaller gameplay exhibit.
 | `/interstellar-visuals body true/false` | Experimental returning player images (default off) |
 | `/interstellar-visuals weather true/false` | Show/hide the inexpensive local rain/snow approximation |
 
-Source edits, splits, merges and chunk reloads refresh automatically. F10 stays on through the horizon; interior blocks use normal positions for editing. Leaving the supported viewing range pauses lensing; returning resumes it. F10 controls optics independently of entity gravity. Persistent physics settings are in `config/interstellar-gravity.json`. Entity dynamics currently support enclosing radius up to16 blocks and horizon radius up to12; larger sources retain optics and show the physics size limit. The central background is dark below0.1 horizon radii; block editing stays active. See [horizon assumptions and checks](https://github.com/rohrl/mc-interstellar/blob/codex/incremental-refresh/docs/horizon-body-study.md).
+Source edits, splits, merges and chunk reloads refresh automatically. F10 stays on through the horizon; interior blocks use normal positions for editing. Leaving the supported viewing range pauses lensing; returning resumes it. F10 controls optics independently of entity gravity. Persistent physics settings are in `config/interstellar-gravity.json`. Entity dynamics currently support enclosing radius up to16 blocks and horizon radius up to12; larger sources retain optics and show the physics size limit. The central background is dark below0.1 horizon radii; block editing stays active. See [horizon assumptions and checks](https://github.com/rohrl/mc-interstellar/blob/main/docs/horizon-body-study.md).
 
 ## Performance and coverage
 
@@ -118,4 +118,4 @@ First-person hands and held items remain visible over the live F10 scene. The in
 
 The historical OpenGL natural-world build measured about 59 FPS facing the wall and 34 FPS looking down at terrain, at 2560×1440 on an RTX 5070 Ti. Those measurements predate the RTX backend and later disk/ambience work; they are not current-version performance promises. See `docs/material-coverage.md` for their original conditions and limitations, and the repository README for newer measurements.
 
-Native water/lava, glass, ordinary entities/block entities, emissive/glint materials, text, shadows and selection/mining overlays join the curved scene. Glowing-status outlines follow curved images through walls. Actual player-body images can appear as thin arcs near the black-hole edge; no delayed pose history is simulated. Rain/snow uses a small unbent foreground pass. Particles and various special surfaces remain absent; water blending is not physical refraction. Current sharp2xAA still limits fine secondary detail. See [current coverage](https://github.com/rohrl/mc-interstellar/blob/codex/incremental-refresh/docs/minecraft-coverage.md) and [feature checks/timings](https://github.com/rohrl/mc-interstellar/blob/codex/incremental-refresh/docs/world-features.md).
+Native water/lava, glass, ordinary entities/block entities, emissive/glint materials, text, shadows and selection/mining overlays join the curved scene. Glowing-status outlines follow curved images through walls. Actual player-body images can appear as thin arcs near the black-hole edge; no delayed pose history is simulated. Rain/snow uses a small unbent foreground pass. Particles and various special surfaces remain absent; water blending is not physical refraction. Current sharp2xAA still limits fine secondary detail. See [current coverage](https://github.com/rohrl/mc-interstellar/blob/main/docs/minecraft-coverage.md) and [feature checks/timings](https://github.com/rohrl/mc-interstellar/blob/main/docs/world-features.md).

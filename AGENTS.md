@@ -4,7 +4,7 @@ Read README.md, decision-log.md, progress.md, and handoff.md before continuing. 
 
 ## Working agreement
 
-- User authorizes normal implementation, branches, commits, and pushes to origin. Keep work reviewable on development branches. Do not force-push or discard unrelated edits.
+- User authorizes normal implementation, branches, commits, and pushes to origin. `main` is the default branch and must contain the latest completed work. Push completed changes to `origin/main`; intermediate branches are allowed, but integrate accepted results into main before finishing. Preserve rejected experiments separately. Do not force-push or discard unrelated edits.
 - Maintain decision-log.md for important technical decisions and reasons. Mark proposals, accepted choices, and superseded choices distinctly.
 - Update progress.md and handoff.md at meaningful checkpoints and before ending an iteration. Record exact checks and remaining limitations.
 - Notify the user in the active task when blocked or when a material product choice requires them. Routine implementation choices are delegated; record their rationale rather than repeatedly asking permission.

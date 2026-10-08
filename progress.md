@@ -1,5 +1,13 @@
 # Progress
 
+## 2026-10-08 — Main branch and future push policy
+
+- Renamed the latest `codex/incremental-refresh` branch to `main` on GitHub and
+  locally; changed the repository default from the old bootstrap branch to main.
+- Updated upstream tracking, current documentation links and AGENTS.md: completed
+  work goes to origin/main; temporary branches and preserved experiments remain allowed.
+- No source/build/runtime changes.
+
 ## 2026-10-06 — Standalone Windows RTX distribution
 
 - Optional RTX jar/ZIP bundles Vulkan/shaderc bindings and Windows x64 native

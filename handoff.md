@@ -1,6 +1,11 @@
-# Handoff — Standalone RTX packaging, 6 October 2026
+# Handoff — Main branch established, 8 October 2026
 
 ## Current state
+
+The latest branch was renamed to `main` locally and on GitHub, and main is now
+the repository default. Future completed work must be integrated and pushed to
+`origin/main`; intermediate experiment branches are still allowed. Older
+historical branches are preserved. Current documentation links use main.
 
 Documentation audit complete: README now covers normal Fabric installation,
 source/RTX launch, features, controls, troubleshooting and scientific references.
@@ -29,7 +34,7 @@ draw, also affecting both lensed backends. The multiplier is sqrt(1.5) because
 vanilla multiplies RGB and source alpha together. Now built; runtime appearance
 remains unverified. The no-launch instruction is still in force.
 
-Branch `codex/incremental-refresh`. Accretion disk, visual refinements and
+Branch `main` (formerly `codex/incremental-refresh`). Accretion disk, visual refinements and
 ambience are complete; implementation, assumptions and evidence are in
 [docs/accretion-disk.md](docs/accretion-disk.md), with decisions in D105.
 Preserve owner worlds, IDE settings and the earlier AA branch/commit `8ad46ebd`.
